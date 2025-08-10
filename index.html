@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2E7D32">
+  <title>HirtenApp – Preview</title>
+  <style>
+    html,body{height:100%} body{margin:0;background:#f8fafc;}
+    #app{min-height:100vh}
+    .loading{font:16px system-ui,-apple-system,Segoe UI,Roboto; color:#111827; padding:16px}
+  </style>
+</head>
+<body>
+  <noscript>
+    <div class="loading">Bitte JavaScript aktivieren, um die HirtenApp zu sehen.</div>
+  </noscript>
+  <div id="app"><div class="loading">Lade …</div></div>
+
+  <!-- Wichtig: Der Pfad ist relativ. Legt diese index.html und hirtenapp.cdn.js in denselben Ordner. -->
+  <script src="./hirtenapp.cdn.js?v=3" defer></script>
+  <script>
+    // Mount nach DOM + Bundle-Load
+    window.addEventListener('DOMContentLoaded', function () {
+      var root = document.getElementById('app');
+      if (window.HirtenApp && typeof HirtenApp.mount === 'function') {
+        // Sprache für den ersten Eindruck: 'de' | 'it' | 'en'
+        window.__hirtenApp = HirtenApp.mount(root, { lang: 'de' });
+        // Beispiel:
+        // __hirtenApp.setLang('it');
+        // __hirtenApp.navigate('dashboard');
+      } else {
+        root.innerHTML = '<div class="loading">Bundle nicht geladen – liegt <code>hirtenapp.cdn.js</code> im selben Ordner wie diese <code>index.html</code>? (Pfad: <code>./hirtenapp.cdn.js</code>)</div>';
+      }
+    });
+  </script>
+</body>
+</html>
