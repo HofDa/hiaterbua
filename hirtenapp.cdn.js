@@ -1,0 +1,1 @@
+(function(r,f){r.HirtenApp={mount:function(el){el.innerHTML='<div style="padding:1rem;font-family:sans-serif">Bundle missing. Please upload hirtenapp.cdn.js</div>';return {};}};})(this,function(){return{}});
