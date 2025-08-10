@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HirtenApp – Offline Mockup v3</title>
+<style>
+:root{
+  --bg:#fff;--fg:#111827;--muted:#6b7280;--border:#e5e7eb;--accent:#2E7D32;
+  --neutral:#f5f5f5;--panel:#ffffff;--shadow:0 10px 30px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+h1,h2,h3{margin:.25rem 0 .5rem}
+button{font:inherit}
+.container{max-width:820px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;filter:contrast(1.15) saturate(1.1);padding-bottom:calc(env(safe-area-inset-bottom) + 140px)}
+.sticky{position:sticky;top:0;background:rgba(255,255,255,.8);backdrop-filter:saturate(1.1) blur(6px);border-bottom:1px solid var(--border);padding:.75rem 1rem;z-index:10}
+.topbar{display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:1.125rem}
+.topbar .left{display:flex;align-items:center;gap:.5rem}
+.icon-btn{border:1px solid var(--border);padding:.25rem .5rem;border-radius:.5rem;background:#fff}
+.lang{display:flex;border:1px solid var(--border);border-radius:999px;overflow:hidden}
+.lang button{padding:.25rem .6rem;border:0;background:#fff;font-size:.85rem}
+.lang button.active{background:#111827;color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+@media(min-width:640px){.grid2{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:768px){.grid2{grid-template-columns:repeat(4,1fr)}}
+.tile{aspect-ratio:16/9;border:2px solid #d1d5db;border-radius:1rem;padding:1rem;display:flex;flex-direction:column;justify-content:space-between}
+.tile .emoji{font-size:2rem}
+.tile:active{transform:scale(.99)}
+.card{border:1px solid var(--border);border-radius:1rem;background:#fff;padding:1rem}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}
+@media(min-width:640px){.stats{grid-template-columns:repeat(3,1fr)}}
+.stat{border:1px solid var(--border);border-radius:.75rem;padding:.75rem}
+.stat .label{font-size:.75rem;color:var(--muted)}
+.stat .value{font-weight:600}
+.map{height:52vh;border:1px solid var(--border);border-radius:1rem;overflow:hidden;background:#f3f4f6}
+.map.tall{height:58vh}
+.badges{display:flex;flex-wrap:wrap;gap:.5rem}
+.badge{font-size:.75rem;border-radius:999px;border:1px solid currentColor;padding:.15rem .5rem}
+.btn{border:1px solid var(--border);border-radius:1rem;padding:.65rem 1rem;background:#fff}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.block{display:block;width:100%}
+.btn-group{display:flex;gap:.5rem;align-items:center}
+.hold{position:relative;border-radius:1rem;overflow:hidden}
+.hold .progress{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.25);width:0;pointer-events:none}
+.bottomnav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);padding:.5rem;z-index:20}
+.bottomnav .row{max-width:820px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.navbtn{border:1px solid var(--border);border-radius:.5rem;padding:.5rem;display:flex;gap:.4rem;align-items:center;justify-content:center;font-size:.8rem;background:#fff}
+.fab{display:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal.open{display:flex}
+.modal .sheet{background:#fff;width:100%;max-width:520px;max-height:90vh;border-radius:1.25rem 1.25rem 0 0;padding:1rem;overflow:auto;box-shadow:var(--shadow)}
+.field{display:flex;flex-direction:column;gap:.25rem}
+input[type="text"],textarea{border:1px solid var(--border);border-radius:.75rem;padding:.6rem .75rem;font:inherit}
+.legend{display:flex;flex-direction:column;gap:.25rem;font-size:.9rem}
+.legend .dot{width:.75rem;height:.75rem;border-radius:50%;display:inline-block}
+.row{display:flex;gap:.5rem;align-items:center;justify-content:space-between}
+.small{font-size:.85rem;color:var(--muted)}
+/* Bars */
+.barrow{display:flex;gap:.75rem;align-items:center}
+.barlabel{width:8rem;font-size:.85rem;color:#4b5563}
+.barbg{flex:1;height:.9rem;background:#f3f4f6;border-radius:999px;overflow:hidden}
+.barfill{height:100%}
+/* Donut */
+.donut{display:flex;gap:1rem;align-items:center}
+/* Mini line chart */
+.linechart{border:1px solid var(--border)}
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2E7D32">
+<link rel="icon" href="icon-192.png">
+
+    <style id="responsive-fixes">
+      /* Global box model & layout sanity */
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { max-width: 100%; overflow-x: hidden; }
+      img, video, canvas, svg { max-width: 100%; height: auto; }
+
+      /* Make generic "dashboard" grids wrap on small screens */
+      .dashboard, .grid, .cards, .card-grid, .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .card, .tile, .panel, .box { min-width: 0; }
+
+      /* Buttons and inputs wrap nicely */
+      button, .btn, input, select, textarea { max-width: 100%; }
+
+      /* Tables and preformatted content scroll horizontally if needed */
+      table, pre, code { max-width: 100%; overflow-x: auto; display: block; }
+
+      /* Avoid giant fixed widths */
+      [style*="width: 600px"], [style*="width:600px"],
+      [style*="width: 700px"], [style*="width:700px"],
+      [style*="width: 800px"], [style*="width:800px"],
+      [style*="min-width: 600px"], [style*="min-width:600px"],
+      [style*="min-width: 700px"], [style*="min-width:700px"],
+      [style*="min-width: 800px"], [style*="min-width:800px"] {
+        width: 100% !important; min-width: 0 !important;
+      }
+
+      /* Safe paddings on mobile */
+      @media (max-width: 480px) {
+        body { padding: 12px; }
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.25rem; }
+        h3 { font-size: 1.1rem; }
+        .card, .panel, .box { padding: 12px; }
+        .toolbar, .navbar, .header { flex-wrap: wrap; gap: 8px; }
+      }
+
+      /* Prevent sticky footers/headers from covering content on iOS */
+      :root { --safe-bottom: env(safe-area-inset-bottom); --safe-top: env(safe-area-inset-top); }
+      .footer-fixed, .header-fixed { padding-bottom: max(12px, var(--safe-bottom)); padding-top: max(12px, var(--safe-top)); }
+    </style>
+    
+
+    <style id="fluid-container-fix">
+      [class*="container"], [class*="content"], main, section, article, aside {
+        max-width: 100%;
+      }
+    </style>
+    
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<div class="bottomnav">
+  <div class="row">
+    <button class="navbtn" data-nav="home"><span class="emoji">🏠</span><span class="navlabel" data-i="start">Start</span></button>
+    <button class="navbtn" data-nav="grazing"><span class="emoji">🐄</span><span class="navlabel" data-i="grazing">Geführter Weidegang</span></button>
+    <button class="navbtn" data-nav="fence"><span class="emoji">🚧</span><span class="navlabel" data-i="fence">Zäunen</span></button>
+    <button class="navbtn" data-nav="paddock_map"><span class="emoji">🗺️</span><span class="navlabel" data-i="paddockMap">Pferche – Karte</span></button>
+    <button class="navbtn" data-nav="dashboard"><span class="emoji">📊</span><span class="navlabel" data-i="dashboard">Dashboard</span></button>
+    <button class="navbtn" data-nav="settings"><span class="emoji">⚙️</span><span class="navlabel" data-i="settings">Einstellungen</span></button>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div class="row"><span></span><button class="btn" id="closeModal">×</button></div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+// --- utilities ---
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const vibrate = (ms=20)=>{ try{ if(navigator.vibrate) navigator.vibrate(ms);}catch(e){} };
+
+const STR = {
+  de: {app:"HirtenApp",start:"Start",fence:"Zäunen",grazing:"Geführter Weidegang",control:"Kontrolle",add:"+",
+       speciesPicker:"Geführte Beweidung",ready:"Bereit",running:"Läuft",paused:"Pausiert",
+       hourlyActive:"Stündliche Erinnerung aktiv ⏰",time:"Zeit",distance:"Distanz",avgSpeed:"Ø Tempo",
+       startBtn:"Start",stopHold:"Stop (halten)",pause:"Pause",resume:"Weiter",
+       fenceTitle:"Zäunen – Zaunverlauf erfassen",points:"Punkte",lengthApprox:"Länge (≈)",
+       savePaddock:"Als Pferch speichern",paddockMap:"Pferche – Karte",paddockList:"Pferche – Liste",
+       newPaddock:"Neuer Pferch",daysLeft:"Tage übrig",area:"Fläche",gvePerHa:"GVE/ha",gveDaysPerHa:"GVE-Tage/ha",
+       plusOneDay:"+1 Tag",end:"Beenden",navigate:"Navigieren",settings:"Einstellungen",speciesGVE:"Tierarten & GVE-Faktoren",
+       notifications:"Benachrichtigungen",hourlyReminders:"Stündliche Erinnerung bei laufenden Tätigkeiten",
+       addActivity:"Neue Tätigkeit (Zeit-Tracking)",title:"Titel",
+       description:"Beschreibung (optional)",cancel:"Abbrechen",create:"Anlegen",activityOnlyTime:"(Kein GPS – nur Zeit)",
+       dashboard:"Dashboard",hrsByCat:"Stunden nach Kategorie (inkl. eigene)",activePaddocks:"Aktive Pferche",endingToday:"Heute auslaufend",
+       addCustomSpecies:"+ Eigene Tierart",today:"Heute",active:"Aktive",note:"Notiz",category:"Kategorie",
+       status:"Status",gve:"GVE",shareByCat:"Anteile nach Kategorie",last7dHours:"Stunden (letzte 7 Tage)"},
+  it: {app:"HirtenApp",start:"Avvio",fence:"Recinzione",grazing:"Pascolamento guidato",control:"Controllo",add:"+",
+       speciesPicker:"Pascolamento guidato",ready:"Pronto",running:"In corso",paused:"In pausa",
+       hourlyActive:"Promemoria orario attivo ⏰",time:"Tempo",distance:"Distanza",avgSpeed:"Velocità media",
+       startBtn:"Avvia",stopHold:"Stop (tieni premuto)",pause:"Pausa",resume:"Riprendi",
+       fenceTitle:"Recinzione – tracciamento",points:"Punti",lengthApprox:"Lunghezza (≈)",
+       savePaddock:"Salva come paddock",paddockMap:"Paddock – Mappa",paddockList:"Paddock – Lista",
+       newPaddock:"Nuovo paddock",daysLeft:"Giorni rimanenti",area:"Superficie",gvePerHa:"GVE/ha",gveDaysPerHa:"GVE-giorni/ha",
+       plusOneDay:"+1 giorno",end:"Chiudi",navigate:"Naviga",settings:"Impostazioni",speciesGVE:"Specie & fattori GVE",
+       notifications:"Notifiche",hourlyReminders:"Promemoria orario durante le attività",
+       addActivity:"Nuova attività (solo tempo)",title:"Titolo",
+       description:"Descrizione (opzionale)",cancel:"Annulla",create:"Crea",activityOnlyTime:"(Solo tempo – nessun GPS)",
+       dashboard:"Cruscotto",hrsByCat:"Ore per categoria (incl. personalizzate)",activePaddocks:"Paddock attivi",endingToday:"In scadenza oggi",
+       addCustomSpecies:"+ Aggiungi specie",today:"Oggi",active:"Attivi",note:"Nota",category:"Categoria",
+       status:"Stato",gve:"GVE",shareByCat:"Quote per categoria",last7dHours:"Ore (ultimi 7 giorni)"},
+  en: {app:"HirtenApp",start:"Home",fence:"Fencing",grazing:"Guided Grazing",control:"Inspection",add:"+",
+       speciesPicker:"Guided Grazing",ready:"Ready",running:"Running",paused:"Paused",
+       hourlyActive:"Hourly reminder active ⏰",time:"Time",distance:"Distance",avgSpeed:"Avg speed",
+       startBtn:"Start",stopHold:"Stop (hold)",pause:"Pause",resume:"Resume",
+       fenceTitle:"Fencing – track line",points:"Points",lengthApprox:"Length (≈)",
+       savePaddock:"Save as paddock",paddockMap:"Paddocks – Map",paddockList:"Paddocks – List",
+       newPaddock:"New paddock",daysLeft:"Days left",area:"Area",gvePerHa:"GVE/ha",gveDaysPerHa:"GVE-days/ha",
+       plusOneDay:"+1 day",end:"End",navigate:"Navigate",settings:"Settings",speciesGVE:"Species & GVE factors",
+       notifications:"Notifications",hourlyReminders:"Hourly reminder during active tasks",
+       addActivity:"New activity (time only)",title:"Title",
+       description:"Description (optional)",cancel:"Cancel",create:"Create",activityOnlyTime:"(Time only – no GPS)",
+       dashboard:"Dashboard",hrsByCat:"Hours by category (incl. custom)",activePaddocks:"Active paddocks",endingToday:"Ending today",
+       addCustomSpecies:"+ Custom species",today:"Today",active:"Active",note:"Note",category:"Category",
+       status:"Status",gve:"GVE",shareByCat:"Share by category",last7dHours:"Hours (last 7 days)"}
+};
+const SPECIES = {
+  cattle:{color:"#2E7D32",de:"Rinder",it:"Bovini",en:"Cattle"},
+  sheep:{color:"#F9A825",de:"Schafe",it:"Ovini",en:"Sheep"},
+  goats:{color:"#6A1B9A",de:"Ziegen",it:"Capre",en:"Goats"},
+  horses:{color:"#1565C0",de:"Pferde",it:"Cavalli",en:"Horses"}
+};
+function speciesList(lang){ return Object.entries(SPECIES).map(([k,v])=>({key:k,name:v[lang],color:v.color})) }
+
+const SAMPLE_TRACK = [[0.1,0.1],[0.2,0.18],[0.28,0.22],[0.36,0.3],[0.42,0.34],[0.5,0.42],[0.62,0.45]];
+const SAMPLE_POLYGONS = [
+  { id:1, name:"Unterer Hang", color:SPECIES.cattle.color, composition:[{species:"cattle",head:25},{species:"sheep",head:120}], daysLeft:2,
+    points:[[0.15,0.65],[0.35,0.62],[0.42,0.8],[0.18,0.82],[0.15,0.65]] },
+  { id:2, name:"Almmitte Wiese", color:SPECIES.horses.color, composition:[{species:"horses",head:8}], daysLeft:4,
+    points:[[0.58,0.62],[0.78,0.58],[0.8,0.78],[0.6,0.8],[0.58,0.62]] }
+];
+
+const state = {
+  lang:"de",
+  screen:"home",
+  activityRun:null, // {title,desc}
+  activityHistory:[], // {title, minutes}
+  chosenSpecies: speciesList("de")[0],
+  mod:null // {type:"add"}
+};
+
+function t(k){ return (STR[state.lang] && STR[state.lang][k]) || k }
+function setLang(l){ state.lang=l; render() }
+function go(s){ state.screen=s; render() }
+
+function speciesName(code){ const def=SPECIES[code]; return def?def[state.lang]:code }
+
+// --- UI primitives ---
+function TopBar({title, back, right}){
+  return `<div class="sticky"><div class="topbar">
+    <div class="left">${back?`<button class="icon-btn" data-back>←</button>`:""}<h1>${title}</h1></div>
+    <div class="row">
+      ${right||""}
+      <div class="lang">
+        ${["de","it","en"].map(l=>`<button data-lang="${l}" class="${state.lang===l?'active':''}">${l.toUpperCase()}</button>`).join("")}
+      </div>
+    </div>
+  </div></div>`
+}
+
+function Stat({label,value}){
+  return `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`
+}
+
+function MapPlaceholder({tracks=[],polygons=[]}){
+  const strokeWidth = 6;
+  const polys = polygons.map((poly,i)=>{
+    const pts = poly.points.map(p=>`${p[0]*100}%,${p[1]*100}%`).join(" ");
+    return `<polygon points="${pts}" fill="${poly.color}55" stroke="${poly.color}" stroke-width="2"></polygon>`
+  }).join("");
+  const lines = tracks.map((t,i)=>{
+    const pts = t.points.map(p=>`${p[0]*100}%,${p[1]*100}%`).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="${t.color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"></polyline>`
+  }).join("");
+  return `<div class="map"><svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%">
+    <defs><pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M 8 0 L 0 0 0 8" fill="none" stroke="#e5e7eb" stroke-width="0.5" /></pattern></defs>
+    <rect width="100" height="100" fill="url(#grid)"></rect>
+    ${polys}${lines}
+  </svg></div>`
+}
+
+function Bars({data}){
+  const max = Math.max(1,...data.map(d=>d.value));
+  return data.map(d=>`<div class="barrow">
+    <div class="barlabel">${d.label}</div>
+    <div class="barbg"><div class="barfill" style="width:${(d.value/max*100).toFixed(0)}%;background:${d.color}"></div></div>
+    <div class="small" style="width:3rem;text-align:right">${d.value}</div>
+  </div>`).join("")
+}
+
+function Donut({data}){
+  const total = data.reduce((a,b)=>a+(b.value||0),0)||1;
+  const r=40, c=2*Math.PI*r; let offset=0;
+  const segs = data.map((d,i)=>{
+    const frac=(d.value||0)/total; const dash=Math.max(1,frac*c);
+    const seg=`<circle cx="50" cy="50" r="${r}" fill="none" stroke="${d.color}" stroke-width="16"
+      stroke-dasharray="${dash} ${c-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 50 50)"></circle>`;
+    offset+=dash; return seg;
+  }).join("");
+  const legend = data.slice(0,4).map(d=>`<div><span class="dot" style="background:${d.color}"></span> ${d.label} <span class="small">${d.value}</span></div>`).join("");
+  return `<div class="donut">
+    <svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="16"></circle>${segs}</svg>
+    <div class="legend">${legend}</div>
+  </div>`
+}
+
+function MiniLine({series}){
+  const w=280,h=100,p=8; const max=Math.max(1,...series);
+  const pts=series.map((v,i)=>{
+    const x=p + (i*(w-2*p))/Math.max(1,series.length-1);
+    const y=h-p - (v/max)*(h-2*p);
+    return `${x},${y}`
+  }).join(" ");
+  return `<svg class="linechart" width="${w}" height="${h}"><rect x="0" y="0" width="${w}" height="${h}" fill="#fff" stroke="#e5e7eb"></rect><polyline fill="none" stroke="#111827" stroke-width="2" points="${pts}"></polyline></svg>`
+}
+
+function Badges(comp){
+  return `<div class="badges">${
+    comp.map(c=>`<span class="badge" style="color:${(SPECIES[c.species]||{}).color||'#0ea5e9'}">${speciesName(c.species)}: ${c.head}</span>`).join("")
+  }</div>`
+}
+
+// --- Screens ---
+function ScreenHome(){
+  return `
+  ${TopBar({title:STR[state.lang].app})}
+  <div class="content" style="padding:1rem">
+    <div class="grid2">
+      <button class="tile" data-go="fence"><div class="emoji">🚧</div><div><strong>${t("fence")}</strong></div></button>
+      <button class="tile" data-go="grazing"><div class="emoji">🐄</div><div><strong>${t("grazing")}</strong></div></button>
+      <button class="tile" data-start-kontrolle><div class="emoji">🔎</div><div><strong>${t("control")}</strong></div></button>
+      <button class="tile" data-add><div class="emoji">➕</div><div><strong>${t("add")}</strong></div></button>
+    </div>
+  </div>`
+}
+
+function ScreenGrazingStart(){
+  const list = speciesList(state.lang);
+  return `
+  ${TopBar({title:t("speciesPicker"), back:true})}
+  <div style="padding:1rem">
+    <div class="grid2">
+      ${list.map(s=>`<button class="tile" data-pick-species="${s.key}" style="border-color:${s.color};background:${s.color}20;color:${s.color}"><div style="font-weight:700">${s.name}</div></button>`).join("")}
+      <button class="tile" data-custom-spec class="small" style="border:2px dashed #9ca3af;color:#6b7280">${t("addCustomSpecies")}</button>
+    </div>
+  </div>`
+}
+
+function ScreenGrazingMap(){
+  const started = !!state._g_started; const running = !!state._g_running;
+  const right = running ? t("hourlyActive") : (started ? t("paused")+" ⏸️" : t("ready"));
+  const minutes = state._g_min||0; const dist = state._g_dist||0;
+  const track = started ? [{points:SAMPLE_TRACK,color:(state.chosenSpecies?.color||SPECIES.cattle.color)}] : [];
+  return `
+  ${TopBar({title:`${state.chosenSpecies?.name||t("grazing")}${running?" – "+t("running").toLowerCase():""}`, back:true, right:`<span class="small">${right}</span>`})}
+  <div style="padding:1rem">
+    <div class="stats">
+      ${Stat({label:t("time"), value:`${Math.floor(minutes/60)}h ${minutes%60}m`})}
+      ${Stat({label:t("distance"), value:`${dist.toFixed(1)} km`})}
+      ${Stat({label:t("avgSpeed"), value:`${(dist>0?(dist/Math.max(minutes,1)*60):0).toFixed(1)} km/h`})}
+    </div>
+    <div style="height:.75rem"></div>
+    ${MapPlaceholder({tracks:track})}
+    <div style="height:.75rem"></div>
+    ${!started
+      ? `<button class="btn primary block" data-g-start>${t("startBtn")}</button>`
+      : `<div class="btn-group">
+           <div class="hold" style="flex:1">
+             <button class="btn primary block" data-g-stop>${t("stopHold")}</button>
+             <div class="progress" id="gHold"></div>
+           </div>
+           <button class="btn" data-g-pause>${running?t("pause"):t("resume")}</button>
+         </div>`
+    }
+  </div>`
+}
+
+function ScreenFence(){
+  const started = !!state._f_started; const running = !!state._f_running;
+  const track = started ? [{points:SAMPLE_TRACK,color:SPECIES.goats.color}] : [];
+  const points = started ? SAMPLE_TRACK.length : 0;
+  const len = started ? (SAMPLE_TRACK.length*0.03).toFixed(1) : 0;
+  const status = !started ? t("ready") : (running ? t("running") : t("paused"));
+  return `
+  ${TopBar({title:t("fenceTitle"), back:true, right:`<span class="small">${status}</span>`})}
+  <div style="padding:1rem">
+    ${MapPlaceholder({tracks:track})}
+    <div style="height:.75rem"></div>
+    <div class="stats">
+      ${Stat({label:t("points"), value:String(points)})}
+      ${Stat({label:t("lengthApprox"), value:`${len} km`})}
+      ${Stat({label:t("status"), value:status})}
+    </div>
+    <div style="height:.75rem"></div>
+    ${!started
+      ? `<button class="btn primary block" data-f-start>${t("startBtn")}</button>`
+      : `<div class="btn-group" style="align-items:stretch">
+           <button class="btn" data-f-pause>${running?t("pause"):t("resume")}</button>
+           <button class="btn primary" style="flex:1" data-save-paddock>${t("savePaddock")}</button>
+           <div class="hold" style="flex:1">
+             <button class="btn" data-f-stop>${t("stopHold")}</button>
+             <div class="progress" id="fHold"></div>
+           </div>
+         </div>`
+    }
+  </div>`
+}
+
+function ScreenPaddockMap(){
+  return `
+  ${TopBar({title:t("paddockMap"), back:true, right:`<button class="btn">${t("newPaddock")}</button>`})}
+  <div style="padding:1rem">
+    <div class="map tall">
+      ${MapPlaceholder({tracks:[],polygons:SAMPLE_POLYGONS})}
+    </div>
+    <div style="height:.75rem"></div>
+    ${SAMPLE_POLYGONS.map(p=>`
+      <div class="card">
+        <div class="row">
+          <div class="row" style="gap:.5rem">
+            <span class="dot" style="width:.75rem;height:.75rem;border-radius:50%;background:${p.color}"></span>
+            <strong>${p.name}</strong>
+          </div>
+          <div class="small">${p.daysLeft} ${t("daysLeft")}</div>
+        </div>
+        <div style="margin:.5rem 0">${Badges(p.composition)}</div>
+        <div class="btn-group">
+          <button class="btn">${t("plusOneDay")}</button>
+          <button class="btn">${t("end")}</button>
+          <button class="btn">${t("navigate")}</button>
+        </div>
+      </div>
+    `).join("")}
+  </div>`
+}
+
+function ScreenPaddockList(){
+  return `
+  ${TopBar({title:t("paddockList"), back:true, right:`<div class="row"><button class="btn">${t("today")}</button><button class="btn">${t("active")}</button></div>`})}
+  <div style="padding:1rem">
+    ${SAMPLE_POLYGONS.map(p=>`
+      <div class="card">
+        <div class="row">
+          <div class="row" style="gap:.5rem">
+            <span class="dot" style="width:.75rem;height:.75rem;border-radius:50%;background:${p.color}"></span>
+            <strong>${p.name}</strong>
+          </div>
+          <div class="small">${p.daysLeft} ${t("daysLeft")}</div>
+        </div>
+        <div style="margin:.5rem 0">${Badges(p.composition)}</div>
+        <div class="stats">
+          ${Stat({label:t("area"), value:"3.2 ha"})}
+          ${Stat({label:t("gvePerHa"), value:"11.6"})}
+          ${Stat({label:t("gveDaysPerHa"), value:"46.3"})}
+        </div>
+        <div style="height:.5rem"></div>
+        <div class="btn-group">
+          <button class="btn">${t("plusOneDay")}</button>
+          <button class="btn">${t("note")}</button>
+          <button class="btn">${t("end")}</button>
+        </div>
+      </div>
+    `).join("")}
+  </div>`
+}
+
+function ScreenActivityRun(){
+  const a = state.activityRun;
+  const started = !!state._a_started; const running = !!state._a_running;
+  const minutes = state._a_min||0;
+  const right = running ? `${t("running")} ⏱️` : (started ? `${t("paused")} ⏸️` : t("ready"));
+  return `
+  ${TopBar({title:a.title, back:true, right:`<span class="small">${right}</span>`})}
+  <div style="padding:1rem">
+    <div class="stats">
+      ${Stat({label:t("time"), value:`${Math.floor(minutes/60)}h ${minutes%60}m`})}
+      ${Stat({label:t("category"), value:a.title})}
+      ${Stat({label:t("note"), value:a.desc? "ja" : "-"})}
+    </div>
+    <div style="height:46vh" class="card" ><div class="small" style="text-align:center;color:#9ca3af;margin-top:25%">${t("activityOnlyTime")}</div></div>
+    <div style="height:.75rem"></div>
+    ${!started
+      ? `<button class="btn primary block" data-a-start>${t("startBtn")}</button>`
+      : `<div class="btn-group">
+           <div class="hold" style="flex:1">
+             <button class="btn primary block" data-a-stop>${t("stopHold")}</button>
+             <div class="progress" id="aHold"></div>
+           </div>
+           <button class="btn" data-a-pause>${running?t("pause"):t("resume")}</button>
+         </div>`
+    }
+  </div>`
+}
+
+function ScreenDashboard(){
+  const aggMap = new Map();
+  state.activityHistory.forEach(h=>aggMap.set(h.title,(aggMap.get(h.title)||0)+h.minutes/60));
+  const bars = (aggMap.size? Array.from(aggMap.entries()).map(([label,val])=>({label,value:+val.toFixed(1),color:SPECIES.cattle.color}))
+    : [{label:t("grazing"),value:6.2,color:SPECIES.cattle.color},{label:t("fence"),value:4.8,color:SPECIES.goats.color}]);
+  const series = [1.2,2.5,0.8,3.1,4.0,1.8,2.2];
+  return `
+  ${TopBar({title:t("dashboard"), back:true})}
+  <div style="padding:1rem">
+    <div class="grid2">
+      <div class="card"><div style="font-weight:600;margin-bottom:.25rem">${t("activePaddocks")}</div><div style="font-size:2rem;font-weight:800">${SAMPLE_POLYGONS.length}</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:.25rem">${t("endingToday")}</div><div style="font-size:2rem;font-weight:800">1</div></div>
+      <div class="card" style="grid-column:1/-1"><div style="font-weight:600;margin-bottom:.25rem">${t("hrsByCat")}</div>${Bars({data:bars})}</div>
+      <div class="card"><div style="font-weight:600;margin-bottom:.25rem">${t("shareByCat")}</div>${Donut({data:bars})}</div>
+      <div class="card"><div style="font-weight:600;margin-bottom:.25rem">${t("last7dHours")}</div>${MiniLine({series})}</div>
+    </div>
+  </div>`
+}
+
+function ScreenSettings(){
+  const list = speciesList(state.lang);
+  return `
+  ${TopBar({title:t("settings"), back:true})}
+  <div style="padding:1rem">
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:.5rem">${t("speciesGVE")}</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:.5rem">
+        ${list.map(s=>`
+          <div class="row card" style="align-items:center;gap:.75rem">
+            <span class="dot" style="width:.9rem;height:.9rem;border-radius:50%;background:${s.color}"></span>
+            <div style="font-weight:500;flex:1">${s.name}</div>
+            <label class="small">${t("gve")}</label><input type="text" value="${(s.key==='sheep'||s.key==='goats')?0.15:(s.key==='horses'?0.7:1.0)}" style="width:4.5rem;text-align:right">
+          </div>
+        `).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:.25rem">${t("notifications")}</div>
+      <div class="row">
+        <div>
+          <div style="font-weight:500">${t("hourlyReminders")}</div>
+          <div class="small">Ton + Vibration (immer aktiv)</div>
+        </div>
+        <input type="checkbox" checked>
+      </div>
+    </div>
+  </div>`
+}
+
+// --- Modals ---
+function openModal(type){
+  state.mod={type}; const m=$("#modal"); m.classList.add("open"); renderModal();
+}
+function closeModal(){ state.mod=null; $("#modal").classList.remove("open") }
+
+function renderModal(){
+  const root=$("#modalContent"); if(!state.mod){ root.innerHTML=""; return }
+  if(state.mod.type==="add"){
+    root.innerHTML = `
+      <h3 style="font-weight:600;margin:.25rem 0 1rem">${t("addActivity")}</h3>
+      <div class="field"><label class="small">${t("title")}</label><input type="text" id="aTitle"></div>
+      <div class="field"><label class="small">${t("description")}</label><textarea id="aDesc" rows="3"></textarea></div>
+      <div style="text-align:right;margin-top:.75rem"><button class="btn" id="aCancel">${t("cancel")}</button> <button class="btn primary" id="aCreate">${t("create")}</button></div>
+    `;
+    $("#aCancel").onclick=closeModal;
+    $("#aCreate").onclick=()=>{
+      const title=$("#aTitle").value.trim(); const desc=$("#aDesc").value.trim();
+      if(!title) return; state.activityRun={title,desc}; closeModal(); state.screen="activity_run"; render();
+    };
+  }
+}
+
+function render(){
+  const root = $("#app");
+  let html = "";
+  if(state.screen==="home") html = ScreenHome();
+  if(state.screen==="grazing") html = ScreenGrazingStart();
+  if(state.screen==="grazing_map") html = ScreenGrazingMap();
+  if(state.screen==="fence") html = ScreenFence();
+  if(state.screen==="paddock_map") html = ScreenPaddockMap();
+  if(state.screen==="paddock_list") html = ScreenPaddockList();
+  if(state.screen==="dashboard") html = ScreenDashboard();
+  if(state.screen==="settings") html = ScreenSettings();
+  if(state.screen==="activity_run") html = ScreenActivityRun();
+  root.innerHTML = html;
+
+  // wire topbar
+  const tb = $(".sticky");
+  if(tb){
+    const backBtn = tb.querySelector("[data-back]");
+    if(backBtn) backBtn.onclick=()=>{ window.history.back(); go("home") };
+    tb.querySelectorAll("[data-lang]").forEach(b=>b.onclick=()=>setLang(b.getAttribute("data-lang")));
+  }
+
+  // home actions
+  if(state.screen==="home"){
+    $("[data-go='fence']").onclick=()=>go("fence");
+    $("[data-go='grazing']").onclick=()=>go("grazing");
+    $("[data-start-kontrolle]").onclick=()=>{ state.activityRun={title:STR[state.lang].control,desc:""}; state.screen="activity_run"; render(); };
+    $("[data-add]").onclick=()=>openModal("add");
+  }
+
+  // grazing start
+  if(state.screen==="grazing"){
+    $$(".tile[data-pick-species]").forEach(b=>b.onclick=()=>{ const key=b.getAttribute("data-pick-species"); const item=speciesList(state.lang).find(x=>x.key===key); state.chosenSpecies=item; go("grazing_map"); });
+    $("[data-custom-spec]").onclick=()=>alert("(Mockup)");
+  }
+
+  // grazing map controls
+  if(state.screen==="grazing_map"){
+    const start = $("[data-g-start]");
+    const stop = $("[data-g-stop]");
+    const pause = $("[data-g-pause]");
+    if(start){ start.onclick=()=>{ vibrate(15); state._g_started=true; state._g_running=true; state._g_min=0; state._g_dist=0; if(state._g_timer) clearInterval(state._g_timer); state._g_timer=setInterval(()=>{ if(state._g_running){ state._g_min++; state._g_dist=(state._g_dist||0)+0.03; render(); } },1200); render(); } }
+    if(pause){ pause.onclick=()=>{ state._g_running=!state._g_running; vibrate(10); render(); } }
+    if(stop){
+      let hold=null; stop.onmousedown=stop.ontouchstart=(e)=>{ e.preventDefault(); const bar=$("#gHold"); const t0=performance.now(); vibrate(10);
+        hold=requestAnimationFrame(function tick(t){ const p=Math.min(1,(t-t0)/1000); bar.style.width=(p*100)+"%"; if(p<1){ hold=requestAnimationFrame(tick);} else { vibrate(30); state._g_started=false; state._g_running=false; clearInterval(state._g_timer); render(); } });
+      };
+      const clear=()=>{ if(hold) cancelAnimationFrame(hold); $("#gHold").style.width="0%"; };
+      stop.onmouseup=stop.onmouseleave=stop.ontouchend=stop.ontouchcancel=clear;
+    }
+  }
+
+  // fence controls
+  if(state.screen==="fence"){
+    const start = $("[data-f-start]"); const pause = $("[data-f-pause]"); const stop = $("[data-f-stop]"); const save = $("[data-save-paddock]");
+    if(start){ start.onclick=()=>{ vibrate(15); state._f_started=true; state._f_running=true; render(); } }
+    if(pause){ pause.onclick=()=>{ state._f_running=!state._f_running; vibrate(10); render(); } }
+    if(save){ save.onclick=()=>alert("(Mockup) Pferch gespeichert"); }
+    if(stop){
+      let hold=null; stop.onmousedown=stop.ontouchstart=(e)=>{ e.preventDefault(); const bar=$("#fHold"); const t0=performance.now(); vibrate(10);
+        hold=requestAnimationFrame(function tick(t){ const p=Math.min(1,(t-t0)/1000); bar.style.width=(p*100)+"%"; if(p<1){ hold=requestAnimationFrame(tick);} else { vibrate(30); state._f_started=false; state._f_running=false; render(); } });
+      };
+      const clear=()=>{ if(hold) cancelAnimationFrame(hold); $("#fHold").style.width="0%"; };
+      stop.onmouseup=stop.onmouseleave=stop.ontouchend=stop.ontouchcancel=clear;
+    }
+  }
+
+  // activity run controls
+  if(state.screen==="activity_run"){
+    const start = $("[data-a-start]"); const pause = $("[data-a-pause]"); const stop = $("[data-a-stop]");
+    if(start){ start.onclick=()=>{ vibrate(15); state._a_started=true; state._a_running=true; state._a_min=0; if(state._a_timer) clearInterval(state._a_timer); state._a_timer=setInterval(()=>{ if(state._a_running){ state._a_min++; render(); } },1000); render(); } }
+    if(pause){ pause.onclick=()=>{ state._a_running=!state._a_running; vibrate(10); render(); } }
+    if(stop){
+      let hold=null; stop.onmousedown=stop.ontouchstart=(e)=>{ e.preventDefault(); const bar=$("#aHold"); const t0=performance.now(); vibrate(10);
+        hold=requestAnimationFrame(function tick(t){ const p=Math.min(1,(t-t0)/1000); bar.style.width=(p*100)+"%"; if(p<1){ hold=requestAnimationFrame(tick);} else { vibrate(30); state.activityHistory.push({title:state.activityRun.title,minutes:state._a_min||0}); state.activityRun=null; state._a_started=false; state._a_running=false; clearInterval(state._a_timer); state.screen="dashboard"; render(); } });
+      };
+      const clear=()=>{ if(hold) cancelAnimationFrame(hold); $("#aHold").style.width="0%"; };
+      stop.onmouseup=stop.onmouseleave=stop.ontouchend=stop.ontouchcancel=clear;
+    }
+  }
+
+  // nav
+  $$(".navbtn").forEach(b=>b.onclick=()=>{ vibrate(10); go(b.getAttribute("data-nav")); });
+
+  // i18n for bottomnav labels
+  $$(".navlabel").forEach(el=>{ const key=el.getAttribute("data-i"); el.textContent=t(key); });
+  // modal close
+  $("#closeModal").onclick=closeModal;
+}
+
+render();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(console.error);
+}
+</script>
+</body>
+</html>
