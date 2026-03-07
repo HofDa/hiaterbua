@@ -46,7 +46,6 @@ type LiveFrameMetrics = {
   darkRatio: number
 }
 
-const framingHints = ['Ohrmarke mittig', 'ruhig halten', 'nur den Tag im Rahmen']
 const ocrInitialMessage = 'Foto aufnehmen, dann wird die Ohrmarke automatisch gelesen.'
 const OCR_FRAME_WIDTH_RATIO = 0.58
 const OCR_FRAME_HEIGHT_RATIO = 0.22
@@ -1221,19 +1220,17 @@ export function EarTagScanPanel({
       ) : (
         <div className="mt-4 space-y-4">
           <div className="rounded-[1.3rem] border border-[#ccb98a] bg-[#fffdf6] p-4 shadow-sm">
-            <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-neutral-700">
-              {framingHints.map((hint) => (
-                <span
-                  key={hint}
-                  className="rounded-full border border-[#d8ccb2] bg-[#f6efdf] px-3 py-1"
-                >
-                  {hint}
-                </span>
-              ))}
+            <div className="rounded-[1rem] border border-[#d8ccb2] bg-[#f7f2e7] px-4 py-3 shadow-sm">
+              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-700">
+                {cameraGuideTitle}
+              </div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">
+                {cameraGuideDetail}
+              </div>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-[1.5rem] border-2 border-[#3a342a] bg-[linear-gradient(180deg,#d4ccb9,#bdb39f)] p-3">
-              <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[1.2rem] border border-[#b6a889] bg-[radial-gradient(circle_at_top,#f5f1e7_0%,#d1c6b0_58%,#b5a78d_100%)]">
+            <div className="mt-4 overflow-hidden rounded-[1.5rem] border-2 border-[#3a342a] bg-[linear-gradient(180deg,#d4ccb9,#bdb39f)] p-3 sm:p-4">
+              <div className="relative flex aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/3] items-center justify-center overflow-hidden rounded-[1.2rem] border border-[#b6a889] bg-[radial-gradient(circle_at_top,#f5f1e7_0%,#d1c6b0_58%,#b5a78d_100%)]">
                 {cameraStep === 'framing' ? (
                   <video
                     ref={videoRef}
@@ -1269,15 +1266,6 @@ export function EarTagScanPanel({
                     <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[rgba(255,253,246,0.4)]" />
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-[1rem] border border-[#d8ccb2] bg-[#f7f2e7] px-4 py-3 shadow-sm">
-              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-700">
-                {cameraGuideTitle}
-              </div>
-              <div className="mt-1 text-sm font-medium text-neutral-900">
-                {cameraGuideDetail}
               </div>
             </div>
 
