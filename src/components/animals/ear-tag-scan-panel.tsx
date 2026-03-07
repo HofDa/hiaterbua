@@ -1,10 +1,12 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type EarTagScanPanelProps = {
   disabled?: boolean
+  knownEarTags?: string[]
+  conflictIgnoreEarTag?: string | null
   value: string
   onApplyValue: (value: string) => void
 }
@@ -30,6 +32,7 @@ type EarTagSuggestion = {
   score: number
   confidence: number
   substitutions: number
+  knownMatch: KnownEarTagMatch | null
 }
 type CropRect = {
   left: number
@@ -46,12 +49,29 @@ type LiveFrameMetrics = {
   darkRatio: number
 }
 
+type ImageCaptureLike = {
+  takePhoto: () => Promise<Blob>
+}
+
+type KnownEarTagMatch = {
+  canonical: string
+  relationship: 'exact' | 'digits'
+}
+
+type KnownEarTagIndex = {
+  exact: Map<string, string>
+  trailingDigits: Map<string, string>
+}
+
+type OcrVariantMode = 'balanced' | 'adaptive' | 'shadow'
+
 const ocrInitialMessage = 'Foto aufnehmen, dann wird die Ohrmarke automatisch gelesen.'
 const OCR_FRAME_WIDTH_RATIO = 0.58
 const OCR_FRAME_HEIGHT_RATIO = 0.22
 const OCR_FRAME_MIN_WIDTH = 280
 const OCR_FRAME_MIN_HEIGHT = 112
 const LOCAL_PREFIX_BONUS = new Set(['IT', 'AT', 'DE', 'CH', 'SI'])
+const AUTO_CAPTURE_STABLE_MS = 850
 const defaultCaptureGuides: CaptureGuide[] = [
   {
     label: 'Ohrmarke in den Rahmen',
@@ -93,6 +113,62 @@ function stopMediaStream(stream: MediaStream | null) {
   stream.getTracks().forEach((track) => {
     track.stop()
   })
+}
+
+function getImageCapture(track: MediaStreamTrack) {
+  const maybeWindow = globalThis as typeof globalThis & {
+    ImageCapture?: new (track: MediaStreamTrack) => ImageCaptureLike
+  }
+
+  if (!maybeWindow.ImageCapture) {
+    return null
+  }
+
+  try {
+    return new maybeWindow.ImageCapture(track)
+  } catch {
+    return null
+  }
+}
+
+async function drawBlobToCanvas(blob: Blob, canvas: HTMLCanvasElement) {
+  if (typeof createImageBitmap === 'function') {
+    const bitmap = await createImageBitmap(blob)
+    canvas.width = bitmap.width
+    canvas.height = bitmap.height
+    const context = canvas.getContext('2d')
+
+    if (!context) {
+      bitmap.close()
+      throw new Error('Photo canvas unavailable')
+    }
+
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    bitmap.close()
+    return
+  }
+
+  const objectUrl = URL.createObjectURL(blob)
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new window.Image()
+      nextImage.onload = () => resolve(nextImage)
+      nextImage.onerror = () => reject(new Error('Photo image unavailable'))
+      nextImage.src = objectUrl
+    })
+    const context = canvas.getContext('2d')
+
+    if (!context) {
+      throw new Error('Photo canvas unavailable')
+    }
+
+    canvas.width = image.naturalWidth || image.width
+    canvas.height = image.naturalHeight || image.height
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
 function describeCameraError(error: unknown) {
@@ -160,6 +236,15 @@ function normalizeEarTagText(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9/-]+/g, '')
 }
 
+function normalizeEarTagCompact(value: string) {
+  return normalizeEarTagText(value).replace(/[-/]+/g, '')
+}
+
+function isSameEarTag(left: string | null | undefined, right: string | null | undefined) {
+  if (!left || !right) return false
+  return normalizeEarTagCompact(left) === normalizeEarTagCompact(right)
+}
+
 function hasMappedCorrection(map: Record<string, string[]>, value: string) {
   return Object.prototype.hasOwnProperty.call(map, value)
 }
@@ -202,6 +287,84 @@ function buildEarTagVariants(value: string) {
         .filter(Boolean),
     ),
   )
+}
+
+function buildKnownEarTagIndex(values: string[]) {
+  const exact = new Map<string, string>()
+  const trailingDigits = new Map<string, string>()
+
+  values.forEach((value) => {
+    const canonical = normalizeEarTagText(value)
+    const compactCanonical = normalizeEarTagCompact(canonical)
+
+    if (!compactCanonical) {
+      return
+    }
+
+    exact.set(compactCanonical, canonical)
+
+    buildEarTagVariants(canonical).forEach((variant) => {
+      const compactVariant = normalizeEarTagCompact(variant)
+
+      if (compactVariant && !exact.has(compactVariant)) {
+        exact.set(compactVariant, canonical)
+      }
+    })
+
+    const trailing = compactCanonical.match(/\d{6,}$/)?.[0]
+
+    if (trailing && !trailingDigits.has(trailing)) {
+      trailingDigits.set(trailing, canonical)
+    }
+  })
+
+  return { exact, trailingDigits }
+}
+
+function findKnownEarTagMatch(candidate: string, knownEarTagIndex: KnownEarTagIndex | null) {
+  if (!knownEarTagIndex) {
+    return null
+  }
+
+  const compactCandidate = normalizeEarTagCompact(candidate)
+
+  if (!compactCandidate) {
+    return null
+  }
+
+  const exactMatch = knownEarTagIndex.exact.get(compactCandidate)
+
+  if (exactMatch) {
+    return {
+      canonical: exactMatch,
+      relationship: 'exact' as const,
+    }
+  }
+
+  const trailingDigits = compactCandidate.match(/\d{6,}$/)?.[0]
+
+  if (!trailingDigits) {
+    return null
+  }
+
+  const trailingMatch = knownEarTagIndex.trailingDigits.get(trailingDigits)
+
+  if (!trailingMatch) {
+    return null
+  }
+
+  return {
+    canonical: trailingMatch,
+    relationship: 'digits' as const,
+  }
+}
+
+function scoreKnownEarTagMatch(match: KnownEarTagMatch | null) {
+  if (!match) {
+    return 0
+  }
+
+  return match.relationship === 'exact' ? 9 : 3
 }
 
 function scoreEarTagCandidate(value: string) {
@@ -395,16 +558,21 @@ function buildSuggestionVariants(seed: string) {
   }))
 }
 
-function buildRankedEarTagSuggestions(results: OcrPassResult[]) {
+function buildRankedEarTagSuggestions(
+  results: OcrPassResult[],
+  knownEarTagIndex: KnownEarTagIndex | null = null,
+) {
   const ranked = new Map<string, EarTagSuggestion>()
 
   for (const result of results) {
     for (const seed of extractSuggestionSeeds(result.text)) {
       for (const baseVariant of buildEarTagVariants(seed)) {
         for (const suggestion of buildSuggestionVariants(baseVariant)) {
+          const knownMatch = findKnownEarTagMatch(suggestion.value, knownEarTagIndex)
           const nextScore =
             scoreRecognitionCandidate(suggestion.value, result.confidence) -
-            suggestion.substitutions * 1.75
+            suggestion.substitutions * 1.75 +
+            scoreKnownEarTagMatch(knownMatch)
 
           if (nextScore < 12) {
             continue
@@ -418,6 +586,7 @@ function buildRankedEarTagSuggestions(results: OcrPassResult[]) {
               score: nextScore,
               confidence: result.confidence,
               substitutions: suggestion.substitutions,
+              knownMatch,
             })
           }
         }
@@ -435,25 +604,173 @@ function buildRankedEarTagSuggestions(results: OcrPassResult[]) {
     .slice(0, 4)
 }
 
-function prepareProcessedCrop(
+function clipByte(value: number) {
+  return Math.max(0, Math.min(255, Math.round(value)))
+}
+
+function findHistogramThreshold(histogram: Uint32Array, percentile: number) {
+  const total = histogram.reduce((sum, value) => sum + value, 0)
+  const target = total * percentile
+  let cumulative = 0
+
+  for (let index = 0; index < histogram.length; index += 1) {
+    cumulative += histogram[index]
+
+    if (cumulative >= target) {
+      return index
+    }
+  }
+
+  return histogram.length - 1
+}
+
+function normalizeGrayscaleValues(values: Uint8ClampedArray, mode: OcrVariantMode) {
+  const histogram = new Uint32Array(256)
+
+  values.forEach((value) => {
+    histogram[value] += 1
+  })
+
+  const lowPercentile = mode === 'shadow' ? 0.02 : 0.04
+  const highPercentile = mode === 'shadow' ? 0.985 : 0.955
+  const low = findHistogramThreshold(histogram, lowPercentile)
+  const high = Math.max(low + 1, findHistogramThreshold(histogram, highPercentile))
+  const gamma = mode === 'shadow' ? 0.82 : 0.96
+  const normalized = new Uint8ClampedArray(values.length)
+
+  for (let index = 0; index < values.length; index += 1) {
+    const scaled = clipByte(((values[index] - low) * 255) / Math.max(1, high - low))
+    normalized[index] = clipByte(255 * Math.pow(scaled / 255, gamma))
+  }
+
+  return normalized
+}
+
+function buildAdaptiveBinaryValues(
+  values: Uint8ClampedArray,
+  width: number,
+  height: number,
+  radius: number,
+  bias: number,
+) {
+  const integral = new Uint32Array((width + 1) * (height + 1))
+
+  for (let y = 1; y <= height; y += 1) {
+    let rowSum = 0
+
+    for (let x = 1; x <= width; x += 1) {
+      const sourceIndex = (y - 1) * width + (x - 1)
+      rowSum += values[sourceIndex]
+      integral[y * (width + 1) + x] = integral[(y - 1) * (width + 1) + x] + rowSum
+    }
+  }
+
+  const output = new Uint8ClampedArray(values.length)
+
+  for (let y = 0; y < height; y += 1) {
+    const top = Math.max(0, y - radius)
+    const bottom = Math.min(height - 1, y + radius)
+
+    for (let x = 0; x < width; x += 1) {
+      const left = Math.max(0, x - radius)
+      const right = Math.min(width - 1, x + radius)
+      const sum =
+        integral[(bottom + 1) * (width + 1) + (right + 1)] -
+        integral[top * (width + 1) + (right + 1)] -
+        integral[(bottom + 1) * (width + 1) + left] +
+        integral[top * (width + 1) + left]
+      const area = (right - left + 1) * (bottom - top + 1)
+      const threshold = sum / area - bias
+      const index = y * width + x
+
+      output[index] = values[index] > threshold ? 255 : 0
+    }
+  }
+
+  return output
+}
+
+function applyPerspectiveVariant(sourceCanvas: HTMLCanvasElement, perspectiveTilt: number) {
+  const targetCanvas = document.createElement('canvas')
+  targetCanvas.width = sourceCanvas.width
+  targetCanvas.height = sourceCanvas.height
+  const context = targetCanvas.getContext('2d')
+
+  if (!context) {
+    throw new Error('Perspective canvas unavailable')
+  }
+
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, targetCanvas.width, targetCanvas.height)
+
+  for (let y = 0; y < sourceCanvas.height; y += 1) {
+    const ratio = sourceCanvas.height <= 1 ? 0.5 : y / (sourceCanvas.height - 1)
+    const distortion = 1 + perspectiveTilt * ((ratio - 0.5) * 2)
+    const destinationWidth = Math.max(
+      sourceCanvas.width * 0.72,
+      Math.min(sourceCanvas.width * 1.26, sourceCanvas.width * distortion),
+    )
+    const destinationX = (sourceCanvas.width - destinationWidth) / 2
+
+    context.drawImage(
+      sourceCanvas,
+      0,
+      y,
+      sourceCanvas.width,
+      1,
+      destinationX,
+      y,
+      destinationWidth,
+      1,
+    )
+  }
+
+  return targetCanvas
+}
+
+function applyRotationVariant(sourceCanvas: HTMLCanvasElement, rotationDeg: number) {
+  const targetCanvas = document.createElement('canvas')
+  targetCanvas.width = sourceCanvas.width
+  targetCanvas.height = sourceCanvas.height
+  const context = targetCanvas.getContext('2d')
+
+  if (!context) {
+    throw new Error('Rotation canvas unavailable')
+  }
+
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, targetCanvas.width, targetCanvas.height)
+  context.translate(targetCanvas.width / 2, targetCanvas.height / 2)
+  context.rotate((rotationDeg * Math.PI) / 180)
+  context.drawImage(sourceCanvas, -sourceCanvas.width / 2, -sourceCanvas.height / 2)
+
+  return targetCanvas
+}
+
+function extractOcrCropCanvas(
   sourceCanvas: HTMLCanvasElement,
-  options?: { paddingRatio?: number; mode?: 'balanced' | 'binary' },
+  options?: {
+    paddingRatio?: number
+    mode?: OcrVariantMode
+    rotationDeg?: number
+    perspectiveTilt?: number
+  },
 ) {
   const rect = buildOcrCropRect(
     sourceCanvas.width,
     sourceCanvas.height,
     options?.paddingRatio ?? 0,
   )
-  const scale = options?.mode === 'binary' ? 2.6 : 2.2
-  const preparedCanvas = document.createElement('canvas')
-  const context = preparedCanvas.getContext('2d')
+  const scale = options?.mode === 'adaptive' ? 2.75 : options?.mode === 'shadow' ? 2.55 : 2.3
+  const cropCanvas = document.createElement('canvas')
+  const context = cropCanvas.getContext('2d')
 
   if (!context) {
     throw new Error('OCR canvas unavailable')
   }
 
-  preparedCanvas.width = Math.round(rect.width * scale)
-  preparedCanvas.height = Math.round(rect.height * scale)
+  cropCanvas.width = Math.round(rect.width * scale)
+  cropCanvas.height = Math.round(rect.height * scale)
 
   context.drawImage(
     sourceCanvas,
@@ -463,64 +780,115 @@ function prepareProcessedCrop(
     rect.height,
     0,
     0,
-    preparedCanvas.width,
-    preparedCanvas.height,
+    cropCanvas.width,
+    cropCanvas.height,
   )
 
-  const imageData = context.getImageData(0, 0, preparedCanvas.width, preparedCanvas.height)
-  const pixels = imageData.data
-  let totalBrightness = 0
+  let workingCanvas = cropCanvas
 
-  for (let index = 0; index < pixels.length; index += 4) {
-    const grayscale = pixels[index] * 0.299 + pixels[index + 1] * 0.587 + pixels[index + 2] * 0.114
-    totalBrightness += grayscale
-    pixels[index] = grayscale
-    pixels[index + 1] = grayscale
-    pixels[index + 2] = grayscale
+  if (options?.perspectiveTilt) {
+    workingCanvas = applyPerspectiveVariant(workingCanvas, options.perspectiveTilt)
   }
 
-  const averageBrightness = totalBrightness / (pixels.length / 4)
-  const binaryThreshold = averageBrightness > 165 ? 185 : averageBrightness < 110 ? 118 : 145
+  if (options?.rotationDeg) {
+    workingCanvas = applyRotationVariant(workingCanvas, options.rotationDeg)
+  }
+
+  return workingCanvas
+}
+
+function prepareProcessedCrop(
+  sourceCanvas: HTMLCanvasElement,
+  options?: {
+    paddingRatio?: number
+    mode?: OcrVariantMode
+    rotationDeg?: number
+    perspectiveTilt?: number
+  },
+) {
+  const workingCanvas = extractOcrCropCanvas(sourceCanvas, options)
+  const context = workingCanvas.getContext('2d')
+
+  if (!context) {
+    throw new Error('OCR canvas unavailable')
+  }
+
+  const imageData = context.getImageData(0, 0, workingCanvas.width, workingCanvas.height)
+  const pixels = imageData.data
+  const grayscale = new Uint8ClampedArray(pixels.length / 4)
 
   for (let index = 0; index < pixels.length; index += 4) {
-    const grayscale = pixels[index]
-    const contrasted =
-      options?.mode === 'binary'
-        ? grayscale > binaryThreshold
-          ? 255
-          : 0
-        : grayscale > 160
-          ? 255
-          : grayscale < 72
-            ? 0
-            : Math.max(0, Math.min(255, (grayscale - 126) * 2.3 + 126))
+    grayscale[index / 4] = clipByte(
+      pixels[index] * 0.299 + pixels[index + 1] * 0.587 + pixels[index + 2] * 0.114,
+    )
+  }
 
-    pixels[index] = contrasted
-    pixels[index + 1] = contrasted
-    pixels[index + 2] = contrasted
+  const mode = options?.mode ?? 'balanced'
+  const normalized = normalizeGrayscaleValues(grayscale, mode)
+  const processedValues =
+    mode === 'adaptive'
+      ? buildAdaptiveBinaryValues(
+          normalized,
+          workingCanvas.width,
+          workingCanvas.height,
+          Math.max(10, Math.round(Math.min(workingCanvas.width, workingCanvas.height) * 0.06)),
+          12,
+        )
+      : normalized.map((value) => {
+          if (mode === 'shadow') {
+            if (value >= 214) return 255
+            if (value <= 44) return 0
+            return clipByte((value - 104) * 2.35 + 120)
+          }
+
+          if (value >= 188) return 255
+          if (value <= 52) return 0
+          return clipByte((value - 112) * 2.15 + 116)
+        })
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    const value = processedValues[index / 4]
+    pixels[index] = value
+    pixels[index + 1] = value
+    pixels[index + 2] = value
+    pixels[index + 3] = 255
   }
 
   context.putImageData(imageData, 0, 0)
 
   return {
-    canvas: preparedCanvas,
-    previewUrl: preparedCanvas.toDataURL('image/jpeg', 0.92),
+    canvas: workingCanvas,
+    previewUrl: workingCanvas.toDataURL('image/jpeg', 0.92),
   }
 }
 
 function prepareOcrVariants(sourceCanvas: HTMLCanvasElement) {
-  const primary = prepareProcessedCrop(sourceCanvas, {
-    paddingRatio: 0,
-    mode: 'balanced',
-  })
-  const fallback = prepareProcessedCrop(sourceCanvas, {
-    paddingRatio: 0.08,
-    mode: 'binary',
-  })
+  const variants = [
+    prepareProcessedCrop(sourceCanvas, {
+      paddingRatio: 0,
+      mode: 'balanced',
+    }),
+    prepareProcessedCrop(sourceCanvas, {
+      paddingRatio: 0.02,
+      mode: 'adaptive',
+    }),
+    prepareProcessedCrop(sourceCanvas, {
+      paddingRatio: 0.03,
+      mode: 'shadow',
+      perspectiveTilt: 0.13,
+      rotationDeg: 2.6,
+    }),
+    prepareProcessedCrop(sourceCanvas, {
+      paddingRatio: 0.03,
+      mode: 'shadow',
+      perspectiveTilt: -0.13,
+      rotationDeg: -2.6,
+    }),
+  ]
 
   return {
-    previewUrl: primary.previewUrl,
-    canvases: [primary.canvas, fallback.canvas],
+    previewUrl: variants[0].previewUrl,
+    canvases: variants.map((variant) => variant.canvas),
   }
 }
 
@@ -638,6 +1006,14 @@ function analyzeFrameGuidance(
   return {
     grayscaleValues,
     guides,
+    isStable:
+      metrics.motion <= 16 &&
+      metrics.brightness >= 88 &&
+      metrics.brightness <= 212 &&
+      metrics.darkRatio <= 0.36 &&
+      metrics.highlightRatio <= 0.22 &&
+      metrics.edgeStrength >= 18 &&
+      metrics.contrast >= 38,
   }
 }
 
@@ -654,6 +1030,8 @@ function guideToneClasses(tone: GuideTone) {
 
 export function EarTagScanPanel({
   disabled = false,
+  knownEarTags = [],
+  conflictIgnoreEarTag = null,
   value,
   onApplyValue,
 }: EarTagScanPanelProps) {
@@ -663,6 +1041,9 @@ export function EarTagScanPanel({
   const streamRef = useRef<MediaStream | null>(null)
   const guideLoopTimeoutRef = useRef<number | null>(null)
   const previousGuideFrameRef = useRef<Uint8Array | null>(null)
+  const stableSinceRef = useRef<number | null>(null)
+  const captureInFlightRef = useRef(false)
+  const autoCaptureRequestedRef = useRef(false)
   const requestIdRef = useRef(0)
   const isMountedRef = useRef(true)
   const ocrWorkerRef = useRef<OcrWorker | null>(null)
@@ -682,14 +1063,34 @@ export function EarTagScanPanel({
   const [ocrPreviewUrl, setOcrPreviewUrl] = useState<string | null>(null)
   const [ocrSuggestions, setOcrSuggestions] = useState<EarTagSuggestion[]>([])
   const [captureGuides, setCaptureGuides] = useState<CaptureGuide[]>(defaultCaptureGuides)
+  const [captureStabilityMs, setCaptureStabilityMs] = useState<number | null>(null)
+  const [isCapturingPhoto, setIsCapturingPhoto] = useState(false)
 
   const supportsCamera =
     typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia)
   const effectiveDraft = scanDraft ?? value
   const cleanedDraft = effectiveDraft.trim()
+  const knownEarTagIndex = useMemo(
+    () => (knownEarTags.length ? buildKnownEarTagIndex(knownEarTags) : null),
+    [knownEarTags],
+  )
+  const selectedKnownMatch = useMemo(
+    () => findKnownEarTagMatch(effectiveDraft, knownEarTagIndex),
+    [effectiveDraft, knownEarTagIndex],
+  )
+  const selectedKnownConflict =
+    selectedKnownMatch && !isSameEarTag(selectedKnownMatch.canonical, conflictIgnoreEarTag)
+      ? selectedKnownMatch
+      : null
   const isReadingOcr = ocrStatus === 'preparing' || ocrStatus === 'reading'
+  const stabilityCountdownSeconds =
+    captureStabilityMs !== null
+      ? Math.max(0, Math.ceil(captureStabilityMs / 100) / 10).toFixed(1)
+      : null
   const cameraGuideTitle =
-    cameraStep === 'ready'
+    isCapturingPhoto
+      ? 'Foto wird aufgenommen'
+      : cameraStep === 'ready'
       ? 'Kamera bereit'
       : cameraStep === 'framing'
         ? cameraStatus === 'starting'
@@ -697,17 +1098,25 @@ export function EarTagScanPanel({
           : 'Scan-Fokus'
         : 'Ergebnis pruefen'
   const cameraGuideDetail =
-    cameraStep === 'ready'
+    isCapturingPhoto
+      ? 'Wenn moeglich wird gerade ein hochaufloesendes Kamerafoto erstellt.'
+      : cameraStep === 'ready'
       ? 'Rueckkamera wird genutzt, wenn das Geraet sie anbietet.'
       : cameraStep === 'framing'
         ? cameraStatus === 'starting'
           ? 'Bitte kurz warten, bis das Kamerabild erscheint.'
-          : 'Ohrmarke moeglichst frontal und allein in den Rahmen nehmen.'
+          : captureStabilityMs !== null
+            ? captureStabilityMs > 0
+              ? `Noch ${stabilityCountdownSeconds}s ruhig halten, dann wird automatisch fotografiert.`
+              : 'Bild ist stabil. Foto wird automatisch aufgenommen.'
+            : 'Ohrmarke moeglichst frontal und allein in den Rahmen nehmen.'
         : isReadingOcr
           ? 'OCR liest jetzt den markierten Mittelbereich.'
           : 'Foto ansehen und Ergebnis darunter pruefen.'
   const cameraStateLabel =
-    cameraStep === 'captured'
+    isCapturingPhoto
+      ? 'Foto wird aufgenommen'
+      : cameraStep === 'captured'
       ? ocrStatus === 'reading'
         ? `OCR ${Math.round(ocrProgress * 100)}%`
         : ocrStatus === 'preparing'
@@ -734,6 +1143,9 @@ export function EarTagScanPanel({
         guideLoopTimeoutRef.current = null
       }
       previousGuideFrameRef.current = null
+      stableSinceRef.current = null
+      captureInFlightRef.current = false
+      autoCaptureRequestedRef.current = false
       stopMediaStream(streamRef.current)
       streamRef.current = null
 
@@ -767,81 +1179,14 @@ export function EarTagScanPanel({
     }
   }, [cameraStep, cameraStatus])
 
-  useEffect(() => {
-    if (cameraStep !== 'framing' || cameraStatus !== 'live') {
-      if (guideLoopTimeoutRef.current) {
-        window.clearTimeout(guideLoopTimeoutRef.current)
-        guideLoopTimeoutRef.current = null
-      }
-
-      previousGuideFrameRef.current = null
-
-      if (cameraStep === 'ready') {
-        setCaptureGuides(defaultCaptureGuides)
-      }
-
-      return
-    }
-
-    const videoElement = videoRef.current
-
-    if (!videoElement) {
-      setCaptureGuides(defaultCaptureGuides)
-      return
-    }
-
-    const analysisCanvas =
-      analysisCanvasRef.current ?? document.createElement('canvas')
-    analysisCanvasRef.current = analysisCanvas
-    analysisCanvas.width = 160
-    analysisCanvas.height = 120
-    const context = analysisCanvas.getContext('2d', { willReadFrequently: true })
-
-    if (!context) {
-      return
-    }
-
-    let cancelled = false
-
-    const runGuideLoop = () => {
-      if (cancelled) {
-        return
-      }
-
-      if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
-        context.drawImage(videoElement, 0, 0, analysisCanvas.width, analysisCanvas.height)
-        const nextAnalysis = analyzeFrameGuidance(
-          context,
-          analysisCanvas.width,
-          analysisCanvas.height,
-          previousGuideFrameRef.current,
-        )
-
-        previousGuideFrameRef.current = nextAnalysis.grayscaleValues
-        setCaptureGuides(nextAnalysis.guides)
-      }
-
-      guideLoopTimeoutRef.current = window.setTimeout(runGuideLoop, 420)
-    }
-
-    runGuideLoop()
-
-    return () => {
-      cancelled = true
-      previousGuideFrameRef.current = null
-
-      if (guideLoopTimeoutRef.current) {
-        window.clearTimeout(guideLoopTimeoutRef.current)
-        guideLoopTimeoutRef.current = null
-      }
-    }
-  }, [cameraStep, cameraStatus])
-
   function stopActiveCamera() {
     requestIdRef.current += 1
     stopMediaStream(streamRef.current)
     streamRef.current = null
     setCameraStatus('idle')
+    setCaptureStabilityMs(null)
+    stableSinceRef.current = null
+    autoCaptureRequestedRef.current = false
   }
 
   function resetOcrState(options?: { preserveDraft?: boolean }) {
@@ -859,7 +1204,7 @@ export function EarTagScanPanel({
     }
   }
 
-  async function getOcrWorker() {
+  const getOcrWorker = useCallback(async () => {
     if (ocrWorkerRef.current) {
       return ocrWorkerRef.current
     }
@@ -902,132 +1247,135 @@ export function EarTagScanPanel({
       ocrWorkerPromiseRef.current = null
       throw error
     }
-  }
+  }, [])
 
-  async function readEarTagFromCapture(sourceCanvas: HTMLCanvasElement) {
-    const nextRequestId = ocrRequestIdRef.current + 1
-    ocrRequestIdRef.current = nextRequestId
-    ocrActiveRequestIdRef.current = nextRequestId
-    setOcrStatus('preparing')
-    setOcrProgress(0.02)
-    setOcrMessage('Foto wird fuer OCR vorbereitet')
-    setOcrError('')
+  const readEarTagFromCapture = useCallback(
+    async (sourceCanvas: HTMLCanvasElement) => {
+      const nextRequestId = ocrRequestIdRef.current + 1
+      ocrRequestIdRef.current = nextRequestId
+      ocrActiveRequestIdRef.current = nextRequestId
+      setOcrStatus('preparing')
+      setOcrProgress(0.02)
+      setOcrMessage('Foto wird fuer OCR vorbereitet')
+      setOcrError('')
 
-    try {
-      const { canvases, previewUrl } = prepareOcrVariants(sourceCanvas)
-
-      if (ocrRequestIdRef.current !== nextRequestId || !isMountedRef.current) {
-        return
-      }
-
-      setOcrPreviewUrl(previewUrl)
-
-      const worker = await getOcrWorker()
-
-      if (ocrRequestIdRef.current !== nextRequestId || !isMountedRef.current) {
-        return
-      }
-
-      const recognitionResults: OcrPassResult[] = []
-
-      for (const [variantIndex, canvas] of canvases.entries()) {
-        const result = await worker.recognize(canvas)
+      try {
+        const { canvases, previewUrl } = prepareOcrVariants(sourceCanvas)
 
         if (ocrRequestIdRef.current !== nextRequestId || !isMountedRef.current) {
           return
         }
 
-        recognitionResults.push({
-          text: result.data.text,
-          confidence: result.data.confidence,
-        })
+        setOcrPreviewUrl(previewUrl)
 
-        const passSuggestions = buildRankedEarTagSuggestions([
-          {
+        const worker = await getOcrWorker()
+
+        if (ocrRequestIdRef.current !== nextRequestId || !isMountedRef.current) {
+          return
+        }
+
+        const recognitionResults: OcrPassResult[] = []
+
+        for (const [variantIndex, canvas] of canvases.entries()) {
+          const result = await worker.recognize(canvas)
+
+          if (ocrRequestIdRef.current !== nextRequestId || !isMountedRef.current) {
+            return
+          }
+
+          recognitionResults.push({
             text: result.data.text,
             confidence: result.data.confidence,
+          })
+
+          const passSuggestions = buildRankedEarTagSuggestions([
+            {
+              text: result.data.text,
+              confidence: result.data.confidence,
+            },
+          ], knownEarTagIndex)
+          const bestPassSuggestion = passSuggestions[0]
+
+          if (
+            bestPassSuggestion &&
+            (bestPassSuggestion.score >= 24 ||
+              (variantIndex === 0 && bestPassSuggestion.confidence >= 74))
+          ) {
+            break
+          }
+        }
+
+        const suggestions = buildRankedEarTagSuggestions(recognitionResults, knownEarTagIndex)
+        const bestSuggestion = suggestions[0]
+
+        if (!bestSuggestion) {
+          setOcrStatus('error')
+          setOcrProgress(0)
+          setOcrMessage('Keine klare Ohrmarke erkannt')
+          setOcrError('Bitte Ergebnis manuell eingeben oder Foto neu aufnehmen.')
+          setOcrSuggestions([])
+          setCaptureGuides([
+            {
+              label: 'Kein klares Ergebnis',
+              detail: 'Tag groesser, heller oder ruhiger aufnehmen',
+              tone: 'alert',
+            },
+            {
+              label: 'Manuell bleibt moeglich',
+              detail: 'Nummer unten direkt korrigieren oder eintippen',
+              tone: 'warn',
+            },
+          ])
+          return
+        }
+
+        setScanDraft(bestSuggestion.value)
+        setOcrSuggestions(suggestions)
+        setOcrStatus('ready')
+        setOcrProgress(1)
+        setOcrMessage(describeRecognitionMessage(bestSuggestion))
+        setOcrError('')
+        setCaptureGuides([
+          {
+            label: bestSuggestion.confidence >= 70 ? 'OCR klar' : 'OCR unsicher',
+            detail:
+              bestSuggestion.confidence >= 70
+                ? 'Ergebnis unten kurz bestaetigen'
+                : suggestions.length > 1
+                  ? 'Alternativen unten vergleichen'
+                  : 'Ergebnis unten genau pruefen',
+            tone: bestSuggestion.confidence >= 70 ? 'good' : 'warn',
+          },
+          {
+            label: `Erkannt: ${bestSuggestion.value}`,
+            detail:
+              suggestions.length > 1
+                ? `${suggestions.length} Vorschlaege verfuegbar`
+                : 'Bei Bedarf manuell korrigieren',
+            tone: 'good',
           },
         ])
-        const bestPassSuggestion = passSuggestions[0]
-
-        if (
-          bestPassSuggestion &&
-          (bestPassSuggestion.score >= 24 ||
-            (variantIndex === 0 && bestPassSuggestion.confidence >= 74))
-        ) {
-          break
+      } catch (error) {
+        if (ocrRequestIdRef.current !== nextRequestId || !isMountedRef.current) {
+          return
         }
-      }
 
-      const suggestions = buildRankedEarTagSuggestions(recognitionResults)
-      const bestSuggestion = suggestions[0]
-
-      if (!bestSuggestion) {
         setOcrStatus('error')
         setOcrProgress(0)
-        setOcrMessage('Keine klare Ohrmarke erkannt')
-        setOcrError('Bitte Ergebnis manuell eingeben oder Foto neu aufnehmen.')
+        setOcrMessage('OCR konnte nicht abgeschlossen werden')
+        setOcrError(describeOcrError(error))
         setOcrSuggestions([])
         setCaptureGuides([
           {
-            label: 'Kein klares Ergebnis',
-            detail: 'Tag groesser, heller oder ruhiger aufnehmen',
+            label: 'OCR fehlgeschlagen',
+            detail: 'Neu aufnehmen oder Nummer manuell eingeben',
             tone: 'alert',
           },
-          {
-            label: 'Manuell bleibt moeglich',
-            detail: 'Nummer unten direkt korrigieren oder eintippen',
-            tone: 'warn',
-          },
         ])
-        return
       }
-
-      setScanDraft(bestSuggestion.value)
-      setOcrSuggestions(suggestions)
-      setOcrStatus('ready')
-      setOcrProgress(1)
-      setOcrMessage(describeRecognitionMessage(bestSuggestion))
-      setOcrError('')
-      setCaptureGuides([
-        {
-          label: bestSuggestion.confidence >= 70 ? 'OCR klar' : 'OCR unsicher',
-          detail:
-            bestSuggestion.confidence >= 70
-              ? 'Ergebnis unten kurz bestaetigen'
-              : suggestions.length > 1
-                ? 'Alternativen unten vergleichen'
-                : 'Ergebnis unten genau pruefen',
-          tone: bestSuggestion.confidence >= 70 ? 'good' : 'warn',
-        },
-        {
-          label: `Erkannt: ${bestSuggestion.value}`,
-          detail:
-            suggestions.length > 1
-              ? `${suggestions.length} Vorschlaege verfuegbar`
-              : 'Bei Bedarf manuell korrigieren',
-          tone: 'good',
-        },
-      ])
-    } catch (error) {
-      if (ocrRequestIdRef.current !== nextRequestId || !isMountedRef.current) {
-        return
-      }
-
-      setOcrStatus('error')
-      setOcrProgress(0)
-      setOcrMessage('OCR konnte nicht abgeschlossen werden')
-      setOcrError(describeOcrError(error))
-      setOcrSuggestions([])
-      setCaptureGuides([
-        {
-          label: 'OCR fehlgeschlagen',
-          detail: 'Neu aufnehmen oder Nummer manuell eingeben',
-          tone: 'alert',
-        },
-      ])
-    }
-  }
+    },
+    [getOcrWorker, knownEarTagIndex],
+  )
 
   function switchMode(nextMode: ScanMode) {
     setMode(nextMode)
@@ -1055,6 +1403,7 @@ export function EarTagScanPanel({
     setCameraError('')
     setCapturedImageUrl(null)
     resetOcrState({ preserveDraft: true })
+    setCaptureStabilityMs(null)
 
     if (!supportsCamera) {
       setCameraStep('ready')
@@ -1107,51 +1456,109 @@ export function EarTagScanPanel({
     }
   }
 
-  function capturePreview() {
-    const videoElement = videoRef.current
-    const canvasElement = canvasRef.current
+  const capturePreview = useCallback(
+    async (options?: { preferHighResolution?: boolean; autoTriggered?: boolean }) => {
+      const videoElement = videoRef.current
+      const canvasElement = canvasRef.current
+      const activeStream = streamRef.current
 
-    if (!videoElement || !canvasElement) {
-      setCameraError('Kamera ist noch nicht bereit.')
-      return
-    }
-
-    if (videoElement.videoWidth <= 0 || videoElement.videoHeight <= 0) {
-      setCameraError('Kamera ist noch nicht bereit.')
-      return
-    }
-
-    const context = canvasElement.getContext('2d')
-    if (!context) {
-      setCameraError('Foto konnte nicht vorbereitet werden.')
-      return
-    }
-
-    canvasElement.width = videoElement.videoWidth
-    canvasElement.height = videoElement.videoHeight
-    context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height)
-
-    setCapturedImageUrl(canvasElement.toDataURL('image/jpeg', 0.92))
-    stopActiveCamera()
-    setCameraStep('captured')
-    setCameraError('')
-    setCaptureGuides([
-      {
-        label: 'Foto aufgenommen',
-        detail: 'OCR prueft jetzt den mittleren Fokusbereich',
-        tone: 'good',
-      },
-    ])
-    setScanDraft((currentDraft) => {
-      if (currentDraft?.trim()) {
-        return currentDraft
+      if (!videoElement || !canvasElement || !activeStream || captureInFlightRef.current) {
+        setCameraError('Kamera ist noch nicht bereit.')
+        return
       }
 
-      return value.trim() || null
-    })
+      if (videoElement.videoWidth <= 0 || videoElement.videoHeight <= 0) {
+        setCameraError('Kamera ist noch nicht bereit.')
+        return
+      }
 
-    void readEarTagFromCapture(canvasElement)
-  }
+      const context = canvasElement.getContext('2d')
+      if (!context) {
+        setCameraError('Foto konnte nicht vorbereitet werden.')
+        return
+      }
+
+      const activeRequestId = requestIdRef.current
+      let usedPhotoCapture = false
+
+      captureInFlightRef.current = true
+      autoCaptureRequestedRef.current = Boolean(options?.autoTriggered)
+      setIsCapturingPhoto(true)
+
+      try {
+        if (options?.preferHighResolution) {
+          const videoTrack = activeStream.getVideoTracks()[0]
+          const imageCapture = videoTrack ? getImageCapture(videoTrack) : null
+
+          if (imageCapture) {
+            try {
+              const blob = await imageCapture.takePhoto()
+
+              if (
+                requestIdRef.current !== activeRequestId ||
+                cameraStep !== 'framing' ||
+                !isMountedRef.current
+              ) {
+                return
+              }
+
+              await drawBlobToCanvas(blob, canvasElement)
+              usedPhotoCapture = true
+            } catch {
+              usedPhotoCapture = false
+            }
+          }
+        }
+
+        if (!usedPhotoCapture) {
+          canvasElement.width = videoElement.videoWidth
+          canvasElement.height = videoElement.videoHeight
+          context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height)
+        }
+
+        if (
+          requestIdRef.current !== activeRequestId ||
+          cameraStep !== 'framing' ||
+          !isMountedRef.current
+        ) {
+          return
+        }
+
+        setCapturedImageUrl(canvasElement.toDataURL('image/jpeg', 0.92))
+        stopActiveCamera()
+        setCameraStep('captured')
+        setCameraError('')
+        setCaptureGuides([
+          {
+            label: 'Foto aufgenommen',
+            detail: usedPhotoCapture
+              ? 'Hochaufloesendes Kamerafoto wird jetzt fuer OCR gelesen'
+              : 'Videobild wird jetzt fuer OCR gelesen',
+            tone: 'good',
+          },
+        ])
+        setScanDraft((currentDraft) => {
+          if (currentDraft?.trim()) {
+            return currentDraft
+          }
+
+          return value.trim() || null
+        })
+
+        void readEarTagFromCapture(canvasElement)
+      } catch (error) {
+        if (requestIdRef.current === activeRequestId && isMountedRef.current) {
+          setCameraError(describeCameraError(error))
+        }
+      } finally {
+        captureInFlightRef.current = false
+        if (isMountedRef.current) {
+          setIsCapturingPhoto(false)
+        }
+      }
+    },
+    [cameraStep, readEarTagFromCapture, value],
+  )
 
   function resetCapture() {
     stopActiveCamera()
@@ -1159,8 +1566,110 @@ export function EarTagScanPanel({
     setCapturedImageUrl(null)
     setCameraError('')
     setCaptureGuides(defaultCaptureGuides)
+    setCaptureStabilityMs(null)
     resetOcrState()
   }
+
+  useEffect(() => {
+    if (cameraStep !== 'framing' || cameraStatus !== 'live') {
+      if (guideLoopTimeoutRef.current) {
+        window.clearTimeout(guideLoopTimeoutRef.current)
+        guideLoopTimeoutRef.current = null
+      }
+
+      previousGuideFrameRef.current = null
+      stableSinceRef.current = null
+      captureInFlightRef.current = false
+      autoCaptureRequestedRef.current = false
+      setCaptureStabilityMs(null)
+
+      if (cameraStep === 'ready') {
+        setCaptureGuides(defaultCaptureGuides)
+      }
+
+      return
+    }
+
+    const videoElement = videoRef.current
+
+    if (!videoElement) {
+      setCaptureGuides(defaultCaptureGuides)
+      return
+    }
+
+    const analysisCanvas =
+      analysisCanvasRef.current ?? document.createElement('canvas')
+    analysisCanvasRef.current = analysisCanvas
+    analysisCanvas.width = 160
+    analysisCanvas.height = 120
+    const context = analysisCanvas.getContext('2d', { willReadFrequently: true })
+
+    if (!context) {
+      return
+    }
+
+    let cancelled = false
+
+    const runGuideLoop = () => {
+      if (cancelled) {
+        return
+      }
+
+      if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+        context.drawImage(videoElement, 0, 0, analysisCanvas.width, analysisCanvas.height)
+        const nextAnalysis = analyzeFrameGuidance(
+          context,
+          analysisCanvas.width,
+          analysisCanvas.height,
+          previousGuideFrameRef.current,
+        )
+        const now = performance.now()
+
+        previousGuideFrameRef.current = nextAnalysis.grayscaleValues
+        setCaptureGuides(nextAnalysis.guides)
+
+        if (nextAnalysis.isStable) {
+          if (stableSinceRef.current === null) {
+            stableSinceRef.current = now
+          }
+
+          const remainingMs = Math.max(0, AUTO_CAPTURE_STABLE_MS - (now - stableSinceRef.current))
+          setCaptureStabilityMs(remainingMs)
+
+          if (
+            remainingMs <= 0 &&
+            !captureInFlightRef.current &&
+            !autoCaptureRequestedRef.current
+          ) {
+            autoCaptureRequestedRef.current = true
+            void capturePreview({ preferHighResolution: true, autoTriggered: true })
+            return
+          }
+        } else {
+          stableSinceRef.current = null
+          autoCaptureRequestedRef.current = false
+          setCaptureStabilityMs(null)
+        }
+      }
+
+      guideLoopTimeoutRef.current = window.setTimeout(runGuideLoop, 420)
+    }
+
+    runGuideLoop()
+
+    return () => {
+      cancelled = true
+      previousGuideFrameRef.current = null
+      stableSinceRef.current = null
+      captureInFlightRef.current = false
+      autoCaptureRequestedRef.current = false
+
+      if (guideLoopTimeoutRef.current) {
+        window.clearTimeout(guideLoopTimeoutRef.current)
+        guideLoopTimeoutRef.current = null
+      }
+    }
+  }, [cameraStep, cameraStatus, capturePreview])
 
   function applyDraft() {
     if (!cleanedDraft) return
@@ -1303,11 +1812,15 @@ export function EarTagScanPanel({
                 <>
                   <button
                     type="button"
-                    onClick={capturePreview}
-                    disabled={disabled || cameraStatus !== 'live'}
+                    onClick={() => void capturePreview({ preferHighResolution: true })}
+                    disabled={disabled || cameraStatus !== 'live' || isCapturingPhoto}
                     className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
                   >
-                    {cameraStatus === 'starting' ? 'Kamera startet ...' : 'Foto aufnehmen'}
+                    {cameraStatus === 'starting'
+                      ? 'Kamera startet ...'
+                      : isCapturingPhoto
+                        ? 'Foto wird aufgenommen ...'
+                        : 'Foto aufnehmen'}
                   </button>
                   <button
                     type="button"
@@ -1396,6 +1909,14 @@ export function EarTagScanPanel({
             />
             <div className="mt-2 text-sm text-neutral-700">{ocrMessage}</div>
 
+            {selectedKnownConflict ? (
+              <div className="mt-3 rounded-[1rem] border border-[#d9b37a] bg-[#fbf2dd] px-4 py-3 text-sm font-medium text-[#5e4320]">
+                {selectedKnownConflict.relationship === 'exact'
+                  ? `Diese Ohrmarke ist bereits in der Datenbank vorhanden: ${selectedKnownConflict.canonical}`
+                  : `Der erkannte Ziffernblock passt zu einer vorhandenen Ohrmarke: ${selectedKnownConflict.canonical}`}
+              </div>
+            ) : null}
+
             {ocrSuggestions.length ? (
               <div className="mt-4">
                 <div className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-700">
@@ -1420,11 +1941,13 @@ export function EarTagScanPanel({
                       >
                         {suggestion.value}
                         <span className="ml-2 text-[0.65rem] uppercase tracking-[0.12em] text-neutral-600">
-                          {index === 0
-                            ? 'OCR'
-                            : suggestion.substitutions > 0
-                              ? `${suggestion.substitutions} Korr.`
-                              : 'Alt'}
+                          {suggestion.knownMatch?.relationship === 'exact'
+                            ? 'DB'
+                            : index === 0
+                              ? 'OCR'
+                              : suggestion.substitutions > 0
+                                ? `${suggestion.substitutions} Korr.`
+                                : 'Alt'}
                         </span>
                       </button>
                     )

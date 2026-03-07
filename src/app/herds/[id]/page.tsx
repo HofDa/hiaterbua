@@ -55,6 +55,7 @@ export default function HerdDetailPage({
   const router = useRouter()
 
   const herd = useLiveQuery(() => db.herds.get(id), [id])
+  const allAnimals = useLiveQuery(() => db.animals.toArray(), [])
   const animals = useLiveQuery(
     () => db.animals.where('herdId').equals(id).toArray(),
     [id]
@@ -117,6 +118,14 @@ export default function HerdDetailPage({
   const activeAssignment = useMemo(
     () => safeAssignments.find((assignment) => !assignment.endTime) ?? null,
     [safeAssignments]
+  )
+  const knownEarTags = useMemo(
+    () => (allAnimals ?? []).map((animal) => animal.earTag),
+    [allAnimals]
+  )
+  const editingAnimal = useMemo(
+    () => safeAnimals.find((animal) => animal.id === editingAnimalId) ?? null,
+    [editingAnimalId, safeAnimals]
   )
 
   const currentEnclosure = useMemo(
@@ -687,6 +696,7 @@ export default function HerdDetailPage({
         <form className="mt-4 space-y-4" onSubmit={handleAddAnimal}>
           <EarTagScanPanel
             disabled={saving}
+            knownEarTags={knownEarTags}
             value={earTag}
             onApplyValue={setEarTag}
           />
@@ -778,6 +788,8 @@ export default function HerdDetailPage({
           <form className="mt-4 space-y-4" onSubmit={saveEdit}>
             <EarTagScanPanel
               disabled={editSaving}
+              knownEarTags={knownEarTags}
+              conflictIgnoreEarTag={editingAnimal?.earTag ?? null}
               value={editEarTag}
               onApplyValue={setEditEarTag}
             />
