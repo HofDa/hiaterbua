@@ -17,6 +17,23 @@ import {
   getTileCacheCount,
   prefetchTileUrls,
 } from '@/lib/maps/tile-cache'
+import {
+  CenterIcon,
+  LayersIcon,
+  PauseIcon,
+  PlayIcon,
+  StopIcon,
+  TrackpointsIcon,
+} from '@/components/maps/map-toolbar-icons'
+import {
+  MobileMapToolbar,
+  MobileMapToolbarButton,
+  MobileMapToolbarStat,
+} from '@/components/maps/mobile-map-toolbar'
+import {
+  MobileMapFloatingCard,
+  MobileMapTopControls,
+} from '@/components/maps/mobile-map-ui'
 import { defaultAppSettings, normalizeMapBaseLayer } from '@/lib/settings/defaults'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
@@ -100,71 +117,6 @@ const rasterStyle: StyleSpecification = {
 const emptyFeatureCollection: GeoJSON.FeatureCollection = {
   type: 'FeatureCollection',
   features: [],
-}
-
-function LayersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
-      <path
-        d="m12 4 8 4.5-8 4.5-8-4.5L12 4Zm0 8.5 8-4.5M12 12.5l-8-4.5M4 13.5l8 4.5 8-4.5M4 18l8 4.5 8-4.5"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function CenterIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
-      <circle cx="12" cy="12" r="3.5" strokeWidth="1.8" />
-      <path
-        d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function PlayIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
-      <path d="M8 6.5v11l9-5.5-9-5.5Z" />
-    </svg>
-  )
-}
-
-function PauseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
-      <path d="M9 7v10M15 7v10" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function StopIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
-      <rect x="7" y="7" width="10" height="10" rx="1.5" />
-    </svg>
-  )
-}
-
-function TrackpointsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
-      <circle cx="7" cy="12" r="1.8" strokeWidth="1.8" />
-      <circle cx="15.5" cy="8" r="1.8" strokeWidth="1.8" />
-      <circle cx="15.5" cy="16" r="1.8" strokeWidth="1.8" />
-      <path
-        d="M8.8 11.2 13.7 8.8M8.8 12.8l4.9 2.4"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
 }
 
 function formatAccuracy(accuracy: number | null | undefined) {
@@ -1961,18 +1913,17 @@ export function GrazingSessionMap() {
         <div ref={containerRef} className="h-[420px] w-full bg-neutral-100" />
         {!editingSessionId ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
-            <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-[1.35rem] border border-white/80 bg-[rgba(255,252,246,0.94)] px-2 py-2 shadow-[0_12px_30px_rgba(23,20,18,0.18)] backdrop-blur">
-              <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
+            <MobileMapToolbar>
+              <MobileMapToolbarStat>
                 <span className="inline-flex items-center gap-1">
                   <TrackpointsIcon />
                   <span>{safeCurrentTrackpoints.length} · {formatDistance(currentMetrics?.distanceM ?? 0)}</span>
                 </span>
-              </div>
-              <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
+              </MobileMapToolbarStat>
+              <MobileMapToolbarStat>
                 {formatDuration(currentMetrics?.durationS ?? 0)}
-              </div>
-              <button
-                type="button"
+              </MobileMapToolbarStat>
+              <MobileMapToolbarButton
                 aria-label={currentSessionStatus === 'paused' ? 'Fortsetzen' : 'Weidegang starten'}
                 title={currentSessionStatus === 'paused' ? 'Fortsetzen' : 'Weidegang starten'}
                 onClick={() =>
@@ -1983,35 +1934,30 @@ export function GrazingSessionMap() {
                   currentSessionStatus === 'active' ||
                   (currentSessionStatus === null && safeHerds.length === 0)
                 }
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
+                variant="primary"
               >
                 <PlayIcon />
-              </button>
-              <button
-                type="button"
+              </MobileMapToolbarButton>
+              <MobileMapToolbarButton
                 aria-label="Pausieren"
                 title="Pausieren"
                 onClick={() => void pauseSession()}
                 disabled={isSaving || currentSessionStatus !== 'active'}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
               >
                 <PauseIcon />
-              </button>
-              <button
-                type="button"
+              </MobileMapToolbarButton>
+              <MobileMapToolbarButton
                 aria-label="Weidegang beenden"
                 title="Weidegang beenden"
                 onClick={() => void stopSession()}
                 disabled={isSaving || (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-base font-semibold text-white disabled:opacity-50"
               >
                 <StopIcon />
-              </button>
-            </div>
+              </MobileMapToolbarButton>
+            </MobileMapToolbar>
           </div>
         ) : null}
-        <div className="pointer-events-none absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
-          <div className="pointer-events-auto w-44 max-w-[calc(100vw-2rem)]">
+        <MobileMapTopControls>
             <div className="mb-2 flex justify-start gap-2">
               <button
                 type="button"
@@ -2102,11 +2048,10 @@ export function GrazingSessionMap() {
                 ) : null}
               </div>
             ) : null}
-          </div>
-        </div>
+        </MobileMapTopControls>
         {editingSessionId ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 sm:p-4">
-              <div className="pointer-events-auto rounded-[1.35rem] border border-white bg-white p-2 shadow-lg sm:rounded-[1.75rem] sm:p-3">
+              <MobileMapFloatingCard>
               <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:gap-3">
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-neutral-900 sm:text-sm">
@@ -2153,11 +2098,11 @@ export function GrazingSessionMap() {
                   type="button"
                   onClick={cancelEditSession}
                   className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
-                >
-                  Schließen
-                </button>
-              </div>
-            </div>
+                  >
+                    Schließen
+                  </button>
+                </div>
+              </MobileMapFloatingCard>
           </div>
         ) : null}
       </div>

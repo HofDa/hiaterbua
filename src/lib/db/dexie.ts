@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import { defaultAppSettings } from '@/lib/settings/defaults'
 import type {
   Animal,
   AppSettings,
@@ -28,6 +29,16 @@ export class HirtenAppDB extends Dexie {
 
   constructor() {
     super('hirtenapp-db')
+
+    this.version(1).stores({
+      herds: 'id, name, isArchived, updatedAt',
+      animals: 'id, herdId, earTag, species, isArchived, updatedAt',
+      enclosures: 'id, name, method, herdId, createdAt, updatedAt',
+      enclosureAssignments: 'id, enclosureId, herdId, startTime, endTime, updatedAt',
+      sessions: 'id, herdId, status, startTime, endTime, updatedAt',
+      trackpoints: 'id, sessionId, enclosureWalkId, seq, timestamp, accepted',
+      events: 'id, sessionId, timestamp, type',
+    })
 
     this.version(2).stores({
       herds: 'id, name, isArchived, updatedAt',
@@ -112,6 +123,30 @@ export class HirtenAppDB extends Dexie {
       workEvents: 'id, workSessionId, timestamp, type',
       settings: 'id',
     })
+
+    this.version(8)
+      .stores({
+        herds: 'id, name, isArchived, updatedAt',
+        animals: 'id, herdId, earTag, species, isArchived, updatedAt',
+        enclosures:
+          'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt',
+        surveyAreas: 'id, name, createdAt, updatedAt',
+        enclosureAssignments: 'id, enclosureId, herdId, startTime, endTime, updatedAt',
+        sessions: 'id, herdId, status, startTime, endTime, updatedAt',
+        trackpoints: 'id, sessionId, enclosureWalkId, seq, timestamp, accepted',
+        events: 'id, sessionId, timestamp, type',
+        workSessions: 'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt',
+        workEvents: 'id, workSessionId, timestamp, type',
+        settings: 'id',
+      })
+      .upgrade(async (tx) => {
+        const settingsTable = tx.table<AppSettings, 'app'>('settings')
+        const existingSettings = await settingsTable.get('app')
+
+        if (!existingSettings) {
+          await settingsTable.put(defaultAppSettings)
+        }
+      })
   }
 }
 
