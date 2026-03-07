@@ -2,7 +2,6 @@ const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
 const APP_CACHE_NAME = 'hiaterbua-app-shell-v1'
 const OFFLINE_URL = '/offline.html'
 const DB_NAME = 'hirtenapp-tile-db'
-const DB_VERSION = 1
 const MAP_TILE_STORE = 'mapTiles'
 
 let tileCachingEnabled = false
@@ -131,18 +130,42 @@ async function updateTileInBackground(cache, request) {
 
 function openTileDb() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
+    const request = indexedDB.open(DB_NAME)
 
     request.onupgradeneeded = () => {
       const database = request.result
-      if (!database.objectStoreNames.contains(MAP_TILE_STORE)) {
-        database.createObjectStore(MAP_TILE_STORE, { keyPath: 'url' })
-      }
+      ensureTileStore(database)
     }
 
-    request.onsuccess = () => resolve(request.result)
+    request.onsuccess = () => {
+      const database = request.result
+
+      if (database.objectStoreNames.contains(MAP_TILE_STORE)) {
+        resolve(database)
+        return
+      }
+
+      const nextVersion = database.version + 1
+      database.close()
+
+      const upgradeRequest = indexedDB.open(DB_NAME, nextVersion)
+
+      upgradeRequest.onupgradeneeded = () => {
+        const upgradeDatabase = upgradeRequest.result
+        ensureTileStore(upgradeDatabase)
+      }
+
+      upgradeRequest.onsuccess = () => resolve(upgradeRequest.result)
+      upgradeRequest.onerror = () => reject(upgradeRequest.error)
+    }
     request.onerror = () => reject(request.error)
   })
+}
+
+function ensureTileStore(database) {
+  if (!database.objectStoreNames.contains(MAP_TILE_STORE)) {
+    database.createObjectStore(MAP_TILE_STORE, { keyPath: 'url' })
+  }
 }
 
 async function getStoredTile(url) {
