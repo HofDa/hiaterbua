@@ -131,7 +131,11 @@ export async function getTileCacheCount() {
     return null
   }
 
-  return tileDb.mapTiles.count()
+  try {
+    return await tileDb.mapTiles.count()
+  } catch {
+    return null
+  }
 }
 
 export async function clearTileCacheStorage() {
@@ -139,13 +143,17 @@ export async function clearTileCacheStorage() {
     return false
   }
 
-  await tileDb.mapTiles.clear()
+  try {
+    await tileDb.mapTiles.clear()
 
-  if ('caches' in window) {
-    await window.caches.delete(TILE_CACHE_NAME)
+    if ('caches' in window) {
+      await window.caches.delete(TILE_CACHE_NAME)
+    }
+
+    return true
+  } catch {
+    return false
   }
-
-  return true
 }
 
 export async function getPersistentStorageStatus() {
@@ -153,7 +161,11 @@ export async function getPersistentStorageStatus() {
     return null
   }
 
-  return navigator.storage.persisted()
+  try {
+    return await navigator.storage.persisted()
+  } catch {
+    return null
+  }
 }
 
 export async function requestPersistentStorage() {
@@ -161,7 +173,11 @@ export async function requestPersistentStorage() {
     return null
   }
 
-  return navigator.storage.persist()
+  try {
+    return await navigator.storage.persist()
+  } catch {
+    return null
+  }
 }
 
 async function persistTileResponse(

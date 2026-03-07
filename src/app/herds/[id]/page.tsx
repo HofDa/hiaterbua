@@ -4,6 +4,7 @@ import { use, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { EarTagScanPanel } from '@/components/animals/ear-tag-scan-panel'
 import { db } from '@/lib/db/dexie'
 import { deleteHerdCascade } from '@/lib/db/delete-herd'
 import { createId } from '@/lib/utils/ids'
@@ -684,6 +685,12 @@ export default function HerdDetailPage({
         </div>
 
         <form className="mt-4 space-y-4" onSubmit={handleAddAnimal}>
+          <EarTagScanPanel
+            disabled={saving}
+            value={earTag}
+            onApplyValue={setEarTag}
+          />
+
           <div>
             <label className="mb-1 block text-sm font-medium">Ohrmarke</label>
             <input
@@ -769,6 +776,12 @@ export default function HerdDetailPage({
           <h2 className="text-lg font-semibold tracking-[-0.02em]">Tier bearbeiten</h2>
 
           <form className="mt-4 space-y-4" onSubmit={saveEdit}>
+            <EarTagScanPanel
+              disabled={editSaving}
+              value={editEarTag}
+              onApplyValue={setEditEarTag}
+            />
+
             <div>
               <label className="mb-1 block text-sm font-medium">Ohrmarke</label>
               <input

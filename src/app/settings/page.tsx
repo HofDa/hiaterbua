@@ -1,6 +1,5 @@
 'use client'
 
-import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LngLatLike, Map as MapLibreMap, Marker, StyleSpecification } from 'maplibre-gl'
 import { db } from '@/lib/db/dexie'
@@ -35,6 +34,8 @@ type PrefetchLayerChoice = (typeof prefetchLayerOptions)[number]['value']
 const previewCenter: LngLatLike = [11.35, 46.5]
 const previewBaseLayerId = 'settings-preview-basemap'
 const previewBaseSourceId = 'settings-preview-basemap-source'
+const SETTINGS_FALLBACK_KEY = 'hirtenapp-settings-fallback'
+const STORAGE_TIMEOUT_MS = 2500
 const previewRasterStyle: StyleSpecification = {
   version: 8,
   sources: {
@@ -67,6 +68,80 @@ function formatCurrentPositionError(error: GeolocationPositionError) {
       return 'Standortbestimmung hat zu lange gedauert. Bitte erneut versuchen.'
     default:
       return 'Standort konnte nicht gelesen werden.'
+  }
+}
+
+function normalizeSettingsValue(
+  settings: Partial<AppSettings> | null | undefined
+): AppSettings {
+  return {
+    ...defaultAppSettings,
+    ...settings,
+    id: 'app',
+    mapBaseLayer: normalizeMapBaseLayer(settings?.mapBaseLayer),
+    gpsAccuracyThresholdM: Math.max(
+      1,
+      Math.round(settings?.gpsAccuracyThresholdM ?? defaultAppSettings.gpsAccuracyThresholdM)
+    ),
+    gpsMinTimeS: Math.max(
+      1,
+      Math.round(settings?.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS)
+    ),
+    gpsMinDistanceM: Math.max(
+      1,
+      Math.round(settings?.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM)
+    ),
+  }
+}
+
+function readFallbackSettings() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_FALLBACK_KEY)
+
+    if (!raw) {
+      return null
+    }
+
+    return normalizeSettingsValue(JSON.parse(raw) as Partial<AppSettings>)
+  } catch {
+    return null
+  }
+}
+
+function writeFallbackSettings(settings: AppSettings) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(
+      SETTINGS_FALLBACK_KEY,
+      JSON.stringify(normalizeSettingsValue(settings))
+    )
+  } catch {
+    // Local fallback storage is best effort only.
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs = STORAGE_TIMEOUT_MS) {
+  let timeoutId: number | null = null
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => {
+      reject(new Error('storage_timeout'))
+    }, timeoutMs)
+  })
+
+  try {
+    return await Promise.race([promise, timeoutPromise])
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId)
+    }
   }
 }
 
@@ -142,9 +217,12 @@ function PositionPreviewMap({
 }
 
 export default function SettingsPage() {
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
-
-  const [draft, setDraft] = useState<AppSettings>(defaultAppSettings)
+  const [draft, setDraft] = useState<AppSettings>(
+    () => readFallbackSettings() ?? defaultAppSettings
+  )
+  const [settingsReady, setSettingsReady] = useState(false)
+  const [settingsStorageMode, setSettingsStorageMode] = useState<'db' | 'fallback'>('db')
+  const [settingsStorageWarning, setSettingsStorageWarning] = useState('')
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
   const [tileCacheCount, setTileCacheCount] = useState<number | null>(null)
@@ -180,19 +258,66 @@ export default function SettingsPage() {
   }, [prefetchLat, prefetchLon])
 
   useEffect(() => {
-    if (settings === undefined) return
+    let cancelled = false
 
-    if (!settings) {
-      void db.settings.put(defaultAppSettings)
-      setDraft(defaultAppSettings)
-      return
+    async function loadSettings() {
+      const fallbackSettings = readFallbackSettings()
+
+      if (fallbackSettings && !cancelled) {
+        setDraft(fallbackSettings)
+      }
+
+      try {
+        const storedSettings = await withTimeout(db.settings.get('app'))
+
+        if (cancelled) {
+          return
+        }
+
+        const nextSettings = normalizeSettingsValue(storedSettings ?? defaultAppSettings)
+
+        if (!storedSettings) {
+          try {
+            await withTimeout(db.settings.put(nextSettings))
+          } catch {
+            setSettingsStorageMode('fallback')
+            setSettingsStorageWarning(
+              'Einstellungen laufen aktuell im iOS-Fallback. Änderungen bleiben lokal auf diesem Gerät gespeichert.'
+            )
+          }
+        } else {
+          setSettingsStorageMode('db')
+          setSettingsStorageWarning('')
+        }
+
+        setDraft(nextSettings)
+        writeFallbackSettings(nextSettings)
+      } catch {
+        if (cancelled) {
+          return
+        }
+
+        const fallback = fallbackSettings ?? defaultAppSettings
+
+        setDraft(normalizeSettingsValue(fallback))
+        setSettingsStorageMode('fallback')
+        setSettingsStorageWarning(
+          'Die lokale App-Datenbank antwortet auf diesem Gerät gerade nicht zuverlässig. Einstellungen bleiben trotzdem über einen iOS-Fallback erreichbar.'
+        )
+        writeFallbackSettings(normalizeSettingsValue(fallback))
+      } finally {
+        if (!cancelled) {
+          setSettingsReady(true)
+        }
+      }
     }
 
-    setDraft({
-      ...settings,
-      mapBaseLayer: normalizeMapBaseLayer(settings.mapBaseLayer),
-    })
-  }, [settings])
+    void loadSettings()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     setTileCacheSupported(typeof window !== 'undefined' && 'caches' in window)
@@ -202,9 +327,15 @@ export default function SettingsPage() {
     let cancelled = false
 
     async function loadPersistentStorageStatus() {
-      const nextStatus = await getPersistentStorageStatus()
-      if (!cancelled) {
-        setPersistentStorageGranted(nextStatus)
+      try {
+        const nextStatus = await withTimeout(getPersistentStorageStatus())
+        if (!cancelled) {
+          setPersistentStorageGranted(nextStatus)
+        }
+      } catch {
+        if (!cancelled) {
+          setPersistentStorageGranted(null)
+        }
       }
     }
 
@@ -222,9 +353,13 @@ export default function SettingsPage() {
       setTileCacheLoading(true)
 
       try {
-        const nextCount = await getTileCacheCount()
+        const nextCount = await withTimeout(getTileCacheCount())
         if (!isCancelled) {
           setTileCacheCount(nextCount)
+        }
+      } catch {
+        if (!isCancelled) {
+          setTileCacheCount(null)
         }
       } finally {
         if (!isCancelled) {
@@ -238,34 +373,50 @@ export default function SettingsPage() {
     return () => {
       isCancelled = true
     }
-  }, [settings?.tileCachingEnabled])
+  }, [settingsReady])
 
   async function saveSettings(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSaving(true)
     setStatus('')
 
-    const nextSettings: AppSettings = {
-      ...draft,
-      mapBaseLayer: normalizeMapBaseLayer(draft.mapBaseLayer),
-      gpsAccuracyThresholdM: Math.max(1, Math.round(draft.gpsAccuracyThresholdM)),
-      gpsMinTimeS: Math.max(1, Math.round(draft.gpsMinTimeS)),
-      gpsMinDistanceM: Math.max(1, Math.round(draft.gpsMinDistanceM)),
+    const nextSettings = normalizeSettingsValue(draft)
+    let storedInDb = false
+
+    try {
+      await withTimeout(db.settings.put(nextSettings))
+      storedInDb = true
+      setSettingsStorageMode('db')
+      setSettingsStorageWarning('')
+    } catch {
+      setSettingsStorageMode('fallback')
+      setSettingsStorageWarning(
+        'Einstellungen werden aktuell über den iOS-Fallback gespeichert, weil IndexedDB auf diesem Gerät nicht stabil antwortet.'
+      )
     }
 
-    await db.settings.put(nextSettings)
-    if (nextSettings.tileCachingEnabled) {
-      const persistent = await requestPersistentStorage()
-      setPersistentStorageGranted(persistent)
-    }
-    if (!nextSettings.tileCachingEnabled) {
-      await clearTileCacheStorage()
-    }
+    writeFallbackSettings(nextSettings)
 
-    setTileCacheCount(await getTileCacheCount())
-    setDraft(nextSettings)
-    setSaving(false)
-    setStatus('Einstellungen gespeichert.')
+    try {
+      if (nextSettings.tileCachingEnabled) {
+        const persistent = await withTimeout(requestPersistentStorage())
+        setPersistentStorageGranted(persistent)
+      }
+
+      if (!nextSettings.tileCachingEnabled) {
+        await withTimeout(clearTileCacheStorage())
+      }
+
+      setTileCacheCount(await withTimeout(getTileCacheCount()))
+    } finally {
+      setDraft(nextSettings)
+      setSaving(false)
+      setStatus(
+        storedInDb
+          ? 'Einstellungen gespeichert.'
+          : 'Einstellungen im iOS-Fallback gespeichert.'
+      )
+    }
   }
 
   function resetSettings() {
@@ -278,9 +429,13 @@ export default function SettingsPage() {
     setStatus('')
 
     try {
-      await clearTileCacheStorage()
-      setTileCacheCount(0)
-      setStatus('Tile-Cache geleert.')
+      const cleared = await withTimeout(clearTileCacheStorage())
+      if (cleared) {
+        setTileCacheCount(0)
+        setStatus('Tile-Cache geleert.')
+      } else {
+        setStatus('Tile-Cache konnte auf diesem Gerät nicht vollständig geleert werden.')
+      }
     } finally {
       setTileCacheClearing(false)
     }
@@ -290,7 +445,7 @@ export default function SettingsPage() {
     setPersistentStorageLoading(true)
 
     try {
-      const granted = await requestPersistentStorage()
+      const granted = await withTimeout(requestPersistentStorage())
       setPersistentStorageGranted(granted)
       setStatus(
         granted
@@ -491,10 +646,6 @@ export default function SettingsPage() {
     }
   }
 
-  if (settings === undefined) {
-    return <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">Lade Einstellungen ...</div>
-  }
-
   return (
     <div className="space-y-5">
       <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
@@ -502,6 +653,16 @@ export default function SettingsPage() {
         <p className="mt-2 max-w-2xl text-sm font-medium text-neutral-800">
           Kartenbasis, GPS-Schwellen und Offline-Verhalten lokal verwalten.
         </p>
+        {!settingsReady ? (
+          <div className="mt-3 rounded-[1.25rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-800">
+            Einstellungen werden geladen ...
+          </div>
+        ) : null}
+        {settingsStorageWarning ? (
+          <div className="mt-3 rounded-[1.25rem] border border-amber-300 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-950">
+            {settingsStorageWarning}
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
@@ -646,6 +807,9 @@ export default function SettingsPage() {
                     : 'Dieser Browser stellt die Cache-API nicht bereit.'}
                 </div>
                 <div className="mt-2 text-xs font-medium text-neutral-700">
+                  Speichermodus: {settingsStorageMode === 'db' ? 'App-Datenbank' : 'iOS-Fallback'}
+                </div>
+                <div className="mt-1 text-xs font-medium text-neutral-700">
                   Persistenter Speicher:{' '}
                   {persistentStorageGranted === null
                     ? 'unbekannt'
