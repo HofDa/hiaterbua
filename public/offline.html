@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hiaterbua 1.0 offline</title>
+    <meta
+      name="description"
+      content="Hiaterbua 1.0 ist aktuell offline. Bereits lokal gespeicherte Daten und Kartentiles stehen nach Verbindungsrückkehr wieder bereit."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #e7e2d7;
+        --panel: rgba(255, 252, 246, 0.94);
+        --panel-border: rgba(62, 52, 34, 0.12);
+        --text: #171412;
+        --soft: #665f57;
+        --brand: #1f6a49;
+        --warn: #c77c28;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: system-ui, sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(255, 255, 255, 0.52), transparent 32%),
+          linear-gradient(180deg, #d9d2c2 0%, var(--bg) 30%, #f4f0e8 100%);
+        color: var(--text);
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        padding: 20px;
+      }
+
+      .shell {
+        width: min(100%, 760px);
+      }
+
+      .panel {
+        border: 1px solid var(--panel-border);
+        border-radius: 32px;
+        background: var(--panel);
+        padding: 28px;
+        box-shadow: 0 24px 60px rgba(23, 20, 18, 0.12);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 999px;
+        background: #f7d7ae;
+        color: #6f3f08;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--warn);
+      }
+
+      h1 {
+        margin: 18px 0 0;
+        font-size: clamp(32px, 6vw, 54px);
+        line-height: 0.98;
+      }
+
+      p {
+        margin: 16px 0 0;
+        color: var(--soft);
+        font-size: 18px;
+        line-height: 1.5;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .card {
+        border-radius: 22px;
+        background: white;
+        border: 1px solid rgba(23, 20, 18, 0.06);
+        padding: 18px;
+      }
+
+      .card strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .card span {
+        display: block;
+        margin-top: 6px;
+        color: var(--soft);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .button {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 18px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .button.primary {
+        background: var(--brand);
+        color: white;
+      }
+
+      .button.secondary {
+        background: #ece5d8;
+        color: var(--text);
+      }
+
+      @media (min-width: 720px) {
+        .grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <div class="badge"><span class="dot"></span> Offline-Modus</div>
+        <h1>Hiaterbua 1.0 ist gerade ohne Verbindung.</h1>
+        <p>
+          Die Internetverbindung ist aktuell weg. Bereits lokal gespeicherte Daten und
+          vorab geladene Kartentiles stehen nach dem erneuten Öffnen der App wieder zur
+          Verfügung.
+        </p>
+
+        <div class="grid">
+          <div class="card">
+            <strong>Weiterarbeiten</strong>
+            <span>Öffne die App erneut, um mit lokal gespeicherten Herden, Pferchen und Weidegängen weiterzuarbeiten.</span>
+          </div>
+          <div class="card">
+            <strong>Karten</strong>
+            <span>Nur bereits gecachte Kartenausschnitte sind ohne Verbindung verfügbar.</span>
+          </div>
+          <div class="card">
+            <strong>Synchron prüfen</strong>
+            <span>Sobald wieder Netz da ist, kann die App normale Seiten und Importe wieder direkt laden.</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="button primary" type="button" onclick="window.location.reload()">
+            Verbindung erneut prüfen
+          </button>
+          <button class="button secondary" type="button" onclick="history.back()">
+            Zurück
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

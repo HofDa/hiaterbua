@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hiaterbua
 
-## Getting Started
+Offline-faehige Feld- und Alm-Dokumentation fuer Herden, Pferche, Weidegaenge und Arbeitseinsaetze.
 
-First, run the development server:
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Die App laeuft dann unter `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npx next build --webpack
+```
 
-## Learn More
+Der Webpack-Build ist aktuell bewusst der Produktions-Check. Der normale `next build` laeuft in dieser Umgebung in einen Turbopack-Fehler, waehrend der Webpack-Build sauber durchlaeuft.
 
-To learn more about Next.js, take a look at the following resources:
+## Vercel Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Die App ist fuer Vercel vorbereitet.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Empfohlene Einstellungen
 
-## Deploy on Vercel
+- Framework Preset: `Next.js`
+- Root Directory: Projektordner `hiaterbua`
+- Install Command: `npm ci`
+- Build Command: `npx next build --webpack`
+- Output Directory: leer lassen
+- Node.js Version: `22.x`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Ablauf
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Repository nach GitHub pushen.
+2. In Vercel `Add New -> Project` waehlen.
+3. Das GitHub-Repository importieren.
+4. Als Root Directory den App-Ordner `hiaterbua` setzen, falls Vercel nicht direkt dort landet.
+5. Die obigen Build-Einstellungen uebernehmen und deployen.
+
+### Hinweise fuer Feldtests
+
+- Die App speichert ihre Daten lokal im Browser per IndexedDB. Testdaten bleiben also geraetebezogen.
+- Service Worker und Installierbarkeit funktionieren nur ueber HTTPS oder lokal auf `localhost`.
+- Fuer echte Feldtests sollte die App nach dem ersten Aufruf einmal komplett geladen werden, damit Assets und Offline-Seite gecacht werden.
+
+## Hosting Note
+
+GitHub Pages ist fuer diese App nicht geeignet, weil die dynamischen Next.js-Routen nicht als reine statische Dateien ausgeliefert werden.
