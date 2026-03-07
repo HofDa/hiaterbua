@@ -46,7 +46,7 @@ const fieldStartLinks = [
 const utilityLinks = [
   {
     href: '/export',
-    label: 'Import & Export',
+    label: 'Im-/Export',
     className:
       'border-[#ccb98a] bg-[#fffdf6] text-[#17130f]',
   },

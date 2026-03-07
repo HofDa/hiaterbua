@@ -12,7 +12,6 @@
   --brand: #ccb98a;
   --brand-dark: #5a5347;
   --accent: #efe4c8;
-  --shell-scroll-offset: clamp(7rem, 12vh, 9.5rem);
   --font-sans:
     "Segoe UI", "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono:
@@ -26,8 +25,6 @@ body {
   min-height: 100%;
   background: linear-gradient(180deg, #c9bea8 0%, var(--background) 28%, #e7e0d2 100%);
   color: var(--text-main);
-  scroll-snap-type: y proximity;
-  scroll-padding-top: var(--shell-scroll-offset);
 }
 
 * {
@@ -96,14 +93,4 @@ textarea {
 .maplibregl-ctrl button {
   background: #fffdf6;
   color: #111111;
-}
-
-main > section,
-main > article,
-main > div > section,
-main > div > article,
-main > section > div,
-main > section > article {
-  scroll-snap-align: start;
-  scroll-margin-top: var(--shell-scroll-offset);
 }

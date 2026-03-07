@@ -689,6 +689,24 @@ export function EarTagScanPanel({
   const effectiveDraft = scanDraft ?? value
   const cleanedDraft = effectiveDraft.trim()
   const isReadingOcr = ocrStatus === 'preparing' || ocrStatus === 'reading'
+  const cameraGuideTitle =
+    cameraStep === 'ready'
+      ? 'Kamera bereit'
+      : cameraStep === 'framing'
+        ? cameraStatus === 'starting'
+          ? 'Kamera startet'
+          : 'Scan-Fokus'
+        : 'Ergebnis pruefen'
+  const cameraGuideDetail =
+    cameraStep === 'ready'
+      ? 'Rueckkamera wird genutzt, wenn das Geraet sie anbietet.'
+      : cameraStep === 'framing'
+        ? cameraStatus === 'starting'
+          ? 'Bitte kurz warten, bis das Kamerabild erscheint.'
+          : 'Ohrmarke moeglichst frontal und allein in den Rahmen nehmen.'
+        : isReadingOcr
+          ? 'OCR liest jetzt den markierten Mittelbereich.'
+          : 'Foto ansehen und Ergebnis darunter pruefen.'
   const cameraStateLabel =
     cameraStep === 'captured'
       ? ocrStatus === 'reading'
@@ -1235,30 +1253,6 @@ export function EarTagScanPanel({
                   />
                 ) : null}
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,253,246,0.12),rgba(42,34,25,0.12))]" />
-                <div className="pointer-events-none absolute left-4 right-4 top-4 z-10 flex justify-center">
-                  <div className="rounded-full border border-[#d8ccb2] bg-[rgba(255,253,246,0.88)] px-4 py-2 text-center shadow-sm backdrop-blur-sm">
-                    <div className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-neutral-700">
-                      {cameraStep === 'ready'
-                        ? 'Kamera bereit'
-                        : cameraStep === 'framing'
-                          ? cameraStatus === 'starting'
-                            ? 'Kamera startet'
-                            : 'Scan-Fokus'
-                          : 'Ergebnis pruefen'}
-                    </div>
-                    <div className="mt-1 text-xs font-medium text-neutral-900">
-                      {cameraStep === 'ready'
-                        ? 'Rueckkamera wird genutzt, wenn das Geraet sie anbietet'
-                        : cameraStep === 'framing'
-                          ? cameraStatus === 'starting'
-                            ? 'Bitte kurz warten, bis das Kamerabild erscheint'
-                            : 'Ohrmarke moeglichst frontal und allein in den Rahmen nehmen'
-                          : isReadingOcr
-                            ? 'OCR liest jetzt den markierten Mittelbereich'
-                            : 'Foto ansehen und Ergebnis darunter pruefen'}
-                    </div>
-                  </div>
-                </div>
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
                   <div
                     className="relative rounded-[1.2rem] border-[3px] border-[rgba(255,253,246,0.96)] shadow-[0_0_0_1px_rgba(23,57,44,0.55),0_18px_36px_rgba(23,57,44,0.18)]"
@@ -1275,6 +1269,15 @@ export function EarTagScanPanel({
                     <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[rgba(255,253,246,0.4)]" />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-[1rem] border border-[#d8ccb2] bg-[#f7f2e7] px-4 py-3 shadow-sm">
+              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-700">
+                {cameraGuideTitle}
+              </div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">
+                {cameraGuideDetail}
               </div>
             </div>
 

@@ -9,7 +9,7 @@ const items = [
   { href: '/sessions', label: 'Weidegänge' },
   { href: '/enclosures', label: 'Pferche' },
   { href: '/herds', label: 'Herde' },
-  { href: '/export', label: 'Import' },
+  { href: '/export', label: 'Im-/Export' },
   { href: '/settings', label: 'Einstellungen' },
 ]
 

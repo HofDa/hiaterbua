@@ -9,7 +9,7 @@ const navItems = [
   { href: '/sessions', label: 'Weidegänge' },
   { href: '/enclosures', label: 'Pferche' },
   { href: '/herds', label: 'Herde' },
-  { href: '/export', label: 'Export & Import' },
+  { href: '/export', label: 'Im-/Export' },
   { href: '/settings', label: 'Einstellungen' },
 ]
 

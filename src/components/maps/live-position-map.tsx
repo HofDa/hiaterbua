@@ -2965,7 +2965,7 @@ export function LivePositionMap() {
                       disabled={isEditing}
                       className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-[#17130f] disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
                     >
-                      {isEditing ? '...' : 'Speichern'}
+                      {isEditing ? '...' : 'Pferch speichern'}
                     </button>
                     <button
                       type="button"
@@ -3556,7 +3556,7 @@ export function LivePositionMap() {
                     onClick={() => focusEnclosure(enclosure)}
                     className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
                   >
-                    Fokussieren
+                    Fokus
                   </button>
                   <button
                     type="button"
@@ -3626,7 +3626,7 @@ export function LivePositionMap() {
                       ) : null}
                     </div>
 
-                    <div className="hidden grid-cols-2 gap-2 lg:grid">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={startAddEditPoint}
@@ -3650,13 +3650,13 @@ export function LivePositionMap() {
                       </div>
                     ) : null}
 
-                    <div className="hidden grid-cols-2 gap-2 lg:grid">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         type="submit"
                         disabled={isEditing}
                         className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-sm font-medium text-[#17130f] disabled:opacity-50"
                       >
-                        {isEditing ? 'Speichert ...' : 'Änderungen speichern'}
+                        {isEditing ? 'Speichert ...' : 'Pferch speichern'}
                       </button>
                       <button
                         type="button"
