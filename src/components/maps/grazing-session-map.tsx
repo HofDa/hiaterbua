@@ -1979,16 +1979,15 @@ export function GrazingSessionMap() {
             </div>
 
             {isBaseLayerMenuOpen ? (
-              <div className="rounded-[1.15rem] border border-white bg-white p-2 shadow-lg">
-                <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
+              <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-white bg-white/95 p-1.5 shadow-lg">
+                <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
                   Kartengrundlage
                 </div>
-                <div className="grid gap-2">
                   <button
                     type="button"
                     onClick={() => void updateBaseLayer('south-tyrol-orthophoto-2023')}
                     className={[
-                      'rounded-2xl px-3 py-3 text-left text-sm font-medium',
+                      'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       baseLayer === 'south-tyrol-orthophoto-2023'
                         ? 'bg-black text-white'
                         : 'bg-stone-200 text-neutral-950',
@@ -2000,7 +1999,7 @@ export function GrazingSessionMap() {
                     type="button"
                     onClick={() => void updateBaseLayer('south-tyrol-basemap')}
                     className={[
-                      'rounded-2xl px-3 py-3 text-left text-sm font-medium',
+                      'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       baseLayer === 'south-tyrol-basemap'
                         ? 'bg-black text-white'
                         : 'bg-stone-200 text-neutral-950',
@@ -2012,37 +2011,34 @@ export function GrazingSessionMap() {
                     type="button"
                     onClick={() => setShowSurveyAreas((current) => !current)}
                     className={[
-                      'rounded-2xl px-3 py-3 text-left text-sm font-medium',
+                      'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       showSurveyAreas ? 'bg-cyan-100 text-cyan-950' : 'bg-stone-200 text-neutral-950',
                     ].join(' ')}
                   >
-                    Untersuchungsflächen {showSurveyAreas ? 'ausblenden' : 'anzeigen'}
+                    Flächen {showSurveyAreas ? 'an' : 'aus'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowSessionEventsOnMap((current) => !current)}
                     className={[
-                      'rounded-2xl px-3 py-3 text-left text-sm font-medium',
+                      'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       showSessionEventsOnMap
                         ? 'bg-amber-100 text-amber-950'
                         : 'bg-stone-200 text-neutral-950',
                     ].join(' ')}
                   >
-                    Ereignisse {showSessionEventsOnMap ? 'ausblenden' : 'anzeigen'}
+                    Ereignisse {showSessionEventsOnMap ? 'an' : 'aus'}
                   </button>
                   <button
                     type="button"
                     onClick={() => void prefetchVisibleMapArea()}
                     disabled={prefetchingMapArea}
-                    className="rounded-2xl bg-emerald-50 px-3 py-3 text-left text-sm font-medium text-emerald-900 disabled:opacity-50"
+                    className="mt-1.5 w-full rounded-xl bg-emerald-50 px-2.5 py-2 text-left text-xs font-medium text-emerald-900 disabled:opacity-50"
                   >
-                    {prefetchingMapArea
-                      ? 'Sichert Kartenausschnitt ...'
-                      : 'Kartenausschnitt offline sichern'}
+                    {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
                   </button>
-                </div>
                 {prefetchStatus ? (
-                  <div className="mt-2 rounded-[1rem] bg-stone-200 px-3 py-3 text-xs font-medium text-neutral-900">
+                  <div className="mt-1.5 rounded-xl bg-stone-200 px-2.5 py-2 text-[11px] font-medium text-neutral-900">
                     {prefetchStatus}
                   </div>
                 ) : null}
