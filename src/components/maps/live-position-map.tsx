@@ -125,6 +125,47 @@ function CenterIcon() {
   )
 }
 
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+      <path d="M8 6.5v11l9-5.5-9-5.5Z" />
+    </svg>
+  )
+}
+
+function StopIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+      <rect x="7" y="7" width="10" height="10" rx="1.5" />
+    </svg>
+  )
+}
+
+function UndoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
+      <path
+        d="M9 7 5 11l4 4M6 11h7a5 5 0 1 1 0 10"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
+      <path
+        d="M7 7l10 10M17 7 7 17"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 function formatAccuracy(accuracy: number) {
   if (!Number.isFinite(accuracy)) return 'unbekannt'
   return `${Math.round(accuracy)} m`
@@ -2764,7 +2805,7 @@ export function LivePositionMap() {
                     title="Zeichnen starten"
                     onClick={startDrawing}
                     disabled={isDrawing}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
                   >
                     +
                   </button>
@@ -2774,7 +2815,7 @@ export function LivePositionMap() {
                     title="Zeichnen beenden"
                     onClick={finishDrawing}
                     disabled={!isDrawing}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
                   >
                     ✓
                   </button>
@@ -2784,7 +2825,7 @@ export function LivePositionMap() {
                     title="Letzten Punkt löschen"
                     onClick={undoLastPoint}
                     disabled={draftPoints.length === 0}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
                   >
                     ↶
                   </button>
@@ -2794,7 +2835,7 @@ export function LivePositionMap() {
                     title="Entwurf verwerfen"
                     onClick={clearDraft}
                     disabled={draftPoints.length === 0}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
                   >
                     ×
                   </button>
@@ -2815,7 +2856,7 @@ export function LivePositionMap() {
                     disabled={isWalking || isDrawing}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
                   >
-                    +
+                    <PlayIcon />
                   </button>
                   <button
                     type="button"
@@ -2825,7 +2866,7 @@ export function LivePositionMap() {
                     disabled={!isWalking}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
                   >
-                    ✓
+                    <StopIcon />
                   </button>
                   <button
                     type="button"
@@ -2835,7 +2876,7 @@ export function LivePositionMap() {
                     disabled={walkPoints.length === 0}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
                   >
-                    ↶
+                    <UndoIcon />
                   </button>
                   <button
                     type="button"
@@ -2845,7 +2886,7 @@ export function LivePositionMap() {
                     disabled={walkPoints.length === 0 && !isWalking}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
                   >
-                    ×
+                    <CloseIcon />
                   </button>
                 </div>
               </div>

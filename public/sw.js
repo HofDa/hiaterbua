@@ -1,8 +1,8 @@
 const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
 const APP_CACHE_NAME = 'hiaterbua-app-shell-v1'
 const OFFLINE_URL = '/offline.html'
-const DB_NAME = 'hirtenapp-db'
-const DB_VERSION = 6
+const DB_NAME = 'hirtenapp-tile-db'
+const DB_VERSION = 1
 const MAP_TILE_STORE = 'mapTiles'
 
 let tileCachingEnabled = false

@@ -1,7 +1,9 @@
-import { db } from '@/lib/db/dexie'
+import Dexie, { type Table } from 'dexie'
 import type { MapBaseLayer } from '@/types/domain'
+import type { MapTileRecord } from '@/types/domain'
 
 export const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
+export const TILE_DB_NAME = 'hirtenapp-tile-db'
 export const MAX_PREFETCH_TILES = 1200
 export const PREFETCH_CONCURRENCY = 8
 
@@ -25,6 +27,20 @@ export const SOUTH_TYROL_BOUNDS: TileBounds = {
   east: 12.4718,
   west: 10.3567,
 }
+
+class TileCacheDB extends Dexie {
+  mapTiles!: Table<MapTileRecord, string>
+
+  constructor() {
+    super(TILE_DB_NAME)
+
+    this.version(1).stores({
+      mapTiles: 'url, updatedAt',
+    })
+  }
+}
+
+const tileDb = new TileCacheDB()
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -115,7 +131,7 @@ export async function getTileCacheCount() {
     return null
   }
 
-  return db.mapTiles.count()
+  return tileDb.mapTiles.count()
 }
 
 export async function clearTileCacheStorage() {
@@ -123,7 +139,7 @@ export async function clearTileCacheStorage() {
     return false
   }
 
-  await db.mapTiles.clear()
+  await tileDb.mapTiles.clear()
 
   if ('caches' in window) {
     await window.caches.delete(TILE_CACHE_NAME)
@@ -163,7 +179,7 @@ async function persistTileResponse(
   }
 
   const blob = await response.clone().blob()
-  await db.mapTiles.put({
+  await tileDb.mapTiles.put({
     url: request.url,
     blob,
     contentType: response.headers.get('content-type') ?? undefined,

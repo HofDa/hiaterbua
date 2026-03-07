@@ -128,6 +128,45 @@ function CenterIcon() {
   )
 }
 
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+      <path d="M8 6.5v11l9-5.5-9-5.5Z" />
+    </svg>
+  )
+}
+
+function PauseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
+      <path d="M9 7v10M15 7v10" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function StopIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+      <rect x="7" y="7" width="10" height="10" rx="1.5" />
+    </svg>
+  )
+}
+
+function TrackpointsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
+      <circle cx="7" cy="12" r="1.8" strokeWidth="1.8" />
+      <circle cx="15.5" cy="8" r="1.8" strokeWidth="1.8" />
+      <circle cx="15.5" cy="16" r="1.8" strokeWidth="1.8" />
+      <path
+        d="M8.8 11.2 13.7 8.8M8.8 12.8l4.9 2.4"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 function formatAccuracy(accuracy: number | null | undefined) {
   if (typeof accuracy !== 'number' || !Number.isFinite(accuracy)) return 'unbekannt'
   return `${Math.round(accuracy)} m`
@@ -576,6 +615,7 @@ export function GrazingSessionMap() {
   const [lastPositionDecision, setLastPositionDecision] = useState<PositionDecision | null>(
     null
   )
+  const [liveDurationTick, setLiveDurationTick] = useState(() => Date.now())
   const [isLiveStatusOpen, setIsLiveStatusOpen] = useState(false)
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false)
   const [expandedHistoryDays, setExpandedHistoryDays] = useState<string[]>([])
@@ -674,14 +714,34 @@ export function GrazingSessionMap() {
     return buildSessionEventFeatureCollection(Array.from(mergedEvents.values()))
   }, [safeCurrentSessionEvents, safeSelectedSessionEvents])
 
+  useEffect(() => {
+    if (currentSession?.status !== 'active') return
+
+    const intervalId = window.setInterval(() => {
+      setLiveDurationTick(Date.now())
+    }, 1000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [currentSession?.status])
+
   const currentMetrics = useMemo(() => {
     if (!currentSession) return null
+
+    const effectiveEndTime =
+      currentSession.status === 'active'
+        ? new Date(liveDurationTick).toISOString()
+        : currentSession.status === 'finished'
+          ? currentSession.endTime
+          : currentSession.updatedAt
+
     return buildSessionMetrics(
       safeCurrentTrackpoints,
       currentSession.startTime,
-      currentSession.status === 'finished' ? currentSession.endTime : null
+      effectiveEndTime
     )
-  }, [currentSession, safeCurrentTrackpoints])
+  }, [currentSession, liveDurationTick, safeCurrentTrackpoints])
 
   const selectedMetrics = useMemo(() => {
     if (!selectedSession) return null
@@ -1903,7 +1963,10 @@ export function GrazingSessionMap() {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
             <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-[1.35rem] border border-white/80 bg-[rgba(255,252,246,0.94)] px-2 py-2 shadow-[0_12px_30px_rgba(23,20,18,0.18)] backdrop-blur">
               <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
-                ⦿ {safeCurrentTrackpoints.length} · {formatDistance(currentMetrics?.distanceM ?? 0)}
+                <span className="inline-flex items-center gap-1">
+                  <TrackpointsIcon />
+                  <span>{safeCurrentTrackpoints.length} · {formatDistance(currentMetrics?.distanceM ?? 0)}</span>
+                </span>
               </div>
               <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
                 {formatDuration(currentMetrics?.durationS ?? 0)}
@@ -1922,7 +1985,7 @@ export function GrazingSessionMap() {
                 }
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
               >
-                ▶
+                <PlayIcon />
               </button>
               <button
                 type="button"
@@ -1932,7 +1995,7 @@ export function GrazingSessionMap() {
                 disabled={isSaving || currentSessionStatus !== 'active'}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
               >
-                ⏸
+                <PauseIcon />
               </button>
               <button
                 type="button"
@@ -1942,7 +2005,7 @@ export function GrazingSessionMap() {
                 disabled={isSaving || (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-base font-semibold text-white disabled:opacity-50"
               >
-                ■
+                <StopIcon />
               </button>
             </div>
           </div>
