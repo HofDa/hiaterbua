@@ -6,6 +6,7 @@ import type {
   EnclosureAssignment,
   GrazingSession,
   Herd,
+  MapTileRecord,
   SessionEvent,
   SurveyArea,
   TrackPoint,
@@ -25,6 +26,7 @@ export class HirtenAppDB extends Dexie {
   workSessions!: Table<WorkSession, string>
   workEvents!: Table<WorkEvent, string>
   settings!: Table<AppSettings, 'app'>
+  mapTiles!: Table<MapTileRecord, string>
 
   constructor() {
     super('hirtenapp-db')
@@ -81,6 +83,22 @@ export class HirtenAppDB extends Dexie {
       workSessions: 'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt',
       workEvents: 'id, workSessionId, timestamp, type',
       settings: 'id',
+    })
+
+    this.version(6).stores({
+      herds: 'id, name, isArchived, updatedAt',
+      animals: 'id, herdId, earTag, species, isArchived, updatedAt',
+      enclosures:
+        'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt',
+      surveyAreas: 'id, name, createdAt, updatedAt',
+      enclosureAssignments: 'id, enclosureId, herdId, startTime, endTime, updatedAt',
+      sessions: 'id, herdId, status, startTime, endTime, updatedAt',
+      trackpoints: 'id, sessionId, enclosureWalkId, seq, timestamp, accepted',
+      events: 'id, sessionId, timestamp, type',
+      workSessions: 'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt',
+      workEvents: 'id, workSessionId, timestamp, type',
+      settings: 'id',
+      mapTiles: 'url, updatedAt',
     })
   }
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { LngLatLike, Map as MapLibreMap, Marker, StyleSpecification } from 'maplibre-gl'
 import { db } from '@/lib/db/dexie'
 import {
   MAX_PREFETCH_TILES,
@@ -11,6 +12,8 @@ import {
   clearTileCacheStorage,
   getTileCacheCount,
   prefetchTileUrls,
+  getPersistentStorageStatus,
+  requestPersistentStorage,
 } from '@/lib/maps/tile-cache'
 import { defaultAppSettings, normalizeMapBaseLayer } from '@/lib/settings/defaults'
 import type { AppSettings, MapBaseLayer } from '@/types/domain'
@@ -28,6 +31,115 @@ const prefetchLayerOptions = [
 ] as const
 
 type PrefetchLayerChoice = (typeof prefetchLayerOptions)[number]['value']
+
+const previewCenter: LngLatLike = [11.35, 46.5]
+const previewBaseLayerId = 'settings-preview-basemap'
+const previewBaseSourceId = 'settings-preview-basemap-source'
+const previewRasterStyle: StyleSpecification = {
+  version: 8,
+  sources: {
+    [previewBaseSourceId]: {
+      type: 'raster',
+      tiles: [
+        'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=p_bz-BaseMap:Basemap-Standard&STYLES=&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png',
+      ],
+      tileSize: 256,
+      attribution: 'Provincia autonoma di Bolzano - BaseMap Suedtirol',
+      maxzoom: 20,
+    },
+  },
+  layers: [
+    {
+      id: previewBaseLayerId,
+      type: 'raster',
+      source: previewBaseSourceId,
+    },
+  ],
+}
+
+function formatCurrentPositionError(error: GeolocationPositionError) {
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      return 'Standortfreigabe im Browser oder auf dem Gerät aktivieren.'
+    case error.POSITION_UNAVAILABLE:
+      return 'Standort ist gerade nicht verfügbar. Bitte im Freien oder mit besserem Empfang erneut versuchen.'
+    case error.TIMEOUT:
+      return 'Standortbestimmung hat zu lange gedauert. Bitte erneut versuchen.'
+    default:
+      return 'Standort konnte nicht gelesen werden.'
+  }
+}
+
+function PositionPreviewMap({
+  latitude,
+  longitude,
+}: {
+  latitude: number
+  longitude: number
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const mapRef = useRef<MapLibreMap | null>(null)
+  const markerRef = useRef<Marker | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function setupMap() {
+      if (!containerRef.current || mapRef.current) return
+
+      const maplibre = await import('maplibre-gl')
+      if (cancelled || !containerRef.current) return
+
+      const map = new maplibre.Map({
+        container: containerRef.current,
+        style: previewRasterStyle,
+        center: previewCenter,
+        zoom: 9,
+      })
+
+      map.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right')
+
+      mapRef.current = map
+      markerRef.current = new maplibre.Marker({
+        color: '#111827',
+      })
+    }
+
+    void setupMap()
+
+    return () => {
+      cancelled = true
+      markerRef.current?.remove()
+      markerRef.current = null
+      mapRef.current?.remove()
+      mapRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    const marker = markerRef.current
+    if (!map || !marker) return
+
+    const lngLat: LngLatLike = [longitude, latitude]
+    marker.setLngLat(lngLat).addTo(map)
+    map.easeTo({
+      center: lngLat,
+      zoom: Math.max(map.getZoom(), 14),
+      duration: 700,
+    })
+  }, [latitude, longitude])
+
+  return (
+    <div className="overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/70 shadow-sm">
+      <div
+        ref={containerRef}
+        className="h-64 w-full"
+        aria-label="Kartenansicht der aktuellen Position"
+      />
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const settings = useLiveQuery(() => db.settings.get('app'), [])
@@ -50,6 +162,22 @@ export default function SettingsPage() {
   const [prefetching, setPrefetching] = useState(false)
   const [southTyrolPrefetching, setSouthTyrolPrefetching] = useState(false)
   const [highDetailPrefetching, setHighDetailPrefetching] = useState(false)
+  const [currentPositionLoading, setCurrentPositionLoading] = useState(false)
+  const [currentPositionStatus, setCurrentPositionStatus] = useState('')
+  const [isTileCacheOpen, setIsTileCacheOpen] = useState(false)
+  const [isPrefetchOpen, setIsPrefetchOpen] = useState(false)
+  const [persistentStorageGranted, setPersistentStorageGranted] = useState<boolean | null>(null)
+  const [persistentStorageLoading, setPersistentStorageLoading] = useState(false)
+
+  const parsedPreviewPosition = useMemo(() => {
+    const latitude = Number.parseFloat(prefetchLat)
+    const longitude = Number.parseFloat(prefetchLon)
+
+    if (!Number.isFinite(latitude) || latitude < -85.05113 || latitude > 85.05113) return null
+    if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) return null
+
+    return { latitude, longitude }
+  }, [prefetchLat, prefetchLon])
 
   useEffect(() => {
     if (settings === undefined) return
@@ -68,6 +196,23 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setTileCacheSupported(typeof window !== 'undefined' && 'caches' in window)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPersistentStorageStatus() {
+      const nextStatus = await getPersistentStorageStatus()
+      if (!cancelled) {
+        setPersistentStorageGranted(nextStatus)
+      }
+    }
+
+    void loadPersistentStorageStatus()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
@@ -109,6 +254,10 @@ export default function SettingsPage() {
     }
 
     await db.settings.put(nextSettings)
+    if (nextSettings.tileCachingEnabled) {
+      const persistent = await requestPersistentStorage()
+      setPersistentStorageGranted(persistent)
+    }
     if (!nextSettings.tileCachingEnabled) {
       await clearTileCacheStorage()
     }
@@ -137,23 +286,48 @@ export default function SettingsPage() {
     }
   }
 
+  async function enablePersistentStorage() {
+    setPersistentStorageLoading(true)
+
+    try {
+      const granted = await requestPersistentStorage()
+      setPersistentStorageGranted(granted)
+      setStatus(
+        granted
+          ? 'Permanenter Speicher wurde angefragt und gewährt.'
+          : 'Permanenter Speicher konnte nicht dauerhaft zugesichert werden.'
+      )
+    } finally {
+      setPersistentStorageLoading(false)
+    }
+  }
+
   function applyCurrentPosition() {
     setPrefetchError('')
+    setPrefetchStatus('')
+    setCurrentPositionStatus('')
 
     if (!('geolocation' in navigator)) {
       setPrefetchError('Geolocation ist auf diesem Gerät nicht verfügbar.')
       return
     }
 
+    setCurrentPositionLoading(true)
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setPrefetchLat(position.coords.latitude.toFixed(5))
         setPrefetchLon(position.coords.longitude.toFixed(5))
+        setCurrentPositionLoading(false)
+        setCurrentPositionStatus(
+          `Standort übernommen (${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}). Genauigkeit ca. ${Math.round(position.coords.accuracy)} m.`
+        )
       },
-      () => {
-        setPrefetchError('Standort konnte nicht gelesen werden.')
+      (error) => {
+        setCurrentPositionLoading(false)
+        setPrefetchError(formatCurrentPositionError(error))
       },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
     )
   }
 
@@ -456,39 +630,69 @@ export default function SettingsPage() {
           </label>
 
           <div className="rounded-[1.25rem] border border-white bg-white/70 px-4 py-4">
-            <div className="flex items-start justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setIsTileCacheOpen((current) => !current)}
+              aria-expanded={isTileCacheOpen}
+              className="flex w-full items-start justify-between gap-3 text-left"
+            >
               <div>
                 <div className="text-sm font-medium text-neutral-900">Tile-Cache</div>
                 <div className="mt-1 text-sm text-neutral-600">
                   {tileCacheSupported
                     ? draft.tileCachingEnabled
-                    ? 'Kartentiles können lokal für Offline-Nutzung gehalten werden.'
+                      ? 'Kartentiles können lokal für Offline-Nutzung gehalten werden.'
                       : 'Caching ist ausgeschaltet. Bereits geladene Tiles können geleert werden.'
                     : 'Dieser Browser stellt die Cache-API nicht bereit.'}
                 </div>
-              </div>
-              <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-neutral-700">
-                {tileCacheLoading
-                  ? 'prüft ...'
-                  : tileCacheCount === null
+                <div className="mt-2 text-xs text-neutral-500">
+                  Persistenter Speicher:{' '}
+                  {persistentStorageGranted === null
                     ? 'unbekannt'
-                    : `${tileCacheCount} Tiles`}
+                    : persistentStorageGranted
+                      ? 'aktiv'
+                      : 'nicht zugesichert'}
+                </div>
               </div>
-            </div>
+              <div className="shrink-0 text-right">
+                <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-neutral-700">
+                  {tileCacheLoading
+                    ? 'prüft ...'
+                    : tileCacheCount === null
+                      ? 'unbekannt'
+                      : `${tileCacheCount} Tiles`}
+                </div>
+                <div className="mt-1 text-base text-neutral-900">
+                  {isTileCacheOpen ? '−' : '+'}
+                </div>
+              </div>
+            </button>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={clearTileCache}
-                disabled={!tileCacheSupported || tileCacheClearing}
-                className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
-              >
-                {tileCacheClearing ? 'Leert ...' : 'Cache leeren'}
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-neutral-500">
-              Die Anzeige ist eine grobe Anzahl lokal gespeicherter Kartentiles.
-            </p>
+            {isTileCacheOpen ? (
+              <>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void enablePersistentStorage()}
+                    disabled={persistentStorageLoading}
+                    className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
+                  >
+                    {persistentStorageLoading ? 'Fragt an ...' : 'Persistenten Speicher anfragen'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearTileCache}
+                    disabled={!tileCacheSupported || tileCacheClearing}
+                    className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
+                  >
+                    {tileCacheClearing ? 'Leert ...' : 'Cache leeren'}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-neutral-500">
+                  Die Anzeige ist eine grobe Anzahl lokal gespeicherter Kartentiles.
+                </p>
+              </>
+            ) : null}
           </div>
 
           {status ? (
@@ -517,11 +721,22 @@ export default function SettingsPage() {
       </section>
 
       <section className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.82)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] backdrop-blur">
-        <h2 className="text-lg font-semibold">Kartenausschnitt vorladen</h2>
-        <p className="mt-2 text-sm text-neutral-600">
-          Bestimmten Ausschnitt gezielt in den Tile-Cache laden, statt nur beim normalen Kartenaufruf.
-        </p>
+        <button
+          type="button"
+          onClick={() => setIsPrefetchOpen((current) => !current)}
+          aria-expanded={isPrefetchOpen}
+          className="flex w-full items-start justify-between gap-3 text-left"
+        >
+          <div>
+            <h2 className="text-lg font-semibold">Kartenausschnitt vorladen</h2>
+            <p className="mt-2 text-sm text-neutral-600">
+              Bestimmten Ausschnitt gezielt in den Tile-Cache laden, statt nur beim normalen Kartenaufruf.
+            </p>
+          </div>
+          <div className="text-base text-neutral-900">{isPrefetchOpen ? '−' : '+'}</div>
+        </button>
 
+        {isPrefetchOpen ? (
         <form className="mt-4 space-y-4" onSubmit={prefetchTiles}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -547,10 +762,27 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={applyCurrentPosition}
+            disabled={currentPositionLoading}
             className="rounded-2xl bg-neutral-100 px-4 py-3 text-sm font-medium text-neutral-900"
           >
-            Aktuellen Standort übernehmen
+            {currentPositionLoading ? 'Standort wird bestimmt ...' : 'Aktuellen Standort übernehmen'}
           </button>
+
+          {currentPositionStatus ? (
+            <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {currentPositionStatus}
+            </div>
+          ) : null}
+
+          {parsedPreviewPosition ? (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-neutral-900">Aktuelle Position auf der Karte</div>
+              <PositionPreviewMap
+                latitude={parsedPreviewPosition.latitude}
+                longitude={parsedPreviewPosition.longitude}
+              />
+            </div>
+          ) : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -665,6 +897,7 @@ export default function SettingsPage() {
             {prefetching ? 'Lädt Tiles ...' : 'Ausschnitt vorladen'}
           </button>
         </form>
+        ) : null}
       </section>
     </div>
   )

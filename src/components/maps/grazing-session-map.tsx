@@ -576,8 +576,10 @@ export function GrazingSessionMap() {
   const [lastPositionDecision, setLastPositionDecision] = useState<PositionDecision | null>(
     null
   )
+  const [isLiveStatusOpen, setIsLiveStatusOpen] = useState(false)
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false)
   const [expandedHistoryDays, setExpandedHistoryDays] = useState<string[]>([])
+  const [expandedHistorySessionId, setExpandedHistorySessionId] = useState<string | null>(null)
 
   const currentTrackpoints = useLiveQuery(async () => {
     if (!currentSessionId) return []
@@ -1813,13 +1815,16 @@ export function GrazingSessionMap() {
   return (
     <section className="space-y-4">
       <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.02em]">Geführter Weidegang</h1>
-            <p className="mt-2 text-sm text-neutral-700">
-              Herde auswählen, GPS-Tracking starten und den Weidegang lokal aufzeichnen.
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setIsLiveStatusOpen((current) => !current)}
+            aria-expanded={isLiveStatusOpen}
+            className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-600"
+          >
+            <span>Live-Status</span>
+            <span className="text-sm text-neutral-900">{isLiveStatusOpen ? '−' : '+'}</span>
+          </button>
           <div
             className={[
               'rounded-full px-3 py-1.5 text-xs font-semibold',
@@ -1834,48 +1839,114 @@ export function GrazingSessionMap() {
           </div>
         </div>
 
-        <p className="mt-3 text-sm font-medium text-neutral-800">{gpsDetail}</p>
-        <p className="mt-2 text-sm text-neutral-700">{gpsFilterDetail}</p>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
-            <div className="text-neutral-700">Aktive Herde</div>
-            <div className="mt-1 font-medium text-neutral-900">
-              {selectedHerd?.name ?? 'noch nicht gewählt'}
+        {isLiveStatusOpen ? (
+          <>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                  GPS
+                </div>
+                <div className="mt-1 text-sm font-medium text-neutral-900">{gpsDetail}</div>
+              </div>
+              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                  Filter
+                </div>
+                <div className="mt-1 text-sm font-medium text-neutral-900">{gpsFilterDetail}</div>
+              </div>
+              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                  Herde
+                </div>
+                <div className="mt-1 text-sm font-medium text-neutral-900">
+                  {selectedHerd?.name ?? 'noch nicht gewählt'}
+                </div>
+              </div>
+              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                  Status
+                </div>
+                <div className="mt-1 text-sm font-medium text-neutral-900">
+                  {currentSessionStatus === 'active'
+                    ? 'Läuft'
+                    : currentSessionStatus === 'paused'
+                      ? 'Pausiert'
+                      : 'Bereit'}
+                </div>
+              </div>
+              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm sm:col-span-2 xl:col-span-2">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                  Koordinaten
+                </div>
+                <div className="mt-1 text-sm font-medium text-neutral-900">
+                  {position
+                    ? `${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`
+                    : 'Noch keine Position'}
+                </div>
+              </div>
+              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm sm:col-span-2 xl:col-span-2">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                  Update
+                </div>
+                <div className="mt-1 text-sm font-medium text-neutral-900">
+                  {position ? formatTimestamp(position.timestamp) : 'Warte auf GPS'}
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
-            <div className="text-neutral-700">Session-Status</div>
-            <div className="mt-1 font-medium text-neutral-900">
-              {currentSessionStatus === 'active'
-                ? 'Läuft'
-                : currentSessionStatus === 'paused'
-                  ? 'Pausiert'
-                  : 'Bereit'}
-            </div>
-          </div>
-        </div>
-
-        {position ? (
-          <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
-              <dt className="text-neutral-700">Koordinaten</dt>
-              <dd className="mt-1 font-medium text-neutral-900">
-                {position.latitude.toFixed(5)}, {position.longitude.toFixed(5)}
-              </dd>
-            </div>
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
-              <dt className="text-neutral-700">Letztes Update</dt>
-              <dd className="mt-1 font-medium text-neutral-900">
-                {formatTimestamp(position.timestamp)}
-              </dd>
-            </div>
-          </dl>
+          </>
         ) : null}
       </div>
 
       <div className="relative overflow-hidden rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
         <div ref={containerRef} className="h-[420px] w-full bg-neutral-100" />
+        {!editingSessionId ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
+            <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-[1.35rem] border border-white/80 bg-[rgba(255,252,246,0.94)] px-2 py-2 shadow-[0_12px_30px_rgba(23,20,18,0.18)] backdrop-blur">
+              <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
+                ⦿ {safeCurrentTrackpoints.length} · {formatDistance(currentMetrics?.distanceM ?? 0)}
+              </div>
+              <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
+                {formatDuration(currentMetrics?.durationS ?? 0)}
+              </div>
+              <button
+                type="button"
+                aria-label={currentSessionStatus === 'paused' ? 'Fortsetzen' : 'Weidegang starten'}
+                title={currentSessionStatus === 'paused' ? 'Fortsetzen' : 'Weidegang starten'}
+                onClick={() =>
+                  void (currentSessionStatus === 'paused' ? resumeSession() : startSession())
+                }
+                disabled={
+                  isSaving ||
+                  currentSessionStatus === 'active' ||
+                  (currentSessionStatus === null && safeHerds.length === 0)
+                }
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
+              >
+                ▶
+              </button>
+              <button
+                type="button"
+                aria-label="Pausieren"
+                title="Pausieren"
+                onClick={() => void pauseSession()}
+                disabled={isSaving || currentSessionStatus !== 'active'}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+              >
+                ⏸
+              </button>
+              <button
+                type="button"
+                aria-label="Weidegang beenden"
+                title="Weidegang beenden"
+                onClick={() => void stopSession()}
+                disabled={isSaving || (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-base font-semibold text-white disabled:opacity-50"
+              >
+                ■
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div className="pointer-events-none absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
           <div className="pointer-events-auto w-44 max-w-[calc(100vw-2rem)]">
             <div className="mb-2 flex justify-start gap-2">
@@ -2062,7 +2133,11 @@ export function GrazingSessionMap() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-4 rounded-2xl bg-stone-50 px-4 py-3 text-sm text-neutral-700 lg:hidden">
+          Die Hauptsteuerung liegt direkt auf der Karte.
+        </div>
+
+        <div className="mt-4 hidden grid-cols-2 gap-3 lg:grid">
           <button
             type="button"
             onClick={() => void startSession()}
@@ -2380,7 +2455,16 @@ export function GrazingSessionMap() {
                           isSelected ? 'bg-emerald-50' : 'bg-neutral-50',
                         ].join(' ')}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedHistorySessionId((current) =>
+                              current === session.id ? null : session.id
+                            )
+                          }
+                          aria-expanded={expandedHistorySessionId === session.id}
+                          className="flex w-full items-start justify-between gap-3 text-left"
+                        >
                           <div>
                             <div className="font-medium text-neutral-900">
                               {herd?.name ?? 'Unbekannte Herde'}
@@ -2394,56 +2478,65 @@ export function GrazingSessionMap() {
                                   : 'aktiv'}
                             </div>
                           </div>
-                          <div className="text-xs text-neutral-500">
-                            {formatDistance(session.distanceM)}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                          <div className="rounded-2xl bg-white px-3 py-3">
-                            <div className="text-neutral-500">Dauer</div>
-                            <div className="mt-1 font-medium text-neutral-900">
-                              {formatDuration(session.durationS)}
+                          <div className="shrink-0 text-right">
+                            <div className="text-xs text-neutral-500">
+                              {formatDistance(session.distanceM)}
+                            </div>
+                            <div className="mt-1 text-base text-neutral-900">
+                              {expandedHistorySessionId === session.id ? '−' : '+'}
                             </div>
                           </div>
-                          <div className="rounded-2xl bg-white px-3 py-3">
-                            <div className="text-neutral-500">Genauigkeit</div>
-                            <div className="mt-1 font-medium text-neutral-900">
-                              {formatAccuracy(session.avgAccuracyM)}
-                            </div>
-                          </div>
-                        </div>
+                        </button>
 
-                        {session.notes ? (
-                          <p className="mt-3 text-sm text-neutral-600">{session.notes}</p>
+                        {expandedHistorySessionId === session.id ? (
+                          <>
+                            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                              <div className="rounded-2xl bg-white px-3 py-3">
+                                <div className="text-neutral-500">Dauer</div>
+                                <div className="mt-1 font-medium text-neutral-900">
+                                  {formatDuration(session.durationS)}
+                                </div>
+                              </div>
+                              <div className="rounded-2xl bg-white px-3 py-3">
+                                <div className="text-neutral-500">Genauigkeit</div>
+                                <div className="mt-1 font-medium text-neutral-900">
+                                  {formatAccuracy(session.avgAccuracyM)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {session.notes ? (
+                              <p className="mt-3 text-sm text-neutral-600">{session.notes}</p>
+                            ) : null}
+
+                            <div className="mt-3 grid grid-cols-1 gap-2">
+                              <div className="grid grid-cols-3 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedSessionId(session.id)}
+                                  className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
+                                >
+                                  Spur anzeigen
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => startEditSession(session.id)}
+                                  className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
+                                >
+                                  Bearbeiten
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void deleteSession(session)}
+                                  disabled={isSaving || session.status === 'active' || session.status === 'paused'}
+                                  className="rounded-2xl bg-red-50 px-3 py-3 text-sm font-medium text-red-700 disabled:opacity-50"
+                                >
+                                  Löschen
+                                </button>
+                              </div>
+                            </div>
+                          </>
                         ) : null}
-
-                        <div className="mt-3 grid grid-cols-1 gap-2">
-                          <div className="grid grid-cols-3 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedSessionId(session.id)}
-                              className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
-                            >
-                              Spur anzeigen
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => startEditSession(session.id)}
-                              className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
-                            >
-                              Bearbeiten
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void deleteSession(session)}
-                              disabled={isSaving || session.status === 'active' || session.status === 'paused'}
-                              className="rounded-2xl bg-red-50 px-3 py-3 text-sm font-medium text-red-700 disabled:opacity-50"
-                            >
-                              Löschen
-                            </button>
-                          </div>
-                        </div>
                       </div>
                     )
                     })}

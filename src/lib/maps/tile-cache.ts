@@ -1,3 +1,4 @@
+import { db } from '@/lib/db/dexie'
 import type { MapBaseLayer } from '@/types/domain'
 
 export const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
@@ -110,32 +111,76 @@ export function buildPrefetchUrlsForRadius(
 }
 
 export async function getTileCacheCount() {
-  if (typeof window === 'undefined' || !('caches' in window)) {
+  if (typeof window === 'undefined') {
     return null
   }
 
-  const cache = await window.caches.open(TILE_CACHE_NAME)
-  const keys = await cache.keys()
-  return keys.length
+  return db.mapTiles.count()
 }
 
 export async function clearTileCacheStorage() {
-  if (typeof window === 'undefined' || !('caches' in window)) {
+  if (typeof window === 'undefined') {
     return false
   }
 
-  return window.caches.delete(TILE_CACHE_NAME)
+  await db.mapTiles.clear()
+
+  if ('caches' in window) {
+    await window.caches.delete(TILE_CACHE_NAME)
+  }
+
+  return true
+}
+
+export async function getPersistentStorageStatus() {
+  if (typeof navigator === 'undefined' || !navigator.storage?.persisted) {
+    return null
+  }
+
+  return navigator.storage.persisted()
+}
+
+export async function requestPersistentStorage() {
+  if (typeof navigator === 'undefined' || !navigator.storage?.persist) {
+    return null
+  }
+
+  return navigator.storage.persist()
+}
+
+async function persistTileResponse(
+  request: Request,
+  response: Response,
+  cache?: Cache | null
+) {
+  if (cache) {
+    await cache.put(request, response.clone())
+  }
+
+  // Opaque responses cannot be reliably serialized into IndexedDB.
+  if (response.type === 'opaque') {
+    return
+  }
+
+  const blob = await response.clone().blob()
+  await db.mapTiles.put({
+    url: request.url,
+    blob,
+    contentType: response.headers.get('content-type') ?? undefined,
+    status: response.status,
+    updatedAt: new Date().toISOString(),
+  })
 }
 
 export async function prefetchTileUrls(
   urls: string[],
   onProgress?: (completed: number, total: number) => void
 ) {
-  if (typeof window === 'undefined' || !('caches' in window)) {
-    throw new Error('Cache API ist nicht verfuegbar.')
+  if (typeof window === 'undefined') {
+    throw new Error('Browser-APIs sind nicht verfuegbar.')
   }
 
-  const cache = await window.caches.open(TILE_CACHE_NAME)
+  const cache = 'caches' in window ? await window.caches.open(TILE_CACHE_NAME) : null
   let completed = 0
 
   for (let index = 0; index < urls.length; index += PREFETCH_CONCURRENCY) {
@@ -151,7 +196,7 @@ export async function prefetchTileUrls(
         const response = await fetch(request)
 
         if (response.ok || response.type === 'opaque') {
-          await cache.put(request, response.clone())
+          await persistTileResponse(request, response, cache)
         } else {
           throw new Error(`Tile konnte nicht geladen werden: ${response.status}`)
         }

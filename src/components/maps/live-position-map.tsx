@@ -664,7 +664,11 @@ export function LivePositionMap() {
   const [selectedWalkPointIndex, setSelectedWalkPointIndex] = useState<number | null>(null)
   const [selectedEnclosureId, setSelectedEnclosureId] = useState<string | null>(null)
   const [showSelectedTrack, setShowSelectedTrack] = useState(false)
+  const [isSelectedEnclosureInfoOpen, setIsSelectedEnclosureInfoOpen] = useState(false)
+  const [expandedSavedEnclosureId, setExpandedSavedEnclosureId] = useState<string | null>(null)
+  const [isWalkPointsOpen, setIsWalkPointsOpen] = useState(false)
   const [editingEnclosureId, setEditingEnclosureId] = useState<string | null>(null)
+  const [isLiveStatusOpen, setIsLiveStatusOpen] = useState(false)
   const [editName, setEditName] = useState('')
   const [editNotes, setEditNotes] = useState('')
   const [editError, setEditError] = useState('')
@@ -2379,17 +2383,320 @@ export function LivePositionMap() {
         ? 'Letzter Punkt wurde für Karte und Tracking akzeptiert.'
         : 'GPS-Filter noch ohne Entscheidung.'
 
+  const drawStatusText = isDrawing
+    ? 'Jeder Tap auf die Karte setzt einen neuen Punkt.'
+    : 'Zeichnen starten und die Ecken direkt auf der Karte setzen.'
+
+  const drawControls = (
+    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+      <button
+        type="button"
+        onClick={startDrawing}
+        className="rounded-[1.1rem] bg-neutral-950 px-3 py-3 text-sm font-semibold text-white disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={isDrawing}
+      >
+        Start
+      </button>
+      <button
+        type="button"
+        onClick={finishDrawing}
+        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={!isDrawing}
+      >
+        Ende
+      </button>
+      <button
+        type="button"
+        onClick={undoLastPoint}
+        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={draftPoints.length === 0}
+      >
+        Letzter Punkt
+      </button>
+      <button
+        type="button"
+        onClick={clearDraft}
+        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={draftPoints.length === 0}
+      >
+        Verwerfen
+      </button>
+    </div>
+  )
+
+  const drawSummary = (
+    <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm">
+      Punkte gesetzt: <span className="font-medium text-neutral-900">{draftPoints.length}</span>
+      <span className="ml-2">
+        · Fläche <span className="font-medium text-neutral-900">{formatArea(draftAreaM2)}</span>
+      </span>
+    </div>
+  )
+
+  const drawSaveForm = (
+    <form className="mt-4 space-y-4" onSubmit={saveEnclosure}>
+      <div>
+        <label className="mb-1 block text-sm font-medium">Pferchname</label>
+        <input
+          className="w-full rounded-2xl border px-4 py-3"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="z. B. Nordhang 1"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">Notiz</label>
+        <textarea
+          className="w-full rounded-2xl border px-4 py-3"
+          rows={3}
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="optionale Bemerkungen zum Pferch"
+        />
+      </div>
+
+      {saveError ? (
+        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {saveError}
+        </div>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={isSaving || draftPoints.length < 3}
+        className="w-full rounded-2xl bg-emerald-700 px-4 py-4 font-medium text-white disabled:opacity-50"
+      >
+        {isSaving ? 'Speichert ...' : 'Pferch speichern'}
+      </button>
+    </form>
+  )
+
+  const drawWorkspaceContent = (
+    <>
+      <p className="mt-2 text-sm text-neutral-700">{drawStatusText}</p>
+      <div className="mt-4">{drawControls}</div>
+      <div className="mt-4">{drawSummary}</div>
+      {drawSaveForm}
+    </>
+  )
+
+  const walkStatusText = isWalking
+    ? 'GPS-Aufnahme laeuft. Punkte werden direkt auf der Karte markiert.'
+    : 'Walk starten und den Pferch mit GPS-Punkten abgehen.'
+
+  const walkControls = (
+    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+      <button
+        type="button"
+        onClick={() => void startWalkMode()}
+        className="rounded-[1.1rem] bg-neutral-950 px-3 py-3 text-sm font-semibold text-white disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={isWalking || isDrawing}
+      >
+        Start
+      </button>
+      <button
+        type="button"
+        onClick={stopWalkMode}
+        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={!isWalking}
+      >
+        Ende
+      </button>
+      <button
+        type="button"
+        onClick={() => void undoLastWalkPoint()}
+        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={walkPoints.length === 0}
+      >
+        Letzter Punkt
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          selectedWalkPointIndex !== null
+            ? void removeWalkPointAtIndex(selectedWalkPointIndex)
+            : undefined
+        }
+        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={selectedWalkPointIndex === null}
+      >
+        Ausgewählt
+      </button>
+      <button
+        type="button"
+        onClick={() => void discardWalkMode()}
+        className="col-span-2 rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        disabled={walkPoints.length === 0 && !isWalking}
+      >
+        Verwerfen
+      </button>
+    </div>
+  )
+
+  const walkSummary = (
+    <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm">
+      Akzeptierte Walk-Punkte:{' '}
+      <span className="font-medium text-neutral-900">{walkPoints.length}</span>
+      <span className="ml-2">
+        · Fläche <span className="font-medium text-neutral-900">{formatArea(walkAreaM2)}</span>
+      </span>
+    </div>
+  )
+
+  const walkStats = (
+    <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div className="rounded-2xl bg-neutral-50 px-4 py-3">
+        <div className="text-neutral-500">Mittlere Genauigkeit</div>
+        <div className="mt-1 font-medium text-neutral-900">
+          {walkPoints.length > 0
+            ? formatAccuracy(
+                walkPoints.reduce((sum, point) => sum + point.accuracy, 0) / walkPoints.length
+              )
+            : 'noch keine Daten'}
+        </div>
+      </div>
+      <div className="rounded-2xl bg-neutral-50 px-4 py-3">
+        <div className="text-neutral-500">Letzter akzeptierter Punkt</div>
+        <div className="mt-1 font-medium text-neutral-900">
+          {walkPoints.length > 0
+            ? formatTimestamp(walkPoints[walkPoints.length - 1].timestamp)
+            : 'noch keiner'}
+        </div>
+      </div>
+    </div>
+  )
+
+  const walkPointsList = walkPoints.length > 0 ? (
+    <div className="mt-4 rounded-2xl bg-neutral-50 px-4 py-3">
+      <button
+        type="button"
+        onClick={() => setIsWalkPointsOpen((current) => !current)}
+        aria-expanded={isWalkPointsOpen}
+        className="flex w-full items-start justify-between gap-3 text-left"
+      >
+        <div>
+          <h3 className="text-sm font-medium text-neutral-900">Aufgenommene Weidegaenge</h3>
+          <p className="mt-1 text-xs text-neutral-500">
+            {walkPoints.length} Punkte gespeichert
+          </p>
+        </div>
+        <span className="text-base text-neutral-900">{isWalkPointsOpen ? '−' : '+'}</span>
+      </button>
+
+      {isWalkPointsOpen ? (
+        <>
+          {selectedWalkPoint ? (
+            <div className="mt-3 rounded-2xl bg-amber-50 px-3 py-3 text-sm text-amber-900">
+              Ausgewaehlt: Punkt {selectedWalkPointIndex !== null ? selectedWalkPointIndex + 1 : ''}{' '}
+              um {formatPointTimestamp(selectedWalkPoint.timestamp)} mit{' '}
+              {formatAccuracy(selectedWalkPoint.accuracy)}.
+            </div>
+          ) : null}
+
+          <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+            {walkPoints.map((point, index) => (
+              <div
+                key={`${point.timestamp}-${index}`}
+                className={[
+                  'grid grid-cols-[1fr_auto] gap-3 rounded-2xl px-3 py-3 text-sm',
+                  selectedWalkPointIndex === index ? 'bg-amber-100' : 'bg-white',
+                ].join(' ')}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSelectedWalkPointIndex(index)}
+                  className="text-left"
+                >
+                  <div className="font-medium text-neutral-900">Punkt {index + 1}</div>
+                  <div className="mt-1 text-neutral-600">
+                    {point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}
+                  </div>
+                  <div className="mt-1 text-xs text-neutral-500">
+                    {formatPointTimestamp(point.timestamp)} · Genauigkeit {formatAccuracy(point.accuracy)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void removeWalkPointAtIndex(index)}
+                  className="rounded-2xl bg-neutral-100 px-3 py-2 text-xs font-medium text-neutral-900"
+                >
+                  Entfernen
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  ) : null
+
+  const walkSaveForm = (
+    <form className="mt-4 space-y-4" onSubmit={saveWalkEnclosure}>
+      <div>
+        <label className="mb-1 block text-sm font-medium">Pferchname</label>
+        <input
+          className="w-full rounded-2xl border px-4 py-3"
+          value={walkName}
+          onChange={(event) => setWalkName(event.target.value)}
+          placeholder="z. B. Weidekante Ost"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">Notiz</label>
+        <textarea
+          className="w-full rounded-2xl border px-4 py-3"
+          rows={3}
+          value={walkNotes}
+          onChange={(event) => setWalkNotes(event.target.value)}
+          placeholder="optionale Notiz zum abgelaufenen Pferch"
+        />
+      </div>
+
+      {walkError ? (
+        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {walkError}
+        </div>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={isWalkSaving || walkPoints.length < 3}
+        className="w-full rounded-2xl bg-orange-600 px-4 py-4 font-medium text-white disabled:opacity-50"
+      >
+        {isWalkSaving ? 'Speichert ...' : 'Abgelaufenen Pferch speichern'}
+      </button>
+    </form>
+  )
+
+  const walkWorkspaceContent = (
+    <>
+      <p className="mt-2 text-sm text-neutral-700">{walkStatusText}</p>
+      <p className="mt-2 text-xs font-medium text-neutral-700">
+        Walk-Punkte können direkt auf der Karte angetippt und bearbeitet werden.
+      </p>
+      <div className="mt-4">{walkControls}</div>
+      <div className="mt-4">{walkSummary}</div>
+      {walkStats}
+      {walkPointsList}
+      {walkSaveForm}
+    </>
+  )
+
   return (
     <section className="space-y-4">
       <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.02em]">Pferch zeichnen</h1>
-            <p className="mt-2 text-sm text-neutral-700">
-              Punkte auf der Karte setzen, Fläche prüfen und den Pferch lokal
-              speichern.
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setIsLiveStatusOpen((current) => !current)}
+            aria-expanded={isLiveStatusOpen}
+            className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-600"
+          >
+            <span>Live-Status</span>
+            <span className="text-sm text-neutral-900">{isLiveStatusOpen ? '−' : '+'}</span>
+          </button>
           <div
             className={[
               'rounded-full px-3 py-1.5 text-xs font-semibold',
@@ -2404,51 +2711,166 @@ export function LivePositionMap() {
           </div>
         </div>
 
-        <p className="mt-3 text-sm font-medium text-neutral-800">{gpsDetail}</p>
-        <p className="mt-2 text-sm text-neutral-700">{gpsFilterDetail}</p>
-
-        {position ? (
-          <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+        {isLiveStatusOpen ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
-              <dt className="text-neutral-700">Koordinaten</dt>
-              <dd className="mt-1 font-medium text-neutral-900">
-                {position.latitude.toFixed(5)}, {position.longitude.toFixed(5)}
-              </dd>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                GPS
+              </div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">{gpsDetail}</div>
             </div>
             <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
-              <dt className="text-neutral-700">Letztes Update</dt>
-              <dd className="mt-1 font-medium text-neutral-900">
-                {formatTimestamp(position.timestamp)}
-              </dd>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                Filter
+              </div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">{gpsFilterDetail}</div>
             </div>
-          </dl>
+            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                Koordinaten
+              </div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">
+                {position
+                  ? `${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`
+                  : 'Noch keine Position'}
+              </div>
+            </div>
+            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                Update
+              </div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">
+                {position ? formatTimestamp(position.timestamp) : 'Warte auf GPS'}
+              </div>
+            </div>
+          </div>
         ) : null}
+
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.95fr)] lg:items-start">
-        <div className="relative overflow-hidden rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:sticky lg:top-4">
-          <div ref={containerRef} className="h-[420px] w-full bg-neutral-100 sm:h-[520px] lg:h-[calc(100vh-8rem)]" />
-          <div className="pointer-events-none absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
-            <div className="pointer-events-auto w-44 max-w-[calc(100vw-2rem)]">
-              <div className="mb-2 flex justify-start gap-2">
-                <button
-                  type="button"
-                  aria-label="Auf aktuelle Position zentrieren"
-                  onClick={centerMapOnPosition}
-                  disabled={!position}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg disabled:opacity-50"
-                >
-                  <CenterIcon />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Kartengrundlage wählen"
-                  onClick={() => setIsBaseLayerMenuOpen((current) => !current)}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg"
-                >
-                  <LayersIcon />
-                </button>
+        <div className="space-y-4">
+          <div className="relative overflow-hidden rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:sticky lg:top-4">
+            <div ref={containerRef} className="h-[420px] w-full bg-neutral-100 sm:h-[520px] lg:h-[calc(100vh-8rem)]" />
+            {mobilePanel === 'draw' && !editingEnclosureId ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
+                <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-[1.35rem] border border-white/80 bg-[rgba(255,252,246,0.94)] px-2 py-2 shadow-[0_12px_30px_rgba(23,20,18,0.18)] backdrop-blur">
+                  <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
+                    {draftPoints.length} P · {formatArea(draftAreaM2)}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Zeichnen starten"
+                    title="Zeichnen starten"
+                    onClick={startDrawing}
+                    disabled={isDrawing}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Zeichnen beenden"
+                    title="Zeichnen beenden"
+                    onClick={finishDrawing}
+                    disabled={!isDrawing}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Letzten Punkt löschen"
+                    title="Letzten Punkt löschen"
+                    onClick={undoLastPoint}
+                    disabled={draftPoints.length === 0}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  >
+                    ↶
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Entwurf verwerfen"
+                    title="Entwurf verwerfen"
+                    onClick={clearDraft}
+                    disabled={draftPoints.length === 0}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
+            ) : null}
+            {mobilePanel === 'walk' && !editingEnclosureId ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
+                <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-[1.35rem] border border-white/80 bg-[rgba(255,252,246,0.94)] px-2 py-2 shadow-[0_12px_30px_rgba(23,20,18,0.18)] backdrop-blur">
+                  <div className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-neutral-900 shadow-sm">
+                    {walkPoints.length} P · {formatArea(walkAreaM2)}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Walk starten"
+                    title="Walk starten"
+                    onClick={() => void startWalkMode()}
+                    disabled={isWalking || isDrawing}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-base font-semibold text-white disabled:opacity-50"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Walk beenden"
+                    title="Walk beenden"
+                    onClick={stopWalkMode}
+                    disabled={!isWalking}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Letzten Walk-Punkt löschen"
+                    title="Letzten Walk-Punkt löschen"
+                    onClick={() => void undoLastWalkPoint()}
+                    disabled={walkPoints.length === 0}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  >
+                    ↶
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Walk verwerfen"
+                    title="Walk verwerfen"
+                    onClick={() => void discardWalkMode()}
+                    disabled={walkPoints.length === 0 && !isWalking}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-200 text-base font-semibold text-neutral-950 disabled:opacity-50"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            <div className="pointer-events-none absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
+              <div className="pointer-events-auto w-44 max-w-[calc(100vw-2rem)]">
+                <div className="mb-2 flex justify-start gap-2">
+                  <button
+                    type="button"
+                    aria-label="Auf aktuelle Position zentrieren"
+                    onClick={centerMapOnPosition}
+                    disabled={!position}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg disabled:opacity-50"
+                  >
+                    <CenterIcon />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Kartengrundlage wählen"
+                    onClick={() => setIsBaseLayerMenuOpen((current) => !current)}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg"
+                  >
+                    <LayersIcon />
+                  </button>
+                </div>
 
               {isBaseLayerMenuOpen ? (
                 <div className="rounded-[1.15rem] border border-white bg-white p-2 shadow-lg">
@@ -2506,77 +2928,76 @@ export function LivePositionMap() {
                     {prefetchStatus}
                   </div>
                 ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+          {editingEnclosureId ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 sm:p-4">
+                <div className="pointer-events-auto rounded-[1.35rem] border border-white bg-white p-2 shadow-lg sm:rounded-[1.75rem] sm:p-3">
+                  <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                        Pferch bearbeiten
+                      </div>
+                      <div className="text-[11px] text-neutral-800 sm:hidden">
+                        {isAddingEditPoint
+                          ? 'Neuer Punkt: nächster Tap auf Karte.'
+                          : selectedEditPointIndex !== null
+                            ? `Punkt ${selectedEditPointIndex + 1} aktiv.`
+                            : 'Punkt antippen oder Aktion wählen.'}
+                      </div>
+                      <div className="mt-1 hidden text-xs text-neutral-800 sm:block">
+                        {isAddingEditPoint
+                          ? 'Nächster Kartenklick setzt einen neuen Punkt.'
+                          : selectedEditPointIndex !== null
+                            ? `Punkt ${selectedEditPointIndex + 1} ist zum Verschieben ausgewählt.`
+                            : 'Punkt antippen und neu setzen oder unten Aktion wählen.'}
+                      </div>
+                    </div>
+                    <div className="shrink-0 rounded-full bg-cyan-50 px-2 py-1 text-[11px] font-medium text-cyan-900 sm:px-3 sm:text-xs">
+                      {editGeometryPoints.length} Punkte
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <button
+                      type="button"
+                      onClick={startAddEditPoint}
+                      className="rounded-2xl bg-cyan-100 px-2 py-2.5 text-xs font-medium text-cyan-900 sm:px-3 sm:py-3 sm:text-sm"
+                    >
+                      Punkt +
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removeSelectedEditPoint}
+                      disabled={selectedEditPointIndex === null || editGeometryPoints.length <= 3}
+                      className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+                    >
+                      Punkt -
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void persistEditedEnclosure()}
+                      disabled={isEditing}
+                      className="rounded-2xl bg-neutral-950 px-2 py-2.5 text-xs font-semibold text-white disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+                    >
+                      {isEditing ? '...' : 'Speichern'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEditEnclosure}
+                      className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
+                    >
+                      Schließen
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : null}
           </div>
-          </div>
-          {editingEnclosureId ? (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 sm:p-4">
-              <div className="pointer-events-auto rounded-[1.35rem] border border-white bg-white p-2 shadow-lg sm:rounded-[1.75rem] sm:p-3">
-                <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:gap-3">
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-neutral-900 sm:text-sm">
-                      Pferch bearbeiten
-                    </div>
-                    <div className="text-[11px] text-neutral-800 sm:hidden">
-                      {isAddingEditPoint
-                        ? 'Neuer Punkt: nächster Tap auf Karte.'
-                        : selectedEditPointIndex !== null
-                          ? `Punkt ${selectedEditPointIndex + 1} aktiv.`
-                          : 'Punkt antippen oder Aktion wählen.'}
-                    </div>
-                    <div className="mt-1 hidden text-xs text-neutral-800 sm:block">
-                      {isAddingEditPoint
-                        ? 'Nächster Kartenklick setzt einen neuen Punkt.'
-                        : selectedEditPointIndex !== null
-                          ? `Punkt ${selectedEditPointIndex + 1} ist zum Verschieben ausgewählt.`
-                          : 'Punkt antippen und neu setzen oder unten Aktion wählen.'}
-                    </div>
-                  </div>
-                  <div className="shrink-0 rounded-full bg-cyan-50 px-2 py-1 text-[11px] font-medium text-cyan-900 sm:px-3 sm:text-xs">
-                    {editGeometryPoints.length} Punkte
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={startAddEditPoint}
-                    className="rounded-2xl bg-cyan-100 px-2 py-2.5 text-xs font-medium text-cyan-900 sm:px-3 sm:py-3 sm:text-sm"
-                  >
-                    Punkt +
-                  </button>
-                  <button
-                    type="button"
-                    onClick={removeSelectedEditPoint}
-                    disabled={selectedEditPointIndex === null || editGeometryPoints.length <= 3}
-                    className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
-                  >
-                    Punkt -
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void persistEditedEnclosure()}
-                    disabled={isEditing}
-                    className="rounded-2xl bg-neutral-950 px-2 py-2.5 text-xs font-semibold text-white disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
-                  >
-                    {isEditing ? '...' : 'Speichern'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={cancelEditEnclosure}
-                    className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
-                  >
-                    Schließen
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="space-y-4">
-            <div className="rounded-[1.4rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-2 shadow-sm lg:hidden">
+          <div className="rounded-[1.4rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-2 shadow-sm lg:hidden">
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -2611,284 +3032,132 @@ export function LivePositionMap() {
             </div>
           </div>
 
-          <div
-            className={[
-              'rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]',
-              mobilePanel !== 'draw' ? 'hidden lg:block' : '',
-            ].join(' ')}
-          >
-            <h2 className="text-lg font-semibold">Zeichenwerkzeuge</h2>
-            <p className="mt-2 text-sm text-neutral-700">
-              {isDrawing
-                ? 'Jeder Klick auf die Karte fügt einen neuen Punkt hinzu.'
-                : 'Zeichnen starten, dann die Ecken des Pferchs nacheinander setzen.'}
-            </p>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={startDrawing}
-                className="rounded-[1.1rem] bg-neutral-950 px-4 py-4 text-sm font-semibold text-white disabled:opacity-50"
-                disabled={isDrawing}
-              >
-                Zeichnen starten
-              </button>
-              <button
-                type="button"
-                onClick={finishDrawing}
-                className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
-                disabled={!isDrawing}
-              >
-                Zeichnen beenden
-              </button>
-              <button
-                type="button"
-                onClick={undoLastPoint}
-                className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
-                disabled={draftPoints.length === 0}
-              >
-                Letzten Punkt löschen
-              </button>
-              <button
-                type="button"
-                onClick={clearDraft}
-                className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
-                disabled={draftPoints.length === 0}
-              >
-                Entwurf verwerfen
-              </button>
+          <div className={mobilePanel === 'draw' ? 'lg:hidden' : 'hidden'}>
+            <div className="rounded-[1.4rem] border border-white/70 bg-[rgba(255,252,246,0.9)] p-4 shadow-sm">
+              <h2 className="text-lg font-semibold">Pferch zeichnen</h2>
+              <p className="mt-2 text-sm text-neutral-700">
+                Die Zeichenwerkzeuge liegen direkt auf der Karte. Name und Notiz werden hier ergänzt.
+              </p>
+              <div className="mt-4">{drawSummary}</div>
+              {drawSaveForm}
             </div>
+          </div>
 
-            <div className="mt-4 rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm">
-              Punkte gesetzt: <span className="font-medium text-neutral-900">{draftPoints.length}</span>
-              <span className="ml-2">· Fläche <span className="font-medium text-neutral-900">{formatArea(draftAreaM2)}</span></span>
+          <div className={mobilePanel === 'walk' ? 'lg:hidden' : 'hidden'}>
+            <div className="rounded-[1.4rem] border border-white/70 bg-[rgba(255,252,246,0.9)] p-4 shadow-sm">
+              <h2 className="text-lg font-semibold">Pferch per GPS erfassen</h2>
+              <p className="mt-2 text-sm text-neutral-700">{walkStatusText}</p>
+              <div className="mt-4">{walkSummary}</div>
+              {walkStats}
+              {walkPointsList}
+              {walkSaveForm}
             </div>
+          </div>
 
-            <form className="mt-4 space-y-4" onSubmit={saveEnclosure}>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Pferchname</label>
-                <input
-                  className="w-full rounded-2xl border px-4 py-3"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="z. B. Nordhang 1"
-                />
+          <div className={mobilePanel === 'saved' ? 'lg:hidden' : 'hidden'}>
+            <div className="rounded-[1.4rem] border border-white/70 bg-[rgba(255,252,246,0.9)] p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold">Gespeicherte Pferche</h2>
+                <span className="text-sm text-neutral-500">{filteredEnclosures.length}</span>
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium">Notiz</label>
-                <textarea
+              <div className="mt-4">
+                <label className="mb-1 block text-sm font-medium">Pferch wählen</label>
+                <select
                   className="w-full rounded-2xl border px-4 py-3"
-                  rows={3}
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="optionale Bemerkungen zum Pferch"
-                />
+                  value={selectedEnclosureId ?? ''}
+                  onChange={(event) => {
+                    const nextId = event.target.value
+                    if (!nextId) {
+                      setSelectedEnclosureId(null)
+                      setShowSelectedTrack(false)
+                      setIsSelectedEnclosureInfoOpen(false)
+                      return
+                    }
+
+                    const nextEnclosure =
+                      safeEnclosures.find((enclosure) => enclosure.id === nextId) ?? null
+                    if (!nextEnclosure) return
+
+                    focusEnclosure(nextEnclosure)
+                    setIsSelectedEnclosureInfoOpen(true)
+                  }}
+                >
+                  <option value="">Bitte wählen</option>
+                  {filteredEnclosures.map(({ enclosure }) => (
+                    <option key={enclosure.id} value={enclosure.id}>
+                      {enclosure.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {saveError ? (
-                <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {saveError}
+              {filteredEnclosures.length === 0 ? (
+                <p className="mt-3 text-sm text-neutral-600">
+                  Für diesen Filter gibt es aktuell keine Pferche.
+                </p>
+              ) : null}
+
+              {selectedEnclosure ? (
+                <div className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <button
+                    type="button"
+                    onClick={() => setIsSelectedEnclosureInfoOpen((current) => !current)}
+                    aria-expanded={isSelectedEnclosureInfoOpen}
+                    className="flex w-full items-center justify-between gap-3 text-left"
+                  >
+                    <span>
+                      Fokus: <span className="font-medium">{selectedEnclosure.name}</span>
+                    </span>
+                    <span className="text-base text-amber-950">
+                      {isSelectedEnclosureInfoOpen ? '−' : '+'}
+                    </span>
+                  </button>
+                  {isSelectedEnclosureInfoOpen ? (
+                    <>
+                      <div className="mt-2">
+                        {formatArea(selectedEnclosure.areaM2)} · {selectedEnclosure.pointsCount ?? 0} Punkte
+                      </div>
+                      {selectedEnclosure.notes ? (
+                        <div className="mt-1 text-amber-950/80">{selectedEnclosure.notes}</div>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
               ) : null}
 
-              <button
-                type="submit"
-                disabled={isSaving || draftPoints.length < 3}
-                className="w-full rounded-2xl bg-emerald-700 px-4 py-4 font-medium text-white disabled:opacity-50"
-              >
-                {isSaving ? 'Speichert ...' : 'Pferch speichern'}
-              </button>
-            </form>
+              {selectedEnclosure?.method === 'walk' ? (
+                <button
+                  type="button"
+                  onClick={() => setShowSelectedTrack((current) => !current)}
+                  className="mt-4 w-full rounded-2xl bg-white px-4 py-3 text-sm font-medium text-neutral-900"
+                >
+                  {showSelectedTrack ? 'Spur ausblenden' : 'Spur anzeigen'}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div
+            className={[
+              'rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]',
+              'hidden lg:block',
+            ].join(' ')}
+          >
+            <h2 className="text-lg font-semibold">Zeichenwerkzeuge</h2>
+            {drawWorkspaceContent}
           </div>
 
           <div
             className={[
               'rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]',
-              mobilePanel !== 'walk' ? 'hidden lg:block' : '',
+              'hidden lg:block',
             ].join(' ')}
           >
             <h2 className="text-lg font-semibold">Pferch per GPS erfassen</h2>
-            <p className="mt-2 text-sm text-neutral-700">
-              Pferch mit gefilterten GPS-Punkten ablaufen und danach als Fläche speichern.
-            </p>
-            <p className="mt-2 text-xs font-medium text-neutral-700">
-              Walk-Punkte können direkt auf der Karte angetippt und bearbeitet werden.
-            </p>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => void startWalkMode()}
-            className="rounded-[1.1rem] bg-neutral-950 px-4 py-4 text-sm font-semibold text-white disabled:opacity-50"
-            disabled={isWalking || isDrawing}
-          >
-            Ablauf starten
-          </button>
-          <button
-            type="button"
-            onClick={stopWalkMode}
-            className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
-            disabled={!isWalking}
-          >
-            Ablauf beenden
-          </button>
-          <button
-            type="button"
-            onClick={() => void undoLastWalkPoint()}
-            className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
-            disabled={walkPoints.length === 0}
-          >
-            Letzten Punkt entfernen
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              selectedWalkPointIndex !== null
-                ? void removeWalkPointAtIndex(selectedWalkPointIndex)
-                : undefined
-            }
-            className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
-            disabled={selectedWalkPointIndex === null}
-          >
-            Ausgewählten Punkt entfernen
-          </button>
-          <button
-            type="button"
-            onClick={() => void discardWalkMode()}
-            className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
-            disabled={walkPoints.length === 0 && !isWalking}
-          >
-            Verwerfen
-          </button>
-        </div>
-
-            <div className="mt-4 rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm">
-              Akzeptierte Walk-Punkte:{' '}
-              <span className="font-medium text-neutral-900">{walkPoints.length}</span>
-              <span className="ml-2">· Fläche <span className="font-medium text-neutral-900">{formatArea(walkAreaM2)}</span></span>
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-2xl bg-neutral-50 px-4 py-3">
-            <div className="text-neutral-500">Mittlere Genauigkeit</div>
-            <div className="mt-1 font-medium text-neutral-900">
-              {walkPoints.length > 0
-                ? formatAccuracy(
-                    walkPoints.reduce((sum, point) => sum + point.accuracy, 0) /
-                      walkPoints.length
-                  )
-                : 'noch keine Daten'}
-            </div>
-          </div>
-          <div className="rounded-2xl bg-neutral-50 px-4 py-3">
-            <div className="text-neutral-500">Letzter akzeptierter Punkt</div>
-            <div className="mt-1 font-medium text-neutral-900">
-              {walkPoints.length > 0
-                ? formatTimestamp(walkPoints[walkPoints.length - 1].timestamp)
-                : 'noch keiner'}
-            </div>
-          </div>
-        </div>
-
-            {walkPoints.length > 0 ? (
-              <div className="mt-4 rounded-2xl bg-neutral-50 px-4 py-3">
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-medium text-neutral-900">
-                  Aufgenommene Walk-Punkte
-                </h3>
-                <p className="mt-1 text-xs text-neutral-500">
-                  Ausreißer können direkt vor dem Speichern entfernt werden.
-                </p>
-              </div>
-              <span className="text-xs text-neutral-500">
-                {walkPoints.length} Punkte
-              </span>
-            </div>
-
-            {selectedWalkPoint ? (
-              <div className="mt-3 rounded-2xl bg-amber-50 px-3 py-3 text-sm text-amber-900">
-                Ausgewählt: Punkt {selectedWalkPointIndex !== null ? selectedWalkPointIndex + 1 : ''}
-                {' '}um {formatPointTimestamp(selectedWalkPoint.timestamp)} mit{' '}
-                {formatAccuracy(selectedWalkPoint.accuracy)}.
-              </div>
-            ) : null}
-
-            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
-              {walkPoints.map((point, index) => (
-                <div
-                  key={`${point.timestamp}-${index}`}
-                  className={[
-                    'grid grid-cols-[1fr_auto] gap-3 rounded-2xl px-3 py-3 text-sm',
-                    selectedWalkPointIndex === index ? 'bg-amber-100' : 'bg-white',
-                  ].join(' ')}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setSelectedWalkPointIndex(index)}
-                    className="text-left"
-                  >
-                    <div className="font-medium text-neutral-900">
-                      Punkt {index + 1}
-                    </div>
-                    <div className="mt-1 text-neutral-600">
-                      {point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}
-                    </div>
-                    <div className="mt-1 text-xs text-neutral-500">
-                      {formatPointTimestamp(point.timestamp)} · Genauigkeit{' '}
-                      {formatAccuracy(point.accuracy)}
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void removeWalkPointAtIndex(index)}
-                    className="rounded-2xl bg-neutral-100 px-3 py-2 text-xs font-medium text-neutral-900"
-                  >
-                    Entfernen
-                  </button>
-                </div>
-              ))}
-            </div>
-              </div>
-            ) : null}
-
-            <form className="mt-4 space-y-4" onSubmit={saveWalkEnclosure}>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Pferchname</label>
-            <input
-              className="w-full rounded-2xl border px-4 py-3"
-              value={walkName}
-              onChange={(event) => setWalkName(event.target.value)}
-              placeholder="z. B. Weidekante Ost"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Notiz</label>
-            <textarea
-              className="w-full rounded-2xl border px-4 py-3"
-              rows={3}
-              value={walkNotes}
-              onChange={(event) => setWalkNotes(event.target.value)}
-              placeholder="optionale Notiz zum abgelaufenen Pferch"
-            />
-          </div>
-
-          {walkError ? (
-            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-              {walkError}
-            </div>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={isWalkSaving || walkPoints.length < 3}
-            className="w-full rounded-2xl bg-orange-600 px-4 py-4 font-medium text-white disabled:opacity-50"
-          >
-            {isWalkSaving ? 'Speichert ...' : 'Abgelaufenen Pferch speichern'}
-          </button>
-            </form>
+            {walkWorkspaceContent}
           </div>
 
           <div
@@ -2999,22 +3268,37 @@ export function LivePositionMap() {
                   selectedEnclosureId === enclosure.id ? 'bg-amber-50' : 'bg-neutral-50',
                 ].join(' ')}
               >
-                <div className="flex items-start justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedSavedEnclosureId((current) =>
+                      current === enclosure.id ? null : enclosure.id
+                    )
+                  }
+                  aria-expanded={expandedSavedEnclosureId === enclosure.id}
+                  className="flex w-full items-start justify-between gap-3 text-left"
+                >
                   <div>
                     <div className="font-medium text-neutral-900">{enclosure.name}</div>
                     <div className="mt-1 text-sm text-neutral-600">
                       {formatArea(enclosure.areaM2)} · {enclosure.pointsCount ?? 0} Punkte
                     </div>
                   </div>
-                  <div className="text-xs text-neutral-500">
-                    {new Date(enclosure.updatedAt).toLocaleDateString('de-DE')}
+                  <div className="shrink-0 text-right">
+                    <div className="text-xs text-neutral-500">
+                      {new Date(enclosure.updatedAt).toLocaleDateString('de-DE')}
+                    </div>
+                    <div className="mt-1 text-base text-neutral-900">
+                      {expandedSavedEnclosureId === enclosure.id ? '−' : '+'}
+                    </div>
                   </div>
-                </div>
-                {enclosure.notes ? (
+                </button>
+                {expandedSavedEnclosureId === enclosure.id && enclosure.notes ? (
                   <p className="mt-2 text-sm text-neutral-600">{enclosure.notes}</p>
                 ) : null}
 
-                {(() => {
+                {expandedSavedEnclosureId === enclosure.id &&
+                (() => {
                   const activeAssignment = activeAssignmentsByEnclosureId.get(enclosure.id)
                   const assignmentHistory =
                     assignmentHistoryByEnclosureId.get(enclosure.id)?.slice(0, 4) ?? []
@@ -3256,7 +3540,9 @@ export function LivePositionMap() {
                   )
                 })()}
 
-                {selectedEnclosureId === enclosure.id && enclosure.method === 'walk' ? (
+                {expandedSavedEnclosureId === enclosure.id &&
+                selectedEnclosureId === enclosure.id &&
+                enclosure.method === 'walk' ? (
                   <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm text-neutral-600">
                     <div>
                       Spurpunkte:{' '}
@@ -3291,6 +3577,7 @@ export function LivePositionMap() {
                   </div>
                 ) : null}
 
+                {expandedSavedEnclosureId === enclosure.id ? (
                 <div
                   className={[
                     'mt-3 grid gap-2',
@@ -3330,12 +3617,13 @@ export function LivePositionMap() {
                     type="button"
                     onClick={() => deleteEnclosure(enclosure)}
                     className="rounded-2xl bg-red-50 px-3 py-3 text-sm font-medium text-red-700"
-                  >
-                    Löschen
-                  </button>
+                    >
+                      Löschen
+                    </button>
                 </div>
+                ) : null}
 
-                {editingEnclosureId === enclosure.id ? (
+                {expandedSavedEnclosureId === enclosure.id && editingEnclosureId === enclosure.id ? (
                   <form className="mt-4 space-y-3" onSubmit={saveEditedEnclosure}>
                     <div>
                       <label className="mb-1 block text-sm font-medium">Pferchname</label>

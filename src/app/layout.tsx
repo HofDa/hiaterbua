@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   title: 'Hiaterbua 1.0',
   description: 'Offlinefähige Feld- und Alm-Dokumentation für Herden, Pferche und Weidegänge',
   manifest: '/manifest.webmanifest',
-  themeColor: '#163d2f',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -23,6 +22,10 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#163d2f',
 }
 
 export default function RootLayout({

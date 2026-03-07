@@ -1,6 +1,9 @@
 const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
 const APP_CACHE_NAME = 'hiaterbua-app-shell-v1'
 const OFFLINE_URL = '/offline.html'
+const DB_NAME = 'hirtenapp-db'
+const DB_VERSION = 6
+const MAP_TILE_STORE = 'mapTiles'
 
 let tileCachingEnabled = false
 
@@ -39,7 +42,7 @@ self.addEventListener('message', (event) => {
     tileCachingEnabled = Boolean(data.enabled)
 
     if (!tileCachingEnabled) {
-      event.waitUntil(caches.delete(TILE_CACHE_NAME))
+      event.waitUntil(Promise.all([caches.delete(TILE_CACHE_NAME), clearTileStore()]))
     }
   }
 })
@@ -78,9 +81,16 @@ async function handleTileRequest(request) {
     return cachedResponse
   }
 
+  const storedTile = await getStoredTile(request.url)
+  if (storedTile) {
+    void updateTileInBackground(cache, request)
+    return responseFromStoredTile(storedTile)
+  }
+
   const networkResponse = await fetch(request)
   if (networkResponse.ok || networkResponse.type === 'opaque') {
     await cache.put(request, networkResponse.clone())
+    await putStoredTile(request, networkResponse.clone())
   }
 
   return networkResponse
@@ -112,8 +122,93 @@ async function updateTileInBackground(cache, request) {
     const networkResponse = await fetch(request)
     if (networkResponse.ok || networkResponse.type === 'opaque') {
       await cache.put(request, networkResponse.clone())
+      await putStoredTile(request, networkResponse.clone())
     }
   } catch {
     // Ignore background refresh failures and keep the cached tile.
   }
+}
+
+function openTileDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION)
+
+    request.onupgradeneeded = () => {
+      const database = request.result
+      if (!database.objectStoreNames.contains(MAP_TILE_STORE)) {
+        database.createObjectStore(MAP_TILE_STORE, { keyPath: 'url' })
+      }
+    }
+
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+}
+
+async function getStoredTile(url) {
+  const database = await openTileDb()
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(MAP_TILE_STORE, 'readonly')
+    const store = transaction.objectStore(MAP_TILE_STORE)
+    const request = store.get(url)
+
+    request.onsuccess = () => resolve(request.result ?? null)
+    request.onerror = () => reject(request.error)
+    transaction.oncomplete = () => database.close()
+    transaction.onabort = () => database.close()
+  })
+}
+
+async function clearTileStore() {
+  const database = await openTileDb()
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(MAP_TILE_STORE, 'readwrite')
+    const store = transaction.objectStore(MAP_TILE_STORE)
+    const request = store.clear()
+
+    request.onsuccess = () => resolve(true)
+    request.onerror = () => reject(request.error)
+    transaction.oncomplete = () => database.close()
+    transaction.onabort = () => database.close()
+  })
+}
+
+async function putStoredTile(request, response) {
+  if (response.type === 'opaque') return
+
+  const database = await openTileDb()
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const blob = await response.blob()
+      const transaction = database.transaction(MAP_TILE_STORE, 'readwrite')
+      const store = transaction.objectStore(MAP_TILE_STORE)
+      const writeRequest = store.put({
+        url: request.url,
+        blob,
+        contentType: response.headers.get('content-type') ?? '',
+        status: response.status,
+        updatedAt: new Date().toISOString(),
+      })
+
+      writeRequest.onsuccess = () => resolve(true)
+      writeRequest.onerror = () => reject(writeRequest.error)
+      transaction.oncomplete = () => database.close()
+      transaction.onabort = () => database.close()
+    } catch (error) {
+      database.close()
+      reject(error)
+    }
+  })
+}
+
+function responseFromStoredTile(tileRecord) {
+  return new Response(tileRecord.blob, {
+    status: tileRecord.status || 200,
+    headers: {
+      'Content-Type': tileRecord.contentType || 'application/octet-stream',
+    },
+  })
 }

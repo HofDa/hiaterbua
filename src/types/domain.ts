@@ -32,6 +32,14 @@ export type WorkEventType = 'start' | 'pause' | 'resume' | 'stop' | 'note'
 
 export type MapBaseLayer = 'south-tyrol-basemap' | 'south-tyrol-orthophoto-2023'
 
+export interface MapTileRecord {
+  url: string
+  blob: Blob
+  contentType?: string
+  status: number
+  updatedAt: string
+}
+
 export interface Herd {
   id: string
   name: string
