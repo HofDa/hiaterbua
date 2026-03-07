@@ -1826,7 +1826,7 @@ export function GrazingSessionMap() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -1841,10 +1841,10 @@ export function GrazingSessionMap() {
             className={[
               'rounded-full px-3 py-1.5 text-xs font-semibold',
               gpsState === 'tracking'
-                ? 'bg-emerald-200 text-emerald-950'
+                ? 'bg-[#efe4c8] text-[#17130f]'
                 : gpsState === 'denied' || gpsState === 'error'
                   ? 'bg-red-100 text-red-800'
-                  : 'bg-stone-200 text-stone-900',
+                  : 'bg-[#f1efeb] text-stone-900',
             ].join(' ')}
           >
             {gpsLabel}
@@ -1854,19 +1854,19 @@ export function GrazingSessionMap() {
         {isLiveStatusOpen ? (
           <>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                   GPS
                 </div>
                 <div className="mt-1 text-sm font-medium text-neutral-900">{gpsDetail}</div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                   Filter
                 </div>
                 <div className="mt-1 text-sm font-medium text-neutral-900">{gpsFilterDetail}</div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                   Herde
                 </div>
@@ -1874,7 +1874,7 @@ export function GrazingSessionMap() {
                   {selectedHerd?.name ?? 'noch nicht gewählt'}
                 </div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                   Status
                 </div>
@@ -1886,7 +1886,7 @@ export function GrazingSessionMap() {
                       : 'Bereit'}
                 </div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm sm:col-span-2 xl:col-span-2">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm sm:col-span-2 xl:col-span-2">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                   Koordinaten
                 </div>
@@ -1896,7 +1896,7 @@ export function GrazingSessionMap() {
                     : 'Noch keine Position'}
                 </div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm sm:col-span-2 xl:col-span-2">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm sm:col-span-2 xl:col-span-2">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                   Update
                 </div>
@@ -1909,8 +1909,8 @@ export function GrazingSessionMap() {
         ) : null}
       </div>
 
-      <div className="relative overflow-hidden rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
-        <div ref={containerRef} className="h-[420px] w-full bg-neutral-100" />
+      <div className="relative overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <div ref={containerRef} className="h-[420px] w-full bg-[#fffdf6]" />
         {!editingSessionId ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
             <MobileMapToolbar>
@@ -1935,6 +1935,7 @@ export function GrazingSessionMap() {
                   (currentSessionStatus === null && safeHerds.length === 0)
                 }
                 variant="primary"
+                label={currentSessionStatus === 'paused' ? 'Weiter' : 'Start'}
               >
                 <PlayIcon />
               </MobileMapToolbarButton>
@@ -1943,6 +1944,7 @@ export function GrazingSessionMap() {
                 title="Pausieren"
                 onClick={() => void pauseSession()}
                 disabled={isSaving || currentSessionStatus !== 'active'}
+                label="Pause"
               >
                 <PauseIcon />
               </MobileMapToolbarButton>
@@ -1951,6 +1953,7 @@ export function GrazingSessionMap() {
                 title="Weidegang beenden"
                 onClick={() => void stopSession()}
                 disabled={isSaving || (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')}
+                label="Stop"
               >
                 <StopIcon />
               </MobileMapToolbarButton>
@@ -1964,7 +1967,7 @@ export function GrazingSessionMap() {
                 aria-label="Auf aktuelle Position zentrieren"
                 onClick={centerMapOnPosition}
                 disabled={!position}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg disabled:opacity-50"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg disabled:opacity-50"
               >
                 <CenterIcon />
               </button>
@@ -1972,14 +1975,14 @@ export function GrazingSessionMap() {
                 type="button"
                 aria-label="Kartengrundlage wählen"
                 onClick={() => setIsBaseLayerMenuOpen((current) => !current)}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg"
               >
                 <LayersIcon />
               </button>
             </div>
 
             {isBaseLayerMenuOpen ? (
-              <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-white bg-white/95 p-1.5 shadow-lg">
+              <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-[#ccb98a] bg-[rgba(255,253,246,0.96)] p-1.5 shadow-lg">
                 <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
                   Kartengrundlage
                 </div>
@@ -1989,8 +1992,8 @@ export function GrazingSessionMap() {
                     className={[
                       'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       baseLayer === 'south-tyrol-orthophoto-2023'
-                        ? 'bg-black text-white'
-                        : 'bg-stone-200 text-neutral-950',
+                        ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                        : 'bg-[#f1efeb] text-neutral-950',
                     ].join(' ')}
                   >
                     Orthofoto 2023
@@ -2001,8 +2004,8 @@ export function GrazingSessionMap() {
                     className={[
                       'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       baseLayer === 'south-tyrol-basemap'
-                        ? 'bg-black text-white'
-                        : 'bg-stone-200 text-neutral-950',
+                        ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                        : 'bg-[#f1efeb] text-neutral-950',
                     ].join(' ')}
                   >
                     BaseMap Südtirol
@@ -2012,7 +2015,7 @@ export function GrazingSessionMap() {
                     onClick={() => setShowSurveyAreas((current) => !current)}
                     className={[
                       'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-                      showSurveyAreas ? 'bg-cyan-100 text-cyan-950' : 'bg-stone-200 text-neutral-950',
+                      showSurveyAreas ? 'bg-[#efe4c8] text-[#17130f]' : 'bg-[#f1efeb] text-neutral-950',
                     ].join(' ')}
                   >
                     Flächen {showSurveyAreas ? 'an' : 'aus'}
@@ -2023,8 +2026,8 @@ export function GrazingSessionMap() {
                     className={[
                       'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       showSessionEventsOnMap
-                        ? 'bg-amber-100 text-amber-950'
-                        : 'bg-stone-200 text-neutral-950',
+                        ? 'bg-[#efe4c8] text-[#17130f]'
+                        : 'bg-[#f1efeb] text-neutral-950',
                     ].join(' ')}
                   >
                     Ereignisse {showSessionEventsOnMap ? 'an' : 'aus'}
@@ -2033,12 +2036,12 @@ export function GrazingSessionMap() {
                     type="button"
                     onClick={() => void prefetchVisibleMapArea()}
                     disabled={prefetchingMapArea}
-                    className="mt-1.5 w-full rounded-xl bg-emerald-50 px-2.5 py-2 text-left text-xs font-medium text-emerald-900 disabled:opacity-50"
+                    className="mt-1.5 w-full rounded-xl border border-[#ccb98a] bg-[#fffdf6] px-2.5 py-2 text-left text-xs font-medium text-[#17130f] disabled:opacity-50"
                   >
                     {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
                   </button>
                 {prefetchStatus ? (
-                  <div className="mt-1.5 rounded-xl bg-stone-200 px-2.5 py-2 text-[11px] font-medium text-neutral-900">
+                  <div className="mt-1.5 rounded-xl bg-[#f1efeb] px-2.5 py-2 text-[11px] font-medium text-neutral-900">
                     {prefetchStatus}
                   </div>
                 ) : null}
@@ -2061,7 +2064,7 @@ export function GrazingSessionMap() {
                         : 'Punkt antippen oder Aktion wählen.'}
                   </div>
                 </div>
-                <div className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-900 sm:px-3 sm:text-xs">
+                <div className="shrink-0 rounded-full border border-[#ccb98a] bg-[#fffdf6] px-2 py-1 text-[11px] font-medium text-[#17130f] sm:px-3 sm:text-xs">
                   {editTrackpoints.length} Punkte
                 </div>
               </div>
@@ -2070,7 +2073,7 @@ export function GrazingSessionMap() {
                 <button
                   type="button"
                   onClick={startAddEditTrackpoint}
-                  className="rounded-2xl bg-emerald-100 px-2 py-2.5 text-xs font-medium text-emerald-900 sm:px-3 sm:py-3 sm:text-sm"
+                  className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-2 py-2.5 text-xs font-medium text-[#17130f] sm:px-3 sm:py-3 sm:text-sm"
                 >
                   Punkt +
                 </button>
@@ -2078,7 +2081,7 @@ export function GrazingSessionMap() {
                   type="button"
                   onClick={removeSelectedEditTrackpoint}
                   disabled={selectedEditTrackpointIndex === null || editTrackpoints.length <= 1}
-                  className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+                  className="rounded-2xl bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
                 >
                   Punkt -
                 </button>
@@ -2086,14 +2089,14 @@ export function GrazingSessionMap() {
                   type="button"
                   onClick={() => void saveEditedSession()}
                   disabled={isSaving}
-                  className="rounded-2xl bg-neutral-950 px-2 py-2.5 text-xs font-semibold text-white disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+                  className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-[#17130f] disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
                 >
                   {isSaving ? '...' : 'Speichern'}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEditSession}
-                  className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
+                  className="rounded-2xl bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
                   >
                     Schließen
                   </button>
@@ -2103,7 +2106,7 @@ export function GrazingSessionMap() {
         ) : null}
       </div>
 
-      <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
         <h2 className="text-lg font-semibold">Weidegang verwalten</h2>
 
         <div className="mt-4 space-y-4">
@@ -2113,7 +2116,7 @@ export function GrazingSessionMap() {
               value={selectedHerdId}
               onChange={(event) => setSelectedHerdId(event.target.value)}
               disabled={currentSessionStatus !== null}
-              className="w-full rounded-2xl border px-4 py-3"
+              className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
             >
               <option value="">Bitte wählen</option>
               {safeHerds.map((herd: Herd) => (
@@ -2131,13 +2134,13 @@ export function GrazingSessionMap() {
               value={sessionNotes}
               onChange={(event) => setSessionNotes(event.target.value)}
               disabled={currentSessionStatus !== null}
-              className="w-full rounded-2xl border px-4 py-3"
+              className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
               placeholder="optionale Begleitnotiz"
             />
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl bg-stone-50 px-4 py-3 text-sm text-neutral-700 lg:hidden">
+        <div className="mt-4 rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm text-neutral-700 lg:hidden">
           Die Hauptsteuerung liegt direkt auf der Karte.
         </div>
 
@@ -2146,7 +2149,7 @@ export function GrazingSessionMap() {
             type="button"
             onClick={() => void startSession()}
             disabled={isSaving || currentSessionStatus !== null || safeHerds.length === 0}
-            className="rounded-[1.1rem] bg-neutral-950 px-4 py-4 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-sm font-semibold text-[#17130f] disabled:opacity-50"
           >
             Weidegang starten
           </button>
@@ -2154,7 +2157,7 @@ export function GrazingSessionMap() {
             type="button"
             onClick={() => void pauseSession()}
             disabled={isSaving || currentSessionStatus !== 'active'}
-            className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+            className="rounded-[1.1rem] bg-[#f1efeb] px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
           >
             Pausieren
           </button>
@@ -2162,7 +2165,7 @@ export function GrazingSessionMap() {
             type="button"
             onClick={() => void resumeSession()}
             disabled={isSaving || currentSessionStatus !== 'paused'}
-            className="rounded-[1.1rem] bg-stone-200 px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+            className="rounded-[1.1rem] bg-[#f1efeb] px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
           >
             Fortsetzen
           </button>
@@ -2170,14 +2173,14 @@ export function GrazingSessionMap() {
             type="button"
             onClick={() => void stopSession()}
             disabled={isSaving || (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')}
-            className="rounded-2xl bg-emerald-700 px-4 py-4 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-sm font-medium text-[#17130f] disabled:opacity-50"
           >
             Weidegang beenden
           </button>
         </div>
 
         {currentSessionStatus ? (
-          <div className="mt-4 rounded-[1.35rem] border border-white bg-white px-4 py-4 shadow-sm">
+          <div className="mt-4 rounded-[1.35rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-neutral-950">Ereignisse erfassen</h3>
               <div className="text-xs font-medium text-neutral-500">
@@ -2190,7 +2193,7 @@ export function GrazingSessionMap() {
                 type="button"
                 onClick={() => void addSessionMarkerEvent('water')}
                 disabled={isEventSaving}
-                className="rounded-[1.05rem] bg-sky-100 px-3 py-3 text-sm font-semibold text-sky-950 disabled:opacity-50"
+                className="rounded-[1.05rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
               >
                 Wasser
               </button>
@@ -2198,7 +2201,7 @@ export function GrazingSessionMap() {
                 type="button"
                 onClick={() => void addSessionMarkerEvent('rest')}
                 disabled={isEventSaving}
-                className="rounded-[1.05rem] bg-amber-100 px-3 py-3 text-sm font-semibold text-amber-950 disabled:opacity-50"
+                className="rounded-[1.05rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
               >
                 Rast-Ort
               </button>
@@ -2214,7 +2217,7 @@ export function GrazingSessionMap() {
                 type="button"
                 onClick={() => void addSessionMarkerEvent('move')}
                 disabled={isEventSaving}
-                className="rounded-[1.05rem] bg-emerald-100 px-3 py-3 text-sm font-semibold text-emerald-950 disabled:opacity-50"
+                className="rounded-[1.05rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
               >
                 Punkt
               </button>
@@ -2226,26 +2229,26 @@ export function GrazingSessionMap() {
                 rows={2}
                 value={eventNote}
                 onChange={(event) => setEventNote(event.target.value)}
-                className="w-full rounded-2xl border px-4 py-3"
+                className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
                 placeholder="Bemerkung zum aktuellen Weidegang"
               />
               <button
                 type="button"
                 onClick={() => void addSessionMarkerEvent('note', eventNote)}
                 disabled={isEventSaving || !eventNote.trim()}
-                className="w-full rounded-[1.05rem] bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                className="w-full rounded-[1.05rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
               >
                 Notiz speichern
               </button>
             </div>
 
             {eventStatus ? (
-              <div className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+              <div className="mt-3 rounded-2xl border border-[#c5d3c8] bg-[#edf1ec] px-4 py-3 text-sm text-[#243228]">
                 {eventStatus}
               </div>
             ) : null}
 
-            <div className="mt-3 rounded-2xl bg-stone-50 px-4 py-3">
+            <div className="mt-3 rounded-2xl bg-[#fffdf6] px-4 py-3">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
                 Letzte Ereignisse
               </div>
@@ -2256,7 +2259,7 @@ export function GrazingSessionMap() {
                   {safeCurrentSessionEvents.slice(0, 5).map((sessionEvent) => (
                     <div
                       key={sessionEvent.id}
-                      className="rounded-[1rem] border border-white bg-white px-3 py-3 text-sm text-neutral-800"
+                      className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3 text-sm text-neutral-800"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="font-medium text-neutral-950">
@@ -2289,25 +2292,25 @@ export function GrazingSessionMap() {
         ) : null}
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+          <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
             <div className="text-neutral-700">Punkte</div>
             <div className="mt-1 font-medium text-neutral-900">
               {safeCurrentTrackpoints.length}
             </div>
           </div>
-          <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+          <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
             <div className="text-neutral-700">Distanz</div>
             <div className="mt-1 font-medium text-neutral-900">
               {formatDistance(currentMetrics?.distanceM ?? 0)}
             </div>
           </div>
-          <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+          <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
             <div className="text-neutral-700">Dauer</div>
             <div className="mt-1 font-medium text-neutral-900">
               {formatDuration(currentMetrics?.durationS ?? 0)}
             </div>
           </div>
-          <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+          <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
             <div className="text-neutral-700">Mittlere Genauigkeit</div>
             <div className="mt-1 font-medium text-neutral-900">
               {formatAccuracy(currentMetrics?.avgAccuracyM)}
@@ -2316,11 +2319,11 @@ export function GrazingSessionMap() {
         </div>
       </div>
 
-      <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
         <button
           type="button"
           onClick={() => setIsHistoryExpanded((current) => !current)}
-          className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-white bg-white px-4 py-3 text-left shadow-sm"
+          className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-left shadow-sm"
         >
           <div>
             <h2 className="text-lg font-semibold text-neutral-950">Weidegang-Historie</h2>
@@ -2333,7 +2336,7 @@ export function GrazingSessionMap() {
           </span>
         </button>
 
-        <div className="mt-4 rounded-[1.25rem] bg-stone-50 px-4 py-4">
+        <div className="mt-4 rounded-[1.25rem] bg-[#fffdf6] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-neutral-950">Untersuchungsflächen</h2>
             <span className="text-sm text-neutral-500">{safeSurveyAreas.length}</span>
@@ -2343,7 +2346,7 @@ export function GrazingSessionMap() {
           </p>
 
           {selectedSurveyArea ? (
-            <div className="mt-3 rounded-2xl bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
+            <div className="mt-3 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
               Fokus: <span className="font-medium">{selectedSurveyArea.name}</span> ·{' '}
                   {formatArea(selectedSurveyArea.areaM2)}
             </div>
@@ -2359,10 +2362,10 @@ export function GrazingSessionMap() {
                 <div
                   key={surveyArea.id}
                   className={[
-                    'rounded-2xl border px-3 py-3',
+                    'rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-3 py-3',
                     selectedSurveyAreaId === surveyArea.id
-                      ? 'border-cyan-200 bg-cyan-50'
-                      : 'border-white bg-white',
+                      ? 'border-[#d2cbc0] bg-[#efe4c8]'
+                      : 'border-[#ccb98a] bg-[#fffdf6]',
                   ].join(' ')}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -2375,7 +2378,7 @@ export function GrazingSessionMap() {
                     <button
                       type="button"
                       onClick={() => focusSurveyArea(surveyArea)}
-                      className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-950 shadow-sm"
+                      className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-2 text-xs font-semibold text-neutral-950 shadow-sm"
                     >
                       Fokus
                     </button>
@@ -2389,25 +2392,25 @@ export function GrazingSessionMap() {
         {isHistoryExpanded ? (
           <>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-neutral-700">Sessions</div>
                 <div className="mt-1 font-medium text-neutral-900">
                   {sessionHistoryStats.totalSessions}
                 </div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-neutral-700">Abgeschlossen</div>
                 <div className="mt-1 font-medium text-neutral-900">
                   {sessionHistoryStats.finishedSessions}
                 </div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-neutral-700">Gesamtdistanz</div>
                 <div className="mt-1 font-medium text-neutral-900">
                   {formatDistance(sessionHistoryStats.totalDistanceM)}
                 </div>
               </div>
-              <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                 <div className="text-neutral-700">Gesamtdauer</div>
                 <div className="mt-1 font-medium text-neutral-900">
                   {formatDuration(sessionHistoryStats.totalDurationS)}
@@ -2430,7 +2433,7 @@ export function GrazingSessionMap() {
                         : [...current, group.dayKey]
                     )
                   }
-                  className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-white bg-white px-4 py-3 text-left shadow-sm"
+                  className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-left shadow-sm"
                 >
                   <div>
                     <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-neutral-700">
@@ -2456,7 +2459,7 @@ export function GrazingSessionMap() {
                         key={session.id}
                         className={[
                           'rounded-2xl px-4 py-3',
-                          isSelected ? 'bg-emerald-50' : 'bg-neutral-50',
+                          isSelected ? 'bg-[#efe4c8]' : 'bg-neutral-50',
                         ].join(' ')}
                       >
                         <button
@@ -2495,13 +2498,13 @@ export function GrazingSessionMap() {
                         {expandedHistorySessionId === session.id ? (
                           <>
                             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                              <div className="rounded-2xl bg-white px-3 py-3">
+                              <div className="rounded-2xl bg-[#fffdf6] px-3 py-3">
                                 <div className="text-neutral-500">Dauer</div>
                                 <div className="mt-1 font-medium text-neutral-900">
                                   {formatDuration(session.durationS)}
                                 </div>
                               </div>
-                              <div className="rounded-2xl bg-white px-3 py-3">
+                              <div className="rounded-2xl bg-[#fffdf6] px-3 py-3">
                                 <div className="text-neutral-500">Genauigkeit</div>
                                 <div className="mt-1 font-medium text-neutral-900">
                                   {formatAccuracy(session.avgAccuracyM)}
@@ -2518,14 +2521,14 @@ export function GrazingSessionMap() {
                                 <button
                                   type="button"
                                   onClick={() => setSelectedSessionId(session.id)}
-                                  className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
+                                  className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
                                 >
                                   Spur anzeigen
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => startEditSession(session.id)}
-                                  className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
+                                  className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
                                 >
                                   Bearbeiten
                                 </button>
@@ -2554,7 +2557,7 @@ export function GrazingSessionMap() {
         ) : null}
 
         {isHistoryExpanded && selectedSession && selectedMetrics ? (
-          <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <div className="mt-4 rounded-2xl border border-[#c5d3c8] bg-[#edf1ec] px-4 py-3 text-sm text-[#243228]">
             Fokus: <span className="font-medium">{formatDateTime(selectedSession.startTime)}</span>
             {' '}· {formatDistance(selectedMetrics.distanceM)} ·{' '}
             {formatDuration(selectedMetrics.durationS)} ·{' '}
@@ -2563,7 +2566,7 @@ export function GrazingSessionMap() {
         ) : null}
 
         {isHistoryExpanded && selectedSession ? (
-          <div className="mt-4 rounded-2xl border border-white bg-white px-4 py-4 shadow-sm">
+          <div className="mt-4 rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
               Ereignisse im Fokus-Weidegang
             </div>
@@ -2574,7 +2577,7 @@ export function GrazingSessionMap() {
                 {safeSelectedSessionEvents.slice(0, 8).map((sessionEvent) => (
                   <div
                     key={sessionEvent.id}
-                    className="rounded-[1rem] bg-stone-50 px-3 py-3 text-sm text-neutral-800"
+                    className="rounded-[1rem] bg-[#fffdf6] px-3 py-3 text-sm text-neutral-800"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="font-medium text-neutral-950">
@@ -2595,7 +2598,7 @@ export function GrazingSessionMap() {
         ) : null}
 
         {isHistoryExpanded && editingSessionId && editMetrics ? (
-          <div className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
             Bearbeitung aktiv: {formatDistance(editMetrics.distanceM)} ·{' '}
             {formatDuration(editMetrics.durationS)} · {editTrackpoints.length} Punkte
           </div>

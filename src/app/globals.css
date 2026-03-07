@@ -2,16 +2,17 @@
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 :root {
-  --background: #e7e2d7;
-  --background-strong: #d8d0c1;
-  --surface: rgba(255, 252, 246, 0.82);
-  --surface-strong: rgba(255, 252, 246, 0.94);
-  --surface-border: rgba(62, 52, 34, 0.1);
-  --text-main: #171412;
-  --text-soft: #6c655d;
-  --brand: #1f6a49;
-  --brand-dark: #164c35;
-  --accent: #c77c28;
+  --background: #d8d0bf;
+  --background-strong: #c9bea8;
+  --surface: #fff8ea;
+  --surface-strong: #fffdf6;
+  --surface-border: rgba(58, 52, 42, 0.24);
+  --text-main: #0f0d0b;
+  --text-soft: #5e5549;
+  --brand: #ccb98a;
+  --brand-dark: #5a5347;
+  --accent: #efe4c8;
+  --shell-scroll-offset: clamp(7rem, 12vh, 9.5rem);
   --font-sans:
     "Segoe UI", "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono:
@@ -23,10 +24,10 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.52), transparent 32%),
-    linear-gradient(180deg, #d9d2c2 0%, var(--background) 30%, #f4f0e8 100%);
+  background: linear-gradient(180deg, #c9bea8 0%, var(--background) 28%, #e7e0d2 100%);
   color: var(--text-main);
+  scroll-snap-type: y proximity;
+  scroll-padding-top: var(--shell-scroll-offset);
 }
 
 * {
@@ -38,17 +39,19 @@ body {
   font-family: var(--font-sans);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
-  background-size: 36px 36px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.32), transparent 80%);
-  opacity: 0.22;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.2), transparent 36%);
+  opacity: 0.45;
 }
 
 a {
@@ -76,7 +79,7 @@ textarea {
 }
 
 ::selection {
-  background: rgba(31, 106, 73, 0.18);
+  background: rgba(127, 155, 139, 0.22);
 }
 
 .maplibregl-map {
@@ -85,11 +88,22 @@ textarea {
 
 .maplibregl-ctrl-group {
   overflow: hidden;
-  border: 1px solid rgba(23, 20, 18, 0.08);
+  border: 2px solid rgba(18, 16, 12, 0.28);
   border-radius: 1rem;
-  box-shadow: 0 10px 24px rgba(23, 20, 18, 0.12);
+  box-shadow: 0 12px 28px rgba(23, 20, 18, 0.18);
 }
 
 .maplibregl-ctrl button {
-  background: rgba(255, 252, 246, 0.96);
+  background: #fffdf6;
+  color: #111111;
+}
+
+main > section,
+main > article,
+main > div > section,
+main > div > article,
+main > section > div,
+main > section > article {
+  scroll-snap-align: start;
+  scroll-margin-top: var(--shell-scroll-offset);
 }

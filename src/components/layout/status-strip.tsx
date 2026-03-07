@@ -104,24 +104,24 @@ export function StatusStrip() {
   }
 
   return (
-    <div className="border-b border-white/45 bg-[rgba(255,252,246,0.55)] backdrop-blur">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2 text-sm">
+    <div className="border-b border-[#061a14] bg-[linear-gradient(180deg,#174634,#113126)] text-white shadow-[0_12px_28px_rgba(8,23,17,0.28)]">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm">
         <span
           className={[
-            'rounded-full px-3 py-1 font-medium',
+            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
             isOnline
-              ? 'bg-emerald-100 text-emerald-950'
-              : 'bg-amber-100 text-amber-950',
+              ? 'border-white bg-[#2f6b4d] text-white'
+              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
           ].join(' ')}
         >
           {isOnline ? 'Online' : 'Offline'}
         </span>
         <span
           className={[
-            'rounded-full px-3 py-1 font-medium',
+            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
             effectiveSettings.tileCachingEnabled
-              ? 'bg-cyan-100 text-cyan-950'
-              : 'bg-stone-200 text-stone-900',
+              ? 'border-white bg-[#2f6b4d] text-white'
+              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
           ].join(' ')}
         >
           {effectiveSettings.tileCachingEnabled
@@ -133,12 +133,12 @@ export function StatusStrip() {
             type="button"
             onClick={() => void handleInstallApp()}
             disabled={isInstalling}
-            className="rounded-full bg-neutral-950 px-3 py-1 font-medium text-white disabled:opacity-50"
+            className="rounded-full border border-[#0a2018] bg-[#fffdf8] px-3 py-1.5 font-semibold text-[#111111] shadow-sm disabled:opacity-50"
           >
             {isInstalling ? 'Installiert ...' : 'App installieren'}
           </button>
         ) : null}
-        <span className="w-full text-xs font-medium text-neutral-700 sm:w-auto sm:flex-1">
+        <span className="w-full text-sm font-semibold text-[#f3f8f4] sm:w-auto sm:flex-1">
           {guidanceText}
         </span>
       </div>

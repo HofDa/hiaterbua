@@ -3,17 +3,28 @@
 import { area as turfArea } from '@turf/turf'
 import type * as GeoJSON from 'geojson'
 import JSZip from 'jszip'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { db } from '@/lib/db/dexie'
+import {
+  type ExistingImportRefs,
+  getImportCounts,
+  getPresentImportPayloadKeys,
+  isCompleteAppDataPayload,
+  parseImportPayload,
+  prepareImportPayload,
+  type ImportSourceKind,
+  type ImportPayload,
+  type ImportPreviewMeta,
+  type PreparedImportPayload,
+} from '@/lib/import-export/import-validation'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type {
   Animal,
-  AppSettings,
-  Enclosure,
   EnclosureAssignment,
   GrazingSession,
   Herd,
+  Enclosure,
   SessionEvent,
   SurveyArea,
   TrackPoint,
@@ -21,37 +32,40 @@ import type {
   WorkSession,
 } from '@/types/domain'
 
-type ImportPayload = {
-  herds?: Herd[]
-  animals?: Animal[]
-  enclosures?: Enclosure[]
-  surveyAreas?: SurveyArea[]
-  enclosureAssignments?: EnclosureAssignment[]
-  grazingSessions?: GrazingSession[]
-  trackpoints?: TrackPoint[]
-  sessionEvents?: SessionEvent[]
-  workSessions?: WorkSession[]
-  workEvents?: WorkEvent[]
-  settings?: AppSettings[]
-}
-
 type ImportPreview = {
   sourceLabel: string
+  meta: ImportPreviewMeta
   payload: ImportPayload
-  counts: {
-    herds: number
+  counts: ReturnType<typeof getImportCounts>
+  warnings: string[]
+}
+
+type HerdExportBundle = {
+  herd: Herd
+  summary: {
     animals: number
+    activeAnimals: number
     enclosures: number
-    surveyAreas: number
-    enclosureAssignments: number
+    activeAssignments: number
+    allAssignments: number
     grazingSessions: number
-    trackpoints: number
-    sessionEvents: number
+    grazingTrackpoints: number
+    grazingEvents: number
     workSessions: number
     workEvents: number
-    settings: number
   }
-  warnings: string[]
+  animals: Animal[]
+  enclosures: Enclosure[]
+  enclosureAssignments: EnclosureAssignment[]
+  grazingSessions: Array<{
+    session: GrazingSession
+    trackpoints: TrackPoint[]
+    events: SessionEvent[]
+  }>
+  workSessions: Array<{
+    session: WorkSession
+    events: WorkEvent[]
+  }>
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -63,6 +77,15 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+function sanitizeFilenamePart(value: string) {
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return normalized.length > 0 ? normalized : 'herde'
+}
+
 function buildFeatureCollection(
   features: GeoJSON.Feature[]
 ): GeoJSON.FeatureCollection<GeoJSON.Geometry, GeoJSON.GeoJsonProperties> {
@@ -70,6 +93,129 @@ function buildFeatureCollection(
     type: 'FeatureCollection',
     features,
   }
+}
+
+function buildHerdExportBundles(input: {
+  herds: Herd[]
+  animals: Animal[]
+  enclosures: Enclosure[]
+  enclosureAssignments: EnclosureAssignment[]
+  sessions: GrazingSession[]
+  trackpoints: TrackPoint[]
+  events: SessionEvent[]
+  workSessions: WorkSession[]
+  workEvents: WorkEvent[]
+}) {
+  const {
+    herds,
+    animals,
+    enclosures,
+    enclosureAssignments,
+    sessions,
+    trackpoints,
+    events,
+    workSessions,
+    workEvents,
+  } = input
+
+  const trackpointsBySessionId = new Map<string, TrackPoint[]>()
+  const eventsBySessionId = new Map<string, SessionEvent[]>()
+  const workEventsBySessionId = new Map<string, WorkEvent[]>()
+
+  trackpoints.forEach((point) => {
+    if (!point.sessionId) return
+    const current = trackpointsBySessionId.get(point.sessionId) ?? []
+    current.push(point)
+    trackpointsBySessionId.set(point.sessionId, current)
+  })
+
+  events.forEach((event) => {
+    const current = eventsBySessionId.get(event.sessionId) ?? []
+    current.push(event)
+    eventsBySessionId.set(event.sessionId, current)
+  })
+
+  workEvents.forEach((event) => {
+    const current = workEventsBySessionId.get(event.workSessionId) ?? []
+    current.push(event)
+    workEventsBySessionId.set(event.workSessionId, current)
+  })
+
+  return herds.map((herd): HerdExportBundle => {
+    const herdAnimals = animals.filter((animal) => animal.herdId === herd.id)
+    const herdAssignments = enclosureAssignments
+      .filter((assignment) => assignment.herdId === herd.id)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    const herdSessions = sessions
+      .filter((session) => session.herdId === herd.id)
+      .sort((left, right) => right.startTime.localeCompare(left.startTime))
+    const herdWorkSessions = workSessions
+      .filter((session) => session.herdId === herd.id)
+      .sort((left, right) => right.startTime.localeCompare(left.startTime))
+
+    const relatedEnclosureIds = new Set<string>()
+
+    enclosures.forEach((enclosure) => {
+      if (enclosure.herdId === herd.id) {
+        relatedEnclosureIds.add(enclosure.id)
+      }
+    })
+
+    herdAssignments.forEach((assignment) => {
+      relatedEnclosureIds.add(assignment.enclosureId)
+    })
+
+    herdWorkSessions.forEach((session) => {
+      if (session.enclosureId) {
+        relatedEnclosureIds.add(session.enclosureId)
+      }
+    })
+
+    const herdEnclosures = enclosures
+      .filter((enclosure) => relatedEnclosureIds.has(enclosure.id))
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+
+    const herdGrazingSessions = herdSessions.map((session) => ({
+      session,
+      trackpoints: [...(trackpointsBySessionId.get(session.id) ?? [])].sort(
+        (left, right) => left.seq - right.seq
+      ),
+      events: [...(eventsBySessionId.get(session.id) ?? [])].sort((left, right) =>
+        left.timestamp.localeCompare(right.timestamp)
+      ),
+    }))
+
+    const herdWorkSessionBundles = herdWorkSessions.map((session) => ({
+      session,
+      events: [...(workEventsBySessionId.get(session.id) ?? [])].sort((left, right) =>
+        left.timestamp.localeCompare(right.timestamp)
+      ),
+    }))
+
+    return {
+      herd,
+      summary: {
+        animals: herdAnimals.length,
+        activeAnimals: herdAnimals.filter((animal) => !animal.isArchived).length,
+        enclosures: herdEnclosures.length,
+        activeAssignments: herdAssignments.filter((assignment) => !assignment.endTime).length,
+        allAssignments: herdAssignments.length,
+        grazingSessions: herdGrazingSessions.length,
+        grazingTrackpoints: herdGrazingSessions.reduce(
+          (sum, session) => sum + session.trackpoints.length,
+          0
+        ),
+        grazingEvents: herdGrazingSessions.reduce((sum, session) => sum + session.events.length, 0),
+        workSessions: herdWorkSessionBundles.length,
+        workEvents: herdWorkSessionBundles.reduce((sum, session) => sum + session.events.length, 0),
+      },
+      animals: herdAnimals,
+      enclosures: herdEnclosures,
+      enclosureAssignments: herdAssignments,
+      grazingSessions: herdGrazingSessions,
+      workSessions: herdWorkSessionBundles,
+    }
+  })
 }
 
 function hasGeometry(
@@ -138,26 +284,6 @@ function getAreaMetrics(geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon) {
   }
 }
 
-function getArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : []
-}
-
-function getImportCounts(payload: ImportPayload) {
-  return {
-    herds: getArray<Herd>(payload.herds).length,
-    animals: getArray<Animal>(payload.animals).length,
-    enclosures: getArray<Enclosure>(payload.enclosures).length,
-    surveyAreas: getArray<SurveyArea>(payload.surveyAreas).length,
-    enclosureAssignments: getArray<EnclosureAssignment>(payload.enclosureAssignments).length,
-    grazingSessions: getArray<GrazingSession>(payload.grazingSessions).length,
-    trackpoints: getArray<TrackPoint>(payload.trackpoints).length,
-    sessionEvents: getArray<SessionEvent>(payload.sessionEvents).length,
-    workSessions: getArray<WorkSession>(payload.workSessions).length,
-    workEvents: getArray<WorkEvent>(payload.workEvents).length,
-    settings: getArray<AppSettings>(payload.settings).length,
-  }
-}
-
 function buildSurveyAreasFromGeoJson(
   content: string,
   fallbackName: string
@@ -206,19 +332,8 @@ function buildSurveyAreasFromGeoJson(
     })
 }
 
-async function importPayloadIntoDb(payload: ImportPayload, replaceExisting: boolean) {
-  const herds = getArray<Herd>(payload.herds)
-  const animals = getArray<Animal>(payload.animals)
-  const enclosures = getArray<Enclosure>(payload.enclosures)
-  const surveyAreas = getArray<SurveyArea>(payload.surveyAreas)
-  const enclosureAssignments = getArray<EnclosureAssignment>(payload.enclosureAssignments)
-  const grazingSessions = getArray<GrazingSession>(payload.grazingSessions)
-  const trackpoints = getArray<TrackPoint>(payload.trackpoints)
-  const sessionEvents = getArray<SessionEvent>(payload.sessionEvents)
-  const workSessions = getArray<WorkSession>(payload.workSessions)
-  const workEvents = getArray<WorkEvent>(payload.workEvents)
-  const settings = getArray<AppSettings>(payload.settings)
-
+async function importPayloadIntoDb(preparedImport: PreparedImportPayload) {
+  const { clearKeys, counts, payload } = preparedImport
   await db.transaction(
     'rw',
     [
@@ -235,45 +350,100 @@ async function importPayloadIntoDb(payload: ImportPayload, replaceExisting: bool
       db.settings,
     ],
     async () => {
-      if (replaceExisting) {
-        await Promise.all([
-          db.herds.clear(),
-          db.animals.clear(),
-          db.enclosures.clear(),
-          db.surveyAreas.clear(),
-          db.enclosureAssignments.clear(),
-          db.sessions.clear(),
-          db.trackpoints.clear(),
-          db.events.clear(),
-          db.workSessions.clear(),
-          db.workEvents.clear(),
-          db.settings.clear(),
-        ])
+      if (clearKeys.length > 0) {
+        const clearTableByKey = {
+          workEvents: () => db.workEvents.clear(),
+          workSessions: () => db.workSessions.clear(),
+          sessionEvents: () => db.events.clear(),
+          trackpoints: () => db.trackpoints.clear(),
+          grazingSessions: () => db.sessions.clear(),
+          enclosureAssignments: () => db.enclosureAssignments.clear(),
+          surveyAreas: () => db.surveyAreas.clear(),
+          animals: () => db.animals.clear(),
+          enclosures: () => db.enclosures.clear(),
+          herds: () => db.herds.clear(),
+          settings: () => db.settings.clear(),
+        } satisfies Record<keyof typeof counts, () => Promise<void>>
+
+        for (const key of clearKeys) {
+          await clearTableByKey[key]()
+        }
       }
 
-      if (herds.length > 0) await db.herds.bulkPut(herds)
-      if (animals.length > 0) await db.animals.bulkPut(animals)
-      if (enclosures.length > 0) await db.enclosures.bulkPut(enclosures)
-      if (surveyAreas.length > 0) await db.surveyAreas.bulkPut(surveyAreas)
-      if (enclosureAssignments.length > 0) {
-        await db.enclosureAssignments.bulkPut(enclosureAssignments)
+      if (payload.herds.length > 0) await db.herds.bulkPut(payload.herds)
+      if (payload.animals.length > 0) await db.animals.bulkPut(payload.animals)
+      if (payload.enclosures.length > 0) await db.enclosures.bulkPut(payload.enclosures)
+      if (payload.surveyAreas.length > 0) await db.surveyAreas.bulkPut(payload.surveyAreas)
+      if (payload.enclosureAssignments.length > 0) {
+        await db.enclosureAssignments.bulkPut(payload.enclosureAssignments)
       }
-      if (grazingSessions.length > 0) await db.sessions.bulkPut(grazingSessions)
-      if (trackpoints.length > 0) await db.trackpoints.bulkPut(trackpoints)
-      if (sessionEvents.length > 0) await db.events.bulkPut(sessionEvents)
-      if (workSessions.length > 0) await db.workSessions.bulkPut(workSessions)
-      if (workEvents.length > 0) await db.workEvents.bulkPut(workEvents)
-      if (settings.length > 0) await db.settings.bulkPut(settings)
+      if (payload.grazingSessions.length > 0) await db.sessions.bulkPut(payload.grazingSessions)
+      if (payload.trackpoints.length > 0) await db.trackpoints.bulkPut(payload.trackpoints)
+      if (payload.sessionEvents.length > 0) await db.events.bulkPut(payload.sessionEvents)
+      if (payload.workSessions.length > 0) await db.workSessions.bulkPut(payload.workSessions)
+      if (payload.workEvents.length > 0) await db.workEvents.bulkPut(payload.workEvents)
+      if (payload.settings.length > 0) await db.settings.bulkPut(payload.settings)
     }
   )
 
+  return counts
+}
+
+function buildImportPreviewResult(
+  sourceLabel: string,
+  kind: ImportSourceKind,
+  payload: ImportPayload,
+  warnings: string[]
+): ImportPreview {
+  const presentKeys = getPresentImportPayloadKeys(payload)
+  const isCompleteAppData = isCompleteAppDataPayload(presentKeys)
+  const counts = getImportCounts(payload)
+  const nextWarnings = [...warnings]
+
+  if (
+    (kind === 'zip-export' || kind === 'app-data-json') &&
+    presentKeys.length > 0 &&
+    !isCompleteAppData
+  ) {
+    nextWarnings.push(
+      'Datei enthält nur Teilmengen der App-Daten. `Ersetzen` ist damit nicht erlaubt.'
+    )
+  }
+
+  if (Object.values(counts).every((count) => count === 0)) {
+    nextWarnings.push('Datei enthält keine importierbaren Datensätze.')
+  }
+
   return {
-    herds: herds.length,
-    animals: animals.length,
-    enclosures: enclosures.length,
-    surveyAreas: surveyAreas.length,
-    grazingSessions: grazingSessions.length,
-    trackpoints: trackpoints.length,
+    sourceLabel,
+    meta: {
+      kind,
+      presentKeys,
+      isCompleteAppData,
+    },
+    payload,
+    counts,
+    warnings: nextWarnings,
+  }
+}
+
+async function getExistingImportRefs(): Promise<ExistingImportRefs> {
+  const [animals, herdIds, enclosureIds, sessionIds, workSessionIds] = await Promise.all([
+    db.animals.toArray(),
+    db.herds.toCollection().primaryKeys(),
+    db.enclosures.toCollection().primaryKeys(),
+    db.sessions.toCollection().primaryKeys(),
+    db.workSessions.toCollection().primaryKeys(),
+  ])
+
+  return {
+    animalEarTags: new Map(
+      animals.map((animal) => [animal.earTag.trim().toLowerCase(), animal.id])
+    ),
+    enclosureIds: new Set(enclosureIds.map((id) => String(id))),
+    herdIds: new Set(herdIds.map((id) => String(id))),
+    sessionIds: new Set(sessionIds.map((id) => String(id))),
+    workSessionIds: new Set(workSessionIds.map((id) => String(id))),
   }
 }
 
@@ -291,7 +461,7 @@ async function buildImportPreview(file: File): Promise<ImportPreview> {
     const warnings: string[] = []
 
     if (appDataEntry) {
-      payload = JSON.parse(await appDataEntry.async('string')) as ImportPayload
+      payload = parseImportPayload(JSON.parse(await appDataEntry.async('string')))
     } else {
       warnings.push('ZIP enthält keine `app-data.json`.')
     }
@@ -301,48 +471,51 @@ async function buildImportPreview(file: File): Promise<ImportPreview> {
         await surveyAreasEntry.async('string'),
         'Untersuchungsfläche'
       )
-      payload.surveyAreas = importedSurveyAreas
+      if (payload.surveyAreas) {
+        warnings.push(
+          'ZIP enthält Untersuchungsflächen sowohl in `app-data.json` als auch als GeoJSON. `app-data.json` wird bevorzugt.'
+        )
+      } else {
+        payload = {
+          ...payload,
+          surveyAreas: importedSurveyAreas,
+        }
+      }
     }
 
-    return {
-      sourceLabel: 'ZIP-Export',
-      payload,
-      counts: getImportCounts(payload),
-      warnings,
+    if (!appDataEntry && !surveyAreasEntry) {
+      throw new Error('ZIP enthält keine importierbaren Dateien.')
     }
+
+    return buildImportPreviewResult(
+      appDataEntry ? 'ZIP-Export' : 'ZIP mit Untersuchungsflächen',
+      appDataEntry ? 'zip-export' : 'survey-geojson',
+      payload,
+      warnings
+    )
   }
 
   if (fileName.endsWith('.geojson') || fileName.endsWith('.json')) {
     const content = await file.text()
     const parsed = JSON.parse(content) as Record<string, unknown>
+    const payload = parseImportPayload(parsed)
+    const presentKeys = getPresentImportPayloadKeys(payload)
 
-    const looksLikeAppData =
-      Array.isArray(parsed.herds) ||
-      Array.isArray(parsed.enclosures) ||
-      Array.isArray(parsed.grazingSessions) ||
-      Array.isArray(parsed.trackpoints) ||
-      Array.isArray(parsed.workSessions)
-
-    if (looksLikeAppData) {
-      const payload = parsed as ImportPayload
-
-      return {
-        sourceLabel: 'App-Daten JSON',
-        payload,
-        counts: getImportCounts(payload),
-        warnings: [],
-      }
+    if (
+      presentKeys.length > 0 ||
+      (typeof parsed.app === 'string' && parsed.app.toLowerCase().includes('hiaterbua'))
+    ) {
+      return buildImportPreviewResult('App-Daten JSON', 'app-data-json', payload, [])
     }
 
     const surveyAreas = buildSurveyAreasFromGeoJson(content, 'Untersuchungsfläche')
-    const payload = { surveyAreas }
 
-    return {
-      sourceLabel: 'Untersuchungsflächen GeoJSON',
-      payload,
-      counts: getImportCounts(payload),
-      warnings: [],
-    }
+    return buildImportPreviewResult(
+      'Untersuchungsflächen GeoJSON',
+      'survey-geojson',
+      { surveyAreas },
+      []
+    )
   }
 
   throw new Error('Unterstützt werden ZIP, JSON und GeoJSON.')
@@ -350,11 +523,14 @@ async function buildImportPreview(file: File): Promise<ImportPreview> {
 
 export default function ExportPage() {
   const [isExporting, setIsExporting] = useState(false)
+  const [isExportingHerd, setIsExportingHerd] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
+  const [exportableHerds, setExportableHerds] = useState<Herd[] | null>(null)
   const [replaceExisting, setReplaceExisting] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedHerdExportId, setSelectedHerdExportId] = useState('')
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null)
   const [isAnalyzingImport, setIsAnalyzingImport] = useState(false)
 
@@ -362,6 +538,60 @@ export default function ExportPage() {
     if (!selectedFile) return 'Keine Datei gewählt.'
     return `${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)`
   }, [selectedFile])
+
+  const canReplaceExisting = useMemo(() => {
+    if (!importPreview) {
+      return false
+    }
+
+    return (
+      importPreview.meta.isCompleteAppData ||
+      (importPreview.meta.presentKeys.length > 0 &&
+        importPreview.meta.presentKeys.every(
+          (key) => key === 'surveyAreas' || key === 'settings'
+        ))
+    )
+  }, [importPreview])
+
+  const activeHerdExportId = useMemo(() => {
+    if (!exportableHerds || exportableHerds.length === 0) {
+      return ''
+    }
+
+    if (selectedHerdExportId && exportableHerds.some((herd) => herd.id === selectedHerdExportId)) {
+      return selectedHerdExportId
+    }
+
+    return exportableHerds[0].id
+  }, [exportableHerds, selectedHerdExportId])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadExportableHerds() {
+      const herdList = await db.herds.orderBy('name').toArray()
+      if (!cancelled) {
+        setExportableHerds(herdList)
+      }
+    }
+
+    void loadExportableHerds()
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void loadExportableHerds()
+      }
+    }
+
+    window.addEventListener('focus', loadExportableHerds)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('focus', loadExportableHerds)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   async function handleExportZip() {
     setIsExporting(true)
@@ -566,6 +796,21 @@ export default function ExportPage() {
         workEvents,
         settings,
       }
+      const herdExport = {
+        exportedAt: appData.exportedAt,
+        app: appData.app,
+        herds: buildHerdExportBundles({
+          herds,
+          animals,
+          enclosures,
+          enclosureAssignments,
+          sessions,
+          trackpoints,
+          events,
+          workSessions,
+          workEvents,
+        }),
+      }
 
       const grazingGpx = buildGpxTrack(
         'Hiaterbua 1.0 Weidegänge',
@@ -611,6 +856,7 @@ export default function ExportPage() {
         'spatial/enclosure_walk_trackpoints.geojson: Trackpunkte der abgelaufenen Pferche',
         'gpx/grazing_sessions.gpx: Weidegänge als GPX',
         'gpx/enclosure_walks.gpx: Pferch-Walks als GPX',
+        'herds/herds.json: Herden mit Tieren, Belegungen, Sitzungen und Arbeitseinsätzen',
         'app-data.json: übrige App-Daten für Import/Archiv',
         '',
         'GeoPackage ist aktuell noch nicht enthalten.',
@@ -642,6 +888,7 @@ export default function ExportPage() {
       )
       zip.file('gpx/grazing_sessions.gpx', grazingGpx)
       zip.file('gpx/enclosure_walks.gpx', enclosureWalkGpx)
+      zip.file('herds/herds.json', JSON.stringify(herdExport, null, 2))
 
       const blob = await zip.generateAsync({ type: 'blob' })
       downloadBlob(blob, `hiaterbua-1.0-export-${new Date().toISOString().slice(0, 10)}.zip`)
@@ -657,6 +904,108 @@ export default function ExportPage() {
     }
   }
 
+  async function handleExportSingleHerd() {
+    if (!activeHerdExportId) {
+      setError('Bitte zuerst eine Herde wählen.')
+      return
+    }
+
+    setIsExportingHerd(true)
+    setStatus('')
+    setError('')
+
+    try {
+      const herd = await db.herds.get(activeHerdExportId)
+
+      if (!herd) {
+        throw new Error('Gewählte Herde wurde nicht gefunden.')
+      }
+
+      const [animals, enclosureAssignments, sessions, workSessions, directHerdEnclosures] =
+        await Promise.all([
+          db.animals.where('herdId').equals(herd.id).toArray(),
+          db.enclosureAssignments.where('herdId').equals(herd.id).toArray(),
+          db.sessions.where('herdId').equals(herd.id).toArray(),
+          db.workSessions.where('herdId').equals(herd.id).toArray(),
+          db.enclosures.where('herdId').equals(herd.id).toArray(),
+        ])
+
+      const relatedEnclosureIds = [
+        ...new Set(
+          [
+            ...enclosureAssignments.map((assignment) => assignment.enclosureId),
+            ...workSessions
+              .map((session) => session.enclosureId)
+              .filter((enclosureId): enclosureId is string => Boolean(enclosureId)),
+          ].filter((enclosureId) => !directHerdEnclosures.some((enclosure) => enclosure.id === enclosureId))
+        ),
+      ]
+
+      const [trackpoints, events, workEvents, referencedEnclosures] = await Promise.all([
+        sessions.length > 0
+          ? db.trackpoints
+              .where('sessionId')
+              .anyOf(sessions.map((session) => session.id))
+              .toArray()
+          : Promise.resolve([] as TrackPoint[]),
+        sessions.length > 0
+          ? db.events
+              .where('sessionId')
+              .anyOf(sessions.map((session) => session.id))
+              .toArray()
+          : Promise.resolve([] as SessionEvent[]),
+        workSessions.length > 0
+          ? db.workEvents
+              .where('workSessionId')
+              .anyOf(workSessions.map((session) => session.id))
+              .toArray()
+          : Promise.resolve([] as WorkEvent[]),
+        relatedEnclosureIds.length > 0
+          ? db.enclosures.bulkGet(relatedEnclosureIds)
+          : Promise.resolve([] as Array<Enclosure | undefined>),
+      ])
+
+      const bundle = buildHerdExportBundles({
+        herds: [herd],
+        animals,
+        enclosures: [
+          ...directHerdEnclosures,
+          ...referencedEnclosures.filter(
+            (enclosure): enclosure is Enclosure =>
+              enclosure !== undefined &&
+              !directHerdEnclosures.some((existing) => existing.id === enclosure.id)
+          ),
+        ],
+        enclosureAssignments,
+        sessions,
+        trackpoints,
+        events,
+        workSessions,
+        workEvents,
+      })[0]
+
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        app: 'Hiaterbua 1.0',
+        herd: bundle,
+      }
+
+      downloadBlob(
+        new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+        `hiaterbua-herde-${sanitizeFilenamePart(herd.name)}-${new Date().toISOString().slice(0, 10)}.json`
+      )
+      setStatus(`Herde "${herd.name}" als JSON exportiert.`)
+    } catch (currentError) {
+      setError(
+        currentError instanceof Error
+          ? currentError.message
+          : 'Herde konnte nicht exportiert werden.'
+      )
+    } finally {
+      setIsExportingHerd(false)
+    }
+  }
+
   async function handleImport() {
     if (!selectedFile || !importPreview) {
       setError('Bitte zuerst eine Importdatei wählen.')
@@ -668,9 +1017,16 @@ export default function ExportPage() {
     setError('')
 
     try {
-      const counts = await importPayloadIntoDb(importPreview.payload, replaceExisting)
+      const existingRefs = await getExistingImportRefs()
+      const preparedImport = prepareImportPayload(
+        importPreview.payload,
+        importPreview.meta,
+        replaceExisting,
+        existingRefs
+      )
+      const counts = await importPayloadIntoDb(preparedImport)
       setStatus(
-        `Import abgeschlossen (${replaceExisting ? 'Ersetzen' : 'Zusammenführen'}). Herden: ${counts.herds}, Pferche: ${counts.enclosures}, Untersuchungsflächen: ${counts.surveyAreas}, Weidegänge: ${counts.grazingSessions}, Trackpunkte: ${counts.trackpoints}.`
+        `Import abgeschlossen (${replaceExisting ? 'Ersetzen' : 'Zusammenführen'}). Herden: ${counts.herds}, Tiere: ${counts.animals}, Pferche: ${counts.enclosures}, Untersuchungsflächen: ${counts.surveyAreas}, Belegungen: ${counts.enclosureAssignments}, Weidegänge: ${counts.grazingSessions}, Trackpunkte: ${counts.trackpoints}, Ereignisse: ${counts.sessionEvents}, Arbeit: ${counts.workSessions}, Arbeitsereignisse: ${counts.workEvents}, Settings: ${counts.settings}.`
       )
     } catch (currentError) {
       setError(
@@ -697,6 +1053,17 @@ export default function ExportPage() {
 
     try {
       const preview = await buildImportPreview(file)
+      if (replaceExisting) {
+        const nextCanReplace =
+          preview.meta.isCompleteAppData ||
+          (preview.meta.presentKeys.length > 0 &&
+            preview.meta.presentKeys.every(
+              (key) => key === 'surveyAreas' || key === 'settings'
+            ))
+        if (!nextCanReplace) {
+          setReplaceExisting(false)
+        }
+      }
       setImportPreview(preview)
       setStatus(`Import-Datei geprüft: ${preview.sourceLabel}.`)
     } catch (currentError) {
@@ -713,21 +1080,21 @@ export default function ExportPage() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-3xl bg-white p-5 shadow-sm">
+      <section className="rounded-3xl border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
         <h1 className="text-2xl font-semibold">Export & Import</h1>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm font-medium text-neutral-800">
           QGIS-taugliche Raumdaten als GeoJSON, Spuren zusätzlich als GPX und übrige App-Daten als JSON bündeln oder wieder einlesen.
         </p>
       </section>
 
-      <section className="rounded-3xl bg-white p-5 shadow-sm">
+      <section className="rounded-3xl border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
         <h2 className="text-lg font-semibold">ZIP-Export</h2>
-        <p className="mt-2 text-sm text-neutral-600">
-          Enthält Pferche, Untersuchungsflächen, geführte Weidegänge, Trackpunkte, GPX-Dateien und `app-data.json` für Herden, Tiere, Arbeit und Einstellungen.
+        <p className="mt-2 text-sm font-medium text-neutral-800">
+          Enthält Pferche, Untersuchungsflächen, geführte Weidegänge, Trackpunkte, GPX-Dateien, `herds/herds.json` für vollständige Herden-Pakete und `app-data.json` für den vollständigen App-Import.
         </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <div className="rounded-2xl bg-neutral-50 px-4 py-4 text-sm text-neutral-700">
+          <div className="rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
             <div className="font-medium text-neutral-900">Für QGIS</div>
             <div className="mt-2">`enclosures.geojson`</div>
             <div>`survey_areas.geojson`</div>
@@ -736,10 +1103,11 @@ export default function ExportPage() {
             <div>`session_events.geojson`</div>
             <div>`enclosure_walk_trackpoints.geojson`</div>
           </div>
-          <div className="rounded-2xl bg-neutral-50 px-4 py-4 text-sm text-neutral-700">
+          <div className="rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
             <div className="font-medium text-neutral-900">Weitere Dateien</div>
             <div className="mt-2">`grazing_sessions.gpx`</div>
             <div>`enclosure_walks.gpx`</div>
+            <div>`herds/herds.json`</div>
             <div>`app-data.json`</div>
           </div>
         </div>
@@ -748,25 +1116,68 @@ export default function ExportPage() {
           type="button"
           onClick={() => void handleExportZip()}
           disabled={isExporting}
-          className="mt-4 rounded-2xl bg-black px-4 py-4 font-medium text-white disabled:opacity-50"
+          className="mt-4 rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-[#17130f] disabled:opacity-50"
         >
           {isExporting ? 'Erstellt Export ...' : 'ZIP-Export herunterladen'}
         </button>
 
-        <p className="mt-3 text-xs text-neutral-500">
+        <p className="mt-3 text-xs font-medium text-neutral-700">
           GeoPackage ist bewusst noch nicht enthalten, weil im Projekt aktuell keine Schreibbibliothek dafür integriert ist.
         </p>
       </section>
 
-      <section className="rounded-3xl bg-white p-5 shadow-sm">
+      <section className="rounded-3xl border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+        <h2 className="text-lg font-semibold">Einzelne Herde exportieren</h2>
+        <p className="mt-2 text-sm font-medium text-neutral-800">
+          Exportiert genau eine Herde als eigene JSON-Datei mit Stammdaten, Tieren, Belegungen, zugehörigen Pferchen, Weidegängen und Arbeitseinsätzen.
+        </p>
+
+        {exportableHerds === null ? (
+          <div className="mt-4 rounded-2xl border border-[#ccb98a] bg-[#efe4c8] px-4 py-3 text-sm font-semibold text-neutral-900">
+            Lade Herden ...
+          </div>
+        ) : exportableHerds.length === 0 ? (
+          <div className="mt-4 rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-800">
+            Keine Herde vorhanden.
+          </div>
+        ) : (
+          <>
+            <label className="mt-4 block text-sm font-medium text-neutral-900">
+              Herde wählen
+              <select
+                value={activeHerdExportId}
+                onChange={(event) => setSelectedHerdExportId(event.target.value)}
+                className="mt-2 w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-neutral-950"
+              >
+                {exportableHerds.map((herd) => (
+                  <option key={herd.id} value={herd.id}>
+                    {herd.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="button"
+              onClick={() => void handleExportSingleHerd()}
+              disabled={isExportingHerd}
+              className="mt-4 rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-[#17130f] disabled:opacity-50"
+            >
+              {isExportingHerd ? 'Erstellt Herden-JSON ...' : 'Herde als JSON herunterladen'}
+            </button>
+          </>
+        )}
+      </section>
+
+      <section className="rounded-3xl border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
         <h2 className="text-lg font-semibold">Import</h2>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm font-medium text-neutral-800">
           Importiert `app-data.json`, den gesamten ZIP-Export oder ein separates GeoJSON für Untersuchungsflächen.
         </p>
 
-        <label className="mt-4 block rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-700">
+        <label className="mt-4 block rounded-2xl border-2 border-dashed border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
           <div className="font-medium text-neutral-900">Datei wählen</div>
-          <div className="mt-1 text-neutral-600">{selectedFileLabel}</div>
+          <div className="mt-1 font-medium text-neutral-800">{selectedFileLabel}</div>
           <input
             type="file"
             accept=".zip,.json,.geojson,application/json,application/geo+json,application/zip"
@@ -778,19 +1189,19 @@ export default function ExportPage() {
         </label>
 
         {isAnalyzingImport ? (
-          <div className="mt-4 rounded-2xl bg-stone-100 px-4 py-3 text-sm text-neutral-800">
+          <div className="mt-4 rounded-2xl border border-[#ccb98a] bg-[#efe4c8] px-4 py-3 text-sm font-semibold text-neutral-900">
             Analysiere Importdatei ...
           </div>
         ) : null}
 
         {importPreview ? (
-          <div className="mt-4 rounded-2xl bg-stone-50 px-4 py-4">
+          <div className="mt-4 rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-neutral-950">Importübersicht</div>
                 <div className="mt-1 text-sm text-neutral-700">{importPreview.sourceLabel}</div>
               </div>
-              <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-neutral-900">
+              <div className="rounded-full border border-[#ccb98a] bg-[#efe4c8] px-3 py-1 text-xs font-semibold text-neutral-950">
                 {replaceExisting ? 'Ersetzen' : 'Zusammenführen'}
               </div>
             </div>
@@ -811,16 +1222,16 @@ export default function ExportPage() {
               ].map(([label, value]) => (
                 <div
                   key={String(label)}
-                  className="rounded-2xl border border-white bg-white px-3 py-3 text-sm text-neutral-800"
+                  className="rounded-2xl border-2 border-[#ccb98a] bg-[#fff8ea] px-3 py-3 text-sm text-neutral-900"
                 >
-                  <div className="text-neutral-600">{label}</div>
+                  <div className="font-medium text-neutral-700">{label}</div>
                   <div className="mt-1 font-semibold text-neutral-950">{value}</div>
                 </div>
               ))}
             </div>
 
             {importPreview.warnings.length > 0 ? (
-              <div className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <div className="mt-4 rounded-2xl border border-amber-300 bg-[#fff1c7] px-4 py-3 text-sm font-medium text-amber-950">
                 {importPreview.warnings.map((warning) => (
                   <div key={warning}>{warning}</div>
                 ))}
@@ -829,18 +1240,24 @@ export default function ExportPage() {
           </div>
         ) : null}
 
-        <label className="mt-4 flex items-start gap-3 rounded-2xl bg-neutral-50 px-4 py-4 text-sm text-neutral-700">
+        <label className="mt-4 flex items-start gap-3 rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
           <input
             type="checkbox"
             checked={replaceExisting}
             onChange={(event) => setReplaceExisting(event.target.checked)}
+            disabled={!!importPreview && !canReplaceExisting}
             className="mt-1 h-4 w-4 rounded border-neutral-300"
           />
           <span>
             <span className="block font-medium text-neutral-900">Vorhandene Daten vorher löschen</span>
-            <span className="block text-neutral-600">
+            <span className="block font-medium text-neutral-800">
               Ohne Haken werden Datensätze anhand ihrer `id` ergänzt oder überschrieben.
             </span>
+            {importPreview && !canReplaceExisting ? (
+              <span className="mt-1 block font-medium text-amber-900">
+                Für diese Datei ist `Ersetzen` gesperrt, weil nur Teilmengen importiert werden.
+              </span>
+            ) : null}
           </span>
         </label>
 
@@ -848,20 +1265,20 @@ export default function ExportPage() {
           type="button"
           onClick={() => void handleImport()}
           disabled={isImporting || isAnalyzingImport || !selectedFile || !importPreview}
-          className="mt-4 rounded-2xl bg-neutral-900 px-4 py-4 font-medium text-white disabled:opacity-50"
+          className="mt-4 rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-[#17130f] disabled:opacity-50"
         >
           {isImporting ? 'Import läuft ...' : 'Import starten'}
         </button>
       </section>
 
       {status ? (
-        <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm font-semibold text-emerald-900">
           {status}
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-2xl border border-red-300 bg-red-100 px-4 py-3 text-sm font-semibold text-red-900">
           {error}
         </div>
       ) : null}

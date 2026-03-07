@@ -2386,7 +2386,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={startDrawing}
-        className="rounded-[1.1rem] bg-neutral-950 px-3 py-3 text-sm font-semibold text-white disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={isDrawing}
       >
         Start
@@ -2394,7 +2394,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={finishDrawing}
-        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={!isDrawing}
       >
         Ende
@@ -2402,7 +2402,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={undoLastPoint}
-        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={draftPoints.length === 0}
       >
         Letzter Punkt
@@ -2410,7 +2410,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={clearDraft}
-        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={draftPoints.length === 0}
       >
         Verwerfen
@@ -2419,7 +2419,7 @@ export function LivePositionMap() {
   )
 
   const drawSummary = (
-    <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm">
+    <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm text-neutral-800 shadow-sm">
       Punkte gesetzt: <span className="font-medium text-neutral-900">{draftPoints.length}</span>
       <span className="ml-2">
         · Fläche <span className="font-medium text-neutral-900">{formatArea(draftAreaM2)}</span>
@@ -2432,7 +2432,7 @@ export function LivePositionMap() {
       <div>
         <label className="mb-1 block text-sm font-medium">Pferchname</label>
         <input
-          className="w-full rounded-2xl border px-4 py-3"
+          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="z. B. Nordhang 1"
@@ -2442,7 +2442,7 @@ export function LivePositionMap() {
       <div>
         <label className="mb-1 block text-sm font-medium">Notiz</label>
         <textarea
-          className="w-full rounded-2xl border px-4 py-3"
+          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
           rows={3}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
@@ -2459,7 +2459,7 @@ export function LivePositionMap() {
       <button
         type="submit"
         disabled={isSaving || draftPoints.length < 3}
-        className="w-full rounded-2xl bg-emerald-700 px-4 py-4 font-medium text-white disabled:opacity-50"
+        className="w-full rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-medium text-[#17130f] disabled:opacity-50"
       >
         {isSaving ? 'Speichert ...' : 'Pferch speichern'}
       </button>
@@ -2484,7 +2484,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={() => void startWalkMode()}
-        className="rounded-[1.1rem] bg-neutral-950 px-3 py-3 text-sm font-semibold text-white disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={isWalking || isDrawing}
       >
         Start
@@ -2492,7 +2492,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={stopWalkMode}
-        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={!isWalking}
       >
         Ende
@@ -2500,7 +2500,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={() => void undoLastWalkPoint()}
-        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={walkPoints.length === 0}
       >
         Letzter Punkt
@@ -2512,7 +2512,7 @@ export function LivePositionMap() {
             ? void removeWalkPointAtIndex(selectedWalkPointIndex)
             : undefined
         }
-        className="rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={selectedWalkPointIndex === null}
       >
         Ausgewählt
@@ -2520,7 +2520,7 @@ export function LivePositionMap() {
       <button
         type="button"
         onClick={() => void discardWalkMode()}
-        className="col-span-2 rounded-[1.1rem] bg-stone-200 px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
+        className="col-span-2 rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
         disabled={walkPoints.length === 0 && !isWalking}
       >
         Verwerfen
@@ -2529,7 +2529,7 @@ export function LivePositionMap() {
   )
 
   const walkSummary = (
-    <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm">
+    <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm text-neutral-800 shadow-sm">
       Akzeptierte Walk-Punkte:{' '}
       <span className="font-medium text-neutral-900">{walkPoints.length}</span>
       <span className="ml-2">
@@ -2581,7 +2581,7 @@ export function LivePositionMap() {
       {isWalkPointsOpen ? (
         <>
           {selectedWalkPoint ? (
-            <div className="mt-3 rounded-2xl bg-amber-50 px-3 py-3 text-sm text-amber-900">
+            <div className="mt-3 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-3 py-3 text-sm text-[#17130f]">
               Ausgewaehlt: Punkt {selectedWalkPointIndex !== null ? selectedWalkPointIndex + 1 : ''}{' '}
               um {formatPointTimestamp(selectedWalkPoint.timestamp)} mit{' '}
               {formatAccuracy(selectedWalkPoint.accuracy)}.
@@ -2594,7 +2594,7 @@ export function LivePositionMap() {
                 key={`${point.timestamp}-${index}`}
                 className={[
                   'grid grid-cols-[1fr_auto] gap-3 rounded-2xl px-3 py-3 text-sm',
-                  selectedWalkPointIndex === index ? 'bg-amber-100' : 'bg-white',
+                  selectedWalkPointIndex === index ? 'bg-[#efe4c8]' : 'bg-[#fffdf6]',
                 ].join(' ')}
               >
                 <button
@@ -2613,7 +2613,7 @@ export function LivePositionMap() {
                 <button
                   type="button"
                   onClick={() => void removeWalkPointAtIndex(index)}
-                  className="rounded-2xl bg-neutral-100 px-3 py-2 text-xs font-medium text-neutral-900"
+                  className="rounded-2xl bg-[#fffdf6] px-3 py-2 text-xs font-medium text-neutral-900"
                 >
                   Entfernen
                 </button>
@@ -2630,7 +2630,7 @@ export function LivePositionMap() {
       <div>
         <label className="mb-1 block text-sm font-medium">Pferchname</label>
         <input
-          className="w-full rounded-2xl border px-4 py-3"
+          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
           value={walkName}
           onChange={(event) => setWalkName(event.target.value)}
           placeholder="z. B. Weidekante Ost"
@@ -2640,7 +2640,7 @@ export function LivePositionMap() {
       <div>
         <label className="mb-1 block text-sm font-medium">Notiz</label>
         <textarea
-          className="w-full rounded-2xl border px-4 py-3"
+          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
           rows={3}
           value={walkNotes}
           onChange={(event) => setWalkNotes(event.target.value)}
@@ -2657,7 +2657,7 @@ export function LivePositionMap() {
       <button
         type="submit"
         disabled={isWalkSaving || walkPoints.length < 3}
-        className="w-full rounded-2xl bg-orange-600 px-4 py-4 font-medium text-white disabled:opacity-50"
+        className="w-full rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-medium text-[#17130f] disabled:opacity-50"
       >
         {isWalkSaving ? 'Speichert ...' : 'Abgelaufenen Pferch speichern'}
       </button>
@@ -2680,7 +2680,7 @@ export function LivePositionMap() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -2695,10 +2695,10 @@ export function LivePositionMap() {
             className={[
               'rounded-full px-3 py-1.5 text-xs font-semibold',
               gpsState === 'tracking'
-                ? 'bg-emerald-200 text-emerald-950'
+                ? 'bg-[#efe4c8] text-[#17130f]'
                 : gpsState === 'denied' || gpsState === 'error'
                   ? 'bg-red-100 text-red-800'
-                  : 'bg-stone-200 text-stone-900',
+                  : 'bg-[#f1efeb] text-stone-900',
             ].join(' ')}
           >
             {gpsLabel}
@@ -2707,19 +2707,19 @@ export function LivePositionMap() {
 
         {isLiveStatusOpen ? (
           <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                 GPS
               </div>
               <div className="mt-1 text-sm font-medium text-neutral-900">{gpsDetail}</div>
             </div>
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                 Filter
               </div>
               <div className="mt-1 text-sm font-medium text-neutral-900">{gpsFilterDetail}</div>
             </div>
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                 Koordinaten
               </div>
@@ -2729,7 +2729,7 @@ export function LivePositionMap() {
                   : 'Noch keine Position'}
               </div>
             </div>
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
                 Update
               </div>
@@ -2744,8 +2744,8 @@ export function LivePositionMap() {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.95fr)] lg:items-start">
         <div className="space-y-4">
-          <div className="relative overflow-hidden rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:sticky lg:top-4">
-            <div ref={containerRef} className="h-[420px] w-full bg-neutral-100 sm:h-[520px] lg:h-[calc(100vh-8rem)]" />
+          <div className="relative overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:sticky lg:top-4">
+            <div ref={containerRef} className="h-[420px] w-full bg-[#fffdf6] sm:h-[520px] lg:h-[calc(100vh-8rem)]" />
             {mobilePanel === 'draw' && !editingEnclosureId ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
                 <MobileMapToolbar>
@@ -2758,6 +2758,7 @@ export function LivePositionMap() {
                     onClick={startDrawing}
                     disabled={isDrawing}
                     variant="primary"
+                    label="Start"
                   >
                     +
                   </MobileMapToolbarButton>
@@ -2766,6 +2767,7 @@ export function LivePositionMap() {
                     title="Zeichnen beenden"
                     onClick={finishDrawing}
                     disabled={!isDrawing}
+                    label="Fertig"
                   >
                     ✓
                   </MobileMapToolbarButton>
@@ -2774,6 +2776,7 @@ export function LivePositionMap() {
                     title="Letzten Punkt löschen"
                     onClick={undoLastPoint}
                     disabled={draftPoints.length === 0}
+                    label="Zurück"
                   >
                     ↶
                   </MobileMapToolbarButton>
@@ -2782,6 +2785,7 @@ export function LivePositionMap() {
                     title="Entwurf verwerfen"
                     onClick={clearDraft}
                     disabled={draftPoints.length === 0}
+                    label="Abbruch"
                   >
                     ×
                   </MobileMapToolbarButton>
@@ -2800,6 +2804,7 @@ export function LivePositionMap() {
                     onClick={() => void startWalkMode()}
                     disabled={isWalking || isDrawing}
                     variant="primary"
+                    label="Start"
                   >
                     <PlayIcon />
                   </MobileMapToolbarButton>
@@ -2808,6 +2813,7 @@ export function LivePositionMap() {
                     title="Walk beenden"
                     onClick={stopWalkMode}
                     disabled={!isWalking}
+                    label="Stop"
                   >
                     <StopIcon />
                   </MobileMapToolbarButton>
@@ -2816,6 +2822,7 @@ export function LivePositionMap() {
                     title="Letzten Walk-Punkt löschen"
                     onClick={() => void undoLastWalkPoint()}
                     disabled={walkPoints.length === 0}
+                    label="Zurück"
                   >
                     <UndoIcon />
                   </MobileMapToolbarButton>
@@ -2824,6 +2831,7 @@ export function LivePositionMap() {
                     title="Walk verwerfen"
                     onClick={() => void discardWalkMode()}
                     disabled={walkPoints.length === 0 && !isWalking}
+                    label="Abbruch"
                   >
                     <CloseIcon />
                   </MobileMapToolbarButton>
@@ -2837,7 +2845,7 @@ export function LivePositionMap() {
                     aria-label="Auf aktuelle Position zentrieren"
                     onClick={centerMapOnPosition}
                     disabled={!position}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg disabled:opacity-50"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg disabled:opacity-50"
                   >
                     <CenterIcon />
                   </button>
@@ -2845,14 +2853,14 @@ export function LivePositionMap() {
                     type="button"
                     aria-label="Kartengrundlage wählen"
                     onClick={() => setIsBaseLayerMenuOpen((current) => !current)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white bg-white text-neutral-950 shadow-lg"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg"
                   >
                     <LayersIcon />
                   </button>
                 </div>
 
               {isBaseLayerMenuOpen ? (
-                <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-white bg-white/95 p-1.5 shadow-lg">
+                <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-[#ccb98a] bg-[rgba(255,253,246,0.96)] p-1.5 shadow-lg">
                   <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
                     Kartengrundlage
                   </div>
@@ -2862,8 +2870,8 @@ export function LivePositionMap() {
                     className={[
                       'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       baseLayer === 'south-tyrol-orthophoto-2023'
-                        ? 'bg-black text-white'
-                        : 'bg-stone-200 text-neutral-950',
+                        ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                        : 'bg-[#f1efeb] text-neutral-950',
                     ].join(' ')}
                   >
                     Orthofoto 2023
@@ -2874,8 +2882,8 @@ export function LivePositionMap() {
                     className={[
                       'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
                       baseLayer === 'south-tyrol-basemap'
-                        ? 'bg-black text-white'
-                        : 'bg-stone-200 text-neutral-950',
+                        ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                        : 'bg-[#f1efeb] text-neutral-950',
                     ].join(' ')}
                   >
                     BaseMap Südtirol
@@ -2885,7 +2893,7 @@ export function LivePositionMap() {
                     onClick={() => setShowSurveyAreas((current) => !current)}
                     className={[
                       'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-                      showSurveyAreas ? 'bg-cyan-100 text-cyan-950' : 'bg-stone-200 text-neutral-950',
+                      showSurveyAreas ? 'bg-[#efe4c8] text-[#17130f]' : 'bg-[#f1efeb] text-neutral-950',
                     ].join(' ')}
                   >
                     Flächen {showSurveyAreas ? 'an' : 'aus'}
@@ -2894,12 +2902,12 @@ export function LivePositionMap() {
                     type="button"
                     onClick={() => void prefetchVisibleMapArea()}
                     disabled={prefetchingMapArea}
-                    className="mt-1.5 w-full rounded-xl bg-emerald-50 px-2.5 py-2 text-left text-xs font-medium text-emerald-900 disabled:opacity-50"
+                    className="mt-1.5 w-full rounded-xl border border-[#ccb98a] bg-[#fffdf6] px-2.5 py-2 text-left text-xs font-medium text-[#17130f] disabled:opacity-50"
                   >
                     {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
                   </button>
                   {prefetchStatus ? (
-                    <div className="mt-1.5 rounded-xl bg-stone-200 px-2.5 py-2 text-[11px] font-medium text-neutral-900">
+                    <div className="mt-1.5 rounded-xl bg-[#f1efeb] px-2.5 py-2 text-[11px] font-medium text-neutral-900">
                     {prefetchStatus}
                     </div>
                   ) : null}
@@ -2930,7 +2938,7 @@ export function LivePositionMap() {
                             : 'Punkt antippen und neu setzen oder unten Aktion wählen.'}
                       </div>
                     </div>
-                    <div className="shrink-0 rounded-full bg-cyan-50 px-2 py-1 text-[11px] font-medium text-cyan-900 sm:px-3 sm:text-xs">
+                    <div className="shrink-0 rounded-full border border-[#ccb98a] bg-[#fffdf6] px-2 py-1 text-[11px] font-medium text-[#17130f] sm:px-3 sm:text-xs">
                       {editGeometryPoints.length} Punkte
                     </div>
                   </div>
@@ -2939,7 +2947,7 @@ export function LivePositionMap() {
                     <button
                       type="button"
                       onClick={startAddEditPoint}
-                      className="rounded-2xl bg-cyan-100 px-2 py-2.5 text-xs font-medium text-cyan-900 sm:px-3 sm:py-3 sm:text-sm"
+                      className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-2 py-2.5 text-xs font-medium text-[#17130f] sm:px-3 sm:py-3 sm:text-sm"
                     >
                       Punkt +
                     </button>
@@ -2947,7 +2955,7 @@ export function LivePositionMap() {
                       type="button"
                       onClick={removeSelectedEditPoint}
                       disabled={selectedEditPointIndex === null || editGeometryPoints.length <= 3}
-                      className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+                      className="rounded-2xl bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
                     >
                       Punkt -
                     </button>
@@ -2955,14 +2963,14 @@ export function LivePositionMap() {
                       type="button"
                       onClick={() => void persistEditedEnclosure()}
                       disabled={isEditing}
-                      className="rounded-2xl bg-neutral-950 px-2 py-2.5 text-xs font-semibold text-white disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+                      className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-[#17130f] disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
                     >
                       {isEditing ? '...' : 'Speichern'}
                     </button>
                     <button
                       type="button"
                       onClick={cancelEditEnclosure}
-                      className="rounded-2xl bg-stone-200 px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
+                      className="rounded-2xl bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
                     >
                       Schließen
                     </button>
@@ -3014,7 +3022,7 @@ export function LivePositionMap() {
           </div>
 
           <div className={mobilePanel === 'saved' ? 'lg:hidden' : 'hidden'}>
-            <div className="rounded-[1.4rem] border border-white/70 bg-[rgba(255,252,246,0.9)] p-4 shadow-sm">
+            <div className="rounded-[1.4rem] border-2 border-[#3a342a] bg-[#fff8ea] p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold">Gespeicherte Pferche</h2>
                 <span className="text-sm text-neutral-500">{filteredEnclosures.length}</span>
@@ -3023,7 +3031,7 @@ export function LivePositionMap() {
               <div className="mt-4">
                 <label className="mb-1 block text-sm font-medium">Pferch wählen</label>
                 <select
-                  className="w-full rounded-2xl border px-4 py-3"
+                  className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
                   value={selectedEnclosureId ?? ''}
                   onChange={(event) => {
                     const nextId = event.target.value
@@ -3058,7 +3066,7 @@ export function LivePositionMap() {
               ) : null}
 
               {selectedEnclosure ? (
-                <div className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
                   <button
                     type="button"
                     onClick={() => setIsSelectedEnclosureInfoOpen((current) => !current)}
@@ -3068,7 +3076,7 @@ export function LivePositionMap() {
                     <span>
                       Fokus: <span className="font-medium">{selectedEnclosure.name}</span>
                     </span>
-                    <span className="text-base text-amber-950">
+                    <span className="text-base text-[#17130f]">
                       {isSelectedEnclosureInfoOpen ? '−' : '+'}
                     </span>
                   </button>
@@ -3078,7 +3086,7 @@ export function LivePositionMap() {
                         {formatArea(selectedEnclosure.areaM2)} · {selectedEnclosure.pointsCount ?? 0} Punkte
                       </div>
                       {selectedEnclosure.notes ? (
-                        <div className="mt-1 text-amber-950/80">{selectedEnclosure.notes}</div>
+                        <div className="mt-1 text-[#4f473c]">{selectedEnclosure.notes}</div>
                       ) : null}
                     </>
                   ) : null}
@@ -3089,7 +3097,7 @@ export function LivePositionMap() {
                 <button
                   type="button"
                   onClick={() => setShowSelectedTrack((current) => !current)}
-                  className="mt-4 w-full rounded-2xl bg-white px-4 py-3 text-sm font-medium text-neutral-900"
+                  className="mt-4 w-full rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900"
                 >
                   {showSelectedTrack ? 'Spur ausblenden' : 'Spur anzeigen'}
                 </button>
@@ -3101,7 +3109,7 @@ export function LivePositionMap() {
         <div className="space-y-4">
           <div
             className={[
-              'rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]',
+              'rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]',
               'hidden lg:block',
             ].join(' ')}
           >
@@ -3111,7 +3119,7 @@ export function LivePositionMap() {
 
           <div
             className={[
-              'rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.94)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]',
+              'rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]',
               'hidden lg:block',
             ].join(' ')}
           >
@@ -3121,11 +3129,11 @@ export function LivePositionMap() {
 
           <div
             className={[
-              'rounded-3xl bg-white p-5 shadow-sm',
+              'rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]',
               mobilePanel !== 'saved' ? 'hidden lg:block' : '',
             ].join(' ')}
           >
-            <div className="rounded-2xl bg-stone-50 px-4 py-4">
+            <div className="rounded-2xl bg-[#fffdf6] px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold">Untersuchungsflächen</h2>
                 <span className="text-sm text-neutral-500">{safeSurveyAreas.length}</span>
@@ -3135,7 +3143,7 @@ export function LivePositionMap() {
               </p>
 
               {selectedSurveyArea ? (
-                <div className="mt-3 rounded-2xl bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
+                <div className="mt-3 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
                   Fokus: <span className="font-medium">{selectedSurveyArea.name}</span> ·{' '}
                   {formatArea(selectedSurveyArea.areaM2)}
                 </div>
@@ -3151,10 +3159,10 @@ export function LivePositionMap() {
                     <div
                       key={surveyArea.id}
                       className={[
-                        'rounded-2xl border px-3 py-3',
+                        'rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-3 py-3',
                         selectedSurveyAreaId === surveyArea.id
-                          ? 'border-cyan-200 bg-cyan-50'
-                          : 'border-white bg-white',
+                          ? 'border-[#d2cbc0] bg-[#efe4c8]'
+                          : 'border-[#ccb98a] bg-[#fffdf6]',
                       ].join(' ')}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -3167,7 +3175,7 @@ export function LivePositionMap() {
                         <button
                           type="button"
                           onClick={() => focusSurveyArea(surveyArea)}
-                          className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-950 shadow-sm"
+                          className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-2 text-xs font-semibold text-neutral-950 shadow-sm"
                         >
                           Fokus
                         </button>
@@ -3197,8 +3205,8 @@ export function LivePositionMap() {
                   className={[
                     'rounded-2xl px-3 py-3 text-sm font-medium',
                     enclosureListFilter === filterOption.id
-                      ? 'bg-neutral-950 text-white'
-                      : 'bg-stone-200 text-neutral-950',
+                      ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                      : 'bg-[#f1efeb] text-neutral-950',
                   ].join(' ')}
                 >
                   {filterOption.label}
@@ -3207,7 +3215,7 @@ export function LivePositionMap() {
             </div>
 
             {selectedEnclosure ? (
-              <div className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
                 Fokus: <span className="font-medium">{selectedEnclosure.name}</span>. Auf
                 ein Polygon in der Karte tippen, um die Bearbeitung direkt zu öffnen.
               </div>
@@ -3224,7 +3232,7 @@ export function LivePositionMap() {
                 key={enclosure.id}
                 className={[
                   'rounded-2xl px-4 py-3',
-                  selectedEnclosureId === enclosure.id ? 'bg-amber-50' : 'bg-neutral-50',
+                  selectedEnclosureId === enclosure.id ? 'bg-[#efe4c8]' : 'bg-neutral-50',
                 ].join(' ')}
               >
                 <button
@@ -3276,30 +3284,30 @@ export function LivePositionMap() {
 
                   return (
                     <div className="mt-3 space-y-3">
-                      <div className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-800">
+                      <div className="rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm text-neutral-800">
                         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-600">
                           Auswertung
                         </div>
                         <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                          <div className="rounded-[1rem] border border-neutral-200 bg-stone-50 px-3 py-3">
+                          <div className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3">
                             <div className="text-xs font-medium text-neutral-600">Nutzungen</div>
                             <div className="mt-1 text-base font-semibold text-neutral-950">
                               {enclosureStats?.totalAssignments ?? 0}
                             </div>
                           </div>
-                          <div className="rounded-[1rem] border border-neutral-200 bg-stone-50 px-3 py-3">
+                          <div className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3">
                             <div className="text-xs font-medium text-neutral-600">Gesamtdauer</div>
                             <div className="mt-1 text-base font-semibold text-neutral-950">
                               {formatDurationSeconds(enclosureStats?.totalDurationS ?? 0)}
                             </div>
                           </div>
-                          <div className="rounded-[1rem] border border-neutral-200 bg-stone-50 px-3 py-3">
+                          <div className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3">
                             <div className="text-xs font-medium text-neutral-600">Herden</div>
                             <div className="mt-1 text-base font-semibold text-neutral-950">
                               {enclosureStats?.uniqueHerdsCount ?? 0}
                             </div>
                           </div>
-                          <div className="rounded-[1rem] border border-neutral-200 bg-stone-50 px-3 py-3">
+                          <div className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-3">
                             <div className="text-xs font-medium text-neutral-600">Ø Besatz</div>
                             <div className="mt-1 text-base font-semibold text-neutral-950">
                               {enclosureStats?.averageCount ?? 'unbekannt'}
@@ -3316,7 +3324,7 @@ export function LivePositionMap() {
                         ) : null}
                       </div>
 
-                      <div className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-700">
+                      <div className="rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm text-neutral-700">
                         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
                           Belegung
                         </div>
@@ -3355,20 +3363,20 @@ export function LivePositionMap() {
                           type="button"
                           onClick={() => void endEnclosureAssignment(activeAssignment)}
                           disabled={endingAssignmentId === activeAssignment.id}
-                          className="w-full rounded-2xl bg-amber-100 px-4 py-3 text-sm font-medium text-amber-950 disabled:opacity-50"
+                          className="w-full rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-[#17130f] disabled:opacity-50"
                         >
                           {endingAssignmentId === activeAssignment.id
                             ? 'Weist aus ...'
                             : 'Herde ausweisen'}
                         </button>
                       ) : assignmentEditorEnclosureId === enclosure.id ? (
-                        <div className="rounded-2xl bg-white px-4 py-4">
+                        <div className="rounded-2xl bg-[#fffdf6] px-4 py-4">
                           <div className="text-sm font-medium text-neutral-900">Herde zuweisen</div>
                           <div className="mt-3 space-y-3">
                             <div>
                               <label className="mb-1 block text-sm font-medium">Herde</label>
                               <select
-                                className="w-full rounded-2xl border px-4 py-3"
+                                className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
                                 value={assignmentHerdId}
                                 onChange={(event) => {
                                   const nextHerdId = event.target.value
@@ -3403,7 +3411,7 @@ export function LivePositionMap() {
                                 type="number"
                                 min="0"
                                 inputMode="numeric"
-                                className="w-full rounded-2xl border px-4 py-3"
+                                className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
                                 value={assignmentCount}
                                 onChange={(event) => setAssignmentCount(event.target.value)}
                                 placeholder="automatisch aus Herde"
@@ -3413,7 +3421,7 @@ export function LivePositionMap() {
                             <div>
                               <label className="mb-1 block text-sm font-medium">Notiz</label>
                               <textarea
-                                className="w-full rounded-2xl border px-4 py-3"
+                                className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
                                 rows={2}
                                 value={assignmentNotes}
                                 onChange={(event) => setAssignmentNotes(event.target.value)}
@@ -3432,14 +3440,14 @@ export function LivePositionMap() {
                                 type="button"
                                 onClick={() => void assignHerdToEnclosure(enclosure)}
                                 disabled={isAssignmentSaving || !assignmentHerdId}
-                                className="rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-medium text-white disabled:opacity-50"
+                                className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-medium text-[#17130f] disabled:opacity-50"
                               >
                                 {isAssignmentSaving ? 'Speichert ...' : 'Zuweisen'}
                               </button>
                               <button
                                 type="button"
                                 onClick={cancelAssignmentEditor}
-                                className="rounded-2xl bg-neutral-100 px-4 py-3 text-sm font-medium text-neutral-900"
+                                className="rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900"
                               >
                                 Abbrechen
                               </button>
@@ -3450,14 +3458,14 @@ export function LivePositionMap() {
                         <button
                           type="button"
                           onClick={() => openAssignmentEditor(enclosure)}
-                          className="w-full rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900"
+                          className="w-full rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-[#17130f]"
                         >
                           Herde zuweisen
                         </button>
                       )}
 
                       {assignmentHistory.length > 0 ? (
-                        <div className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-700">
+                        <div className="rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm text-neutral-700">
                           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
                             Letzte Aufenthalte
                           </div>
@@ -3502,7 +3510,7 @@ export function LivePositionMap() {
                 {expandedSavedEnclosureId === enclosure.id &&
                 selectedEnclosureId === enclosure.id &&
                 enclosure.method === 'walk' ? (
-                  <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm text-neutral-600">
+                  <div className="mt-3 rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm text-neutral-600">
                     <div>
                       Spurpunkte:{' '}
                       <span className="font-medium text-neutral-900">
@@ -3546,14 +3554,14 @@ export function LivePositionMap() {
                   <button
                     type="button"
                     onClick={() => focusEnclosure(enclosure)}
-                    className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
+                    className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
                   >
                     Fokussieren
                   </button>
                   <button
                     type="button"
                     onClick={() => startEditEnclosure(enclosure)}
-                    className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
+                    className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
                   >
                     Bearbeiten
                   </button>
@@ -3565,7 +3573,7 @@ export function LivePositionMap() {
                           selectedEnclosureId === enclosure.id ? !showSelectedTrack : true
                         )
                       }
-                      className="rounded-2xl bg-white px-3 py-3 text-sm font-medium text-neutral-900"
+                      className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
                     >
                       {selectedEnclosureId === enclosure.id && showSelectedTrack
                         ? 'Spur ausblenden'
@@ -3587,7 +3595,7 @@ export function LivePositionMap() {
                     <div>
                       <label className="mb-1 block text-sm font-medium">Pferchname</label>
                       <input
-                        className="w-full rounded-2xl border px-4 py-3"
+                        className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
                         value={editName}
                         onChange={(event) => setEditName(event.target.value)}
                       />
@@ -3596,14 +3604,14 @@ export function LivePositionMap() {
                     <div>
                       <label className="mb-1 block text-sm font-medium">Notiz</label>
                       <textarea
-                        className="w-full rounded-2xl border px-4 py-3"
+                        className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
                         rows={3}
                         value={editNotes}
                         onChange={(event) => setEditNotes(event.target.value)}
                       />
                     </div>
 
-                    <div className="rounded-2xl bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
+                    <div className="rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
                       Punkte auf der Karte antippen und danach die neue Position in der Karte klicken.
                       Mit Hinzufügen setzt der nächste Kartenklick einen neuen Punkt.
                       Aktuell: <span className="font-medium">{editGeometryPoints.length}</span> Punkte
@@ -3622,7 +3630,7 @@ export function LivePositionMap() {
                       <button
                         type="button"
                         onClick={startAddEditPoint}
-                        className="rounded-2xl bg-cyan-100 px-4 py-3 text-sm font-medium text-cyan-900"
+                        className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-[#17130f]"
                       >
                         Punkt hinzufügen
                       </button>
@@ -3630,7 +3638,7 @@ export function LivePositionMap() {
                         type="button"
                         onClick={removeSelectedEditPoint}
                         disabled={selectedEditPointIndex === null || editGeometryPoints.length <= 3}
-                        className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
+                        className="rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
                       >
                         Ausgewählten Punkt entfernen
                       </button>
@@ -3646,14 +3654,14 @@ export function LivePositionMap() {
                       <button
                         type="submit"
                         disabled={isEditing}
-                        className="rounded-2xl bg-black px-4 py-4 text-sm font-medium text-white disabled:opacity-50"
+                        className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-sm font-medium text-[#17130f] disabled:opacity-50"
                       >
                         {isEditing ? 'Speichert ...' : 'Änderungen speichern'}
                       </button>
                       <button
                         type="button"
                         onClick={cancelEditEnclosure}
-                        className="rounded-2xl bg-white px-4 py-4 text-sm font-medium text-neutral-900"
+                        className="rounded-2xl bg-[#fffdf6] px-4 py-4 text-sm font-medium text-neutral-900"
                       >
                         Abbrechen
                       </button>

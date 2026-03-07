@@ -41,6 +41,10 @@ function formatDurationFromIso(startTime: string | null | undefined, endTime?: s
   return `${hours} h ${String(minutes).padStart(2, '0')} min`
 }
 
+function safeString(value: string | null | undefined) {
+  return value?.trim() ?? ''
+}
+
 export default function HerdDetailPage({
   params,
 }: {
@@ -68,6 +72,11 @@ export default function HerdDetailPage({
   const [error, setError] = useState('')
 
   const [showArchived, setShowArchived] = useState(false)
+  const [metaName, setMetaName] = useState('')
+  const [metaFallbackCount, setMetaFallbackCount] = useState('')
+  const [metaNotes, setMetaNotes] = useState('')
+  const [metaSaving, setMetaSaving] = useState(false)
+  const [metaSaved, setMetaSaved] = useState(false)
   const [editingAnimalId, setEditingAnimalId] = useState<string | null>(null)
   const [editEarTag, setEditEarTag] = useState('')
   const [editSpecies, setEditSpecies] = useState<Species>('sheep')
@@ -113,6 +122,13 @@ export default function HerdDetailPage({
     () => (activeAssignment ? enclosuresById.get(activeAssignment.enclosureId) ?? null : null),
     [activeAssignment, enclosuresById]
   )
+  const metaDirty =
+    metaName.trim() !== safeString(herd?.name) ||
+    metaFallbackCount !==
+      (herd?.fallbackCount === null || herd?.fallbackCount === undefined
+        ? ''
+        : String(herd.fallbackCount)) ||
+    metaNotes.trim() !== safeString(herd?.notes)
 
   const recentAssignments = useMemo(() => safeAssignments.slice(0, 5), [safeAssignments])
 
@@ -146,13 +162,24 @@ export default function HerdDetailPage({
     setAssignmentCount(String(effectiveHerdCount))
   }, [effectiveHerdCount])
 
+  useEffect(() => {
+    if (!herd) return
+    setMetaName(herd.name)
+    setMetaFallbackCount(
+      herd.fallbackCount === null || herd.fallbackCount === undefined
+        ? ''
+        : String(herd.fallbackCount)
+    )
+    setMetaNotes(herd.notes ?? '')
+  }, [herd])
+
   if (herd === undefined || animals === undefined || enclosures === undefined || assignments === undefined) {
-    return <div className="rounded-[1.75rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">Lade Daten …</div>
+    return <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">Lade Daten …</div>
   }
 
   if (!herd) {
     return (
-      <div className="rounded-[1.75rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
         Herde nicht gefunden.
       </div>
     )
@@ -211,6 +238,16 @@ export default function HerdDetailPage({
       isArchived,
       updatedAt: nowIso(),
     })
+  }
+
+  async function deleteAnimal(animal: Animal) {
+    const confirmed = window.confirm(
+      `Tier "${animal.earTag}" wirklich aus der Herde löschen?`
+    )
+
+    if (!confirmed) return
+
+    await db.animals.delete(animal.id)
   }
 
   function startEdit(animal: Animal) {
@@ -367,27 +404,45 @@ export default function HerdDetailPage({
     router.push('/herds')
   }
 
+  async function saveHerdMeta(event: React.FormEvent) {
+    event.preventDefault()
+    if (!metaName.trim()) return
+
+    setMetaSaving(true)
+    setMetaSaved(false)
+
+    await db.herds.update(safeHerd.id, {
+      name: metaName.trim(),
+      fallbackCount: metaFallbackCount.trim() ? Number(metaFallbackCount) : null,
+      notes: metaNotes.trim() || undefined,
+      updatedAt: nowIso(),
+    })
+
+    setMetaSaving(false)
+    setMetaSaved(true)
+  }
+
   return (
-    <div className="space-y-5">
-      <section className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+    <div className="space-y-5 rounded-[2rem] bg-[#d8d0bf] p-1 sm:p-2">
+      <form
+        onSubmit={saveHerdMeta}
+        className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]"
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.02em]">{safeHerd.name}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-neutral-700">
-              Einzeltiere mit Ohrmarke erfassen und verwalten.
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-700">
+              Herde
             </p>
-            {safeHerd.notes ? (
-              <p className="mt-3 rounded-[1.1rem] border border-white/70 bg-white/85 px-4 py-3 text-sm text-neutral-800">{safeHerd.notes}</p>
-            ) : null}
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/herds/${id}/edit`}
-              className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
             >
-              Herde bearbeiten
-            </Link>
+              Zurück
+            </button>
             <button
               type="button"
               onClick={() => void deleteHerd()}
@@ -397,12 +452,81 @@ export default function HerdDetailPage({
             </button>
           </div>
         </div>
-      </section>
+        <div className="mt-4 grid gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+              Name
+            </label>
+            <input
+              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-2xl font-semibold tracking-[-0.02em] shadow-sm"
+              value={metaName}
+              onChange={(event) => setMetaName(event.target.value)}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+                Geschätzte Anzahl (optional)
+              </label>
+              <input
+                type="number"
+                min="0"
+                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+                value={metaFallbackCount}
+                onChange={(event) => setMetaFallbackCount(event.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+                Notiz
+              </label>
+              <input
+                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+                value={metaNotes}
+                onChange={(event) => setMetaNotes(event.target.value)}
+                placeholder="optionale Bemerkung"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm">
+          <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
+            <div className="text-neutral-700">Aktive Tiere</div>
+            <div className="mt-1 font-semibold text-neutral-950">{activeAnimalsCount || effectiveHerdCount || 0}</div>
+          </div>
+          <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
+            <div className="text-neutral-700">Aktiver Pferch</div>
+            <div className="mt-1 font-semibold text-neutral-950">{currentEnclosure?.name ?? 'Keiner'}</div>
+          </div>
+          <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
+            <div className="text-neutral-700">Status</div>
+            <div className="mt-1 font-semibold text-neutral-950">
+              {safeHerd.isArchived ? 'Archiviert' : 'Aktiv'}
+            </div>
+          </div>
+        </div>
+        {metaDirty ? (
+          <div className="mt-4">
+            <button
+              type="submit"
+              disabled={metaSaving}
+              className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
+            >
+              {metaSaving ? 'Speichert …' : 'Änderungen speichern'}
+            </button>
+          </div>
+        ) : null}
+        {metaSaved ? (
+          <div className="mt-3 rounded-[1.1rem] border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm font-semibold text-emerald-900">
+            Herdendaten gespeichert.
+          </div>
+        ) : null}
+      </form>
 
-      <section className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-[-0.02em]">Pferch-Belegung</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.02em]">1. Pferch-Belegung</h2>
             <p className="mt-2 text-sm text-neutral-700">
               Aktuellen Pferch der Herde sehen und direkte Wechsel erfassen.
             </p>
@@ -410,26 +534,26 @@ export default function HerdDetailPage({
 
           <Link
             href="/enclosures"
-            className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
+            className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
           >
             Zu Pferchen
           </Link>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm">
-          <div className="rounded-[1.15rem] border border-white bg-white px-4 py-3 shadow-sm">
+          <div className="rounded-[1.15rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
             <div className="text-neutral-700">Aktiver Pferch</div>
             <div className="mt-1 font-medium text-neutral-900">
               {currentEnclosure?.name ?? 'Keiner'}
             </div>
           </div>
-          <div className="rounded-[1.15rem] border border-white bg-white px-4 py-3 shadow-sm">
+          <div className="rounded-[1.15rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
             <div className="text-neutral-700">Aktueller Besatz</div>
             <div className="mt-1 font-medium text-neutral-900">
               {activeAssignment?.count ?? effectiveHerdCount ?? 'unbekannt'}
             </div>
           </div>
-          <div className="rounded-[1.15rem] border border-white bg-white px-4 py-3 shadow-sm">
+          <div className="rounded-[1.15rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
             <div className="text-neutral-700">Seit</div>
             <div className="mt-1 font-medium text-neutral-900">
               {activeAssignment?.startTime ? formatDateTime(activeAssignment.startTime) : 'Nicht zugewiesen'}
@@ -438,7 +562,7 @@ export default function HerdDetailPage({
         </div>
 
         {activeAssignment && currentEnclosure ? (
-          <div className="mt-4 rounded-[1.25rem] border border-amber-200 bg-amber-100 px-4 py-4 text-sm text-amber-950">
+          <div className="mt-4 rounded-[1.25rem] border border-[#d2cbc0] bg-[#efe4c8] px-4 py-4 text-sm text-[#17130f]">
             <div className="font-medium">{currentEnclosure.name}</div>
             <div className="mt-1">
               Verweildauer {formatDurationFromIso(activeAssignment.startTime)}
@@ -448,7 +572,7 @@ export default function HerdDetailPage({
               type="button"
               onClick={() => void endAssignment(activeAssignment)}
               disabled={endingAssignmentId === activeAssignment.id}
-              className="mt-3 rounded-[1.1rem] bg-white px-4 py-3 font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+              className="mt-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
             >
               {endingAssignmentId === activeAssignment.id ? 'Weist aus ...' : 'Aus aktuellem Pferch ausweisen'}
             </button>
@@ -458,7 +582,7 @@ export default function HerdDetailPage({
             <div>
               <label className="mb-1 block text-sm font-medium">Pferch wählen</label>
               <select
-                className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                 value={selectedEnclosureId}
                 onChange={(e) => setSelectedEnclosureId(e.target.value)}
               >
@@ -478,7 +602,7 @@ export default function HerdDetailPage({
                   type="number"
                   min="0"
                   inputMode="numeric"
-                  className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                  className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                   value={assignmentCount}
                   onChange={(e) => setAssignmentCount(e.target.value)}
                   placeholder="automatisch aus Herde"
@@ -488,7 +612,7 @@ export default function HerdDetailPage({
               <div>
                 <label className="mb-1 block text-sm font-medium">Notiz</label>
                 <input
-                  className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                  className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                   value={assignmentNotes}
                   onChange={(e) => setAssignmentNotes(e.target.value)}
                   placeholder="optionale Bemerkung"
@@ -505,7 +629,7 @@ export default function HerdDetailPage({
             <button
               type="submit"
               disabled={assignmentSaving || !selectedEnclosureId}
-              className="rounded-[1.1rem] bg-[linear-gradient(135deg,#1f6a49,#164c35)] px-4 py-4 font-semibold text-white shadow-[0_12px_24px_rgba(31,106,73,0.18)] disabled:opacity-50"
+              className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
             >
               {assignmentSaving ? 'Speichert ...' : 'In Pferch einweisen'}
             </button>
@@ -515,7 +639,7 @@ export default function HerdDetailPage({
         <div className="mt-5">
           <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-neutral-700">Letzte Aufenthalte</h3>
           {recentAssignments.length === 0 ? (
-            <div className="mt-2 rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-700 shadow-sm">
+            <div className="mt-2 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm text-neutral-700 shadow-sm">
               Noch keine Pferchwechsel für diese Herde vorhanden.
             </div>
           ) : (
@@ -524,7 +648,7 @@ export default function HerdDetailPage({
                 const enclosure = enclosuresById.get(assignment.enclosureId)
 
                 return (
-                  <div key={assignment.id} className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm shadow-sm">
+                  <div key={assignment.id} className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm shadow-sm">
                     <div className="font-medium text-neutral-900">
                       {enclosure?.name ?? 'Unbekannter Pferch'}
                     </div>
@@ -546,14 +670,24 @@ export default function HerdDetailPage({
         </div>
       </section>
 
-      <section className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
-        <h2 className="text-lg font-semibold tracking-[-0.02em]">Tier hinzufügen</h2>
+      <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-[-0.02em]">2. Tier hinzufügen</h2>
+            <p className="mt-2 text-sm text-neutral-700">
+              Neues Tier wird direkt dieser Herde zugeordnet.
+            </p>
+          </div>
+          <div className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1.5 text-sm font-semibold text-neutral-950">
+            Herde: {safeHerd.name}
+          </div>
+        </div>
 
         <form className="mt-4 space-y-4" onSubmit={handleAddAnimal}>
           <div>
             <label className="mb-1 block text-sm font-medium">Ohrmarke</label>
             <input
-              className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
               value={earTag}
               onChange={(e) => setEarTag(e.target.value)}
               placeholder="z. B. IT021000123456"
@@ -563,7 +697,7 @@ export default function HerdDetailPage({
           <div>
             <label className="mb-1 block text-sm font-medium">Tierart</label>
             <select
-              className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
               value={species}
               onChange={(e) => setSpecies(e.target.value as Species)}
             >
@@ -578,7 +712,7 @@ export default function HerdDetailPage({
           <div>
             <label className="mb-1 block text-sm font-medium">Name (optional)</label>
             <input
-              className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="optional"
@@ -588,7 +722,7 @@ export default function HerdDetailPage({
           <div>
             <label className="mb-1 block text-sm font-medium">Notiz</label>
             <textarea
-              className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -605,20 +739,25 @@ export default function HerdDetailPage({
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-[1.1rem] bg-[linear-gradient(135deg,#1f6a49,#164c35)] px-4 py-4 font-semibold text-white shadow-[0_12px_24px_rgba(31,106,73,0.18)] disabled:opacity-50"
+            className="w-full rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
           >
             {saving ? 'Speichert …' : 'Tier speichern'}
           </button>
         </form>
       </section>
 
-      <section className="rounded-[1.5rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <section className="rounded-[1.5rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Tiere der Herde</h2>
+          <div>
+            <h2 className="text-lg font-semibold">3. Tiere in {safeHerd.name}</h2>
+            <p className="mt-1 text-sm text-neutral-700">
+              Alle angezeigten Tiere gehören zu dieser Herde.
+            </p>
+          </div>
 
           <button
             onClick={() => setShowArchived((prev) => !prev)}
-            className="rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
+            className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
           >
             {showArchived ? 'Nur aktive anzeigen' : 'Archivierte anzeigen'}
           </button>
@@ -626,14 +765,14 @@ export default function HerdDetailPage({
       </section>
 
       {editingAnimalId ? (
-        <section className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
           <h2 className="text-lg font-semibold tracking-[-0.02em]">Tier bearbeiten</h2>
 
           <form className="mt-4 space-y-4" onSubmit={saveEdit}>
             <div>
               <label className="mb-1 block text-sm font-medium">Ohrmarke</label>
               <input
-                className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                 value={editEarTag}
                 onChange={(e) => setEditEarTag(e.target.value)}
               />
@@ -642,7 +781,7 @@ export default function HerdDetailPage({
             <div>
               <label className="mb-1 block text-sm font-medium">Tierart</label>
               <select
-                className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                 value={editSpecies}
                 onChange={(e) => setEditSpecies(e.target.value as Species)}
               >
@@ -657,7 +796,7 @@ export default function HerdDetailPage({
             <div>
               <label className="mb-1 block text-sm font-medium">Name (optional)</label>
               <input
-                className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
               />
@@ -666,7 +805,7 @@ export default function HerdDetailPage({
             <div>
               <label className="mb-1 block text-sm font-medium">Notiz</label>
               <textarea
-                className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                 rows={3}
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
@@ -683,7 +822,7 @@ export default function HerdDetailPage({
               <button
                 type="submit"
                 disabled={editSaving}
-                className="rounded-[1.1rem] bg-[linear-gradient(135deg,#1f6a49,#164c35)] px-4 py-3 font-semibold text-white shadow-[0_12px_24px_rgba(31,106,73,0.18)] disabled:opacity-50"
+                className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 font-semibold text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
               >
                 {editSaving ? 'Speichert …' : 'Änderungen speichern'}
               </button>
@@ -691,7 +830,7 @@ export default function HerdDetailPage({
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="rounded-[1.1rem] border border-white bg-white px-4 py-3 font-semibold text-neutral-950 shadow-sm"
+                className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 font-semibold text-neutral-950 shadow-sm"
               >
                 Abbrechen
               </button>
@@ -702,7 +841,7 @@ export default function HerdDetailPage({
 
       <section className="space-y-3">
         {visibleAnimals.length === 0 ? (
-          <div className="rounded-[1.75rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 text-neutral-700 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+          <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 text-neutral-700 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
             Keine passenden Tiere in dieser Ansicht vorhanden.
           </div>
         ) : (
@@ -716,7 +855,7 @@ export default function HerdDetailPage({
                 {group.animals.map((animal) => (
                   <article
                     key={animal.id}
-                    className="rounded-[1.75rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]"
+                    className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -734,17 +873,27 @@ export default function HerdDetailPage({
 
                       <div className="flex flex-col gap-2">
                         <button
+                          type="button"
                           onClick={() => startEdit(animal)}
-                          className="rounded-[1rem] border border-white bg-white px-3 py-2 text-sm font-semibold text-neutral-950 shadow-sm"
+                          className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-neutral-950 shadow-sm"
                         >
                           Bearbeiten
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => setAnimalArchived(animal.id, !animal.isArchived)}
-                          className="rounded-[1rem] border border-white bg-white px-3 py-2 text-sm font-semibold text-neutral-950 shadow-sm"
+                          className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-neutral-950 shadow-sm"
                         >
                           {animal.isArchived ? 'Reaktivieren' : 'Archivieren'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void deleteAnimal(animal)}
+                          className="rounded-[1rem] border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800 shadow-sm"
+                        >
+                          Löschen
                         </button>
                       </div>
                     </div>

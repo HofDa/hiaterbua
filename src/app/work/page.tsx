@@ -186,7 +186,7 @@ export default function WorkPage() {
   }, [activeSession])
 
   if (workSessions === undefined || herds === undefined || enclosures === undefined) {
-    return <div className="rounded-[1.75rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">Lade Daten ...</div>
+    return <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">Lade Daten ...</div>
   }
 
   async function startWorkSession(event: React.FormEvent<HTMLFormElement>) {
@@ -431,57 +431,61 @@ export default function WorkPage() {
   return (
     <div className="space-y-4">
       {activeReminderMessage ? (
-        <section className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+        <section className="rounded-3xl border border-[#ccb98a] bg-[#fffdf6] p-4 shadow-[0_16px_30px_rgba(40,34,26,0.08)]">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-amber-950">Erinnerung</div>
-              <div className="mt-1 text-sm text-amber-900">{activeReminderMessage}</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5e5549]">
+                Erinnerung aktiv
+              </div>
+              <div className="mt-1 text-base font-semibold text-[#17130f]">{activeReminderMessage}</div>
             </div>
             <button
               type="button"
               onClick={() => setActiveReminderMessage('')}
-              className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-neutral-900"
+              className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-900 shadow-sm"
             >
-              Schließen
+              Erledigt
             </button>
           </div>
         </section>
       ) : null}
 
-      <section className="rounded-[2rem] border border-white/20 bg-gradient-to-br from-stone-950 via-stone-900 to-amber-700 p-6 text-white shadow-[0_24px_60px_rgba(23,20,18,0.18)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+      <section className="rounded-[2rem] border-2 border-[#3a342a] bg-[#fff8ea] p-6 text-[#17130f] shadow-[0_24px_60px_rgba(40,34,26,0.1)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5e5549]">
           Arbeit
         </p>
         <h1 className="mt-3 text-3xl font-semibold">Arbeitszeit und Tätigkeiten</h1>
-        <p className="mt-3 text-sm text-white/75">
+        <p className="mt-3 text-sm text-[#4f473c]">
           Allgemeine Arbeit mit Start, Pause, Fortsetzen und Stop erfassen.
         </p>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-        <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
           <h2 className="text-lg font-semibold tracking-[-0.02em]">Neuer Arbeitseinsatz</h2>
 
           {activeSession ? (
-            <div className="mt-4 rounded-[1.5rem] border border-amber-200 bg-amber-100 p-4">
-              <div className="text-sm text-amber-950">Aktiver Einsatz</div>
-              <div className="mt-1 text-xl font-semibold text-amber-950">
+            <div className="mt-4 rounded-[1.5rem] border border-[#ccb98a] bg-[#fffdf6] p-4 shadow-sm">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5e5549]">
+                Aktiver Einsatz
+              </div>
+              <div className="mt-1 text-xl font-semibold text-[#17130f]">
                 {getWorkTypeLabel(activeSession.type)}
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                   <div className="text-sm text-neutral-700">Status</div>
                   <div className="mt-1 font-medium text-neutral-900">
                     {activeSession.status === 'active' ? 'Läuft' : 'Pausiert'}
                   </div>
                 </div>
-                <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                   <div className="text-sm text-neutral-700">Beginn</div>
                   <div className="mt-1 font-medium text-neutral-900">
                     {formatDateTime(activeSession.startTime)}
                   </div>
                 </div>
-                <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
                   <div className="text-sm text-neutral-700">Dauer</div>
                   <div className="mt-1 font-medium text-neutral-900">
                     {formatDuration(getLiveDurationS(activeSession, nowMs))}
@@ -490,7 +494,7 @@ export default function WorkPage() {
               </div>
 
               {activeSession.reminderIntervalMin ? (
-                <div className="mt-3 rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm">
+                <div className="mt-3 rounded-[1.1rem] border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f] shadow-sm">
                   Erinnerung alle{' '}
                   <span className="font-medium text-neutral-900">
                     {activeSession.reminderIntervalMin} min
@@ -524,16 +528,16 @@ export default function WorkPage() {
                     type="button"
                     onClick={() => void updateWorkSessionStatus('paused')}
                     disabled={isSaving}
-                className="rounded-[1.1rem] bg-neutral-950 px-4 py-4 text-sm font-semibold text-white disabled:opacity-50"
+                    className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
                   >
-                    Pause
+                    Pause setzen
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => void updateWorkSessionStatus('active')}
                     disabled={isSaving}
-                    className="rounded-[1.1rem] bg-[linear-gradient(135deg,#1f6a49,#164c35)] px-4 py-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(31,106,73,0.18)] disabled:opacity-50"
+                    className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
                   >
                     Fortsetzen
                   </button>
@@ -542,9 +546,9 @@ export default function WorkPage() {
                   type="button"
                   onClick={() => void updateWorkSessionStatus('finished')}
                   disabled={isSaving}
-                  className="rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-4 text-sm font-semibold text-red-800 disabled:opacity-50"
+                  className="rounded-[1.1rem] border border-red-300 bg-[linear-gradient(135deg,#fff3f1,#ffd9d2)] px-4 py-4 text-base font-semibold text-red-900 shadow-[0_10px_20px_rgba(127,29,29,0.14)] disabled:opacity-50"
                 >
-                  Stop
+                  Einsatz beenden
                 </button>
               </div>
             </div>
@@ -553,7 +557,7 @@ export default function WorkPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium">Tätigkeit</label>
                 <select
-                  className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                  className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                   value={workType}
                   onChange={(event) => setWorkType(event.target.value as WorkType)}
                 >
@@ -569,7 +573,7 @@ export default function WorkPage() {
                 <div>
                   <label className="mb-1 block text-sm font-medium">Herde</label>
                   <select
-                    className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                    className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                     value={selectedHerdId}
                     onChange={(event) => setSelectedHerdId(event.target.value)}
                   >
@@ -587,7 +591,7 @@ export default function WorkPage() {
                 <div>
                   <label className="mb-1 block text-sm font-medium">Pferch</label>
                   <select
-                    className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                    className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                     value={selectedEnclosureId}
                     onChange={(event) => setSelectedEnclosureId(event.target.value)}
                   >
@@ -604,7 +608,7 @@ export default function WorkPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium">Notiz</label>
                 <textarea
-                  className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                  className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                   rows={3}
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
@@ -615,7 +619,7 @@ export default function WorkPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium">Erinnerung</label>
                 <select
-                  className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                  className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                   value={reminderIntervalMin}
                   onChange={(event) => setReminderIntervalMin(event.target.value)}
                 >
@@ -633,7 +637,7 @@ export default function WorkPage() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="w-full rounded-[1.1rem] bg-[linear-gradient(135deg,#1f6a49,#164c35)] px-4 py-4 font-semibold text-white shadow-[0_12px_24px_rgba(31,106,73,0.18)] disabled:opacity-50"
+                className="w-full rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
               >
                 {isSaving ? 'Startet ...' : 'Arbeitseinsatz starten'}
               </button>
@@ -647,22 +651,22 @@ export default function WorkPage() {
           ) : null}
 
           {statusMessage ? (
-            <div className="mt-4 rounded-[1.1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            <div className="mt-4 rounded-[1.1rem] border border-[#c5d3c8] bg-[#edf1ec] px-4 py-3 text-sm font-semibold text-[#243228]">
               {statusMessage}
             </div>
           ) : null}
         </div>
 
-        <div className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
           <h2 className="text-lg font-semibold tracking-[-0.02em]">Übersicht</h2>
           <div className="mt-4 grid gap-3 text-sm">
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
               <div className="text-neutral-700">Laufender Einsatz</div>
               <div className="mt-1 font-medium text-neutral-900">
                 {activeSession ? getWorkTypeLabel(activeSession.type) : 'Keiner'}
               </div>
             </div>
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
               <div className="text-neutral-700">Letzter Status</div>
               <div className="mt-1 font-medium text-neutral-900">
                 {activeSession
@@ -672,7 +676,7 @@ export default function WorkPage() {
                   : 'Bereit'}
               </div>
             </div>
-            <div className="rounded-[1.1rem] border border-white bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
               <div className="text-neutral-700">Erfasste Einsaetze</div>
               <div className="mt-1 font-medium text-neutral-900">{safeSessions.length}</div>
             </div>
@@ -680,20 +684,20 @@ export default function WorkPage() {
         </div>
       </section>
 
-      <section className="rounded-[1.9rem] border border-white/70 bg-[rgba(255,252,246,0.92)] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold tracking-[-0.02em]">Letzte Arbeitseinsaetze</h2>
           <span className="text-sm font-medium text-neutral-700">{safeSessions.length}</span>
         </div>
 
         {safeSessions.length === 0 ? (
-          <div className="mt-4 rounded-[1.1rem] border border-white bg-white px-4 py-3 text-sm text-neutral-700 shadow-sm">
+          <div className="mt-4 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm text-neutral-700 shadow-sm">
             Noch keine Arbeitseinsaetze erfasst.
           </div>
         ) : (
           <div className="mt-4 space-y-3">
             {safeSessions.map((session) => (
-              <article key={session.id} className="rounded-[1.15rem] border border-white bg-white px-4 py-4 shadow-sm">
+              <article key={session.id} className="rounded-[1.15rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="font-medium text-neutral-900">
@@ -750,7 +754,7 @@ export default function WorkPage() {
                             ? cancelEditingSession()
                             : startEditingSession(session)
                         }
-                        className="rounded-full bg-stone-200 px-3 py-2 text-xs font-semibold text-neutral-950"
+                        className="rounded-full border border-[#ccb98a] bg-[#f1efeb] px-3 py-2 text-xs font-semibold text-neutral-950"
                       >
                         {editingSessionId === session.id ? 'Abbrechen' : 'Bearbeiten'}
                       </button>
@@ -758,7 +762,7 @@ export default function WorkPage() {
                         type="button"
                         onClick={() => void deleteWorkSession(session)}
                         disabled={isSaving}
-                        className="rounded-full bg-red-50 px-3 py-2 text-xs font-semibold text-red-800 disabled:opacity-50"
+                        className="rounded-full border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-900 disabled:opacity-50"
                       >
                         Löschen
                       </button>
@@ -767,12 +771,12 @@ export default function WorkPage() {
                 </div>
 
                 {editingSessionId === session.id ? (
-                  <div className="mt-4 space-y-4 rounded-[1.1rem] border border-stone-200 bg-stone-50 px-4 py-4">
+                  <div className="mt-4 space-y-4 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4">
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-sm font-medium">Tätigkeit</label>
                         <select
-                          className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                           value={editWorkType}
                           onChange={(event) => setEditWorkType(event.target.value as WorkType)}
                         >
@@ -786,7 +790,7 @@ export default function WorkPage() {
                       <div>
                         <label className="mb-1 block text-sm font-medium">Erinnerung</label>
                         <select
-                          className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                           value={editReminderIntervalMin}
                           onChange={(event) => setEditReminderIntervalMin(event.target.value)}
                         >
@@ -803,7 +807,7 @@ export default function WorkPage() {
                       <div>
                         <label className="mb-1 block text-sm font-medium">Herde</label>
                         <select
-                          className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                           value={editSelectedHerdId}
                           onChange={(event) => setEditSelectedHerdId(event.target.value)}
                         >
@@ -821,7 +825,7 @@ export default function WorkPage() {
                       <div>
                         <label className="mb-1 block text-sm font-medium">Pferch</label>
                         <select
-                          className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                           value={editSelectedEnclosureId}
                           onChange={(event) => setEditSelectedEnclosureId(event.target.value)}
                         >
@@ -838,7 +842,7 @@ export default function WorkPage() {
                     <div>
                       <label className="mb-1 block text-sm font-medium">Notiz</label>
                       <textarea
-                        className="w-full rounded-[1.1rem] border-2 border-neutral-300 bg-white px-4 py-3 text-base shadow-sm"
+                        className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                         rows={3}
                         value={editNotes}
                         onChange={(event) => setEditNotes(event.target.value)}
@@ -851,14 +855,14 @@ export default function WorkPage() {
                         type="button"
                         onClick={() => void saveEditedSession(session.id)}
                         disabled={isSaving}
-                        className="rounded-[1.1rem] bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                        className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
                       >
                         {isSaving ? 'Speichert ...' : 'Änderungen speichern'}
                       </button>
                       <button
                         type="button"
                         onClick={cancelEditingSession}
-                        className="rounded-[1.1rem] bg-stone-200 px-4 py-3 text-sm font-semibold text-neutral-950"
+                        className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950"
                       >
                         Abbrechen
                       </button>
