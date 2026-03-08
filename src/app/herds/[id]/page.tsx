@@ -4,20 +4,12 @@ import { use, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { EarTagScanPanel } from '@/components/animals/ear-tag-scan-panel'
+import { AnimalFormFields, speciesOptions } from '@/components/herds/animal-form-fields'
 import { db } from '@/lib/db/dexie'
 import { deleteHerdCascade } from '@/lib/db/delete-herd'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type { Animal, EnclosureAssignment, Species } from '@/types/domain'
-
-const speciesOptions: { value: Species; label: string }[] = [
-  { value: 'cattle', label: 'Rinder' },
-  { value: 'sheep', label: 'Schafe' },
-  { value: 'goats', label: 'Ziegen' },
-  { value: 'horses', label: 'Pferde' },
-  { value: 'other', label: 'Andere' },
-]
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return 'unbekannt'
@@ -694,58 +686,18 @@ export default function HerdDetailPage({
         </div>
 
         <form className="mt-4 space-y-4" onSubmit={handleAddAnimal}>
-          <EarTagScanPanel
+          <AnimalFormFields
             disabled={saving}
+            earTag={earTag}
+            onEarTagChange={setEarTag}
             knownEarTags={knownEarTags}
-            value={earTag}
-            onApplyValue={setEarTag}
+            species={species}
+            onSpeciesChange={setSpecies}
+            name={name}
+            onNameChange={setName}
+            notes={notes}
+            onNotesChange={setNotes}
           />
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Ohrmarke</label>
-            <input
-              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-              value={earTag}
-              onChange={(e) => setEarTag(e.target.value)}
-              placeholder="z. B. IT021000123456"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Tierart</label>
-            <select
-              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-              value={species}
-              onChange={(e) => setSpecies(e.target.value as Species)}
-            >
-              {speciesOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Name (optional)</label>
-            <input
-              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="optional"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Notiz</label>
-            <textarea
-              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-              rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Bemerkungen zum Tier"
-            />
-          </div>
 
           {error ? (
             <div className="rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
@@ -786,56 +738,21 @@ export default function HerdDetailPage({
           <h2 className="text-lg font-semibold tracking-[-0.02em]">Tier bearbeiten</h2>
 
           <form className="mt-4 space-y-4" onSubmit={saveEdit}>
-            <EarTagScanPanel
+            <AnimalFormFields
               disabled={editSaving}
+              earTag={editEarTag}
+              onEarTagChange={setEditEarTag}
               knownEarTags={knownEarTags}
               conflictIgnoreEarTag={editingAnimal?.earTag ?? null}
-              value={editEarTag}
-              onApplyValue={setEditEarTag}
+              species={editSpecies}
+              onSpeciesChange={setEditSpecies}
+              name={editName}
+              onNameChange={setEditName}
+              notes={editNotes}
+              onNotesChange={setEditNotes}
+              namePlaceholder=""
+              notesPlaceholder=""
             />
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Ohrmarke</label>
-              <input
-                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-                value={editEarTag}
-                onChange={(e) => setEditEarTag(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Tierart</label>
-              <select
-                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-                value={editSpecies}
-                onChange={(e) => setEditSpecies(e.target.value as Species)}
-              >
-                {speciesOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Name (optional)</label>
-              <input
-                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Notiz</label>
-              <textarea
-                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-                rows={3}
-                value={editNotes}
-                onChange={(e) => setEditNotes(e.target.value)}
-              />
-            </div>
 
             {editError ? (
               <div className="rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">

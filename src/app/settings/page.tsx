@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { LngLatLike, Map as MapLibreMap, Marker, StyleSpecification } from 'maplibre-gl'
+import { useEffect, useMemo, useState } from 'react'
+import { PositionPreviewMap } from '@/components/settings/position-preview-map'
 import { db } from '@/lib/db/dexie'
 import {
   MAX_PREFETCH_TILES,
@@ -13,8 +13,16 @@ import {
   prefetchTileUrls,
   getPersistentStorageStatus,
   requestPersistentStorage,
+  TILE_CACHE_CHANGED_EVENT,
 } from '@/lib/maps/tile-cache'
-import { defaultAppSettings, normalizeMapBaseLayer } from '@/lib/settings/defaults'
+import { defaultAppSettings } from '@/lib/settings/defaults'
+import {
+  formatCurrentPositionError,
+  normalizeSettingsValue,
+  readFallbackSettings,
+  withTimeout,
+  writeFallbackSettings,
+} from '@/lib/settings/page-helpers'
 import type { AppSettings, MapBaseLayer } from '@/types/domain'
 
 const mapOptions: { value: MapBaseLayer; label: string }[] = [
@@ -30,191 +38,6 @@ const prefetchLayerOptions = [
 ] as const
 
 type PrefetchLayerChoice = (typeof prefetchLayerOptions)[number]['value']
-
-const previewCenter: LngLatLike = [11.35, 46.5]
-const previewBaseLayerId = 'settings-preview-basemap'
-const previewBaseSourceId = 'settings-preview-basemap-source'
-const SETTINGS_FALLBACK_KEY = 'hirtenapp-settings-fallback'
-const STORAGE_TIMEOUT_MS = 2500
-const previewRasterStyle: StyleSpecification = {
-  version: 8,
-  sources: {
-    [previewBaseSourceId]: {
-      type: 'raster',
-      tiles: [
-        'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=p_bz-BaseMap:Basemap-Standard&STYLES=&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png',
-      ],
-      tileSize: 256,
-      attribution: 'Provincia autonoma di Bolzano - BaseMap Suedtirol',
-      maxzoom: 20,
-    },
-  },
-  layers: [
-    {
-      id: previewBaseLayerId,
-      type: 'raster',
-      source: previewBaseSourceId,
-    },
-  ],
-}
-
-function formatCurrentPositionError(error: GeolocationPositionError) {
-  switch (error.code) {
-    case error.PERMISSION_DENIED:
-      return 'Standortfreigabe im Browser oder auf dem Gerät aktivieren.'
-    case error.POSITION_UNAVAILABLE:
-      return 'Standort ist gerade nicht verfügbar. Bitte im Freien oder mit besserem Empfang erneut versuchen.'
-    case error.TIMEOUT:
-      return 'Standortbestimmung hat zu lange gedauert. Bitte erneut versuchen.'
-    default:
-      return 'Standort konnte nicht gelesen werden.'
-  }
-}
-
-function normalizeSettingsValue(
-  settings: Partial<AppSettings> | null | undefined
-): AppSettings {
-  return {
-    ...defaultAppSettings,
-    ...settings,
-    id: 'app',
-    mapBaseLayer: normalizeMapBaseLayer(settings?.mapBaseLayer),
-    gpsAccuracyThresholdM: Math.max(
-      1,
-      Math.round(settings?.gpsAccuracyThresholdM ?? defaultAppSettings.gpsAccuracyThresholdM)
-    ),
-    gpsMinTimeS: Math.max(
-      1,
-      Math.round(settings?.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS)
-    ),
-    gpsMinDistanceM: Math.max(
-      1,
-      Math.round(settings?.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM)
-    ),
-  }
-}
-
-function readFallbackSettings() {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  try {
-    const raw = window.localStorage.getItem(SETTINGS_FALLBACK_KEY)
-
-    if (!raw) {
-      return null
-    }
-
-    return normalizeSettingsValue(JSON.parse(raw) as Partial<AppSettings>)
-  } catch {
-    return null
-  }
-}
-
-function writeFallbackSettings(settings: AppSettings) {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  try {
-    window.localStorage.setItem(
-      SETTINGS_FALLBACK_KEY,
-      JSON.stringify(normalizeSettingsValue(settings))
-    )
-  } catch {
-    // Local fallback storage is best effort only.
-  }
-}
-
-async function withTimeout<T>(promise: Promise<T>, timeoutMs = STORAGE_TIMEOUT_MS) {
-  let timeoutId: number | null = null
-
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = window.setTimeout(() => {
-      reject(new Error('storage_timeout'))
-    }, timeoutMs)
-  })
-
-  try {
-    return await Promise.race([promise, timeoutPromise])
-  } finally {
-    if (timeoutId !== null) {
-      window.clearTimeout(timeoutId)
-    }
-  }
-}
-
-function PositionPreviewMap({
-  latitude,
-  longitude,
-}: {
-  latitude: number
-  longitude: number
-}) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<MapLibreMap | null>(null)
-  const markerRef = useRef<Marker | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function setupMap() {
-      if (!containerRef.current || mapRef.current) return
-
-      const maplibre = await import('maplibre-gl')
-      if (cancelled || !containerRef.current) return
-
-      const map = new maplibre.Map({
-        container: containerRef.current,
-        style: previewRasterStyle,
-        center: previewCenter,
-        zoom: 9,
-      })
-
-      map.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right')
-
-      mapRef.current = map
-      markerRef.current = new maplibre.Marker({
-        color: '#111827',
-      })
-    }
-
-    void setupMap()
-
-    return () => {
-      cancelled = true
-      markerRef.current?.remove()
-      markerRef.current = null
-      mapRef.current?.remove()
-      mapRef.current = null
-    }
-  }, [])
-
-  useEffect(() => {
-    const map = mapRef.current
-    const marker = markerRef.current
-    if (!map || !marker) return
-
-    const lngLat: LngLatLike = [longitude, latitude]
-    marker.setLngLat(lngLat).addTo(map)
-    map.easeTo({
-      center: lngLat,
-      zoom: Math.max(map.getZoom(), 14),
-      duration: 700,
-    })
-  }, [latitude, longitude])
-
-  return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-[#ccb98a] bg-[rgba(255,253,246,0.88)] shadow-sm">
-      <div
-        ref={containerRef}
-        className="h-64 w-full"
-        aria-label="Kartenansicht der aktuellen Position"
-      />
-    </div>
-  )
-}
 
 export default function SettingsPage() {
   const [draft, setDraft] = useState<AppSettings>(
@@ -256,6 +79,7 @@ export default function SettingsPage() {
 
     return { latitude, longitude }
   }, [prefetchLat, prefetchLon])
+  const hasStoredTiles = tileCacheCount !== null && tileCacheCount > 0
 
   useEffect(() => {
     let cancelled = false
@@ -370,8 +194,37 @@ export default function SettingsPage() {
 
     void refreshTileCache()
 
+    const handleFocus = () => {
+      void refreshTileCache()
+    }
+
+    const handleTileCacheChanged = () => {
+      void refreshTileCache()
+    }
+
+    const handleWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'TILE_CACHE_UPDATED') {
+        void refreshTileCache()
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshTileCache()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener(TILE_CACHE_CHANGED_EVENT, handleTileCacheChanged)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    navigator.serviceWorker?.addEventListener('message', handleWorkerMessage)
+
     return () => {
       isCancelled = true
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener(TILE_CACHE_CHANGED_EVENT, handleTileCacheChanged)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      navigator.serviceWorker?.removeEventListener('message', handleWorkerMessage)
     }
   }, [settingsReady])
 
@@ -801,10 +654,52 @@ export default function SettingsPage() {
                 <div className="text-sm font-medium text-neutral-900">Tile-Cache</div>
                 <div className="mt-1 text-sm font-medium text-neutral-800">
                   {tileCacheSupported
-                    ? draft.tileCachingEnabled
-                      ? 'Kartentiles können lokal für Offline-Nutzung gehalten werden.'
-                      : 'Caching ist ausgeschaltet. Bereits geladene Tiles können geleert werden.'
+                    ? hasStoredTiles
+                      ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
+                      : draft.tileCachingEnabled
+                        ? 'Tile-Caching ist aktiv. Neu geladene Tiles werden lokal auf dem Gerät gespeichert.'
+                        : 'Caching ist ausgeschaltet. Bereits geladene Tiles können geleert werden.'
                     : 'Dieser Browser stellt die Cache-API nicht bereit.'}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span
+                    className={[
+                      'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
+                      hasStoredTiles
+                        ? 'border-emerald-700 bg-emerald-100 text-emerald-950'
+                        : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
+                    ].join(' ')}
+                  >
+                    {tileCacheLoading
+                      ? 'Tiles werden geprüft'
+                      : hasStoredTiles
+                        ? `${tileCacheCount} Tiles auf Gerät`
+                        : 'Keine Tiles auf Gerät'}
+                  </span>
+                  <span
+                    className={[
+                      'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
+                      hasStoredTiles
+                        ? 'border-emerald-700 bg-emerald-100 text-emerald-950'
+                        : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
+                    ].join(' ')}
+                  >
+                    {hasStoredTiles ? 'Offline nutzbar' : 'Offline noch nicht vorbereitet'}
+                  </span>
+                  <span
+                    className={[
+                      'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
+                      persistentStorageGranted
+                        ? 'border-emerald-700 bg-emerald-100 text-emerald-950'
+                        : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
+                    ].join(' ')}
+                  >
+                    {persistentStorageGranted === null
+                      ? 'Persistenz unbekannt'
+                      : persistentStorageGranted
+                        ? 'Persistenter Speicher aktiv'
+                        : 'Speicher nicht zugesichert'}
+                  </span>
                 </div>
                 <div className="mt-2 text-xs font-medium text-neutral-700">
                   Speichermodus: {settingsStorageMode === 'db' ? 'App-Datenbank' : 'iOS-Fallback'}

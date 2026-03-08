@@ -5,6 +5,7 @@ const DB_NAME = 'hirtenapp-tile-db'
 const MAP_TILE_STORE = 'mapTiles'
 
 let tileCachingEnabled = false
+let tileCacheUpdateTimeout = null
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -40,8 +41,12 @@ self.addEventListener('message', (event) => {
   if (data.type === 'SET_TILE_CACHING') {
     tileCachingEnabled = Boolean(data.enabled)
 
-    if (!tileCachingEnabled) {
-      event.waitUntil(Promise.all([caches.delete(TILE_CACHE_NAME), clearTileStore()]))
+    if (data.clearStoredTiles) {
+      event.waitUntil(
+        Promise.all([caches.delete(TILE_CACHE_NAME), clearTileStore()]).then(() => {
+          scheduleTileCacheUpdatedMessage()
+        })
+      )
     }
   }
 })
@@ -52,7 +57,6 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  if (!tileCachingEnabled) return
   if (event.request.method !== 'GET') return
 
   const requestUrl = new URL(event.request.url)
@@ -76,20 +80,25 @@ async function handleTileRequest(request) {
   const cachedResponse = await cache.match(request)
 
   if (cachedResponse) {
-    void updateTileInBackground(cache, request)
+    if (tileCachingEnabled) {
+      void updateTileInBackground(cache, request)
+    }
     return cachedResponse
   }
 
   const storedTile = await getStoredTile(request.url)
   if (storedTile) {
-    void updateTileInBackground(cache, request)
+    if (tileCachingEnabled) {
+      void updateTileInBackground(cache, request)
+    }
     return responseFromStoredTile(storedTile)
   }
 
   const networkResponse = await fetch(request)
-  if (networkResponse.ok || networkResponse.type === 'opaque') {
+  if (tileCachingEnabled && (networkResponse.ok || networkResponse.type === 'opaque')) {
     await cache.put(request, networkResponse.clone())
     await putStoredTile(request, networkResponse.clone())
+    scheduleTileCacheUpdatedMessage()
   }
 
   return networkResponse
@@ -122,10 +131,29 @@ async function updateTileInBackground(cache, request) {
     if (networkResponse.ok || networkResponse.type === 'opaque') {
       await cache.put(request, networkResponse.clone())
       await putStoredTile(request, networkResponse.clone())
+      scheduleTileCacheUpdatedMessage()
     }
   } catch {
     // Ignore background refresh failures and keep the cached tile.
   }
+}
+
+function scheduleTileCacheUpdatedMessage() {
+  if (tileCacheUpdateTimeout !== null) {
+    return
+  }
+
+  tileCacheUpdateTimeout = setTimeout(async () => {
+    tileCacheUpdateTimeout = null
+    const clients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    })
+
+    clients.forEach((client) => {
+      client.postMessage({ type: 'TILE_CACHE_UPDATED' })
+    })
+  }, 500)
 }
 
 function openTileDb() {

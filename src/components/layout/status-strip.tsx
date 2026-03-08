@@ -3,8 +3,13 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/db/dexie'
-import { getTileCacheCount } from '@/lib/maps/tile-cache'
+import {
+  getPersistentStorageStatus,
+  getTileCacheCount,
+  TILE_CACHE_CHANGED_EVENT,
+} from '@/lib/maps/tile-cache'
 import { defaultAppSettings } from '@/lib/settings/defaults'
+import { readFallbackSettings } from '@/lib/settings/page-helpers'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -14,20 +19,30 @@ type BeforeInstallPromptEvent = Event & {
 export function StatusStrip() {
   const [isOnline, setIsOnline] = useState(true)
   const [tileCacheCount, setTileCacheCount] = useState<number | null>(null)
+  const [persistentStorageGranted, setPersistentStorageGranted] = useState<boolean | null>(null)
   const [installPromptEvent, setInstallPromptEvent] =
     useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalling, setIsInstalling] = useState(false)
   const settings = useLiveQuery(() => db.settings.get('app'), [])
-  const effectiveSettings = settings ?? defaultAppSettings
+  const fallbackSettings = readFallbackSettings()
+  const tileCachingEnabled =
+    settings?.tileCachingEnabled ??
+    fallbackSettings?.tileCachingEnabled ??
+    defaultAppSettings.tileCachingEnabled
+  const hasStoredTiles = tileCacheCount !== null && tileCacheCount > 0
   const guidanceText = !isOnline
-    ? effectiveSettings.tileCachingEnabled
-      ? 'Offline aktiv. Bereits gesicherte Kartenausschnitte bleiben verfügbar.'
-      : 'Offline ohne aktiven Tile-Cache. Kartenbereiche vorher sichern.'
-    : installPromptEvent
-      ? 'Für den Außeneinsatz die App installieren und Kartenausschnitte vorab sichern.'
-      : effectiveSettings.tileCachingEnabled
-        ? 'Tile-Cache ist aktiv. Ausschnitte können direkt in der Karte offline gesichert werden.'
-        : 'Für den Außeneinsatz Tile-Caching in den Einstellungen aktivieren.'
+    ? hasStoredTiles
+      ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
+      : tileCachingEnabled
+        ? 'Offline aktiv. Noch keine Tiles auf diesem Gerät. Bereich vorher online laden oder gezielt vorab sichern.'
+        : 'Offline ohne Tile-Cache. Tile-Caching aktivieren und Kartenausschnitte vorab sichern.'
+    : hasStoredTiles
+      ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
+      : installPromptEvent
+        ? 'Für den Außeneinsatz die App installieren und Kartenausschnitte vorab sichern.'
+        : tileCachingEnabled
+          ? 'Tile-Cache ist aktiv. Neu geladene Kartentiles werden lokal auf dem Gerät gehalten.'
+          : 'Für den Außeneinsatz Tile-Caching in den Einstellungen aktivieren.'
 
   useEffect(() => {
     const update = () => setIsOnline(navigator.onLine)
@@ -45,30 +60,53 @@ export function StatusStrip() {
   useEffect(() => {
     let cancelled = false
 
-    async function loadTileCacheCount() {
-      const count = await getTileCacheCount()
+    async function refreshTileCacheState() {
+      const [count, persistent] = await Promise.all([
+        getTileCacheCount(),
+        getPersistentStorageStatus(),
+      ])
+
       if (!cancelled) {
         setTileCacheCount(count)
+        setPersistentStorageGranted(persistent)
       }
     }
 
-    void loadTileCacheCount()
+    void refreshTileCacheState()
+
+    const handleFocus = () => {
+      void refreshTileCacheState()
+    }
+
+    const handleTileCacheChanged = () => {
+      void refreshTileCacheState()
+    }
+
+    const handleWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'TILE_CACHE_UPDATED') {
+        void refreshTileCacheState()
+      }
+    }
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        void loadTileCacheCount()
+        void refreshTileCacheState()
       }
     }
 
-    window.addEventListener('focus', loadTileCacheCount)
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener(TILE_CACHE_CHANGED_EVENT, handleTileCacheChanged)
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    navigator.serviceWorker?.addEventListener('message', handleWorkerMessage)
 
     return () => {
       cancelled = true
-      window.removeEventListener('focus', loadTileCacheCount)
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener(TILE_CACHE_CHANGED_EVENT, handleTileCacheChanged)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      navigator.serviceWorker?.removeEventListener('message', handleWorkerMessage)
     }
-  }, [effectiveSettings.tileCachingEnabled])
+  }, [tileCachingEnabled])
 
   useEffect(() => {
     function handleBeforeInstallPrompt(event: Event) {
@@ -119,15 +157,51 @@ export function StatusStrip() {
         <span
           className={[
             'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
-            effectiveSettings.tileCachingEnabled
+            tileCachingEnabled
               ? 'border-white bg-[#2f6b4d] text-white'
               : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
           ].join(' ')}
         >
-          {effectiveSettings.tileCachingEnabled
-            ? `Tile-Cache aktiv${tileCacheCount !== null ? ` · ${tileCacheCount} Tiles` : ''}`
+          {tileCachingEnabled
+            ? 'Tile-Cache aktiv'
             : 'Tile-Cache aus'}
         </span>
+        <span
+          className={[
+            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
+            hasStoredTiles
+              ? 'border-white bg-[#2f6b4d] text-white'
+              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+          ].join(' ')}
+        >
+          {tileCacheCount === null
+            ? 'Tiles werden geprüft'
+            : hasStoredTiles
+              ? `${tileCacheCount} Tiles auf Gerät`
+              : 'Keine Tiles auf Gerät'}
+        </span>
+        <span
+          className={[
+            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
+            hasStoredTiles
+              ? 'border-white bg-[#2f6b4d] text-white'
+              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+          ].join(' ')}
+        >
+          {hasStoredTiles ? 'Offline nutzbar' : 'Offline nicht vorbereitet'}
+        </span>
+        {persistentStorageGranted !== null ? (
+          <span
+            className={[
+              'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
+              persistentStorageGranted
+                ? 'border-white bg-[#2f6b4d] text-white'
+                : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+            ].join(' ')}
+          >
+            {persistentStorageGranted ? 'Persistenter Speicher aktiv' : 'Speicher nicht zugesichert'}
+          </span>
+        ) : null}
         {installPromptEvent ? (
           <button
             type="button"

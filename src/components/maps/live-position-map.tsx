@@ -1,18 +1,54 @@
 'use client'
 
-import { area, polygon } from '@turf/turf'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type * as GeoJSON from 'geojson'
+import { useEffect, useRef, useState } from 'react'
 import type {
   GeoJSONSource,
   LngLatLike,
   Map as MapLibreMap,
-  MapMouseEvent,
   Marker,
-  StyleSpecification,
 } from 'maplibre-gl'
 import { db } from '@/lib/db/dexie'
+import {
+  appendWalkTrackpoint,
+  assignHerdToEnclosureRecord,
+  deleteEnclosureRecord,
+  discardWalkTrack,
+  endEnclosureAssignmentRecord,
+  getDefaultAssignmentValues,
+  removeWalkTrackpointAtIndex,
+  saveDrawnEnclosureRecord,
+  saveWalkEnclosureRecord,
+  updateEditedEnclosureRecord,
+} from '@/lib/maps/live-position-actions'
+import {
+  southTyrolBaseMapLayerId,
+  southTyrolOrthoLayerId,
+} from '@/lib/maps/base-map-style'
+import {
+  emptyFeatureCollection,
+  formatAccuracy,
+  formatArea,
+  formatTimestamp,
+  getBoundsFromSurveyAreaGeometry,
+  getBoundsFromTrackpoints,
+  type GpsState,
+  type PositionDecision,
+} from '@/lib/maps/map-core'
+import { registerLivePositionMapSetup } from '@/lib/maps/live-position-map-setup'
+import { createDefaultMarker, createRasterMap } from '@/lib/maps/maplibre-runtime'
+import {
+  formatDate,
+  formatDateTime,
+  formatDurationFromIso,
+  formatDurationSeconds,
+  formatPointTimestamp,
+  getBoundsFromPolygon,
+  getBoundsFromWalkPoints,
+  getDraftPolygon,
+  getEffectiveHerdCount,
+  type DraftPoint,
+  type EnclosureListFilter,
+} from '@/lib/maps/live-position-map-helpers'
 import {
   MAX_PREFETCH_TILES,
   buildPrefetchUrlsForBounds,
@@ -32,6 +68,10 @@ import {
   MobileMapToolbarButton,
   MobileMapToolbarStat,
 } from '@/components/maps/mobile-map-toolbar'
+import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
+import { useGeolocationWatcher } from '@/components/maps/hooks/use-geolocation-watcher'
+import { useLivePositionMapData } from '@/components/maps/hooks/use-live-position-map-data'
+import { useMapBaseLayerSettings } from '@/components/maps/hooks/use-map-base-layer-settings'
 import {
   MobileMapFloatingCard,
   MobileMapSectionCard,
@@ -39,20 +79,14 @@ import {
   MobileMapSegmentedControl,
   MobileMapTopControls,
 } from '@/components/maps/mobile-map-ui'
-import { defaultAppSettings, normalizeMapBaseLayer } from '@/lib/settings/defaults'
+import { defaultAppSettings } from '@/lib/settings/defaults'
 import { createId } from '@/lib/utils/ids'
-import { nowIso } from '@/lib/utils/time'
 import type {
-  Animal,
   Enclosure,
   EnclosureAssignment,
-  Herd,
   MapBaseLayer,
   SurveyArea,
-  TrackPoint,
 } from '@/types/domain'
-
-type GpsState = 'idle' | 'requesting' | 'tracking' | 'unsupported' | 'denied' | 'error'
 
 type PositionData = {
   latitude: number
@@ -61,557 +95,7 @@ type PositionData = {
   timestamp: number
 }
 
-type PositionDecision =
-  | { accepted: true; reason: 'initial' | 'accepted' }
-  | { accepted: false; reason: 'accuracy' | 'time' | 'distance' }
-
-type DraftPoint = {
-  lat: number
-  lon: number
-}
-
-type WalkTrackSummary = {
-  count: number
-  avgAccuracyM: number | null
-  firstTimestamp: string | null
-  lastTimestamp: string | null
-}
-
 type MobilePanel = 'draw' | 'walk' | 'saved'
-type EnclosureListFilter = 'all' | 'active' | 'unused' | 'most-used'
-
-const fallbackCenter: LngLatLike = [11.35, 46.5]
-const southTyrolBaseMapLayerId = 'south-tyrol-basemap'
-const southTyrolBaseMapSourceId = 'south-tyrol-basemap-source'
-const southTyrolOrthoLayerId = 'south-tyrol-orthophoto-2023'
-const southTyrolOrthoSourceId = 'south-tyrol-orthophoto-2023-source'
-
-const southTyrolBaseMapTiles = [
-  'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=p_bz-BaseMap:Basemap-Standard&STYLES=&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png',
-]
-
-const southTyrolOrthoTiles = [
-  'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=p_bz-Orthoimagery:Aerial-2023-RGB&STYLES=&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/jpeg',
-]
-
-const rasterStyle: StyleSpecification = {
-  version: 8,
-  sources: {
-    [southTyrolBaseMapSourceId]: {
-      type: 'raster' as const,
-      tiles: southTyrolBaseMapTiles,
-      tileSize: 256,
-      attribution: 'Provincia autonoma di Bolzano - BaseMap Suedtirol',
-      maxzoom: 20,
-    },
-  },
-  layers: [
-    {
-      id: southTyrolBaseMapLayerId,
-      type: 'raster' as const,
-      source: southTyrolBaseMapSourceId,
-    },
-  ],
-}
-
-const emptyFeatureCollection: GeoJSON.FeatureCollection = {
-  type: 'FeatureCollection',
-  features: [],
-}
-
-function formatAccuracy(accuracy: number) {
-  if (!Number.isFinite(accuracy)) return 'unbekannt'
-  return `${Math.round(accuracy)} m`
-}
-
-function formatTimestamp(timestamp: number) {
-  return new Intl.DateTimeFormat('de-DE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(timestamp)
-}
-
-function formatPointTimestamp(timestamp: number) {
-  return new Intl.DateTimeFormat('de-DE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(timestamp)
-}
-
-function formatArea(areaM2: number) {
-  if (!Number.isFinite(areaM2) || areaM2 <= 0) return '0 m² · 0,00 ha'
-  return `${Math.round(areaM2)} m² · ${(areaM2 / 10_000).toFixed(2)} ha`
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return 'unbekannt'
-  return new Date(value).toLocaleString('de-DE')
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'unbekannt'
-  return new Date(value).toLocaleDateString('de-DE')
-}
-
-function formatDurationFromIso(startTime: string | null | undefined, endTime?: string | null) {
-  if (!startTime) return 'unbekannt'
-
-  const startMs = new Date(startTime).getTime()
-  const endMs = new Date(endTime ?? nowIso()).getTime()
-
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) {
-    return 'unbekannt'
-  }
-
-  const totalMinutes = Math.round((endMs - startMs) / 1000 / 60)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  if (hours <= 0) return `${minutes} min`
-  return `${hours} h ${String(minutes).padStart(2, '0')} min`
-}
-
-function getDurationSecondsFromIso(
-  startTime: string | null | undefined,
-  endTime?: string | null
-) {
-  if (!startTime) return 0
-
-  const startMs = new Date(startTime).getTime()
-  const endMs = new Date(endTime ?? nowIso()).getTime()
-
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) {
-    return 0
-  }
-
-  return Math.max(0, Math.round((endMs - startMs) / 1000))
-}
-
-function formatDurationSeconds(totalSeconds: number) {
-  const safeSeconds = Math.max(0, Math.round(totalSeconds))
-  const totalMinutes = Math.round(safeSeconds / 60)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  if (hours <= 0) return `${minutes} min`
-  return `${hours} h ${String(minutes).padStart(2, '0')} min`
-}
-
-function getEffectiveHerdCount(herd: Herd | undefined, animals: Animal[]) {
-  const activeAnimalsCount = animals.filter((animal) => !animal.isArchived).length
-  if (activeAnimalsCount > 0) return activeAnimalsCount
-  return herd?.fallbackCount ?? null
-}
-
-function haversineDistanceM(from: PositionData, to: PositionData) {
-  const earthRadiusM = 6_371_000
-  const toRadians = (value: number) => (value * Math.PI) / 180
-
-  const dLat = toRadians(to.latitude - from.latitude)
-  const dLon = toRadians(to.longitude - from.longitude)
-  const lat1 = toRadians(from.latitude)
-  const lat2 = toRadians(to.latitude)
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1) *
-      Math.cos(lat2) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2)
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return earthRadiusM * c
-}
-
-function getPositionDecision(
-  previousPosition: PositionData | null,
-  nextPosition: PositionData,
-  gpsAccuracyThresholdM: number,
-  gpsMinTimeS: number,
-  gpsMinDistanceM: number
-): PositionDecision {
-  if (nextPosition.accuracy > gpsAccuracyThresholdM) {
-    return { accepted: false, reason: 'accuracy' }
-  }
-
-  if (!previousPosition) {
-    return { accepted: true, reason: 'initial' }
-  }
-
-  const timeDiffS = (nextPosition.timestamp - previousPosition.timestamp) / 1000
-  if (timeDiffS < gpsMinTimeS) {
-    return { accepted: false, reason: 'time' }
-  }
-
-  const distanceM = haversineDistanceM(previousPosition, nextPosition)
-  if (distanceM < gpsMinDistanceM) {
-    return { accepted: false, reason: 'distance' }
-  }
-
-  return { accepted: true, reason: 'accepted' }
-}
-
-function buildDraftFeatureCollection(points: DraftPoint[]): GeoJSON.FeatureCollection {
-  if (points.length === 0) {
-    return emptyFeatureCollection
-  }
-
-  const pointFeatures: GeoJSON.Feature<GeoJSON.Point>[] = points.map((point, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [point.lon, point.lat],
-    },
-    properties: {
-      index: index + 1,
-    },
-  }))
-
-  const features: GeoJSON.Feature[] = [...pointFeatures]
-
-  if (points.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: points.map((point) => [point.lon, point.lat]),
-      },
-      properties: {
-        kind: 'draft-line',
-      },
-    })
-  }
-
-  if (points.length >= 3) {
-    const ring = points.map((point) => [point.lon, point.lat])
-    ring.push([points[0].lon, points[0].lat])
-
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [ring],
-      },
-      properties: {
-        kind: 'draft-polygon',
-      },
-    })
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
-  }
-}
-
-function buildSavedFeatureCollection(enclosures: Enclosure[]): GeoJSON.FeatureCollection {
-  return {
-    type: 'FeatureCollection',
-    features: enclosures
-      .filter(
-        (enclosure): enclosure is Enclosure & { geometry: GeoJSON.Polygon } =>
-          enclosure.geometry !== null
-      )
-      .map((enclosure) => ({
-        type: 'Feature',
-        geometry: enclosure.geometry,
-        properties: {
-          id: enclosure.id,
-          name: enclosure.name,
-          areaHa: enclosure.areaHa,
-          areaM2: enclosure.areaM2,
-        },
-      })),
-  }
-}
-
-function buildSurveyAreaFeatureCollection(
-  surveyAreas: SurveyArea[]
-): GeoJSON.FeatureCollection {
-  return {
-    type: 'FeatureCollection',
-    features: surveyAreas.map((surveyArea) => ({
-      type: 'Feature',
-      geometry: surveyArea.geometry,
-      properties: {
-        id: surveyArea.id,
-        name: surveyArea.name,
-        areaHa: surveyArea.areaHa,
-        areaM2: surveyArea.areaM2,
-      },
-    })),
-  }
-}
-
-function buildWalkFeatureCollection(points: PositionData[]): GeoJSON.FeatureCollection {
-  if (points.length === 0) {
-    return emptyFeatureCollection
-  }
-
-  const pointFeatures: GeoJSON.Feature<GeoJSON.Point>[] = points.map((point, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [point.longitude, point.latitude],
-    },
-    properties: {
-      index: index + 1,
-    },
-  }))
-
-  const features: GeoJSON.Feature[] = [...pointFeatures]
-
-  if (points.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: points.map((point) => [point.longitude, point.latitude]),
-      },
-      properties: {
-        kind: 'walk-line',
-      },
-    })
-  }
-
-  if (points.length >= 3) {
-    const ring = points.map((point) => [point.longitude, point.latitude])
-    ring.push([points[0].longitude, points[0].latitude])
-
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [ring],
-      },
-      properties: {
-        kind: 'walk-polygon',
-      },
-    })
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
-  }
-}
-
-function getDraftPolygon(points: DraftPoint[]) {
-  if (points.length < 3) return null
-
-  const coordinates = points.map((point) => [point.lon, point.lat] as [number, number])
-  coordinates.push([points[0].lon, points[0].lat])
-
-  return polygon([coordinates])
-}
-
-function buildSelectedFeatureCollection(
-  enclosure: Enclosure | null
-): GeoJSON.FeatureCollection {
-  if (!enclosure?.geometry) {
-    return emptyFeatureCollection
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        geometry: enclosure.geometry,
-        properties: {
-          id: enclosure.id,
-          name: enclosure.name,
-        },
-      },
-    ],
-  }
-}
-
-function getBoundsFromPolygon(geometry: GeoJSON.Polygon) {
-  const allPoints = geometry.coordinates[0]
-  if (allPoints.length === 0) return null
-
-  let minLon = allPoints[0][0]
-  let minLat = allPoints[0][1]
-  let maxLon = allPoints[0][0]
-  let maxLat = allPoints[0][1]
-
-  for (const [lon, lat] of allPoints) {
-    minLon = Math.min(minLon, lon)
-    minLat = Math.min(minLat, lat)
-    maxLon = Math.max(maxLon, lon)
-    maxLat = Math.max(maxLat, lat)
-  }
-
-  return [
-    [minLon, minLat],
-    [maxLon, maxLat],
-  ] as [[number, number], [number, number]]
-}
-
-function getBoundsFromSurveyAreaGeometry(
-  geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
-) {
-  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
-  const firstPoint = polygons[0]?.[0]?.[0]
-  if (!firstPoint) return null
-
-  let minLon = firstPoint[0]
-  let minLat = firstPoint[1]
-  let maxLon = firstPoint[0]
-  let maxLat = firstPoint[1]
-
-  for (const polygonCoordinates of polygons) {
-    for (const ring of polygonCoordinates) {
-      for (const [lon, lat] of ring) {
-        minLon = Math.min(minLon, lon)
-        minLat = Math.min(minLat, lat)
-        maxLon = Math.max(maxLon, lon)
-        maxLat = Math.max(maxLat, lat)
-      }
-    }
-  }
-
-  return [
-    [minLon, minLat],
-    [maxLon, maxLat],
-  ] as [[number, number], [number, number]]
-}
-
-function buildTrackpointsFeatureCollection(trackpoints: TrackPoint[]): GeoJSON.FeatureCollection {
-  if (trackpoints.length === 0) {
-    return emptyFeatureCollection
-  }
-
-  const sorted = [...trackpoints].sort((left, right) => left.seq - right.seq)
-
-  const pointFeatures: GeoJSON.Feature<GeoJSON.Point>[] = sorted.map((point, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [point.lon, point.lat],
-    },
-    properties: {
-      index: index + 1,
-    },
-  }))
-
-  const features: GeoJSON.Feature[] = [...pointFeatures]
-
-  if (sorted.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: sorted.map((point) => [point.lon, point.lat]),
-      },
-      properties: {
-        kind: 'stored-walk-line',
-      },
-    })
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
-  }
-}
-
-function buildSelectedWalkPointFeatureCollection(
-  point: PositionData | null,
-  index: number | null
-): GeoJSON.FeatureCollection {
-  if (!point || index === null) {
-    return emptyFeatureCollection
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [point.longitude, point.latitude],
-        },
-        properties: {
-          index: index + 1,
-        },
-      },
-    ],
-  }
-}
-
-function getWalkTrackSummary(trackpoints: TrackPoint[]): WalkTrackSummary {
-  if (trackpoints.length === 0) {
-    return {
-      count: 0,
-      avgAccuracyM: null,
-      firstTimestamp: null,
-      lastTimestamp: null,
-    }
-  }
-
-  const sorted = [...trackpoints].sort((left, right) => left.seq - right.seq)
-  const accuracies = sorted
-    .map((point) => point.accuracyM)
-    .filter((accuracy): accuracy is number => typeof accuracy === 'number')
-
-  return {
-    count: sorted.length,
-    avgAccuracyM:
-      accuracies.length > 0
-        ? accuracies.reduce((sum, accuracy) => sum + accuracy, 0) / accuracies.length
-        : null,
-    firstTimestamp: sorted[0]?.timestamp ?? null,
-    lastTimestamp: sorted[sorted.length - 1]?.timestamp ?? null,
-  }
-}
-
-function getBoundsFromTrackpoints(trackpoints: TrackPoint[]) {
-  if (trackpoints.length === 0) return null
-
-  let minLon = trackpoints[0].lon
-  let minLat = trackpoints[0].lat
-  let maxLon = trackpoints[0].lon
-  let maxLat = trackpoints[0].lat
-
-  for (const point of trackpoints) {
-    minLon = Math.min(minLon, point.lon)
-    minLat = Math.min(minLat, point.lat)
-    maxLon = Math.max(maxLon, point.lon)
-    maxLat = Math.max(maxLat, point.lat)
-  }
-
-  return [
-    [minLon, minLat],
-    [maxLon, maxLat],
-  ] as [[number, number], [number, number]]
-}
-
-function getBoundsFromWalkPoints(points: PositionData[]) {
-  if (points.length === 0) return null
-
-  let minLon = points[0].longitude
-  let minLat = points[0].latitude
-  let maxLon = points[0].longitude
-  let maxLat = points[0].latitude
-
-  for (const point of points) {
-    minLon = Math.min(minLon, point.longitude)
-    minLat = Math.min(minLat, point.latitude)
-    maxLon = Math.max(maxLon, point.longitude)
-    maxLat = Math.max(maxLat, point.latitude)
-  }
-
-  return [
-    [minLon, minLat],
-    [maxLon, maxLat],
-  ] as [[number, number], [number, number]]
-}
-
 export function LivePositionMap() {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
@@ -619,26 +103,12 @@ export function LivePositionMap() {
   const watchIdRef = useRef<number | null>(null)
   const isDrawingRef = useRef(false)
   const isWalkingRef = useRef(false)
-  const enclosuresRef = useRef<Enclosure[]>([])
-  const settingsRef = useRef(defaultAppSettings)
   const acceptedPositionRef = useRef<PositionData | null>(null)
   const walkEnclosureIdRef = useRef<string | null>(null)
   const walkSeqRef = useRef(0)
   const walkLastTimestampRef = useRef<number | null>(null)
-  const editingEnclosureIdRef = useRef<string | null>(null)
-  const selectedEditPointIndexRef = useRef<number | null>(null)
-  const isAddingEditPointRef = useRef(false)
   const appendWalkPointRef = useRef<(nextPosition: PositionData) => Promise<void>>(async () => {})
   const openEnclosureDetailsRef = useRef<(enclosureId: string) => void>(() => {})
-
-  const enclosures = useLiveQuery(
-    () => db.enclosures.orderBy('updatedAt').reverse().toArray(),
-    []
-  )
-  const surveyAreas = useLiveQuery(
-    () => db.surveyAreas.orderBy('updatedAt').reverse().toArray(),
-    []
-  )
 
   const [gpsState, setGpsState] = useState<GpsState>('idle')
   const [position, setPosition] = useState<PositionData | null>(null)
@@ -688,292 +158,79 @@ export function LivePositionMap() {
   const [lastPositionDecision, setLastPositionDecision] = useState<PositionDecision | null>(
     null
   )
-
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
-  const herds = useLiveQuery(() => db.herds.orderBy('name').toArray(), [])
-  const animals = useLiveQuery(() => db.animals.toArray(), [])
-  const assignments = useLiveQuery(
-    () => db.enclosureAssignments.orderBy('updatedAt').reverse().toArray(),
-    []
+  const {
+    settings,
+    safeEnclosures,
+    safeSurveyAreas,
+    safeHerds,
+    safeSelectedTrackpoints,
+    draftFeatureCollection,
+    walkFeatureCollection,
+    savedFeatureCollection,
+    surveyAreaFeatureCollection,
+    selectedEnclosure,
+    selectedSurveyArea,
+    selectedFeatureCollection,
+    selectedTrackFeatureCollection,
+    selectedTrackSummary,
+    herdsById,
+    animalsByHerdId,
+    activeAssignmentsByEnclosureId,
+    assignmentHistoryByEnclosureId,
+    enclosureStatsById,
+    filteredEnclosures,
+    selectedWalkPoint,
+    selectedWalkPointFeatureCollection,
+    editFeatureCollection,
+    draftAreaM2,
+    editAreaM2,
+    walkAreaM2,
+  } = useLivePositionMapData({
+    selectedEnclosureId,
+    selectedSurveyAreaId,
+    selectedWalkPointIndex,
+    enclosureListFilter,
+    draftPoints,
+    walkPoints,
+    editGeometryPoints,
+  })
+  const enclosuresRef = useLatestValueRef(safeEnclosures)
+  const settingsRef = useLatestValueRef(settings ?? defaultAppSettings)
+  const editingEnclosureIdRef = useLatestValueRef(editingEnclosureId)
+  const selectedEditPointIndexRef = useLatestValueRef(selectedEditPointIndex)
+  const isAddingEditPointRef = useLatestValueRef(isAddingEditPoint)
+  const buildPositionRef = useLatestValueRef(
+    (nextPosition: GeolocationPosition): PositionData => ({
+      latitude: nextPosition.coords.latitude,
+      longitude: nextPosition.coords.longitude,
+      accuracy: nextPosition.coords.accuracy,
+      timestamp: nextPosition.timestamp,
+    })
   )
-  const selectedTrackpoints = useLiveQuery(async () => {
-    if (!selectedEnclosureId) return []
-    return db.trackpoints
-      .where('enclosureWalkId')
-      .equals(selectedEnclosureId)
-      .sortBy('seq')
-  }, [selectedEnclosureId])
-
-  const safeEnclosures = useMemo(() => enclosures ?? [], [enclosures])
-  const safeSurveyAreas = useMemo(() => surveyAreas ?? [], [surveyAreas])
-  const safeHerds = useMemo(() => herds ?? [], [herds])
-  const safeAnimals = useMemo(() => animals ?? [], [animals])
-  const safeAssignments = useMemo(() => assignments ?? [], [assignments])
-  const safeSelectedTrackpoints = useMemo(
-    () => selectedTrackpoints ?? [],
-    [selectedTrackpoints]
-  )
-  const hasLoadedSettingsRef = useRef(false)
-
-  useEffect(() => {
-    enclosuresRef.current = safeEnclosures
-  }, [safeEnclosures])
-
-  useEffect(() => {
-    editingEnclosureIdRef.current = editingEnclosureId
-  }, [editingEnclosureId])
-
-  useEffect(() => {
-    selectedEditPointIndexRef.current = selectedEditPointIndex
-  }, [selectedEditPointIndex])
-
-  useEffect(() => {
-    isAddingEditPointRef.current = isAddingEditPoint
-  }, [isAddingEditPoint])
-
-  useEffect(() => {
-    settingsRef.current = settings ?? defaultAppSettings
-  }, [settings])
-
-  useEffect(() => {
-    if (hasLoadedSettingsRef.current) return
-    if (settings === undefined) return
-
-    hasLoadedSettingsRef.current = true
-
-    if (!settings) {
-      void db.settings.put(defaultAppSettings)
-      return
+  const handleAcceptedPositionRef = useLatestValueRef<((next: PositionData) => void) | null>(
+    (next) => {
+      if (isWalkingRef.current) {
+        void appendWalkPointRef.current(next)
+      }
     }
-
-    setBaseLayer(normalizeMapBaseLayer(settings.mapBaseLayer))
-  }, [settings])
-
-  const draftFeatureCollection = useMemo(
-    () => buildDraftFeatureCollection(draftPoints),
-    [draftPoints]
   )
 
-  const walkFeatureCollection = useMemo(
-    () => buildWalkFeatureCollection(walkPoints),
-    [walkPoints]
-  )
+  useMapBaseLayerSettings({
+    settings,
+    setBaseLayer,
+    mode: 'once',
+  })
 
-  const savedFeatureCollection = useMemo(
-    () => buildSavedFeatureCollection(safeEnclosures),
-    [safeEnclosures]
-  )
-  const surveyAreaFeatureCollection = useMemo(
-    () => buildSurveyAreaFeatureCollection(safeSurveyAreas),
-    [safeSurveyAreas]
-  )
-
-  const selectedEnclosure = useMemo(
-    () =>
-      selectedEnclosureId
-        ? safeEnclosures.find((enclosure) => enclosure.id === selectedEnclosureId) ?? null
-        : null,
-    [safeEnclosures, selectedEnclosureId]
-  )
-
-  const selectedSurveyArea = useMemo(
-    () =>
-      selectedSurveyAreaId
-        ? safeSurveyAreas.find((surveyArea) => surveyArea.id === selectedSurveyAreaId) ?? null
-        : null,
-    [safeSurveyAreas, selectedSurveyAreaId]
-  )
-
-  const selectedFeatureCollection = useMemo(
-    () => buildSelectedFeatureCollection(selectedEnclosure),
-    [selectedEnclosure]
-  )
-
-  const selectedTrackFeatureCollection = useMemo(
-    () => buildTrackpointsFeatureCollection(safeSelectedTrackpoints),
-    [safeSelectedTrackpoints]
-  )
-
-  const selectedTrackSummary = useMemo(
-    () => getWalkTrackSummary(safeSelectedTrackpoints),
-    [safeSelectedTrackpoints]
-  )
-
-  const herdsById = useMemo(
-    () => new Map(safeHerds.map((herd) => [herd.id, herd])),
-    [safeHerds]
-  )
-
-  const animalsByHerdId = useMemo(() => {
-    const map = new Map<string, Animal[]>()
-
-    safeAnimals.forEach((animal) => {
-      const currentAnimals = map.get(animal.herdId) ?? []
-      currentAnimals.push(animal)
-      map.set(animal.herdId, currentAnimals)
-    })
-
-    return map
-  }, [safeAnimals])
-
-  const activeAssignmentsByEnclosureId = useMemo(() => {
-    const map = new Map<string, EnclosureAssignment>()
-
-    safeAssignments.forEach((assignment) => {
-      if (!assignment.endTime && !map.has(assignment.enclosureId)) {
-        map.set(assignment.enclosureId, assignment)
-      }
-    })
-
-    return map
-  }, [safeAssignments])
-
-  const assignmentHistoryByEnclosureId = useMemo(() => {
-    const map = new Map<string, EnclosureAssignment[]>()
-
-    safeAssignments.forEach((assignment) => {
-      const currentAssignments = map.get(assignment.enclosureId) ?? []
-      currentAssignments.push(assignment)
-      map.set(assignment.enclosureId, currentAssignments)
-    })
-
-    return map
-  }, [safeAssignments])
-
-  const enclosureStatsById = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        totalAssignments: number
-        totalDurationS: number
-        averageCount: number | null
-        lastEndTime: string | null
-        uniqueHerdsCount: number
-      }
-    >()
-
-    safeEnclosures.forEach((enclosure) => {
-      const history = assignmentHistoryByEnclosureId.get(enclosure.id) ?? []
-      const totalDurationS = history.reduce(
-        (sum, assignment) =>
-          sum + getDurationSecondsFromIso(assignment.startTime, assignment.endTime),
-        0
-      )
-
-      const counts = history
-        .map((assignment) => {
-          if (typeof assignment.count === 'number') return assignment.count
-
-          const herd = herdsById.get(assignment.herdId)
-          return getEffectiveHerdCount(
-            herd,
-            animalsByHerdId.get(assignment.herdId) ?? []
-          )
-        })
-        .filter((count): count is number => typeof count === 'number')
-
-      const uniqueHerdsCount = new Set(history.map((assignment) => assignment.herdId)).size
-
-      map.set(enclosure.id, {
-        totalAssignments: history.length,
-        totalDurationS,
-        averageCount:
-          counts.length > 0
-            ? Math.round(counts.reduce((sum, count) => sum + count, 0) / counts.length)
-            : null,
-        lastEndTime:
-          history
-            .map((assignment) => assignment.endTime ?? assignment.startTime ?? null)
-            .filter((value): value is string => Boolean(value))
-            .sort()
-            .at(-1) ?? null,
-        uniqueHerdsCount,
-      })
-    })
-
-    return map
-  }, [animalsByHerdId, assignmentHistoryByEnclosureId, herdsById, safeEnclosures])
-
-  const filteredEnclosures = useMemo(() => {
-    const withMeta = safeEnclosures.map((enclosure) => {
-      const stats = enclosureStatsById.get(enclosure.id)
-      const activeAssignment = activeAssignmentsByEnclosureId.get(enclosure.id)
-
-      return {
-        enclosure,
-        stats,
-        activeAssignment,
-      }
-    })
-
-    switch (enclosureListFilter) {
-      case 'active':
-        return withMeta
-          .filter((item) => Boolean(item.activeAssignment))
-          .sort((left, right) => right.enclosure.updatedAt.localeCompare(left.enclosure.updatedAt))
-      case 'unused':
-        return withMeta
-          .filter((item) => (item.stats?.totalAssignments ?? 0) === 0)
-          .sort((left, right) => left.enclosure.name.localeCompare(right.enclosure.name, 'de'))
-      case 'most-used':
-        return withMeta.sort((left, right) => {
-          const assignmentsDiff =
-            (right.stats?.totalAssignments ?? 0) - (left.stats?.totalAssignments ?? 0)
-          if (assignmentsDiff !== 0) return assignmentsDiff
-
-          const durationDiff =
-            (right.stats?.totalDurationS ?? 0) - (left.stats?.totalDurationS ?? 0)
-          if (durationDiff !== 0) return durationDiff
-
-          return left.enclosure.name.localeCompare(right.enclosure.name, 'de')
-        })
-      case 'all':
-      default:
-        return withMeta.sort((left, right) =>
-          right.enclosure.updatedAt.localeCompare(left.enclosure.updatedAt)
-        )
-    }
-  }, [activeAssignmentsByEnclosureId, enclosureListFilter, enclosureStatsById, safeEnclosures])
-
-  const selectedWalkPoint = useMemo(
-    () =>
-      selectedWalkPointIndex !== null
-        ? walkPoints[selectedWalkPointIndex] ?? null
-        : null,
-    [selectedWalkPointIndex, walkPoints]
-  )
-
-  const selectedWalkPointFeatureCollection = useMemo(
-    () =>
-      buildSelectedWalkPointFeatureCollection(selectedWalkPoint, selectedWalkPointIndex),
-    [selectedWalkPoint, selectedWalkPointIndex]
-  )
-
-  const editFeatureCollection = useMemo(
-    () => buildDraftFeatureCollection(editGeometryPoints),
-    [editGeometryPoints]
-  )
-
-  const draftAreaM2 = useMemo(() => {
-    const draftPolygon = getDraftPolygon(draftPoints)
-    return draftPolygon ? area(draftPolygon) : 0
-  }, [draftPoints])
-
-  const editAreaM2 = useMemo(() => {
-    const editPolygon = getDraftPolygon(editGeometryPoints)
-    return editPolygon ? area(editPolygon) : 0
-  }, [editGeometryPoints])
-
-  const walkAreaM2 = useMemo(() => {
-    if (walkPoints.length < 3) return 0
-
-    const coordinates = walkPoints.map(
-      (point) => [point.longitude, point.latitude] as [number, number]
-    )
-    coordinates.push([walkPoints[0].longitude, walkPoints[0].latitude])
-
-    return area(polygon([coordinates]))
-  }, [walkPoints])
+  useGeolocationWatcher({
+    acceptedPositionRef,
+    buildPositionRef,
+    onAcceptedPositionRef: handleAcceptedPositionRef,
+    settingsRef,
+    watchIdRef,
+    setGpsState,
+    setLastPositionDecision,
+    setPosition,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -984,423 +241,75 @@ export function LivePositionMap() {
       const maplibre = await import('maplibre-gl')
       if (cancelled || !containerRef.current) return
 
-      const map = new maplibre.Map({
-        container: containerRef.current,
-        style: rasterStyle,
-        center: fallbackCenter,
-        zoom: 11,
-        attributionControl: false,
-      })
-
-      map.addControl(new maplibre.NavigationControl(), 'top-right')
-      map.addControl(
-        new maplibre.AttributionControl({
-          compact:
-            typeof window !== 'undefined'
-              ? window.matchMedia('(max-width: 768px)').matches
-              : false,
-        }),
-        'bottom-right'
-      )
+      const map = createRasterMap(maplibre, containerRef.current)
 
       map.on('load', () => {
         if (cancelled) return
+        registerLivePositionMapSetup(map, {
+          onMapClick: (event) => {
+            if (editingEnclosureIdRef.current && isAddingEditPointRef.current) {
+              setEditGeometryPoints((currentPoints) => [
+                ...currentPoints,
+                {
+                  lat: event.lngLat.lat,
+                  lon: event.lngLat.lng,
+                },
+              ])
+              setIsAddingEditPoint(false)
+              setEditError('')
+              return
+            }
 
-        map.addSource('saved-enclosures', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
+            if (
+              editingEnclosureIdRef.current &&
+              selectedEditPointIndexRef.current !== null
+            ) {
+              setEditGeometryPoints((currentPoints) =>
+                currentPoints.map((point, index) =>
+                  index === selectedEditPointIndexRef.current
+                    ? {
+                        lat: event.lngLat.lat,
+                        lon: event.lngLat.lng,
+                      }
+                    : point
+                )
+              )
+              setSelectedEditPointIndex(null)
+              setEditError('')
+              return
+            }
 
-        map.addSource('survey-areas', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
+            setDraftPoints((currentPoints) => {
+              if (!isDrawingRef.current) return currentPoints
 
-        map.addLayer({
-          id: 'survey-areas-fill',
-          type: 'fill',
-          source: 'survey-areas',
-          paint: {
-            'fill-color': '#7c3aed',
-            'fill-opacity': 0.1,
+              return [
+                ...currentPoints,
+                {
+                  lat: event.lngLat.lat,
+                  lon: event.lngLat.lng,
+                },
+              ]
+            })
           },
-        })
-
-        map.addLayer({
-          id: 'survey-areas-line',
-          type: 'line',
-          source: 'survey-areas',
-          paint: {
-            'line-color': '#6d28d9',
-            'line-width': 2,
-            'line-dasharray': [2, 2],
+          onSavedEnclosureSelect: (enclosureId) => {
+            openEnclosureDetailsRef.current(enclosureId)
           },
-        })
-
-        map.addLayer({
-          id: 'saved-enclosures-fill',
-          type: 'fill',
-          source: 'saved-enclosures',
-          paint: {
-            'fill-color': '#15803d',
-            'fill-opacity': 0.18,
+          onSelectedEnclosureSelect: (enclosureId) => {
+            openEnclosureDetailsRef.current(enclosureId)
           },
-        })
-
-        map.addLayer({
-          id: 'saved-enclosures-line',
-          type: 'line',
-          source: 'saved-enclosures',
-          paint: {
-            'line-color': '#166534',
-            'line-width': 2,
+          onWalkPointSelect: (index) => {
+            setSelectedWalkPointIndex(index)
           },
-        })
-
-        map.addSource(southTyrolOrthoSourceId, {
-          type: 'raster',
-          tiles: southTyrolOrthoTiles,
-          tileSize: 256,
-          attribution: 'Provincia autonoma di Bolzano - Orthofoto 2023 (20 cm)',
-        })
-
-        map.addLayer({
-          id: southTyrolOrthoLayerId,
-          type: 'raster',
-          source: southTyrolOrthoSourceId,
-          layout: {
-            visibility: 'visible',
+          onEditPointSelect: (index) => {
+            setSelectedEditPointIndex(index)
           },
-          paint: {
-            'raster-opacity': 1,
-          },
-        })
-
-        map.addSource('selected-enclosure', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
-
-        map.addLayer({
-          id: 'selected-enclosure-fill',
-          type: 'fill',
-          source: 'selected-enclosure',
-          paint: {
-            'fill-color': '#f59e0b',
-            'fill-opacity': 0.2,
-          },
-        })
-
-        map.addLayer({
-          id: 'selected-enclosure-line',
-          type: 'line',
-          source: 'selected-enclosure',
-          paint: {
-            'line-color': '#d97706',
-            'line-width': 4,
-          },
-        })
-
-        map.addSource('draft-enclosure', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
-
-        map.addLayer({
-          id: 'draft-enclosure-fill',
-          type: 'fill',
-          source: 'draft-enclosure',
-          paint: {
-            'fill-color': '#2563eb',
-            'fill-opacity': 0.16,
-          },
-          filter: ['==', '$type', 'Polygon'],
-        })
-
-        map.addLayer({
-          id: 'draft-enclosure-line',
-          type: 'line',
-          source: 'draft-enclosure',
-          paint: {
-            'line-color': '#1d4ed8',
-            'line-width': 3,
-          },
-          filter: ['==', '$type', 'LineString'],
-        })
-
-        map.addLayer({
-          id: 'draft-enclosure-points',
-          type: 'circle',
-          source: 'draft-enclosure',
-          paint: {
-            'circle-radius': 5,
-            'circle-color': '#1d4ed8',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-          },
-          filter: ['==', '$type', 'Point'],
-        })
-
-        map.addSource('edit-enclosure', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
-
-        map.addLayer({
-          id: 'edit-enclosure-fill',
-          type: 'fill',
-          source: 'edit-enclosure',
-          paint: {
-            'fill-color': '#0891b2',
-            'fill-opacity': 0.14,
-          },
-          filter: ['==', '$type', 'Polygon'],
-        })
-
-        map.addLayer({
-          id: 'edit-enclosure-line',
-          type: 'line',
-          source: 'edit-enclosure',
-          paint: {
-            'line-color': '#0f766e',
-            'line-width': 3,
-          },
-          filter: ['==', '$type', 'LineString'],
-        })
-
-        map.addLayer({
-          id: 'edit-enclosure-points',
-          type: 'circle',
-          source: 'edit-enclosure',
-          paint: {
-            'circle-radius': 8,
-            'circle-color': '#0f766e',
-            'circle-stroke-width': 3,
-            'circle-stroke-color': '#ffffff',
-          },
-          filter: ['==', '$type', 'Point'],
-        })
-
-        map.addLayer({
-          id: 'edit-enclosure-touch-target',
-          type: 'circle',
-          source: 'edit-enclosure',
-          paint: {
-            'circle-radius': 18,
-            'circle-color': '#ffffff',
-            'circle-opacity': 0.01,
-          },
-          filter: ['==', '$type', 'Point'],
-        })
-
-        map.addSource('walk-track', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
-
-        map.addLayer({
-          id: 'walk-track-fill',
-          type: 'fill',
-          source: 'walk-track',
-          paint: {
-            'fill-color': '#ea580c',
-            'fill-opacity': 0.14,
-          },
-          filter: ['==', '$type', 'Polygon'],
-        })
-
-        map.addLayer({
-          id: 'walk-track-line',
-          type: 'line',
-          source: 'walk-track',
-          paint: {
-            'line-color': '#f97316',
-            'line-width': 3,
-          },
-          filter: ['==', '$type', 'LineString'],
-        })
-
-        map.addLayer({
-          id: 'walk-track-points',
-          type: 'circle',
-          source: 'walk-track',
-          paint: {
-            'circle-radius': 4,
-            'circle-color': '#f97316',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-          },
-          filter: ['==', '$type', 'Point'],
-        })
-
-        map.addSource('selected-walk-point', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
-
-        map.addLayer({
-          id: 'selected-walk-point',
-          type: 'circle',
-          source: 'selected-walk-point',
-          paint: {
-            'circle-radius': 8,
-            'circle-color': '#111827',
-            'circle-stroke-width': 3,
-            'circle-stroke-color': '#fbbf24',
-          },
-          filter: ['==', '$type', 'Point'],
-        })
-
-        map.addSource('selected-walk-track', {
-          type: 'geojson',
-          data: emptyFeatureCollection,
-        })
-
-        map.addLayer({
-          id: 'selected-walk-track-line',
-          type: 'line',
-          source: 'selected-walk-track',
-          paint: {
-            'line-color': '#7c3aed',
-            'line-width': 4,
-          },
-          filter: ['==', '$type', 'LineString'],
-        })
-
-        map.addLayer({
-          id: 'selected-walk-track-points',
-          type: 'circle',
-          source: 'selected-walk-track',
-          paint: {
-            'circle-radius': 4,
-            'circle-color': '#7c3aed',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-          },
-          filter: ['==', '$type', 'Point'],
         })
 
         setMapReady(true)
       })
 
-      map.on('click', (event: MapMouseEvent) => {
-        if (editingEnclosureIdRef.current && isAddingEditPointRef.current) {
-          setEditGeometryPoints((currentPoints) => [
-            ...currentPoints,
-            {
-              lat: event.lngLat.lat,
-              lon: event.lngLat.lng,
-            },
-          ])
-          setIsAddingEditPoint(false)
-          setEditError('')
-          return
-        }
-
-        if (
-          editingEnclosureIdRef.current &&
-          selectedEditPointIndexRef.current !== null
-        ) {
-          setEditGeometryPoints((currentPoints) =>
-            currentPoints.map((point, index) =>
-              index === selectedEditPointIndexRef.current
-                ? {
-                    lat: event.lngLat.lat,
-                    lon: event.lngLat.lng,
-                  }
-                : point
-            )
-          )
-          setSelectedEditPointIndex(null)
-          setEditError('')
-          return
-        }
-
-        setDraftPoints((currentPoints) => {
-          if (!isDrawingRef.current) return currentPoints
-
-          return [
-            ...currentPoints,
-            {
-              lat: event.lngLat.lat,
-              lon: event.lngLat.lng,
-            },
-          ]
-        })
-      })
-
-      map.on('click', 'saved-enclosures-fill', (event) => {
-        const clickedFeature = event.features?.[0]
-        const enclosureId = clickedFeature?.properties?.id
-
-        if (typeof enclosureId === 'string') {
-          openEnclosureDetailsRef.current(enclosureId)
-        }
-      })
-
-      map.on('click', 'selected-enclosure-fill', (event) => {
-        const clickedFeature = event.features?.[0]
-        const enclosureId = clickedFeature?.properties?.id
-
-        if (typeof enclosureId === 'string') {
-          openEnclosureDetailsRef.current(enclosureId)
-        }
-      })
-
-      map.on('click', 'walk-track-points', (event) => {
-        const clickedFeature = event.features?.[0]
-        const pointIndex = Number(clickedFeature?.properties?.index)
-
-        if (Number.isInteger(pointIndex) && pointIndex >= 1) {
-          setSelectedWalkPointIndex(pointIndex - 1)
-        }
-      })
-
-      map.on('click', 'edit-enclosure-touch-target', (event) => {
-        const clickedFeature = event.features?.[0]
-        const pointIndex = Number(clickedFeature?.properties?.index)
-
-        if (Number.isInteger(pointIndex) && pointIndex >= 1) {
-          setSelectedEditPointIndex(pointIndex - 1)
-        }
-      })
-
-      map.on('mouseenter', 'saved-enclosures-fill', () => {
-        map.getCanvas().style.cursor = 'pointer'
-      })
-
-      map.on('mouseleave', 'saved-enclosures-fill', () => {
-        map.getCanvas().style.cursor = ''
-      })
-
-      map.on('mouseenter', 'selected-enclosure-fill', () => {
-        map.getCanvas().style.cursor = 'pointer'
-      })
-
-      map.on('mouseleave', 'selected-enclosure-fill', () => {
-        map.getCanvas().style.cursor = ''
-      })
-
-      map.on('mouseenter', 'walk-track-points', () => {
-        map.getCanvas().style.cursor = 'pointer'
-      })
-
-      map.on('mouseleave', 'walk-track-points', () => {
-        map.getCanvas().style.cursor = ''
-      })
-
-      map.on('mouseenter', 'edit-enclosure-touch-target', () => {
-        map.getCanvas().style.cursor = 'pointer'
-      })
-
-      map.on('mouseleave', 'edit-enclosure-touch-target', () => {
-        map.getCanvas().style.cursor = ''
-      })
-
       mapRef.current = map
-      markerRef.current = new maplibre.Marker({
-        color: '#111827',
-      })
+      markerRef.current = createDefaultMarker(maplibre)
     }
 
     setupMap()
@@ -1412,73 +321,7 @@ export function LivePositionMap() {
       mapRef.current?.remove()
       mapRef.current = null
     }
-  }, [])
-
-  useEffect(() => {
-    if (!('geolocation' in navigator)) {
-      setGpsState('unsupported')
-      return
-    }
-
-    setGpsState('requesting')
-
-    const watchId = navigator.geolocation.watchPosition(
-      (nextPosition) => {
-        const next: PositionData = {
-          latitude: nextPosition.coords.latitude,
-          longitude: nextPosition.coords.longitude,
-          accuracy: nextPosition.coords.accuracy,
-          timestamp: nextPosition.timestamp,
-        }
-
-        const currentSettings = settingsRef.current
-        const decision = getPositionDecision(
-          acceptedPositionRef.current,
-          next,
-          currentSettings.gpsAccuracyThresholdM,
-          currentSettings.gpsMinTimeS,
-          currentSettings.gpsMinDistanceM
-        )
-
-        setLastPositionDecision(decision)
-
-        if (!decision.accepted) {
-          setGpsState('tracking')
-          return
-        }
-
-        acceptedPositionRef.current = next
-        setPosition(next)
-        setGpsState('tracking')
-
-        if (isWalkingRef.current) {
-          void appendWalkPointRef.current(next)
-        }
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setGpsState('denied')
-          return
-        }
-
-        setGpsState('error')
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 10_000,
-        timeout: 20_000,
-      }
-    )
-
-    watchIdRef.current = watchId
-
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current)
-        watchIdRef.current = null
-      }
-    }
-  }, [])
+  }, [editingEnclosureIdRef, isAddingEditPointRef, selectedEditPointIndexRef])
 
   useEffect(() => {
     const source = mapRef.current?.getSource('saved-enclosures') as GeoJSONSource | undefined
@@ -1724,26 +567,19 @@ export function LivePositionMap() {
     const enclosureWalkId = walkEnclosureIdRef.current
     if (!enclosureWalkId) return
 
-    if (walkLastTimestampRef.current === nextPosition.timestamp) {
+    const result = await appendWalkTrackpoint({
+      enclosureWalkId,
+      lastTimestamp: walkLastTimestampRef.current,
+      nextSeq: walkSeqRef.current + 1,
+      nextPosition,
+    })
+
+    if (!result) {
       return
     }
 
-    walkLastTimestampRef.current = nextPosition.timestamp
-    walkSeqRef.current += 1
-
-    const trackPoint: TrackPoint = {
-      id: createId('trackpoint'),
-      enclosureWalkId,
-      sessionId: null,
-      seq: walkSeqRef.current,
-      timestamp: new Date(nextPosition.timestamp).toISOString(),
-      lat: nextPosition.latitude,
-      lon: nextPosition.longitude,
-      accuracyM: nextPosition.accuracy,
-      accepted: true,
-    }
-
-    await db.trackpoints.add(trackPoint)
+    walkSeqRef.current = result.nextSeq
+    walkLastTimestampRef.current = result.lastTimestamp
 
     let nextPoints: PositionData[] = []
     setWalkPoints((currentPoints) => {
@@ -1906,9 +742,7 @@ export function LivePositionMap() {
     walkLastTimestampRef.current = null
     walkEnclosureIdRef.current = null
 
-    if (enclosureWalkId) {
-      await db.trackpoints.where('enclosureWalkId').equals(enclosureWalkId).delete()
-    }
+    await discardWalkTrack(enclosureWalkId)
   }
 
   async function undoLastWalkPoint() {
@@ -1918,38 +752,20 @@ export function LivePositionMap() {
   async function removeWalkPointAtIndex(pointIndex: number) {
     const enclosureWalkId = walkEnclosureIdRef.current
     if (!enclosureWalkId || walkPoints.length === 0) return
-    if (pointIndex < 0 || pointIndex >= walkPoints.length) return
-
-    const walkTrackPoints = await db.trackpoints
-      .where('enclosureWalkId')
-      .equals(enclosureWalkId)
-      .sortBy('seq')
-
-    const trackPointToDelete = walkTrackPoints[pointIndex]
-    if (!trackPointToDelete) return
-
-    await db.transaction('rw', db.trackpoints, async () => {
-      await db.trackpoints.delete(trackPointToDelete.id)
-
-      const remainingTrackPoints = walkTrackPoints.filter(
-        (trackPoint) => trackPoint.id !== trackPointToDelete.id
-      )
-
-      await Promise.all(
-        remainingTrackPoints.map((trackPoint, index) =>
-          db.trackpoints.update(trackPoint.id, {
-            seq: index + 1,
-          })
-        )
-      )
+    const result = await removeWalkTrackpointAtIndex({
+      enclosureWalkId,
+      walkPoints,
+      pointIndex,
     })
 
-    const nextPoints = walkPoints.filter((_, index) => index !== pointIndex)
-    setWalkPoints(nextPoints)
-    walkSeqRef.current = nextPoints.length
-    walkLastTimestampRef.current =
-      nextPoints.length > 0 ? nextPoints[nextPoints.length - 1].timestamp : null
-    focusWalkPoints(nextPoints)
+    if (!result) {
+      return
+    }
+
+    setWalkPoints(result.nextPoints)
+    walkSeqRef.current = result.nextSeq
+    walkLastTimestampRef.current = result.lastTimestamp
+    focusWalkPoints(result.nextPoints)
     setSelectedWalkPointIndex((currentIndex) => {
       if (currentIndex === null) return null
       if (currentIndex === pointIndex) return null
@@ -1957,11 +773,7 @@ export function LivePositionMap() {
       return currentIndex
     })
 
-    setWalkError(
-      pointIndex === walkPoints.length - 1
-        ? 'Letzter Walk-Punkt entfernt.'
-        : `Walk-Punkt ${pointIndex + 1} entfernt.`
-    )
+    setWalkError(result.message)
   }
 
   function focusEnclosure(enclosure: Enclosure) {
@@ -2020,16 +832,14 @@ export function LivePositionMap() {
   function openAssignmentEditor(enclosure: Enclosure) {
     setAssignmentEditorEnclosureId(enclosure.id)
     setAssignmentError('')
+    const defaults = getDefaultAssignmentValues({
+      herds: safeHerds,
+      animalsByHerdId,
+      getEffectiveHerdCount,
+    })
 
-    const firstActiveHerd = safeHerds.find((herd) => !herd.isArchived) ?? safeHerds[0]
-    const nextHerdId = firstActiveHerd?.id ?? ''
-    setAssignmentHerdId(nextHerdId)
-
-    const effectiveCount = nextHerdId
-      ? getEffectiveHerdCount(firstActiveHerd, animalsByHerdId.get(nextHerdId) ?? [])
-      : null
-
-    setAssignmentCount(effectiveCount !== null ? String(effectiveCount) : '')
+    setAssignmentHerdId(defaults.herdId)
+    setAssignmentCount(defaults.count)
     setAssignmentNotes('')
   }
 
@@ -2066,25 +876,11 @@ export function LivePositionMap() {
     setAssignmentError('')
 
     try {
-      const timestamp = nowIso()
-
-      await db.transaction('rw', db.enclosureAssignments, db.enclosures, async () => {
-        await db.enclosureAssignments.add({
-          id: createId('enclosure_assignment'),
-          enclosureId: enclosure.id,
-          herdId: herd.id,
-          count: parsedCount,
-          startTime: timestamp,
-          endTime: null,
-          notes: assignmentNotes.trim() || undefined,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-        })
-
-        await db.enclosures.update(enclosure.id, {
-          herdId: herd.id,
-          updatedAt: timestamp,
-        })
+      await assignHerdToEnclosureRecord({
+        enclosure,
+        herd,
+        count: parsedCount,
+        notes: assignmentNotes,
       })
 
       cancelAssignmentEditor()
@@ -2103,19 +899,7 @@ export function LivePositionMap() {
     setAssignmentError('')
 
     try {
-      const timestamp = nowIso()
-
-      await db.transaction('rw', db.enclosureAssignments, db.enclosures, async () => {
-        await db.enclosureAssignments.update(assignment.id, {
-          endTime: timestamp,
-          updatedAt: timestamp,
-        })
-
-        await db.enclosures.update(assignment.enclosureId, {
-          herdId: null,
-          updatedAt: timestamp,
-        })
-      })
+      await endEnclosureAssignmentRecord(assignment)
     } catch (error) {
       setAssignmentError(
         error instanceof Error ? error.message : 'Ausweisung konnte nicht gespeichert werden.'
@@ -2167,15 +951,13 @@ export function LivePositionMap() {
     setEditError('')
 
     try {
-      const timestamp = nowIso()
-      await db.enclosures.update(editingEnclosureId, {
+      await updateEditedEnclosureRecord({
+        enclosureId: editingEnclosureId,
         name: cleanedName,
+        notes: editNotes,
         geometry: editPolygon.geometry,
         areaM2: editAreaM2,
-        areaHa: editAreaM2 / 10_000,
         pointsCount: editGeometryPoints.length,
-        notes: editNotes.trim() || undefined,
-        updatedAt: timestamp,
       })
 
       setEditingEnclosureId(null)
@@ -2201,8 +983,7 @@ export function LivePositionMap() {
 
     if (!confirmed) return
 
-    await db.enclosures.delete(enclosure.id)
-    await db.trackpoints.where('enclosureWalkId').equals(enclosure.id).delete()
+    await deleteEnclosureRecord(enclosure.id)
 
     if (selectedEnclosureId === enclosure.id) {
       setSelectedEnclosureId(null)
@@ -2239,37 +1020,17 @@ export function LivePositionMap() {
       return
     }
 
-    const coordinates = walkPoints.map(
-      (point) => [point.longitude, point.latitude] as [number, number]
-    )
-    coordinates.push([walkPoints[0].longitude, walkPoints[0].latitude])
-
     setIsWalkSaving(true)
     setWalkError('')
 
     try {
-      const timestamp = nowIso()
-      const averageAccuracy =
-        walkPoints.reduce((sum, point) => sum + point.accuracy, 0) / walkPoints.length
-
-      const enclosure: Enclosure = {
-        id: enclosureId,
+      const enclosure = await saveWalkEnclosureRecord({
+        enclosureId,
         name: cleanedName,
-        method: 'walk',
-        geometry: {
-          type: 'Polygon',
-          coordinates: [coordinates],
-        },
-        areaM2: walkAreaM2,
-        areaHa: walkAreaM2 / 10_000,
-        notes: walkNotes.trim() || undefined,
-        pointsCount: walkPoints.length,
-        avgAccuracyM: averageAccuracy,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      }
-
-      await db.enclosures.put(enclosure)
+        notes: walkNotes,
+        walkPoints,
+        walkAreaM2,
+      })
 
       setSelectedEnclosureId(enclosure.id)
       setWalkPoints([])
@@ -2307,24 +1068,14 @@ export function LivePositionMap() {
     setSaveError('')
 
     try {
-      const timestamp = nowIso()
-      const enclosureId = createId('enclosure')
-
-      const enclosure: Enclosure = {
-        id: enclosureId,
+      await saveDrawnEnclosureRecord({
         name: cleanedName,
-        method: 'draw',
+        notes,
         geometry: draftPolygon.geometry,
         areaM2: draftAreaM2,
-        areaHa: draftAreaM2 / 10_000,
-        notes: notes.trim() || undefined,
-        pointsCount: draftPoints.length,
-        avgAccuracyM: position?.accuracy ?? null,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      }
-
-      await db.enclosures.add(enclosure)
+        points: draftPoints,
+        accuracyM: position?.accuracy ?? null,
+      })
 
       isDrawingRef.current = false
       setName('')

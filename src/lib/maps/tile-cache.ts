@@ -6,6 +6,7 @@ export const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
 export const TILE_DB_NAME = 'hirtenapp-tile-db'
 export const MAX_PREFETCH_TILES = 1200
 export const PREFETCH_CONCURRENCY = 8
+export const TILE_CACHE_CHANGED_EVENT = 'hirtenapp:tile-cache-changed'
 
 export const tileTemplates: Record<MapBaseLayer, string> = {
   'south-tyrol-orthophoto-2023':
@@ -41,6 +42,14 @@ class TileCacheDB extends Dexie {
 }
 
 const tileDb = new TileCacheDB()
+
+function dispatchTileCacheChanged() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.dispatchEvent(new CustomEvent(TILE_CACHE_CHANGED_EVENT))
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -150,6 +159,7 @@ export async function clearTileCacheStorage() {
       await window.caches.delete(TILE_CACHE_NAME)
     }
 
+    dispatchTileCacheChanged()
     return true
   } catch {
     return false
@@ -238,4 +248,6 @@ export async function prefetchTileUrls(
       })
     )
   }
+
+  dispatchTileCacheChanged()
 }
