@@ -1,7 +1,7 @@
 'use client'
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { db } from '@/lib/db/dexie'
 import {
   getPersistentStorageStatus,
@@ -9,11 +9,19 @@ import {
   TILE_CACHE_CHANGED_EVENT,
 } from '@/lib/maps/tile-cache'
 import { defaultAppSettings } from '@/lib/settings/defaults'
-import { readFallbackSettings } from '@/lib/settings/page-helpers'
+import {
+  parseFallbackSettingsSnapshot,
+  readFallbackSettingsSnapshot,
+  subscribeToFallbackSettings,
+} from '@/lib/settings/page-helpers'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
+function subscribeToHydration() {
+  return () => {}
 }
 
 export function StatusStrip() {
@@ -24,11 +32,25 @@ export function StatusStrip() {
     useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalling, setIsInstalling] = useState(false)
   const settings = useLiveQuery(() => db.settings.get('app'), [])
-  const fallbackSettings = readFallbackSettings()
-  const tileCachingEnabled =
-    settings?.tileCachingEnabled ??
-    fallbackSettings?.tileCachingEnabled ??
-    defaultAppSettings.tileCachingEnabled
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false
+  )
+  const fallbackSettingsSnapshot = useSyncExternalStore(
+    subscribeToFallbackSettings,
+    readFallbackSettingsSnapshot,
+    () => null
+  )
+  const fallbackTileCachingEnabled =
+    parseFallbackSettingsSnapshot(fallbackSettingsSnapshot)?.tileCachingEnabled ?? null
+  const tileCachingEnabled = isHydrated
+    ? (
+        settings?.tileCachingEnabled ??
+        fallbackTileCachingEnabled ??
+        defaultAppSettings.tileCachingEnabled
+      )
+    : defaultAppSettings.tileCachingEnabled
   const hasStoredTiles = tileCacheCount !== null && tileCacheCount > 0
   const guidanceText = !isOnline
     ? hasStoredTiles
@@ -143,7 +165,7 @@ export function StatusStrip() {
 
   return (
     <div className="border-b border-[#061a14] bg-[linear-gradient(180deg,#174634,#113126)] text-white shadow-[0_12px_28px_rgba(8,23,17,0.28)]">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm xl:max-w-[88rem]">
         <span
           className={[
             'rounded-full border px-3 py-1.5 font-semibold shadow-sm',

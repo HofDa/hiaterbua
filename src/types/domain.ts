@@ -17,6 +17,24 @@ export type WorkType =
   | 'transport'
   | 'other'
 
+export type WorkActivityId =
+  | 'guided_access_to_grazing_animals'
+  | 'guided_lead_grazing_animals'
+  | 'guided_herd_grazing_animals'
+  | 'guided_collect_grazing_animals'
+  | 'guided_fence_work'
+  | 'guided_overnight_fence_work'
+  | 'guided_material_shift'
+  | 'guided_check_grazing_animals'
+  | 'guided_check_lambing'
+  | 'guided_check_herding_dogs'
+  | 'guided_check_guard_dogs'
+  | 'guided_brush_clearing_with_grazers'
+  | 'guided_detangling'
+  | 'guided_follow_up_grazing'
+  | 'guided_fence_work_for_brush_clearing'
+  | 'guided_trampling_via_overdrive'
+
 export type SessionEventType =
   | 'water'
   | 'rest'
@@ -107,6 +125,7 @@ export interface EnclosureAssignment {
 export interface GrazingSession {
   id: string
   herdId: string
+  animalCount?: number | null
   status: SessionStatus
   startTime: string
   endTime?: string | null
@@ -123,6 +142,7 @@ export interface GrazingSession {
 export interface WorkSession {
   id: string
   type: WorkType
+  activityId?: WorkActivityId | null
   status: WorkStatus
   herdId?: string | null
   enclosureId?: string | null
@@ -171,6 +191,8 @@ export interface SessionEvent {
 
 export interface AppSettings {
   id: 'app'
+  userName: string
+  accessPasswordHash: string
   language: 'de' | 'it'
   mapBaseLayer: MapBaseLayer
   gpsAccuracyThresholdM: number

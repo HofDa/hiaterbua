@@ -232,7 +232,7 @@ export function buildGpxTrack(
     .join('')
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Hiaterbua 1.0" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="Pastore 1.0" xmlns="http://www.topografix.com/GPX/1/1">
 <metadata><name>${escapeXml(name)}</name></metadata>
 ${tracksXml}
 </gpx>`

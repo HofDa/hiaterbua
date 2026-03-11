@@ -86,7 +86,7 @@ export function describeCameraError(error: unknown) {
   }
 
   if (error.name === 'OverconstrainedError') {
-    return 'Gewuenschte Kameraeinstellung ist auf diesem Geraet nicht verfuegbar.'
+    return 'Gewünschte Kameraeinstellung ist auf diesem Gerät nicht verfügbar.'
   }
 
   return 'Kamera konnte nicht gestartet werden.'

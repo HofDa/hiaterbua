@@ -3,6 +3,7 @@ import type { AppSettings } from '@/types/domain'
 
 const SETTINGS_FALLBACK_KEY = 'hirtenapp-settings-fallback'
 const STORAGE_TIMEOUT_MS = 2500
+export const SETTINGS_FALLBACK_CHANGED_EVENT = 'hirtenapp:settings-fallback-changed'
 
 export function formatCurrentPositionError(error: GeolocationPositionError) {
   switch (error.code) {
@@ -24,6 +25,12 @@ export function normalizeSettingsValue(
     ...defaultAppSettings,
     ...settings,
     id: 'app',
+    userName:
+      typeof settings?.userName === 'string' ? settings.userName.trim() : defaultAppSettings.userName,
+    accessPasswordHash:
+      typeof settings?.accessPasswordHash === 'string'
+        ? settings.accessPasswordHash.trim()
+        : defaultAppSettings.accessPasswordHash,
     mapBaseLayer: normalizeMapBaseLayer(settings?.mapBaseLayer),
     gpsAccuracyThresholdM: Math.max(
       1,
@@ -41,20 +48,54 @@ export function normalizeSettingsValue(
 }
 
 export function readFallbackSettings() {
+  return parseFallbackSettingsSnapshot(readFallbackSettingsSnapshot())
+}
+
+export function readFallbackSettingsSnapshot() {
   if (typeof window === 'undefined') {
     return null
   }
 
   try {
-    const raw = window.localStorage.getItem(SETTINGS_FALLBACK_KEY)
-
-    if (!raw) {
-      return null
-    }
-
-    return normalizeSettingsValue(JSON.parse(raw) as Partial<AppSettings>)
+    return window.localStorage.getItem(SETTINGS_FALLBACK_KEY)
   } catch {
     return null
+  }
+}
+
+export function parseFallbackSettingsSnapshot(snapshot: string | null) {
+  if (!snapshot) {
+    return null
+  }
+
+  try {
+    return normalizeSettingsValue(JSON.parse(snapshot) as Partial<AppSettings>)
+  } catch {
+    return null
+  }
+}
+
+export function subscribeToFallbackSettings(onStoreChange: () => void) {
+  if (typeof window === 'undefined') {
+    return () => {}
+  }
+
+  function handleStorage(event: StorageEvent) {
+    if (event.key === null || event.key === SETTINGS_FALLBACK_KEY) {
+      onStoreChange()
+    }
+  }
+
+  function handleFallbackChanged() {
+    onStoreChange()
+  }
+
+  window.addEventListener('storage', handleStorage)
+  window.addEventListener(SETTINGS_FALLBACK_CHANGED_EVENT, handleFallbackChanged)
+
+  return () => {
+    window.removeEventListener('storage', handleStorage)
+    window.removeEventListener(SETTINGS_FALLBACK_CHANGED_EVENT, handleFallbackChanged)
   }
 }
 
@@ -68,6 +109,7 @@ export function writeFallbackSettings(settings: AppSettings) {
       SETTINGS_FALLBACK_KEY,
       JSON.stringify(normalizeSettingsValue(settings)),
     )
+    window.dispatchEvent(new CustomEvent(SETTINGS_FALLBACK_CHANGED_EVENT))
   } catch {
     // Local fallback storage is best effort only.
   }

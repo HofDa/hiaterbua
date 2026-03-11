@@ -1,5 +1,5 @@
 const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
-const APP_CACHE_NAME = 'hiaterbua-app-shell-v1'
+const APP_CACHE_NAME = 'pastore-app-shell-v2'
 const OFFLINE_URL = '/offline.html'
 const DB_NAME = 'hirtenapp-tile-db'
 const MAP_TILE_STORE = 'mapTiles'

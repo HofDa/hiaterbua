@@ -1,4 +1,4 @@
-# Hiaterbua
+# Pastore
 
 Offline-faehige Feld- und Alm-Dokumentation fuer Herden, Pferche, Weidegaenge und Arbeitseinsaetze.
 

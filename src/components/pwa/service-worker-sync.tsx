@@ -1,17 +1,27 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db/dexie'
 import { requestPersistentStorage } from '@/lib/maps/tile-cache'
-import { readFallbackSettings } from '@/lib/settings/page-helpers'
+import {
+  parseFallbackSettingsSnapshot,
+  readFallbackSettingsSnapshot,
+  subscribeToFallbackSettings,
+} from '@/lib/settings/page-helpers'
 
 export function ServiceWorkerSync() {
   const settings = useLiveQuery(() => db.settings.get('app'), [])
   const previousTileCachingEnabled = useRef<boolean | null>(null)
-  const fallbackSettings = readFallbackSettings()
+  const fallbackSettingsSnapshot = useSyncExternalStore(
+    subscribeToFallbackSettings,
+    readFallbackSettingsSnapshot,
+    () => null
+  )
+  const fallbackTileCachingEnabled =
+    parseFallbackSettingsSnapshot(fallbackSettingsSnapshot)?.tileCachingEnabled ?? null
   const tileCachingEnabled =
-    settings?.tileCachingEnabled ?? fallbackSettings?.tileCachingEnabled ?? null
+    settings?.tileCachingEnabled ?? fallbackTileCachingEnabled ?? null
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {

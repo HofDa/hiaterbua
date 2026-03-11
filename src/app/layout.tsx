@@ -3,17 +3,18 @@ import { BottomNav } from '@/components/layout/bottom-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
+import { AppAccessGate } from '@/components/pwa/app-access-gate'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Hiaterbua 1.0',
+  title: 'Pastore 1.0',
   description: 'Offlinefähige Feld- und Alm-Dokumentation für Herden, Pferche und Weidegänge',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Hiaterbua 1.0',
+    title: 'Pastore 1.0',
   },
   icons: {
     icon: [
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body className="antialiased">
         <div className="min-h-screen text-neutral-950">
           <ServiceWorkerSync />
+          <AppAccessGate />
           <TopBar />
           <StatusStrip />
           <PageContainer>{children}</PageContainer>

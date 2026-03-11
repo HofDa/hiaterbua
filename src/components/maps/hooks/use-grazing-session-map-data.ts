@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '@/lib/db/dexie'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
+import { buildAnimalsByHerdId } from '@/lib/maps/live-position-map-helpers'
 import {
   buildEditableTrackpointsFeatureCollection,
   buildMergedSessionEventFeatureCollection,
@@ -10,6 +11,7 @@ import {
   buildTrackpointsFeatureCollection,
   buildTrackpointsFromEditableTrackpoints,
   groupSessionHistoryByDay,
+  parseDateTimeInputValue,
   type EditableTrackPoint,
 } from '@/lib/maps/grazing-session-map-helpers'
 
@@ -18,6 +20,8 @@ type UseGrazingSessionMapDataArgs = {
   selectedSessionId: string | null
   selectedSurveyAreaId: string | null
   editTrackpoints: EditableTrackPoint[]
+  editStartTime: string
+  editEndTime: string
   liveDurationTick: number
 }
 
@@ -26,9 +30,12 @@ export function useGrazingSessionMapData({
   selectedSessionId,
   selectedSurveyAreaId,
   editTrackpoints,
+  editStartTime,
+  editEndTime,
   liveDurationTick,
 }: UseGrazingSessionMapDataArgs) {
   const herds = useLiveQuery(() => db.herds.orderBy('name').toArray(), [])
+  const animals = useLiveQuery(() => db.animals.toArray(), [])
   const surveyAreas = useLiveQuery(
     () => db.surveyAreas.orderBy('updatedAt').reverse().toArray(),
     []
@@ -72,6 +79,7 @@ export function useGrazingSessionMapData({
     () => (herds ?? []).filter((herd) => !herd.isArchived),
     [herds]
   )
+  const safeAnimals = useMemo(() => animals ?? [], [animals])
   const safeSurveyAreas = useMemo(() => surveyAreas ?? [], [surveyAreas])
   const safeRecentSessions = useMemo(() => recentSessions ?? [], [recentSessions])
   const safeCurrentTrackpoints = useMemo(() => currentTrackpoints ?? [], [currentTrackpoints])
@@ -84,6 +92,7 @@ export function useGrazingSessionMapData({
     () => selectedSessionEvents ?? [],
     [selectedSessionEvents]
   )
+  const animalsByHerdId = useMemo(() => buildAnimalsByHerdId(safeAnimals), [safeAnimals])
 
   const currentSession = useMemo(
     () =>
@@ -175,14 +184,26 @@ export function useGrazingSessionMapData({
       editTrackpoints,
       selectedSession.id
     )
+    const nextStartTime =
+      selectedSession.status === 'finished'
+        ? parseDateTimeInputValue(editStartTime) ?? selectedSession.startTime
+        : selectedSession.startTime
+    const nextEndTime =
+      selectedSession.status === 'finished'
+        ? editEndTime.trim().length > 0
+          ? parseDateTimeInputValue(editEndTime) ?? selectedSession.endTime
+          : selectedSession.endTime
+        : selectedSession.endTime
 
-    return buildSessionMetrics(nextTrackpoints, selectedSession.startTime, selectedSession.endTime)
-  }, [editTrackpoints, selectedSession])
+    return buildSessionMetrics(nextTrackpoints, nextStartTime, nextEndTime)
+  }, [editEndTime, editStartTime, editTrackpoints, selectedSession])
 
   return {
     settings,
     activeSession,
     safeHerds,
+    safeAnimals,
+    animalsByHerdId,
     safeSurveyAreas,
     safeRecentSessions,
     safeCurrentTrackpoints,

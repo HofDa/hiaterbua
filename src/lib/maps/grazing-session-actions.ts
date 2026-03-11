@@ -71,15 +71,17 @@ export async function appendSessionTrackpoint(params: {
 
 export async function createGrazingSessionRecord(params: {
   herdId: string
+  animalCount: number | null
   notes: string
   position: PositionData | null
 }) {
-  const { herdId, notes, position } = params
+  const { herdId, animalCount, notes, position } = params
   const timestamp = nowIso()
 
   const session: GrazingSession = {
     id: createId('session'),
     herdId,
+    animalCount,
     status: 'active',
     startTime: timestamp,
     endTime: null,
@@ -96,6 +98,18 @@ export async function createGrazingSessionRecord(params: {
   await db.sessions.add(session)
   await logSessionEvent(session.id, 'start', position)
   return session
+}
+
+export async function updateGrazingSessionAnimalCountRecord(params: {
+  sessionId: string
+  animalCount: number
+}) {
+  const { sessionId, animalCount } = params
+
+  await db.sessions.update(sessionId, {
+    animalCount,
+    updatedAt: nowIso(),
+  })
 }
 
 export async function pauseGrazingSessionRecord(params: {
@@ -171,26 +185,37 @@ export async function addGrazingSessionEventRecord(params: {
 export async function saveEditedGrazingSessionRecord(params: {
   sessionId: string
   editTrackpoints: EditableTrackPoint[]
-  selectedSession: GrazingSession
+  editedStartTime: string
+  editedEndTime: string | null
   existingTrackpoints: TrackPoint[]
 }) {
-  const { sessionId, editTrackpoints, selectedSession, existingTrackpoints } = params
+  const {
+    sessionId,
+    editTrackpoints,
+    editedStartTime,
+    editedEndTime,
+    existingTrackpoints,
+  } = params
   const nextTrackpoints = buildTrackpointsFromEditableTrackpoints(
     editTrackpoints,
     sessionId,
     existingTrackpoints
   )
 
-  const metrics = buildSessionMetrics(
-    nextTrackpoints,
-    selectedSession.startTime,
-    selectedSession.endTime
-  )
+  const metrics = buildSessionMetrics(nextTrackpoints, editedStartTime, editedEndTime)
 
-  await db.transaction('rw', db.trackpoints, db.sessions, async () => {
+  await db.transaction('rw', db.trackpoints, db.sessions, db.events, async () => {
+    const sessionEvents = await db.events.where('sessionId').equals(sessionId).sortBy('timestamp')
+    const startEvent = sessionEvents.find((sessionEvent) => sessionEvent.type === 'start')
+    const stopEvent = [...sessionEvents]
+      .reverse()
+      .find((sessionEvent) => sessionEvent.type === 'stop')
+
     await db.trackpoints.where('sessionId').equals(sessionId).delete()
     await db.trackpoints.bulkAdd(nextTrackpoints)
     await db.sessions.update(sessionId, {
+      startTime: editedStartTime,
+      endTime: editedEndTime,
       durationS: metrics.durationS,
       movingTimeS: metrics.movingTimeS,
       distanceM: metrics.distanceM,
@@ -198,6 +223,18 @@ export async function saveEditedGrazingSessionRecord(params: {
       avgAccuracyM: metrics.avgAccuracyM,
       updatedAt: nowIso(),
     })
+
+    if (startEvent) {
+      await db.events.update(startEvent.id, {
+        timestamp: editedStartTime,
+      })
+    }
+
+    if (stopEvent && editedEndTime) {
+      await db.events.update(stopEvent.id, {
+        timestamp: editedEndTime,
+      })
+    }
   })
 }
 

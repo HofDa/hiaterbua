@@ -18,9 +18,9 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#061a14] bg-[linear-gradient(180deg,#123a2d,#0c281f)] text-white shadow-[0_16px_38px_rgba(8,23,17,0.38)]">
-      <div className="mx-auto flex min-h-18 max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="mx-auto flex min-h-18 max-w-6xl items-center justify-between gap-4 px-4 py-3 xl:max-w-[88rem]">
         <div className="shrink-0">
-          <p className="text-lg font-semibold tracking-[-0.02em] text-white">Hiaterbua 1.0</p>
+          <p className="text-lg font-semibold tracking-[-0.02em] text-white">Pastore 1.0</p>
           <p className="text-xs uppercase tracking-[0.16em] text-[#dce9e1]">
             Offlinefähige Felddokumentation
           </p>
