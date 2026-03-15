@@ -1,19 +1,20 @@
-import { useEffect, useRef } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import {
   addGrazingSessionEventRecord,
-  appendSessionTrackpoint,
   createGrazingSessionRecord,
   pauseGrazingSessionRecord,
   resumeGrazingSessionRecord,
   stopGrazingSessionRecord,
   updateGrazingSessionAnimalCountRecord,
 } from '@/lib/maps/grazing-session-actions'
+import {
+  clearRuntimeSessionState,
+  getDefaultAnimalCount,
+} from '@/components/maps/hooks/grazing-session-map-session-controller-helpers'
+import { useGrazingSessionMapSessionRuntime } from '@/components/maps/hooks/use-grazing-session-map-session-runtime'
+import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/use-grazing-session-map-trackpoint-recorder'
 import { getSessionEventLabel } from '@/lib/maps/grazing-session-map-helpers'
-import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-helpers'
-import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
-import { nowIso } from '@/lib/utils/time'
 import type {
   Animal,
   GrazingSession,
@@ -46,17 +47,6 @@ type UseGrazingSessionMapSessionControllerOptions = {
   setLiveDurationTick: Dispatch<SetStateAction<number>>
 }
 
-function getDefaultAnimalCount(
-  herdId: string,
-  safeHerds: Herd[],
-  animalsByHerdId: Map<string, Animal[]>
-) {
-  if (!herdId) return 0
-
-  const herd = safeHerds.find((currentHerd) => currentHerd.id === herdId)
-  return Math.max(0, getEffectiveHerdCount(herd, animalsByHerdId.get(herdId) ?? []) ?? 0)
-}
-
 export function useGrazingSessionMapSessionController({
   activeSession,
   safeCurrentTrackpoints,
@@ -79,126 +69,29 @@ export function useGrazingSessionMapSessionController({
   setEventStatus,
   setLiveDurationTick,
 }: UseGrazingSessionMapSessionControllerOptions) {
-  const currentSessionIdRef = useRef<string | null>(null)
-  const currentSessionStatusRef = useRef<SessionStatus | null>(null)
-  const currentSessionStartTimeRef = useRef<string | null>(null)
-  const currentTrackpointsRef = useRef<TrackPoint[]>([])
-  const currentSeqRef = useRef(0)
-  const currentLastTimestampRef = useRef<number | null>(null)
-  const appendSessionPointRef = useRef<(nextPosition: PositionData) => Promise<void>>(async () => {})
-
-  function getResolvedAnimalCount(herdId: string) {
-    return sessionAnimalCount ?? getDefaultAnimalCount(herdId, safeHerds, animalsByHerdId)
-  }
-
-  useEffect(() => {
-    if (activeSession?.status !== 'active') return
-
-    const intervalId = window.setInterval(() => {
-      setLiveDurationTick(Date.now())
-    }, 1000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [activeSession?.status, setLiveDurationTick])
-
-  useEffect(() => {
-    currentTrackpointsRef.current = safeCurrentTrackpoints
-    currentSeqRef.current =
-      safeCurrentTrackpoints.length > 0
-        ? safeCurrentTrackpoints[safeCurrentTrackpoints.length - 1].seq
-        : 0
-    currentLastTimestampRef.current =
-      safeCurrentTrackpoints.length > 0
-        ? new Date(safeCurrentTrackpoints[safeCurrentTrackpoints.length - 1].timestamp).getTime()
-        : null
-  }, [safeCurrentTrackpoints])
-
-  useEffect(() => {
-    if (!activeSession) return
-
-    currentSessionIdRef.current = activeSession.id
-    currentSessionStatusRef.current = activeSession.status
-    currentSessionStartTimeRef.current = activeSession.startTime
-    setCurrentSessionId(activeSession.id)
-    setCurrentSessionStatus(activeSession.status)
-    setSelectedHerdId(activeSession.herdId)
-    setSessionAnimalCount(
-      activeSession.animalCount ??
-        getDefaultAnimalCount(activeSession.herdId, safeHerds, animalsByHerdId)
-    )
-    setSessionNotes(activeSession.notes ?? '')
-  }, [
+  const runtimeRefs = useGrazingSessionMapSessionRuntime({
     activeSession,
-    animalsByHerdId,
+    safeCurrentTrackpoints,
     safeHerds,
-    setCurrentSessionId,
-    setCurrentSessionStatus,
+    animalsByHerdId,
+    selectedHerdId,
     setSelectedHerdId,
     setSessionAnimalCount,
     setSessionNotes,
-  ])
-
-  useEffect(() => {
-    if (activeSession) return
-    if (currentSessionStatusRef.current === null && currentSessionIdRef.current === null) return
-
-    currentSessionIdRef.current = null
-    currentSessionStatusRef.current = null
-    currentSessionStartTimeRef.current = null
-    currentSeqRef.current = 0
-    currentLastTimestampRef.current = null
-    setCurrentSessionId(null)
-    setCurrentSessionStatus(null)
-    setSessionAnimalCount(
-      selectedHerdId ? getDefaultAnimalCount(selectedHerdId, safeHerds, animalsByHerdId) : null
-    )
-    setEventNote('')
-    setEventStatus('')
-  }, [
-    activeSession,
-    animalsByHerdId,
-    safeHerds,
-    selectedHerdId,
     setCurrentSessionId,
     setCurrentSessionStatus,
     setEventNote,
     setEventStatus,
-    setSessionAnimalCount,
-  ])
-
-  async function appendSessionPoint(nextPosition: PositionData) {
-    const sessionId = currentSessionIdRef.current
-    if (!sessionId) return
-
-    const result = await appendSessionTrackpoint({
-      sessionId,
-      lastTimestamp: currentLastTimestampRef.current,
-      nextSeq: currentSeqRef.current + 1,
-      nextPosition,
-      currentTrackpoints: currentTrackpointsRef.current,
-      startTime: currentSessionStartTimeRef.current ?? nowIso(),
+    setLiveDurationTick,
+  })
+  const { appendSessionPoint, handleAcceptedPositionRef } =
+    useGrazingSessionMapTrackpointRecorder({
+      runtimeRefs,
     })
 
-    if (!result) {
-      return
-    }
-
-    currentTrackpointsRef.current = result.nextTrackpoints
-    currentSeqRef.current = result.nextSeq
-    currentLastTimestampRef.current = result.lastTimestamp
+  function getResolvedAnimalCount(herdId: string) {
+    return sessionAnimalCount ?? getDefaultAnimalCount(herdId, safeHerds, animalsByHerdId)
   }
-
-  appendSessionPointRef.current = appendSessionPoint
-
-  const handleAcceptedPositionRef = useLatestValueRef<((next: PositionData) => void) | null>(
-    (next) => {
-      if (currentSessionStatusRef.current === 'active') {
-        void appendSessionPointRef.current(next)
-      }
-    }
-  )
 
   function changeSelectedHerdId(nextHerdId: string) {
     setSelectedHerdId(nextHerdId)
@@ -231,12 +124,12 @@ export function useGrazingSessionMapSessionController({
         position: acceptedPositionRef.current,
       })
 
-      currentSessionIdRef.current = session.id
-      currentSessionStatusRef.current = 'active'
-      currentSessionStartTimeRef.current = session.startTime
-      currentTrackpointsRef.current = []
-      currentSeqRef.current = 0
-      currentLastTimestampRef.current = null
+      runtimeRefs.currentSessionIdRef.current = session.id
+      runtimeRefs.currentSessionStatusRef.current = 'active'
+      runtimeRefs.currentSessionStartTimeRef.current = session.startTime
+      runtimeRefs.currentTrackpointsRef.current = []
+      runtimeRefs.currentSeqRef.current = 0
+      runtimeRefs.currentLastTimestampRef.current = null
       setCurrentSessionId(session.id)
       setCurrentSessionStatus('active')
       setSessionAnimalCount(animalCount)
@@ -253,8 +146,8 @@ export function useGrazingSessionMapSessionController({
   }
 
   async function pauseSession() {
-    const sessionId = currentSessionIdRef.current
-    const startTime = currentSessionStartTimeRef.current
+    const sessionId = runtimeRefs.currentSessionIdRef.current
+    const startTime = runtimeRefs.currentSessionStartTimeRef.current
     if (!sessionId || !startTime) return
 
     setIsSaving(true)
@@ -264,11 +157,11 @@ export function useGrazingSessionMapSessionController({
       await pauseGrazingSessionRecord({
         sessionId,
         startTime,
-        trackpoints: currentTrackpointsRef.current,
+        trackpoints: runtimeRefs.currentTrackpointsRef.current,
         position: acceptedPositionRef.current,
       })
 
-      currentSessionStatusRef.current = 'paused'
+      runtimeRefs.currentSessionStatusRef.current = 'paused'
       setCurrentSessionStatus('paused')
     } catch {
       setActionError('Weidegang konnte nicht pausiert werden.')
@@ -278,7 +171,7 @@ export function useGrazingSessionMapSessionController({
   }
 
   async function resumeSession() {
-    const sessionId = currentSessionIdRef.current
+    const sessionId = runtimeRefs.currentSessionIdRef.current
     if (!sessionId) return
 
     setIsSaving(true)
@@ -290,7 +183,7 @@ export function useGrazingSessionMapSessionController({
         position: acceptedPositionRef.current,
       })
 
-      currentSessionStatusRef.current = 'active'
+      runtimeRefs.currentSessionStatusRef.current = 'active'
       setCurrentSessionStatus('active')
 
       if (acceptedPositionRef.current) {
@@ -304,8 +197,8 @@ export function useGrazingSessionMapSessionController({
   }
 
   async function stopSession() {
-    const sessionId = currentSessionIdRef.current
-    const startTime = currentSessionStartTimeRef.current
+    const sessionId = runtimeRefs.currentSessionIdRef.current
+    const startTime = runtimeRefs.currentSessionStartTimeRef.current
     if (!sessionId || !startTime) return
 
     setIsSaving(true)
@@ -315,23 +208,23 @@ export function useGrazingSessionMapSessionController({
       await stopGrazingSessionRecord({
         sessionId,
         startTime,
-        trackpoints: currentTrackpointsRef.current,
+        trackpoints: runtimeRefs.currentTrackpointsRef.current,
         position: acceptedPositionRef.current,
       })
 
       setSelectedSessionId(sessionId)
-      currentSessionIdRef.current = null
-      currentSessionStatusRef.current = null
-      currentSessionStartTimeRef.current = null
-      currentTrackpointsRef.current = []
-      currentSeqRef.current = 0
-      currentLastTimestampRef.current = null
-      setCurrentSessionId(null)
-      setCurrentSessionStatus(null)
-      setSessionAnimalCount(
-        selectedHerdId ? getDefaultAnimalCount(selectedHerdId, safeHerds, animalsByHerdId) : null
-      )
-      setSessionNotes('')
+      clearRuntimeSessionState({
+        runtimeRefs,
+        selectedHerdId,
+        safeHerds,
+        animalsByHerdId,
+        setCurrentSessionId,
+        setCurrentSessionStatus,
+        setSessionAnimalCount,
+        setEventNote,
+        setEventStatus,
+        setSessionNotes,
+      })
     } catch {
       setActionError('Weidegang konnte nicht beendet werden.')
     } finally {
@@ -352,7 +245,7 @@ export function useGrazingSessionMapSessionController({
     setSessionAnimalCount(nextAnimalCount)
     setActionError('')
 
-    const sessionId = currentSessionIdRef.current
+    const sessionId = runtimeRefs.currentSessionIdRef.current
     if (!sessionId) return
 
     try {
@@ -367,7 +260,7 @@ export function useGrazingSessionMapSessionController({
   }
 
   async function addSessionMarkerEvent(type: SessionEventType, comment?: string) {
-    const sessionId = currentSessionIdRef.current
+    const sessionId = runtimeRefs.currentSessionIdRef.current
     if (!sessionId) {
       setActionError('Es gibt keinen aktiven Weidegang für dieses Ereignis.')
       return

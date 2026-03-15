@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { formatAccuracy } from '@/lib/maps/map-core'
 import {
   formatDateTime,
@@ -16,34 +17,58 @@ import type {
 export function GrazingSessionManagementSetupFields({
   safeHerds,
   selectedHerdId,
-  selectedAnimalCount,
-  sessionNotes,
   currentSessionStatus,
   onSelectedHerdIdChange,
-  onAdjustAnimalCount,
-  onSessionNotesChange,
 }: {
   safeHerds: Herd[]
   selectedHerdId: string
-  selectedAnimalCount: number | null
-  sessionNotes: string
   currentSessionStatus: SessionStatus | null
   onSelectedHerdIdChange: (value: string) => void
-  onAdjustAnimalCount: (delta: number) => void | Promise<void>
-  onSessionNotesChange: (value: string) => void
 }) {
-  const hasSelectedHerd = selectedHerdId.length > 0
-  const animalCount = selectedAnimalCount ?? 0
-
   return (
     <div className="space-y-4">
       <div>
         <label className="mb-1 block text-sm font-medium">Herde</label>
+        <div className="grid gap-3 lg:hidden">
+          {safeHerds.length === 0 ? (
+            <div className="rounded-[1.35rem] border-2 border-dashed border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-600">
+              Noch keine Herde angelegt.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {safeHerds.map((herd) => {
+                const isSelected = selectedHerdId === herd.id
+
+                return (
+                  <button
+                    key={herd.id}
+                    type="button"
+                    onClick={() => onSelectedHerdIdChange(herd.id)}
+                    disabled={currentSessionStatus !== null}
+                    aria-pressed={isSelected}
+                    className={[
+                      'min-h-20 rounded-[1.4rem] border-2 px-4 py-4 text-left text-sm font-semibold leading-tight whitespace-normal shadow-sm transition-colors disabled:opacity-50',
+                      isSelected
+                        ? 'border-[#5a5347] bg-[#efe4c8] text-[#17130f]'
+                        : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-950',
+                    ].join(' ')}
+                  >
+                    <div className="[overflow-wrap:anywhere]">{herd.name}</div>
+                    <div className="mt-2 text-xs font-medium uppercase tracking-[0.08em] text-neutral-600">
+                      {isSelected ? 'Ausgewählt' : 'Zum Start wählen'}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         <select
           value={selectedHerdId}
           onChange={(event) => onSelectedHerdIdChange(event.target.value)}
           disabled={currentSessionStatus !== null}
-          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+          className="hidden w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 lg:block"
         >
           <option value="">Bitte wählen</option>
           {safeHerds.map((herd) => (
@@ -53,48 +78,257 @@ export function GrazingSessionManagementSetupFields({
           ))}
         </select>
       </div>
+    </div>
+  )
+}
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">Tiere im Weidegang</label>
-        <div className="flex items-center gap-3 rounded-[1.35rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-3 py-3">
-          <button
-            type="button"
-            onClick={() => void onAdjustAnimalCount(-1)}
-            disabled={!hasSelectedHerd || animalCount <= 0}
-            aria-label="Tierzahl verringern"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] border border-[#5a5347] bg-[#f1efeb] text-lg font-semibold text-[#17130f] disabled:opacity-40"
-          >
-            −
-          </button>
-          <div className="min-w-0 flex-1 text-center">
-            <div className="text-2xl font-semibold text-neutral-950">{animalCount}</div>
-            <div className="text-xs text-neutral-500">
-              {hasSelectedHerd ? 'für diesen Weidegang' : 'zuerst Herde wählen'}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => void onAdjustAnimalCount(1)}
-            disabled={!hasSelectedHerd}
-            aria-label="Tierzahl erhöhen"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] border border-[#5a5347] bg-[#f1efeb] text-lg font-semibold text-[#17130f] disabled:opacity-40"
-          >
-            +
-          </button>
+export function GrazingSessionActiveSummary({
+  safeHerds,
+  selectedHerdId,
+  selectedAnimalCount,
+}: {
+  safeHerds: Herd[]
+  selectedHerdId: string
+  selectedAnimalCount: number | null
+}) {
+  const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:hidden">
+      <div className="rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 shadow-sm">
+        <div className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-600">
+          Herde
+        </div>
+        <div className="mt-2 text-sm font-semibold leading-tight text-neutral-950 [overflow-wrap:anywhere]">
+          {selectedHerd?.name ?? 'Nicht gewählt'}
         </div>
       </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">Notiz zum Weidegang</label>
-        <textarea
-          rows={3}
-          value={sessionNotes}
-          onChange={(event) => onSessionNotesChange(event.target.value)}
-          disabled={currentSessionStatus !== null}
-          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
-          placeholder="optionale Begleitnotiz"
-        />
+      <div className="rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-center shadow-sm">
+        <div className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-600">
+          Tiere
+        </div>
+        <div className="mt-2 text-2xl font-semibold text-neutral-950">
+          {selectedAnimalCount ?? 0}
+        </div>
       </div>
+    </div>
+  )
+}
+
+export function GrazingSessionMobileStartFlow({
+  safeHerds,
+  selectedHerdId,
+  selectedAnimalCount,
+  sessionNotes,
+  isSaving,
+  onSelectedHerdIdChange,
+  onAdjustAnimalCount,
+  onSessionNotesChange,
+  onStartSession,
+}: {
+  safeHerds: Herd[]
+  selectedHerdId: string
+  selectedAnimalCount: number | null
+  sessionNotes: string
+  isSaving: boolean
+  onSelectedHerdIdChange: (value: string) => void
+  onAdjustAnimalCount: (delta: number) => void | Promise<void>
+  onSessionNotesChange: (value: string) => void
+  onStartSession: () => void | Promise<void>
+}) {
+  const flowRef = useRef<HTMLDivElement | null>(null)
+  const [internalStep, setInternalStep] = useState<'herd' | 'count' | 'confirm'>('herd')
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [hasStartedFlow, setHasStartedFlow] = useState(false)
+  const mobileStep = selectedHerdId ? internalStep : 'herd'
+  const animalCount = selectedAnimalCount ?? 0
+  const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
+
+  useEffect(() => {
+    if (!hasStartedFlow || typeof window === 'undefined') {
+      return
+    }
+
+    if (!window.matchMedia('(max-width: 1023px)').matches) {
+      return
+    }
+
+    const card = flowRef.current?.closest('[data-grazing-session-management-card="true"]')
+    if (!(card instanceof HTMLElement)) {
+      return
+    }
+
+    const rafId = window.requestAnimationFrame(() => {
+      card.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    })
+
+    return () => window.cancelAnimationFrame(rafId)
+  }, [hasStartedFlow, isDetailsOpen, mobileStep])
+
+  return (
+    <div ref={flowRef} className="space-y-4 lg:hidden">
+      {mobileStep === 'herd' ? (
+        <>
+          {safeHerds.length === 0 ? (
+            <div className="rounded-[1.35rem] border-2 border-dashed border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-600">
+              Noch keine Herde angelegt.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {safeHerds.map((herd) => {
+                const isSelected = selectedHerdId === herd.id
+
+                return (
+                  <button
+                    key={herd.id}
+                    type="button"
+                    onClick={() => {
+                      setHasStartedFlow(true)
+                      onSelectedHerdIdChange(herd.id)
+                      setIsDetailsOpen(false)
+                      setInternalStep('count')
+                    }}
+                    aria-pressed={isSelected}
+                    className={[
+                      'min-h-[4.75rem] rounded-[1.35rem] border-2 px-4 py-4 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
+                      isSelected
+                        ? 'border-[#5a5347] bg-[#efe4c8] text-[#17130f]'
+                        : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-950',
+                    ].join(' ')}
+                  >
+                    <span className="block [overflow-wrap:anywhere]">{herd.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </>
+      ) : null}
+
+      {mobileStep === 'count' ? (
+        <>
+          <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-3 text-[#17130f]">
+            <button
+              type="button"
+              onClick={() => {
+                setHasStartedFlow(true)
+                setInternalStep('herd')
+              }}
+              className="shrink-0 rounded-full border border-[#5a5347] bg-[#fffdf6] px-3 py-1.5 text-sm font-semibold text-[#17130f]"
+            >
+              Zurück
+            </button>
+            <div className="min-w-0 text-right">
+              <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
+                {selectedHerd?.name ?? 'Herde wählen'}
+              </div>
+              <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700">
+                Tiere im Weidegang
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 rounded-[1.35rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-center shadow-[0_12px_24px_rgba(40,34,26,0.08)]">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-600">
+                Tiere
+              </div>
+              <div className="mt-2 text-4xl font-semibold text-neutral-950">{animalCount}</div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void onAdjustAnimalCount(-1)}
+              disabled={animalCount <= 0}
+              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-3xl font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-40"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              onClick={() => void onAdjustAnimalCount(1)}
+              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-3xl font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)]"
+            >
+              +
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setHasStartedFlow(true)
+                setInternalStep('confirm')
+              }}
+              className="col-span-2 min-h-[4.75rem] rounded-[1.35rem] border-2 border-[#5a5347] bg-[linear-gradient(180deg,#f6f2e9,#ece3cf)] px-4 py-4 text-lg font-semibold text-[#17130f] shadow-[0_16px_32px_rgba(40,34,26,0.14)]"
+            >
+              Weiter
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {mobileStep === 'confirm' ? (
+        <>
+          <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-3 text-[#17130f]">
+            <button
+              type="button"
+              onClick={() => {
+                setHasStartedFlow(true)
+                setInternalStep('count')
+              }}
+              className="shrink-0 rounded-full border border-[#5a5347] bg-[#fffdf6] px-3 py-1.5 text-sm font-semibold text-[#17130f]"
+            >
+              Zurück
+            </button>
+            <div className="min-w-0 text-right">
+              <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
+                {selectedHerd?.name ?? 'Herde wählen'}
+              </div>
+              <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700">
+                {animalCount} Tiere bereit
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void onStartSession()}
+            disabled={isSaving || !selectedHerdId}
+            className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-[#5a5347] bg-[linear-gradient(180deg,#f6f2e9,#ece3cf)] px-4 py-4 text-lg font-semibold text-[#17130f] shadow-[0_16px_32px_rgba(40,34,26,0.14)] disabled:opacity-50"
+          >
+            {isSaving ? 'Startet ...' : 'Weidegang starten'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setHasStartedFlow(true)
+              setIsDetailsOpen((currentValue) => !currentValue)
+            }}
+            className="w-full rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950"
+            aria-expanded={isDetailsOpen}
+          >
+            {isDetailsOpen ? 'Details ausblenden' : 'Details'}
+          </button>
+
+          {isDetailsOpen ? (
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium">Notiz zum Weidegang</label>
+                <textarea
+                  rows={3}
+                  value={sessionNotes}
+                  onChange={(event) => onSessionNotesChange(event.target.value)}
+                  className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+                  placeholder="optionale Begleitnotiz"
+                />
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : null}
     </div>
   )
 }
@@ -150,6 +384,89 @@ export function GrazingSessionDesktopControls({
       >
         Weidegang beenden
       </button>
+    </div>
+  )
+}
+
+export function GrazingSessionMobileControls({
+  safeHerdsLength,
+  currentSessionStatus,
+  isSaving,
+  onStartSession,
+  onPauseSession,
+  onResumeSession,
+  onStopSession,
+}: {
+  safeHerdsLength: number
+  currentSessionStatus: SessionStatus | null
+  isSaving: boolean
+  onStartSession: () => void | Promise<void>
+  onPauseSession: () => void | Promise<void>
+  onResumeSession: () => void | Promise<void>
+  onStopSession: () => void | Promise<void>
+}) {
+  const startDisabled =
+    isSaving || currentSessionStatus !== null || safeHerdsLength === 0
+  const pauseDisabled = isSaving || currentSessionStatus !== 'active'
+  const resumeDisabled = isSaving || currentSessionStatus !== 'paused'
+  const stopDisabled =
+    isSaving ||
+    (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')
+
+  return (
+    <div className="mt-4 space-y-3 lg:hidden">
+      {currentSessionStatus === null ? (
+        <button
+          type="button"
+          onClick={() => void onStartSession()}
+          disabled={startDisabled}
+          className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-[#5a5347] bg-[linear-gradient(180deg,#f6f2e9,#ece3cf)] px-4 py-4 text-lg font-semibold text-[#17130f] shadow-[0_16px_32px_rgba(40,34,26,0.14)] disabled:opacity-50"
+        >
+          Weidegang starten
+        </button>
+      ) : null}
+
+      {currentSessionStatus === 'active' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => void onPauseSession()}
+            disabled={pauseDisabled}
+            className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] disabled:opacity-50"
+          >
+            Pause
+          </button>
+          <button
+            type="button"
+            onClick={() => void onStopSession()}
+            disabled={stopDisabled}
+            className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] disabled:opacity-50"
+          >
+            Stop
+          </button>
+        </div>
+      ) : null}
+
+      {currentSessionStatus === 'paused' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => void onResumeSession()}
+            disabled={resumeDisabled}
+            className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] disabled:opacity-50"
+          >
+            Fortsetzen
+          </button>
+          <button
+            type="button"
+            onClick={() => void onStopSession()}
+            disabled={stopDisabled}
+            className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] disabled:opacity-50"
+          >
+            Stop
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

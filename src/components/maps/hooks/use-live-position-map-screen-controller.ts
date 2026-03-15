@@ -137,6 +137,7 @@ export function useLivePositionMapScreenController({
       prefetchVisibleMapArea: runtime.prefetchVisibleMapArea,
       centerMapOnPosition: runtime.centerMapOnPosition,
       focusSurveyArea: runtime.focusSurveyArea,
+      resizeMap: runtime.resizeMap,
     },
     actions,
     presentation,

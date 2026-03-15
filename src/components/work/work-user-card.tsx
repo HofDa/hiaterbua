@@ -19,6 +19,15 @@ import {
 } from '@/lib/settings/page-helpers'
 import type { AppSettings } from '@/types/domain'
 
+function UserBadgeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current">
+      <circle cx="12" cy="8" r="3.25" strokeWidth="1.8" />
+      <path d="M5.5 18.25c1.1-3 3.57-4.5 6.5-4.5s5.4 1.5 6.5 4.5" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function WorkUserCard() {
   const [settings, setSettings] = useState<AppSettings>(defaultAppSettings)
   const [draftUserName, setDraftUserName] = useState(defaultAppSettings.userName)
@@ -173,6 +182,49 @@ export function WorkUserCard() {
 
   const trimmedUserName = settings.userName.trim()
   const isMissingUserName = trimmedUserName.length === 0
+  const showCompactMobileTrigger = !isMissingUserName && !isExpanded
+
+  if (showCompactMobileTrigger) {
+    return (
+      <>
+        <div className="flex justify-end sm:hidden">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#5a5347] bg-[#f1efeb] text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.14)]"
+            aria-label={`Benutzer ${trimmedUserName} öffnen`}
+          >
+            <UserBadgeIcon />
+          </button>
+        </div>
+
+        <section className="hidden rounded-[1.55rem] border-2 border-[#3a342a] bg-[#fff8ea] p-4 shadow-[0_18px_40px_rgba(40,34,26,0.08)] sm:block sm:rounded-[1.9rem] sm:p-5">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5e5549]">
+                Benutzer
+              </div>
+              <p className="mt-1.5 max-w-[min(58vw,15rem)] truncate text-sm font-semibold text-[#17130f] sm:mt-2 sm:max-w-none sm:text-base">
+                {trimmedUserName}
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => setIsExpanded((currentValue) => !currentValue)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5a5347] bg-[#f1efeb] text-base font-semibold text-[#17130f] sm:h-10 sm:w-10 sm:text-lg"
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? 'Benutzerkarte einklappen' : 'Benutzerkarte aufklappen'}
+              >
+                {isExpanded ? '-' : '+'}
+              </button>
+            </div>
+          </div>
+        </section>
+      </>
+    )
+  }
 
   return (
     <section className="rounded-[1.55rem] border-2 border-[#3a342a] bg-[#fff8ea] p-4 shadow-[0_18px_40px_rgba(40,34,26,0.08)] sm:rounded-[1.9rem] sm:p-5">

@@ -1,11 +1,12 @@
 'use client'
 
-import type { FormEvent, RefObject } from 'react'
+import { useState, type FormEvent, type Ref } from 'react'
 import { LivePositionMapDesktopDrawOverlay } from '@/components/maps/live-position-map-desktop-draw-overlay'
 import { LivePositionMapEditOverlay } from '@/components/maps/live-position-map-edit-overlay'
 import { LivePositionMapMobileDrawToolbar } from '@/components/maps/live-position-map-mobile-draw-toolbar'
 import { LivePositionMapMobileWalkToolbar } from '@/components/maps/live-position-map-mobile-walk-toolbar'
 import { LivePositionMapTopControls } from '@/components/maps/live-position-map-top-controls'
+import { ControlsIcon } from '@/components/maps/map-toolbar-icons'
 import type {
   MobilePanel,
   PositionData,
@@ -13,7 +14,7 @@ import type {
 import type { MapBaseLayer } from '@/types/domain'
 
 export type LivePositionMapCanvasPanelProps = {
-  containerRef: RefObject<HTMLDivElement | null>
+  containerRef: Ref<HTMLDivElement>
   mobilePanel: MobilePanel
   editingEnclosureId: string | null
   position: PositionData | null
@@ -49,6 +50,7 @@ export type LivePositionMapCanvasPanelProps = {
   onUpdateBaseLayer: (nextBaseLayer: MapBaseLayer) => void | Promise<void>
   onToggleShowSurveyAreas: () => void
   onPrefetchVisibleMapArea: () => void | Promise<void>
+  onResizeMap?: () => void
   onStartDrawing: () => void
   onFinishDrawing: () => void
   onUndoLastPoint: () => void
@@ -133,13 +135,32 @@ export function LivePositionMapCanvasPanel({
   onPersistEditedEnclosure,
   onCancelEditEnclosure,
 }: LivePositionMapCanvasPanelProps) {
+  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
+
+  const hasMobileToolbar =
+    !editingEnclosureId && (mobilePanel === 'draw' || mobilePanel === 'walk')
+
   return (
     <div className="relative overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
       <div
         ref={containerRef}
         className="h-[420px] w-full bg-[#fffdf6] sm:h-[520px] lg:h-[calc(100vh-8rem)]"
       />
-      {mobilePanel === 'draw' && !editingEnclosureId ? (
+      {hasMobileToolbar ? (
+        <button
+          type="button"
+          aria-label={isMobileControlsOpen ? 'Werkzeuge ausblenden' : 'Werkzeuge einblenden'}
+          aria-expanded={isMobileControlsOpen}
+          onClick={() => setIsMobileControlsOpen((current) => !current)}
+          className={[
+            'absolute left-2 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg transition-all lg:hidden',
+            isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
+          ].join(' ')}
+        >
+          <ControlsIcon />
+        </button>
+      ) : null}
+      {mobilePanel === 'draw' && !editingEnclosureId && isMobileControlsOpen ? (
         <LivePositionMapMobileDrawToolbar
           draftPointsLength={draftPointsLength}
           draftAreaM2={draftAreaM2}
@@ -151,7 +172,7 @@ export function LivePositionMapCanvasPanel({
           onClearDraft={onClearDraft}
         />
       ) : null}
-      {mobilePanel === 'walk' && !editingEnclosureId ? (
+      {mobilePanel === 'walk' && !editingEnclosureId && isMobileControlsOpen ? (
         <LivePositionMapMobileWalkToolbar
           walkPointsLength={walkPointsLength}
           walkAreaM2={walkAreaM2}

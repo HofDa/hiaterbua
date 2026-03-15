@@ -138,6 +138,7 @@ export function useGrazingSessionMapScreenController({
       onToggleShowSessionEventsOnMap: () =>
         runtime.setShowSessionEventsOnMap((current) => !current),
       onPrefetchVisibleMapArea: runtime.prefetchVisibleMapArea,
+      onResizeMap: runtime.resizeMap,
       onStartAddEditTrackpoint: controller.startAddEditTrackpoint,
       onRemoveSelectedEditTrackpoint: controller.removeSelectedEditTrackpoint,
       onSaveEditedSession: controller.saveEditedSession,

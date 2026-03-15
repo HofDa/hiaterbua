@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { Dispatch, Ref, SetStateAction } from 'react'
 import type { LivePositionMapCanvasPanelProps } from '@/components/maps/live-position-map-canvas-panel'
 import type { LivePositionSidebarPanelProps } from '@/components/maps/live-position-sidebar-panel'
 import type { LivePositionStatusCardProps } from '@/components/maps/live-position-status-card'
@@ -35,7 +35,7 @@ export type LivePositionMapPanelData = {
 }
 
 export type LivePositionMapPanelRuntime = {
-  containerRef: RefObject<HTMLDivElement | null>
+  containerRef: Ref<HTMLDivElement>
   baseLayer: MapBaseLayer
   isBaseLayerMenuOpen: boolean
   showSurveyAreas: boolean
@@ -47,6 +47,7 @@ export type LivePositionMapPanelRuntime = {
   prefetchVisibleMapArea: () => void | Promise<void>
   centerMapOnPosition: () => void
   focusSurveyArea: (surveyArea: SurveyArea) => void
+  resizeMap: () => void
 }
 
 export type LivePositionMapPanelActions = {
@@ -155,6 +156,7 @@ export function buildCanvasPanelProps({
     onUpdateBaseLayer: runtime.updateBaseLayer,
     onToggleShowSurveyAreas: () => runtime.setShowSurveyAreas((current) => !current),
     onPrefetchVisibleMapArea: runtime.prefetchVisibleMapArea,
+    onResizeMap: runtime.resizeMap,
     onStartDrawing: actions.startDrawing,
     onFinishDrawing: actions.finishDrawing,
     onUndoLastPoint: actions.undoLastPoint,

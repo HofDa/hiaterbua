@@ -129,6 +129,7 @@ export const workSessionSchema = z
         'guided_fence_work',
         'guided_overnight_fence_work',
         'guided_material_shift',
+        'guided_water_supply',
         'guided_check_grazing_animals',
         'guided_check_lambing',
         'guided_check_herding_dogs',

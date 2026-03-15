@@ -35,7 +35,7 @@ class TileCacheDB extends Dexie {
   constructor() {
     super(TILE_DB_NAME)
 
-    this.version(1).stores({
+    this.version(2).stores({
       mapTiles: 'url, updatedAt',
     })
   }
@@ -210,6 +210,7 @@ async function persistTileResponse(
     blob,
     contentType: response.headers.get('content-type') ?? undefined,
     status: response.status,
+    statusText: response.statusText || undefined,
     updatedAt: new Date().toISOString(),
   })
 }

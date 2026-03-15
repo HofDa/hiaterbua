@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /out/
+/public/pwa-precache-manifest.js
 
 # production
 /build

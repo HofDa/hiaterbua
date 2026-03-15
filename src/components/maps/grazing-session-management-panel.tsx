@@ -2,10 +2,11 @@
 
 import type { SessionMetrics } from '@/lib/maps/grazing-session-map-helpers'
 import {
-  GrazingSessionDesktopControls,
+  GrazingSessionActiveSummary,
   GrazingSessionEventCapturePanel,
-  GrazingSessionManagementSetupFields,
+  GrazingSessionMobileStartFlow,
   GrazingSessionMetricsGrid,
+  GrazingSessionMobileControls,
 } from '@/components/maps/grazing-session-management-panel-sections'
 import type {
   Herd,
@@ -65,30 +66,37 @@ export function GrazingSessionManagementPanel({
 }: GrazingSessionManagementPanelProps) {
   const panelContent = (
     <>
-      <GrazingSessionManagementSetupFields
-        safeHerds={safeHerds}
-        selectedHerdId={selectedHerdId}
-        selectedAnimalCount={selectedAnimalCount}
-        sessionNotes={sessionNotes}
-        currentSessionStatus={currentSessionStatus}
-        onSelectedHerdIdChange={onSelectedHerdIdChange}
-        onAdjustAnimalCount={onAdjustAnimalCount}
-        onSessionNotesChange={onSessionNotesChange}
-      />
+      {currentSessionStatus === null ? (
+        <GrazingSessionMobileStartFlow
+          safeHerds={safeHerds}
+          selectedHerdId={selectedHerdId}
+          selectedAnimalCount={selectedAnimalCount}
+          sessionNotes={sessionNotes}
+          isSaving={isSaving}
+          onSelectedHerdIdChange={onSelectedHerdIdChange}
+          onAdjustAnimalCount={onAdjustAnimalCount}
+          onSessionNotesChange={onSessionNotesChange}
+          onStartSession={onStartSession}
+        />
+      ) : (
+        <>
+          <GrazingSessionActiveSummary
+            safeHerds={safeHerds}
+            selectedHerdId={selectedHerdId}
+            selectedAnimalCount={selectedAnimalCount}
+          />
 
-      <div className="mt-4 rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm text-neutral-700 lg:hidden">
-        Die Hauptsteuerung liegt direkt auf der Karte.
-      </div>
-
-      <GrazingSessionDesktopControls
-        safeHerdsLength={safeHerds.length}
-        currentSessionStatus={currentSessionStatus}
-        isSaving={isSaving}
-        onStartSession={onStartSession}
-        onPauseSession={onPauseSession}
-        onResumeSession={onResumeSession}
-        onStopSession={onStopSession}
-      />
+          <GrazingSessionMobileControls
+            safeHerdsLength={safeHerds.length}
+            currentSessionStatus={currentSessionStatus}
+            isSaving={isSaving}
+            onStartSession={onStartSession}
+            onPauseSession={onPauseSession}
+            onResumeSession={onResumeSession}
+            onStopSession={onStopSession}
+          />
+        </>
+      )}
 
       {currentSessionStatus ? (
         <GrazingSessionEventCapturePanel
@@ -107,15 +115,20 @@ export function GrazingSessionManagementPanel({
         </div>
       ) : null}
 
-      <GrazingSessionMetricsGrid
-        safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
-        currentMetrics={currentMetrics}
-      />
+      {currentSessionStatus ? (
+        <GrazingSessionMetricsGrid
+          safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
+          currentMetrics={currentMetrics}
+        />
+      ) : null}
     </>
   )
 
   return (
-    <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:hidden">
+    <div
+      data-grazing-session-management-card="true"
+      className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:hidden"
+    >
       <h2 className="text-lg font-semibold">Weidegang verwalten</h2>
       <div className="mt-4">{panelContent}</div>
     </div>

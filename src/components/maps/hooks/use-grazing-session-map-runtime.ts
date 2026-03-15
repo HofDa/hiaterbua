@@ -232,6 +232,16 @@ export function useGrazingSessionMapRuntime({
     })
   }
 
+  function resizeMap() {
+    requestAnimationFrame(() => {
+      mapRef.current?.resize()
+
+      window.setTimeout(() => {
+        mapRef.current?.resize()
+      }, 240)
+    })
+  }
+
   return {
     containerRef,
     baseLayer,
@@ -247,5 +257,6 @@ export function useGrazingSessionMapRuntime({
     prefetchVisibleMapArea,
     centerMapOnPosition,
     focusSurveyArea,
+    resizeMap,
   }
 }

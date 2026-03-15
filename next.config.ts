@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  experimental: {
+    webpackBuildWorker: false,
+  },
 }
 
 export default nextConfig

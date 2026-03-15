@@ -61,7 +61,10 @@ export function WorkSessionControlCard({
   onNotesChange,
 }: WorkSessionControlCardProps) {
   return (
-    <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+    <div
+      data-work-session-control-card="true"
+      className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]"
+    >
       <h2 className="text-lg font-semibold tracking-[-0.02em]">Neuer Arbeitseinsatz</h2>
 
       {activeSession ? (

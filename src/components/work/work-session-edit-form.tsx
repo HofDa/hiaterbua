@@ -81,6 +81,7 @@ export function WorkSessionEditForm({
           sectionId={editWorkPickerSectionId}
           workType={editWorkType}
           activityId={editWorkActivityId}
+          initialMobileStep="option"
           onSectionChange={onEditWorkPickerSectionChange}
           onSelectionChange={onEditWorkSelectionChange}
         />

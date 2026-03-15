@@ -79,51 +79,54 @@ export function LivePositionWalkWorkspace({
       ) : null}
 
       {showControls ? (
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="mt-4 space-y-3">
           <button
             type="button"
             onClick={onStartWalkMode}
-            className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50 sm:px-4 sm:py-4"
+            className="min-h-16 w-full rounded-[1.3rem] border-2 border-[#5a5347] bg-[#efe4c8] px-4 py-4 text-base font-semibold text-[#17130f] shadow-sm disabled:opacity-50"
             disabled={isWalking || isDrawing}
           >
-            Start
+            GPS-Aufnahme starten
           </button>
-          <button
-            type="button"
-            onClick={onStopWalkMode}
-            className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
-            disabled={!isWalking}
-          >
-            Ende
-          </button>
-          <button
-            type="button"
-            onClick={onUndoLastWalkPoint}
-            className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
-            disabled={walkPoints.length === 0}
-          >
-            Letzter Punkt
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (selectedWalkPointIndex !== null) {
-                onRemoveWalkPointAtIndex(selectedWalkPointIndex)
-              }
-            }}
-            className="rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
-            disabled={selectedWalkPointIndex === null}
-          >
-            Ausgewählt
-          </button>
-          <button
-            type="button"
-            onClick={onDiscardWalkMode}
-            className="col-span-2 rounded-[1.1rem] bg-[#f1efeb] px-3 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:px-4 sm:py-4"
-            disabled={walkPoints.length === 0 && !isWalking}
-          >
-            Verwerfen
-          </button>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={onStopWalkMode}
+              className="min-h-16 rounded-[1.2rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              disabled={!isWalking}
+            >
+              Aufnahme stoppen
+            </button>
+            <button
+              type="button"
+              onClick={onUndoLastWalkPoint}
+              className="min-h-16 rounded-[1.2rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              disabled={walkPoints.length === 0}
+            >
+              Letzten Punkt löschen
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedWalkPointIndex !== null) {
+                  onRemoveWalkPointAtIndex(selectedWalkPointIndex)
+                }
+              }}
+              className="min-h-16 rounded-[1.2rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              disabled={selectedWalkPointIndex === null}
+            >
+              Ausgewählten Punkt löschen
+            </button>
+            <button
+              type="button"
+              onClick={onDiscardWalkMode}
+              className="min-h-16 rounded-[1.2rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              disabled={walkPoints.length === 0 && !isWalking}
+            >
+              Walk verwerfen
+            </button>
+          </div>
         </div>
       ) : null}
 

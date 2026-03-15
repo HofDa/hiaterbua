@@ -302,6 +302,16 @@ export function useLivePositionMapRuntime({
     })
   }
 
+  function resizeMap() {
+    requestAnimationFrame(() => {
+      mapRef.current?.resize()
+
+      window.setTimeout(() => {
+        mapRef.current?.resize()
+      }, 240)
+    })
+  }
+
   return {
     containerRef,
     baseLayer,
@@ -317,5 +327,6 @@ export function useLivePositionMapRuntime({
     focusSurveyArea,
     focusEnclosure,
     focusWalkPoints,
+    resizeMap,
   }
 }

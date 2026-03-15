@@ -71,6 +71,7 @@ export default function HomePage() {
     return {
       herdsCount: herds.filter((herd) => !herd.isArchived).length,
       enclosuresCount: enclosures.length,
+      sessionsCount: sessions.length,
       activeSessionsCount: sessions.filter(
         (session) => session.status === 'active' || session.status === 'paused'
       ).length,
@@ -142,7 +143,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
           <div className="text-sm font-semibold text-neutral-800">Aktive Herden</div>
           <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
@@ -159,6 +160,12 @@ export default function HomePage() {
           <div className="text-sm font-semibold text-neutral-800">Laufende Weidegänge</div>
           <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
             {dashboardData?.activeSessionsCount ?? '...'}
+          </div>
+        </div>
+        <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
+          <div className="text-sm font-semibold text-neutral-800">Weidegänge gesamt</div>
+          <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
+            {dashboardData?.sessionsCount ?? '...'}
           </div>
         </div>
         <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">

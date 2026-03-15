@@ -1,6 +1,6 @@
 'use client'
 
-import type { RefObject } from 'react'
+import { useState, type Ref } from 'react'
 import {
   formatDistance,
   formatDuration,
@@ -9,6 +9,7 @@ import {
 import { GrazingSessionMapDesktopManagementOverlay } from '@/components/maps/grazing-session-map-desktop-management-overlay'
 import {
   CenterIcon,
+  ControlsIcon,
   LayersIcon,
   PauseIcon,
   PlayIcon,
@@ -34,7 +35,7 @@ import type {
 } from '@/types/domain'
 
 type GrazingSessionMapCanvasPanelProps = {
-  containerRef: RefObject<HTMLDivElement | null>
+  containerRef: Ref<HTMLDivElement>
   editingSessionId: string | null
   safeCurrentTrackpointsLength: number
   currentDistanceM: number
@@ -77,6 +78,7 @@ type GrazingSessionMapCanvasPanelProps = {
   onToggleShowSurveyAreas: () => void
   onToggleShowSessionEventsOnMap: () => void
   onPrefetchVisibleMapArea: () => void | Promise<void>
+  onResizeMap?: () => void
   onStartAddEditTrackpoint: () => void
   onRemoveSelectedEditTrackpoint: () => void
   onSaveEditedSession: () => void | Promise<void>
@@ -132,6 +134,10 @@ export function GrazingSessionMapCanvasPanel({
   onSaveEditedSession,
   onCancelEditSession,
 }: GrazingSessionMapCanvasPanelProps) {
+  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
+
+  const hasMobileToolbar = !editingSessionId
+
   return (
     <div className="relative overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:sticky lg:top-4">
       {!editingSessionId ? (
@@ -164,7 +170,21 @@ export function GrazingSessionMapCanvasPanel({
         ref={containerRef}
         className="h-[420px] w-full bg-[#fffdf6] sm:h-[520px] lg:h-[calc(100vh-8rem)]"
       />
-      {!editingSessionId ? (
+      {hasMobileToolbar ? (
+        <button
+          type="button"
+          aria-label={isMobileControlsOpen ? 'Steuerung ausblenden' : 'Steuerung einblenden'}
+          aria-expanded={isMobileControlsOpen}
+          onClick={() => setIsMobileControlsOpen((current) => !current)}
+          className={[
+            'absolute left-2 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg transition-all lg:hidden',
+            isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
+          ].join(' ')}
+        >
+          <ControlsIcon />
+        </button>
+      ) : null}
+      {!editingSessionId && isMobileControlsOpen ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
           <MobileMapToolbar>
             <MobileMapToolbarStat>

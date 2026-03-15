@@ -4,8 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "dev:local-pwa": "next dev --hostname 127.0.0.1 --port 43031",
+    "build": "next build --webpack && npm run pwa:precache",
+    "build:local-pwa": "npm run build",
+    "pwa:precache": "node ./scripts/generate-pwa-precache-manifest.mjs",
     "start": "next start",
+    "start:local-pwa": "next start --hostname 127.0.0.1 --port 43031",
+    "launch:local-pwa": "bash ./scripts/launch-local-pwa.sh",
+    "install:desktop-launcher": "bash ./scripts/install-local-desktop-entry.sh",
     "lint": "eslint ."
   },
   "dependencies": {

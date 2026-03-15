@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import type {
   Map as MapLibreMap,
@@ -37,21 +37,24 @@ export function useLivePositionMapSetup({
   setIsAddingEditPoint,
   setEditError,
 }: UseLivePositionMapSetupOptions) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRef = useRef<Marker | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    setContainerElement(node)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
 
     async function setupMap() {
-      if (!containerRef.current || mapRef.current) return
+      if (!containerElement || mapRef.current) return
 
       const maplibre = await import('maplibre-gl')
-      if (cancelled || !containerRef.current) return
+      if (cancelled || !containerElement) return
 
-      const map = createRasterMap(maplibre, containerRef.current)
+      const map = createRasterMap(maplibre, containerElement)
 
       map.on('load', () => {
         if (cancelled) return
@@ -132,6 +135,12 @@ export function useLivePositionMapSetup({
         })
 
         setMapReady(true)
+
+        requestAnimationFrame(() => {
+          map.resize()
+          window.setTimeout(() => map.resize(), 250)
+          window.setTimeout(() => map.resize(), 800)
+        })
       })
 
       mapRef.current = map
@@ -148,6 +157,7 @@ export function useLivePositionMapSetup({
       mapRef.current = null
     }
   }, [
+    containerElement,
     editingEnclosureIdRef,
     draftPointsLengthRef,
     isAddingEditPointRef,
@@ -161,6 +171,33 @@ export function useLivePositionMapSetup({
     setSelectedEditPointIndex,
     setSelectedWalkPointIndex,
   ])
+
+  useEffect(() => {
+    if (!mapReady || !containerElement || typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    let frameId = 0
+
+    const resizeMap = () => {
+      cancelAnimationFrame(frameId)
+      frameId = requestAnimationFrame(() => {
+        mapRef.current?.resize()
+      })
+    }
+
+    const observer = new ResizeObserver(() => {
+      resizeMap()
+    })
+
+    observer.observe(containerElement)
+    resizeMap()
+
+    return () => {
+      cancelAnimationFrame(frameId)
+      observer.disconnect()
+    }
+  }, [containerElement, mapReady])
 
   return {
     containerRef,

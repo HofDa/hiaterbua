@@ -87,3 +87,16 @@ export function TrackpointsIcon() {
     </svg>
   )
 }
+
+export function ControlsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-none stroke-current">
+      <path
+        d="M5 6h14M5 12h14M5 18h14M9 4v4M15 10v4M11 16v4"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}

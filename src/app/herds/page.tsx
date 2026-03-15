@@ -52,12 +52,14 @@ export default function HerdsPage() {
   const [fallbackCount, setFallbackCount] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   async function handleCreateHerd(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
 
     setSaving(true)
+    setCreateError('')
     const timestamp = nowIso()
 
     const herd: Herd = {
@@ -70,12 +72,17 @@ export default function HerdsPage() {
       updatedAt: timestamp,
     }
 
-    await db.herds.add(herd)
+    try {
+      await db.herds.add(herd)
 
-    setName('')
-    setFallbackCount('')
-    setNotes('')
-    setSaving(false)
+      setName('')
+      setFallbackCount('')
+      setNotes('')
+    } catch {
+      setCreateError('Herde konnte nicht gespeichert werden.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function toggleArchive(herdId: string, nextState: boolean) {
@@ -173,6 +180,12 @@ export default function HerdsPage() {
             >
               {saving ? 'Speichert …' : 'Herde speichern'}
             </button>
+
+            {createError ? (
+              <div className="rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                {createError}
+              </div>
+            ) : null}
           </form>
         </section>
       ) : null}
@@ -257,7 +270,7 @@ export default function HerdsPage() {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
-                  href={`/herds/${herd.id}`}
+                  href={`/herd?id=${encodeURIComponent(herd.id)}`}
                   className="min-w-[9rem] rounded-[1.1rem] border-2 border-[#5a5347] bg-[#f1efeb] px-5 py-3 text-sm font-semibold text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)]"
                 >
                   Herde öffnen & bearbeiten

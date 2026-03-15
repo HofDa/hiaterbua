@@ -179,7 +179,7 @@ export function LivePositionWorkflowPanels({
             isWalkPointsOpen={isWalkPointsOpen}
             selectedWalkPointIndex={selectedWalkPointIndex}
             selectedWalkPoint={selectedWalkPoint}
-            showControls={false}
+            showControls
             showStatusText
             showHint={false}
             onToggleWalkPoints={onToggleWalkPoints}

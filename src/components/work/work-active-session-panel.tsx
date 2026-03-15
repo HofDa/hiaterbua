@@ -82,13 +82,13 @@ export function WorkActiveSessionPanel({
         {activeSession.notes ? <div className="mt-1">{activeSession.notes}</div> : null}
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {activeSession.status === 'active' ? (
           <button
             type="button"
             onClick={() => void onUpdateStatus('paused')}
             disabled={isSaving}
-            className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
+            className="min-h-[4.5rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[linear-gradient(180deg,#f6f2e9,#ece3cf)] px-4 py-4 text-lg font-semibold text-[#17130f] shadow-[0_16px_32px_rgba(40,34,26,0.14)] disabled:opacity-50"
           >
             Pause setzen
           </button>
@@ -97,7 +97,7 @@ export function WorkActiveSessionPanel({
             type="button"
             onClick={() => void onUpdateStatus('active')}
             disabled={isSaving}
-            className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-base font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
+            className="min-h-[4.5rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[linear-gradient(180deg,#f6f2e9,#ece3cf)] px-4 py-4 text-lg font-semibold text-[#17130f] shadow-[0_16px_32px_rgba(40,34,26,0.14)] disabled:opacity-50"
           >
             Fortsetzen
           </button>
@@ -106,7 +106,7 @@ export function WorkActiveSessionPanel({
           type="button"
           onClick={() => void onUpdateStatus('finished')}
           disabled={isSaving}
-          className="rounded-[1.1rem] border border-red-300 bg-[linear-gradient(135deg,#fff3f1,#ffd9d2)] px-4 py-4 text-base font-semibold text-red-900 shadow-[0_10px_20px_rgba(127,29,29,0.14)] disabled:opacity-50"
+          className="min-h-[4.5rem] rounded-[1.3rem] border-2 border-red-300 bg-[linear-gradient(135deg,#fff3f1,#ffd9d2)] px-4 py-4 text-lg font-semibold text-red-900 shadow-[0_12px_24px_rgba(127,29,29,0.16)] disabled:opacity-50"
         >
           Einsatz beenden
         </button>

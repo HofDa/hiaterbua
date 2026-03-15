@@ -25,6 +25,7 @@ export type WorkActivityId =
   | 'guided_fence_work'
   | 'guided_overnight_fence_work'
   | 'guided_material_shift'
+  | 'guided_water_supply'
   | 'guided_check_grazing_animals'
   | 'guided_check_lambing'
   | 'guided_check_herding_dogs'
@@ -55,6 +56,7 @@ export interface MapTileRecord {
   blob: Blob
   contentType?: string
   status: number
+  statusText?: string
   updatedAt: string
 }
 
