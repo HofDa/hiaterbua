@@ -277,7 +277,7 @@ function LivePositionMobileActiveAssignmentCard({
   endingAssignmentId,
   onEndEnclosureAssignment,
 }: LivePositionMobileActiveAssignmentCardProps) {
-  const activeHerd = herdsById.get(activeAssignment.herdId) ?? null
+  const activeHerd = herdsById.get(activeAssignment.herdId)
   const effectiveCount =
     activeAssignment.count ??
     getEffectiveHerdCount(activeHerd, animalsByHerdId.get(activeAssignment.herdId) ?? [])
