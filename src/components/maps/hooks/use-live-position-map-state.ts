@@ -42,7 +42,7 @@ export function useLivePositionMapState() {
   const [expandedSavedEnclosureId, setExpandedSavedEnclosureId] = useState<string | null>(
     null
   )
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>('draw')
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>('saved')
   const [selectedSurveyAreaId, setSelectedSurveyAreaId] = useState<string | null>(null)
   const [enclosureListFilter, setEnclosureListFilter] =
     useState<EnclosureListFilter>('all')

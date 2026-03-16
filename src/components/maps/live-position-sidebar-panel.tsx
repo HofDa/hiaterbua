@@ -45,6 +45,7 @@ export type LivePositionSidebarPanelProps = {
   safeHerds: Herd[]
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   assignmentHistoryByEnclosureId: Map<string, EnclosureAssignment[]>
   editingEnclosureId: string | null
   editName: string
@@ -99,6 +100,7 @@ export function LivePositionSidebarPanel({
   safeHerds,
   herdsById,
   animalsByHerdId,
+  activeAssignmentsByHerdId,
   assignmentHistoryByEnclosureId,
   editingEnclosureId,
   editName,
@@ -182,6 +184,7 @@ export function LivePositionSidebarPanel({
             safeHerds={safeHerds}
             herdsById={herdsById}
             animalsByHerdId={animalsByHerdId}
+            activeAssignmentsByHerdId={activeAssignmentsByHerdId}
             assignmentHistoryByEnclosureId={assignmentHistoryByEnclosureId}
             editingEnclosureId={editingEnclosureId}
             editName={editName}
@@ -216,47 +219,58 @@ export function LivePositionSidebarPanel({
     )
   }
 
-  const sidebarContent = (
-    <>
-      {renderSurveyAreasPanel()}
+  function renderSavedEnclosuresPanel() {
+    return (
+      <>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Gespeicherte Pferche</h2>
+          <span className="text-sm text-neutral-500">{filteredEnclosures.length}</span>
+        </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Gespeicherte Pferche</h2>
-        <span className="text-sm text-neutral-500">{filteredEnclosures.length}</span>
-      </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {enclosureFilterOptions.map((filterOption) => (
+            <button
+              key={filterOption.id}
+              type="button"
+              onClick={() => onEnclosureListFilterChange(filterOption.id)}
+              className={[
+                'rounded-2xl px-3 py-3 text-sm font-medium',
+                enclosureListFilter === filterOption.id
+                  ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                  : 'bg-[#f1efeb] text-neutral-950',
+              ].join(' ')}
+            >
+              {filterOption.label}
+            </button>
+          ))}
+        </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {enclosureFilterOptions.map((filterOption) => (
-          <button
-            key={filterOption.id}
-            type="button"
-            onClick={() => onEnclosureListFilterChange(filterOption.id)}
-            className={[
-              'rounded-2xl px-3 py-3 text-sm font-medium',
-              enclosureListFilter === filterOption.id
-                ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                : 'bg-[#f1efeb] text-neutral-950',
-            ].join(' ')}
-          >
-            {filterOption.label}
-          </button>
-        ))}
-      </div>
-
-      {renderSelectedEnclosureNotice()}
-      {renderEnclosureListContent()}
-    </>
-  )
+        {renderSelectedEnclosureNotice()}
+        <div className="pb-1">{renderEnclosureListContent()}</div>
+      </>
+    )
+  }
 
   return (
     <>
-      <div
-        className={[
-          'rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)] lg:hidden',
-          mobilePanel === 'saved' ? 'block' : 'hidden',
-        ].join(' ')}
-      >
-        {sidebarContent}
+      <div className="space-y-4 lg:hidden">
+        <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+          <LivePositionSurveyAreasPanel
+            safeSurveyAreas={safeSurveyAreas}
+            selectedSurveyArea={selectedSurveyArea}
+            selectedSurveyAreaId={selectedSurveyAreaId}
+            onFocusSurveyArea={onFocusSurveyArea}
+          />
+        </div>
+
+        <div
+          className={[
+            'rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]',
+            mobilePanel === 'saved' ? 'block' : 'hidden',
+          ].join(' ')}
+        >
+          {renderSavedEnclosuresPanel()}
+        </div>
       </div>
 
       <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:flex">
@@ -267,39 +281,9 @@ export function LivePositionSidebarPanel({
           </p>
         </div>
 
-        <div className="mt-4 min-h-0 flex flex-1 flex-col">
-          <div className="shrink-0">
-            {renderSurveyAreasPanel()}
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold text-neutral-950">Gespeicherte Pferche</h3>
-              <span className="text-sm text-neutral-500">{filteredEnclosures.length}</span>
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {enclosureFilterOptions.map((filterOption) => (
-                <button
-                  key={filterOption.id}
-                  type="button"
-                  onClick={() => onEnclosureListFilterChange(filterOption.id)}
-                  className={[
-                    'rounded-2xl px-3 py-3 text-sm font-medium',
-                    enclosureListFilter === filterOption.id
-                      ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                      : 'bg-[#f1efeb] text-neutral-950',
-                  ].join(' ')}
-                >
-                  {filterOption.label}
-                </button>
-              ))}
-            </div>
-
-            {renderSelectedEnclosureNotice()}
-          </div>
-
-          <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
-            {renderEnclosureListContent()}
-          </div>
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">
+          {renderSurveyAreasPanel()}
+          {renderSavedEnclosuresPanel()}
         </div>
       </section>
     </>

@@ -63,24 +63,27 @@ export function useGrazingSessionMapSync({
   setSelectedSurveyAreaId,
 }: UseGrazingSessionMapSyncOptions) {
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('current-session-track') as
       | GeoJSONSource
       | undefined
     if (!source) return
     source.setData(currentTrackFeatureCollection)
-  }, [currentTrackFeatureCollection, mapRef])
+  }, [currentTrackFeatureCollection, mapReady, mapRef])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('survey-areas') as GeoJSONSource | undefined
     if (!source) return
     source.setData(surveyAreaFeatureCollection)
-  }, [mapRef, surveyAreaFeatureCollection])
+  }, [mapReady, mapRef, surveyAreaFeatureCollection])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('session-events') as GeoJSONSource | undefined
     if (!source) return
     source.setData(sessionEventFeatureCollection)
-  }, [mapRef, sessionEventFeatureCollection])
+  }, [mapReady, mapRef, sessionEventFeatureCollection])
 
   useEffect(() => {
     const map = mapRef.current
@@ -120,6 +123,7 @@ export function useGrazingSessionMapSync({
   }, [safeSurveyAreas, selectedSurveyAreaId, setSelectedSurveyAreaId])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('selected-session-track') as
       | GeoJSONSource
       | undefined
@@ -132,6 +136,7 @@ export function useGrazingSessionMapSync({
   }, [
     editTrackFeatureCollection,
     editingSessionId,
+    mapReady,
     mapRef,
     selectedSessionId,
     selectedTrackFeatureCollection,

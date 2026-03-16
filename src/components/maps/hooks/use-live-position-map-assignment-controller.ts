@@ -4,7 +4,10 @@ import {
   endEnclosureAssignmentRecord,
   getDefaultAssignmentValues,
 } from '@/lib/maps/live-position-actions'
-import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-helpers'
+import {
+  getAssignableHerds,
+  getEffectiveHerdCount,
+} from '@/lib/maps/live-position-map-helpers'
 import type {
   Animal,
   Enclosure,
@@ -17,6 +20,7 @@ type UseLivePositionMapAssignmentControllerOptions = {
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
   activeAssignmentsByEnclosureId: Map<string, EnclosureAssignment>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   assignmentHerdId: string
   assignmentCount: string
   assignmentNotes: string
@@ -35,6 +39,7 @@ export function useLivePositionMapAssignmentController({
   herdsById,
   animalsByHerdId,
   activeAssignmentsByEnclosureId,
+  activeAssignmentsByHerdId,
   assignmentHerdId,
   assignmentCount,
   assignmentNotes,
@@ -59,7 +64,7 @@ export function useLivePositionMapAssignmentController({
     setAssignmentEditorEnclosureId(enclosure.id)
     setAssignmentError('')
     const defaults = getDefaultAssignmentValues({
-      herds: safeHerds,
+      herds: getAssignableHerds(safeHerds, activeAssignmentsByHerdId, enclosure.id),
       animalsByHerdId,
       getEffectiveHerdCount,
     })
@@ -96,6 +101,12 @@ export function useLivePositionMapAssignmentController({
       return
     }
 
+    const activeHerdAssignment = activeAssignmentsByHerdId.get(herd.id)
+    if (activeHerdAssignment && activeHerdAssignment.enclosureId !== enclosure.id) {
+      setAssignmentError('Diese Herde ist bereits einem anderen Pferch zugewiesen.')
+      return
+    }
+
     const parsedCount =
       assignmentCount.trim() === '' ? null : Number.parseInt(assignmentCount.trim(), 10)
 
@@ -110,7 +121,7 @@ export function useLivePositionMapAssignmentController({
     try {
       await assignHerdToEnclosureRecord({
         enclosure,
-        herd,
+        herdId: herd.id,
         count: parsedCount,
         notes: assignmentNotes,
       })

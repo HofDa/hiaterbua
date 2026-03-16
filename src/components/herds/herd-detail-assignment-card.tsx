@@ -108,19 +108,29 @@ export function HerdDetailAssignmentCard({
       ) : (
         <form className="mt-4 space-y-4" onSubmit={onSubmit}>
           <div>
-            <label className="mb-1 block text-sm font-medium">Pferch wählen</label>
-            <select
-              className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-              value={selectedEnclosureId}
-              onChange={(event) => onSelectedEnclosureIdChange(event.target.value)}
-            >
-              <option value="">Bitte wählen</option>
-              {availableEnclosures.map((enclosure) => (
-                <option key={enclosure.id} value={enclosure.id}>
-                  {enclosure.name}
-                </option>
-              ))}
-            </select>
+            <div className="mb-1 text-sm font-medium text-neutral-700">Pferch wählen</div>
+            <div className="flex flex-wrap gap-2 rounded-[1.35rem] border-2 border-[#ccb98a] bg-[#fffdf6] p-2">
+              {availableEnclosures.map((enclosure) => {
+                const isSelected = enclosure.id === selectedEnclosureId
+
+                return (
+                  <button
+                    key={enclosure.id}
+                    type="button"
+                    onClick={() => onSelectedEnclosureIdChange(enclosure.id)}
+                    aria-pressed={isSelected}
+                    className={[
+                      'rounded-[1rem] px-3 py-2 text-left text-sm font-semibold transition',
+                      isSelected
+                        ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                        : 'border border-transparent bg-[#fffdf6] text-neutral-900 hover:border-[#ccb98a]',
+                    ].join(' ')}
+                  >
+                    {enclosure.name}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

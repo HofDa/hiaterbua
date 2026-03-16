@@ -127,18 +127,34 @@ export function getDefaultAssignmentValues(params: {
 
 export async function assignHerdToEnclosureRecord(params: {
   enclosure: Enclosure
-  herd: Herd
+  herdId: string
   count: number | null
   notes: string
 }) {
-  const { enclosure, herd, count, notes } = params
+  const { enclosure, herdId, count, notes } = params
   const timestamp = nowIso()
 
   await db.transaction('rw', db.enclosureAssignments, db.enclosures, async () => {
+    const activeAssignments = (await db.enclosureAssignments.toArray()).filter(
+      (assignment) => !assignment.endTime
+    )
+    const activeEnclosureAssignment =
+      activeAssignments.find((assignment) => assignment.enclosureId === enclosure.id) ?? null
+    const activeHerdAssignment =
+      activeAssignments.find((assignment) => assignment.herdId === herdId) ?? null
+
+    if (activeEnclosureAssignment) {
+      throw new Error('Dieser Pferch ist bereits aktiv belegt.')
+    }
+
+    if (activeHerdAssignment && activeHerdAssignment.enclosureId !== enclosure.id) {
+      throw new Error('Diese Herde ist bereits einem anderen Pferch zugewiesen.')
+    }
+
     await db.enclosureAssignments.add({
       id: createId('enclosure_assignment'),
       enclosureId: enclosure.id,
-      herdId: herd.id,
+      herdId,
       count,
       startTime: timestamp,
       endTime: null,
@@ -148,7 +164,7 @@ export async function assignHerdToEnclosureRecord(params: {
     })
 
     await db.enclosures.update(enclosure.id, {
-      herdId: herd.id,
+      herdId,
       updatedAt: timestamp,
     })
   })

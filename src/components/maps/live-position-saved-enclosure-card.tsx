@@ -36,6 +36,7 @@ type LivePositionSavedEnclosureCardProps = {
   safeHerds: Herd[]
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   assignmentHistoryByEnclosureId: Map<string, EnclosureAssignment[]>
   editingEnclosureId: string | null
   editName: string
@@ -82,6 +83,7 @@ export function LivePositionSavedEnclosureCard({
   safeHerds,
   herdsById,
   animalsByHerdId,
+  activeAssignmentsByHerdId,
   assignmentHistoryByEnclosureId,
   editingEnclosureId,
   editName,
@@ -163,6 +165,7 @@ export function LivePositionSavedEnclosureCard({
             safeHerds={safeHerds}
             herdsById={herdsById}
             animalsByHerdId={animalsByHerdId}
+            activeAssignmentsByHerdId={activeAssignmentsByHerdId}
             assignmentHistoryByEnclosureId={assignmentHistoryByEnclosureId}
             onOpenAssignmentEditor={onOpenAssignmentEditor}
             onCancelAssignmentEditor={onCancelAssignmentEditor}

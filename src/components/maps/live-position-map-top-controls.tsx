@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { CenterIcon, LayersIcon } from '@/components/maps/map-toolbar-icons'
 import { MobileMapTopControls } from '@/components/maps/mobile-map-ui'
 import type { MapBaseLayer } from '@/types/domain'
@@ -16,6 +17,7 @@ type LivePositionMapTopControlsProps = {
   onUpdateBaseLayer: (nextBaseLayer: MapBaseLayer) => void | Promise<void>
   onToggleShowSurveyAreas: () => void
   onPrefetchVisibleMapArea: () => void | Promise<void>
+  extraControls?: ReactNode
 }
 
 export function LivePositionMapTopControls({
@@ -30,6 +32,7 @@ export function LivePositionMapTopControls({
   onUpdateBaseLayer,
   onToggleShowSurveyAreas,
   onPrefetchVisibleMapArea,
+  extraControls,
 }: LivePositionMapTopControlsProps) {
   return (
     <MobileMapTopControls>
@@ -51,6 +54,7 @@ export function LivePositionMapTopControls({
         >
           <LayersIcon />
         </button>
+        {extraControls}
       </div>
 
       {isBaseLayerMenuOpen ? (

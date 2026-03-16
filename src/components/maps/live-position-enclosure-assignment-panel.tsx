@@ -4,6 +4,7 @@ import {
   formatDateTime,
   formatDurationFromIso,
   getEffectiveHerdCount,
+  getAssignableHerds,
 } from '@/lib/maps/live-position-map-helpers'
 import type {
   Animal,
@@ -25,6 +26,7 @@ type LivePositionEnclosureAssignmentPanelProps = {
   safeHerds: Herd[]
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   assignmentHistoryByEnclosureId: Map<string, EnclosureAssignment[]>
   onOpenAssignmentEditor: (enclosure: Enclosure) => void
   onCancelAssignmentEditor: () => void
@@ -48,6 +50,7 @@ export function LivePositionEnclosureAssignmentPanel({
   safeHerds,
   herdsById,
   animalsByHerdId,
+  activeAssignmentsByHerdId,
   assignmentHistoryByEnclosureId,
   onOpenAssignmentEditor,
   onCancelAssignmentEditor,
@@ -64,7 +67,13 @@ export function LivePositionEnclosureAssignmentPanel({
       ? activeAssignment.count ??
         getEffectiveHerdCount(activeHerd, animalsByHerdId.get(activeHerd.id) ?? [])
       : null
-  const hasSelectedAssignmentHerd = assignmentHerdId.trim().length > 0
+  const assignableHerds = getAssignableHerds(
+    safeHerds,
+    activeAssignmentsByHerdId,
+    enclosure.id
+  )
+  const hasAssignableHerds = assignableHerds.length > 0
+  const hasSelectedAssignmentHerd = assignableHerds.some((herd) => herd.id === assignmentHerdId)
 
   function handleAdjustAssignmentCount(delta: number) {
     const parsedCount = Number.parseInt(assignmentCount.trim(), 10)
@@ -124,21 +133,29 @@ export function LivePositionEnclosureAssignmentPanel({
           <div className="text-sm font-medium text-neutral-900">Herde zuweisen</div>
           <div className="mt-3 min-w-0 space-y-3">
             <div className="min-w-0">
-              <label className="mb-1 block text-sm font-medium">Herde</label>
-              <select
-                className="w-full min-w-0 rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
-                value={assignmentHerdId}
-                onChange={(event) => onAssignmentHerdIdChange(event.target.value)}
-              >
-                <option value="">Bitte wählen</option>
-                {safeHerds
-                  .filter((herd) => !herd.isArchived)
-                  .map((herd) => (
-                    <option key={herd.id} value={herd.id}>
+              <div className="mb-1 text-sm font-medium text-neutral-700">Herde</div>
+              <div className="grid grid-cols-2 gap-2 rounded-[1.35rem] border-2 border-[#ccb98a] bg-[#fffdf6] p-2 text-sm">
+                {assignableHerds.map((herd) => (
+                    <button
+                      key={herd.id}
+                      type="button"
+                      onClick={() => onAssignmentHerdIdChange(herd.id)}
+                      className={[
+                        'rounded-[1rem] px-3 py-2 text-left transition',
+                        assignmentHerdId === herd.id
+                          ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                          : 'border border-transparent bg-[#fffdf6] text-neutral-900 hover:border-[#ccb98a]',
+                      ].join(' ')}
+                    >
                       {herd.name}
-                    </option>
+                    </button>
                   ))}
-              </select>
+              </div>
+              {!hasAssignableHerds ? (
+                <div className="mt-2 rounded-2xl border border-dashed border-[#ccb98a] bg-[#f8f1e2] px-3 py-3 text-sm text-neutral-700">
+                  Alle aktiven Herden sind bereits anderen Pferchen zugewiesen.
+                </div>
+              ) : null}
             </div>
 
             <div className="min-w-0">
@@ -195,7 +212,7 @@ export function LivePositionEnclosureAssignmentPanel({
               <button
                 type="button"
                 onClick={() => onAssignHerdToEnclosure(enclosure)}
-                disabled={isAssignmentSaving || !assignmentHerdId}
+                disabled={isAssignmentSaving || !assignmentHerdId || !hasAssignableHerds}
                 className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-medium text-[#17130f] disabled:opacity-50"
               >
                 {isAssignmentSaving ? 'Speichert ...' : 'Zuweisen'}
@@ -214,9 +231,10 @@ export function LivePositionEnclosureAssignmentPanel({
         <button
           type="button"
           onClick={() => onOpenAssignmentEditor(enclosure)}
-          className="w-full rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-[#17130f]"
+          disabled={!hasAssignableHerds}
+          className="w-full rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-[#17130f] disabled:opacity-50"
         >
-          Herde zuweisen
+          {hasAssignableHerds ? 'Herde zuweisen' : 'Keine Herde frei'}
         </button>
       )}
 

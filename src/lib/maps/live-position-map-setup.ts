@@ -18,6 +18,7 @@ export function registerLivePositionMapSetup(
   map: MapLibreMap,
   handlers: LivePositionMapSetupHandlers
 ) {
+  addOrthophotoLayer(map)
   addGeoJsonSource(map, 'saved-enclosures')
   addSurveyAreaLayers(map)
 
@@ -40,8 +41,6 @@ export function registerLivePositionMapSetup(
       'line-width': 2,
     },
   })
-
-  addOrthophotoLayer(map)
 
   addGeoJsonSource(map, 'selected-enclosure')
   map.addLayer({

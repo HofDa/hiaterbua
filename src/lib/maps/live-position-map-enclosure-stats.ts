@@ -45,6 +45,18 @@ export function buildActiveAssignmentsByEnclosureId(assignments: EnclosureAssign
   return map
 }
 
+export function buildActiveAssignmentsByHerdId(assignments: EnclosureAssignment[]) {
+  const map = new Map<string, EnclosureAssignment>()
+
+  assignments.forEach((assignment) => {
+    if (!assignment.endTime && !map.has(assignment.herdId)) {
+      map.set(assignment.herdId, assignment)
+    }
+  })
+
+  return map
+}
+
 export function buildAssignmentHistoryByEnclosureId(assignments: EnclosureAssignment[]) {
   const map = new Map<string, EnclosureAssignment[]>()
 
@@ -55,6 +67,19 @@ export function buildAssignmentHistoryByEnclosureId(assignments: EnclosureAssign
   })
 
   return map
+}
+
+export function getAssignableHerds(
+  herds: Herd[],
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>,
+  enclosureId: string
+) {
+  return herds.filter((herd) => {
+    if (herd.isArchived) return false
+
+    const activeAssignment = activeAssignmentsByHerdId.get(herd.id)
+    return !activeAssignment || activeAssignment.enclosureId === enclosureId
+  })
 }
 
 export function buildEnclosureStatsById(

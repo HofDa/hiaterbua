@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { db } from '@/lib/db/dexie'
-import { createId } from '@/lib/utils/ids'
-import { nowIso } from '@/lib/utils/time'
+import {
+  assignHerdToEnclosureRecord,
+  endEnclosureAssignmentRecord,
+} from '@/lib/maps/live-position-actions'
 import type { Enclosure, EnclosureAssignment } from '@/types/domain'
 
 type UseHerdDetailAssignmentControllerOptions = {
@@ -66,25 +67,11 @@ export function useHerdDetailAssignmentController({
     setAssignmentError('')
 
     try {
-      const timestamp = nowIso()
-
-      await db.transaction('rw', db.enclosureAssignments, db.enclosures, async () => {
-        await db.enclosureAssignments.add({
-          id: createId('enclosure_assignment'),
-          enclosureId: enclosure.id,
-          herdId,
-          count: parsedCount,
-          startTime: timestamp,
-          endTime: null,
-          notes: assignmentNotes.trim() || undefined,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-        })
-
-        await db.enclosures.update(enclosure.id, {
-          herdId,
-          updatedAt: timestamp,
-        })
+      await assignHerdToEnclosureRecord({
+        enclosure,
+        herdId,
+        count: parsedCount,
+        notes: assignmentNotes,
       })
 
       setSelectedEnclosureId('')
@@ -103,19 +90,7 @@ export function useHerdDetailAssignmentController({
     setAssignmentError('')
 
     try {
-      const timestamp = nowIso()
-
-      await db.transaction('rw', db.enclosureAssignments, db.enclosures, async () => {
-        await db.enclosureAssignments.update(assignment.id, {
-          endTime: timestamp,
-          updatedAt: timestamp,
-        })
-
-        await db.enclosures.update(assignment.enclosureId, {
-          herdId: null,
-          updatedAt: timestamp,
-        })
-      })
+      await endEnclosureAssignmentRecord(assignment)
     } catch (err) {
       setAssignmentError(
         err instanceof Error ? err.message : 'Ausweisung konnte nicht gespeichert werden.'

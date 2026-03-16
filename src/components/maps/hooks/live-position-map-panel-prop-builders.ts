@@ -27,6 +27,7 @@ export type LivePositionMapPanelData = {
   safeHerds: Herd[]
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   assignmentHistoryByEnclosureId: Map<string, EnclosureAssignment[]>
   selectedWalkPoint: PositionData | null
   draftAreaM2: number
@@ -190,7 +191,7 @@ export function buildWorkflowPanelsProps({
   actions,
   presentation,
 }: Pick<UseLivePositionMapPanelPropsOptions, 'state' | 'data' | 'actions' | 'presentation'>): LivePositionWorkflowPanelsProps {
-  const { draw, walk, selection } = state
+  const { draw, walk, selection, assignment } = state
 
   return {
     mobilePanel: selection.mobilePanel,
@@ -214,6 +215,17 @@ export function buildWorkflowPanelsProps({
     filteredEnclosures: data.filteredEnclosures,
     selectedEnclosure: data.selectedEnclosure,
     selectedEnclosureId: selection.selectedEnclosureId,
+    assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
+    assignmentHerdId: assignment.assignmentHerdId,
+    assignmentCount: assignment.assignmentCount,
+    assignmentNotes: assignment.assignmentNotes,
+    assignmentError: assignment.assignmentError,
+    isAssignmentSaving: assignment.isAssignmentSaving,
+    endingAssignmentId: assignment.endingAssignmentId,
+    safeHerds: data.safeHerds,
+    herdsById: data.herdsById,
+    animalsByHerdId: data.animalsByHerdId,
+    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
     isSelectedEnclosureInfoOpen: selection.isSelectedEnclosureInfoOpen,
     showSelectedTrack: selection.showSelectedTrack,
     onMobilePanelChange: selection.setMobilePanel,
@@ -243,13 +255,23 @@ export function buildWorkflowPanelsProps({
     onWalkNotesChange: walk.setWalkNotes,
     onSaveWalkEnclosure: actions.saveWalkEnclosure,
     onSelectedEnclosureChange: presentation.handleMobileSelectedEnclosureChange,
-    onClearSelectedEnclosure: actions.clearSelectedEnclosure,
     onToggleSelectedEnclosureInfo: () =>
       selection.setIsSelectedEnclosureInfoOpen((current) => !current),
     onToggleShowSelectedTrack: () => {
       if (data.selectedEnclosure) {
         actions.toggleSelectedTrackForEnclosure(data.selectedEnclosure.id)
       }
+    },
+    onOpenAssignmentEditor: actions.openAssignmentEditor,
+    onCancelAssignmentEditor: actions.cancelAssignmentEditor,
+    onAssignHerdToEnclosure: (enclosure: Enclosure) => {
+      void actions.assignHerdToEnclosure(enclosure)
+    },
+    onAssignmentHerdIdChange: actions.handleAssignmentHerdIdChange,
+    onAssignmentCountChange: assignment.setAssignmentCount,
+    onAssignmentNotesChange: assignment.setAssignmentNotes,
+    onEndEnclosureAssignment: (assignmentRecord: EnclosureAssignment) => {
+      void actions.endEnclosureAssignment(assignmentRecord)
     },
   }
 }
@@ -285,6 +307,7 @@ export function buildSidebarPanelProps({
     safeHerds: data.safeHerds,
     herdsById: data.herdsById,
     animalsByHerdId: data.animalsByHerdId,
+    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
     assignmentHistoryByEnclosureId: data.assignmentHistoryByEnclosureId,
     editingEnclosureId: edit.editingEnclosureId,
     editName: edit.editName,

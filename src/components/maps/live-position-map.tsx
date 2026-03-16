@@ -50,7 +50,6 @@ export function LivePositionMap() {
   }
 
   function handleSelectedEnclosureChange(nextId: string) {
-    setIsMobileMapOpen(true)
     workflowPanelsProps.onSelectedEnclosureChange(nextId)
   }
 

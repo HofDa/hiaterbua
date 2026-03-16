@@ -16,7 +16,12 @@ import {
   MobileMapSegmentButton,
   MobileMapSegmentedControl,
 } from '@/components/maps/mobile-map-ui'
-import type { Enclosure } from '@/types/domain'
+import type {
+  Animal,
+  Enclosure,
+  EnclosureAssignment,
+  Herd,
+} from '@/types/domain'
 
 export type LivePositionWorkflowPanelsProps = {
   mobilePanel: MobilePanel
@@ -40,6 +45,17 @@ export type LivePositionWorkflowPanelsProps = {
   filteredEnclosures: FilteredEnclosureItem[]
   selectedEnclosure: Enclosure | null
   selectedEnclosureId: string | null
+  assignmentEditorEnclosureId: string | null
+  assignmentHerdId: string
+  assignmentCount: string
+  assignmentNotes: string
+  assignmentError: string
+  isAssignmentSaving: boolean
+  endingAssignmentId: string | null
+  safeHerds: Herd[]
+  herdsById: Map<string, Herd>
+  animalsByHerdId: Map<string, Animal[]>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   isSelectedEnclosureInfoOpen: boolean
   showSelectedTrack: boolean
   onMobilePanelChange: (panel: MobilePanel) => void
@@ -61,9 +77,15 @@ export type LivePositionWorkflowPanelsProps = {
   onWalkNotesChange: (value: string) => void
   onSaveWalkEnclosure: (event: FormEvent<HTMLFormElement>) => void
   onSelectedEnclosureChange: (nextId: string) => void
-  onClearSelectedEnclosure: () => void
   onToggleSelectedEnclosureInfo: () => void
   onToggleShowSelectedTrack: () => void
+  onOpenAssignmentEditor: (enclosure: Enclosure) => void
+  onCancelAssignmentEditor: () => void
+  onAssignHerdToEnclosure: (enclosure: Enclosure) => void
+  onAssignmentHerdIdChange: (nextHerdId: string) => void
+  onAssignmentCountChange: (value: string) => void
+  onAssignmentNotesChange: (value: string) => void
+  onEndEnclosureAssignment: (assignment: EnclosureAssignment) => void
 }
 
 export function LivePositionWorkflowPanels({
@@ -88,6 +110,17 @@ export function LivePositionWorkflowPanels({
   filteredEnclosures,
   selectedEnclosure,
   selectedEnclosureId,
+  assignmentEditorEnclosureId,
+  assignmentHerdId,
+  assignmentCount,
+  assignmentNotes,
+  assignmentError,
+  isAssignmentSaving,
+  endingAssignmentId,
+  safeHerds,
+  herdsById,
+  animalsByHerdId,
+  activeAssignmentsByHerdId,
   isSelectedEnclosureInfoOpen,
   showSelectedTrack,
   onMobilePanelChange,
@@ -109,18 +142,24 @@ export function LivePositionWorkflowPanels({
   onWalkNotesChange,
   onSaveWalkEnclosure,
   onSelectedEnclosureChange,
-  onClearSelectedEnclosure,
   onToggleSelectedEnclosureInfo,
   onToggleShowSelectedTrack,
+  onOpenAssignmentEditor,
+  onCancelAssignmentEditor,
+  onAssignHerdToEnclosure,
+  onAssignmentHerdIdChange,
+  onAssignmentCountChange,
+  onAssignmentNotesChange,
+  onEndEnclosureAssignment,
 }: LivePositionWorkflowPanelsProps) {
   return (
     <>
       <MobileMapSegmentedControl>
         <MobileMapSegmentButton
-          onClick={() => onMobilePanelChange('draw')}
-          active={mobilePanel === 'draw'}
+          onClick={() => onMobilePanelChange('saved')}
+          active={mobilePanel === 'saved'}
         >
-          Zeichnen
+          Pferche
         </MobileMapSegmentButton>
         <MobileMapSegmentButton
           onClick={() => onMobilePanelChange('walk')}
@@ -129,10 +168,10 @@ export function LivePositionWorkflowPanels({
           Walk
         </MobileMapSegmentButton>
         <MobileMapSegmentButton
-          onClick={() => onMobilePanelChange('saved')}
-          active={mobilePanel === 'saved'}
+          onClick={() => onMobilePanelChange('draw')}
+          active={mobilePanel === 'draw'}
         >
-          Pferche
+          Zeichnen
         </MobileMapSegmentButton>
       </MobileMapSegmentedControl>
 
@@ -201,12 +240,29 @@ export function LivePositionWorkflowPanels({
           filteredEnclosures={filteredEnclosures}
           selectedEnclosure={selectedEnclosure}
           selectedEnclosureId={selectedEnclosureId}
+          assignmentEditorEnclosureId={assignmentEditorEnclosureId}
+          assignmentHerdId={assignmentHerdId}
+          assignmentCount={assignmentCount}
+          assignmentNotes={assignmentNotes}
+          assignmentError={assignmentError}
+          isAssignmentSaving={isAssignmentSaving}
+          endingAssignmentId={endingAssignmentId}
+          safeHerds={safeHerds}
+          herdsById={herdsById}
+          animalsByHerdId={animalsByHerdId}
+          activeAssignmentsByHerdId={activeAssignmentsByHerdId}
           isSelectedEnclosureInfoOpen={isSelectedEnclosureInfoOpen}
           showSelectedTrack={showSelectedTrack}
           onSelectedEnclosureChange={onSelectedEnclosureChange}
-          onClearSelection={onClearSelectedEnclosure}
           onToggleSelectedEnclosureInfo={onToggleSelectedEnclosureInfo}
           onToggleShowSelectedTrack={onToggleShowSelectedTrack}
+          onOpenAssignmentEditor={onOpenAssignmentEditor}
+          onCancelAssignmentEditor={onCancelAssignmentEditor}
+          onAssignHerdToEnclosure={onAssignHerdToEnclosure}
+          onAssignmentHerdIdChange={onAssignmentHerdIdChange}
+          onAssignmentCountChange={onAssignmentCountChange}
+          onAssignmentNotesChange={onAssignmentNotesChange}
+          onEndEnclosureAssignment={onEndEnclosureAssignment}
         />
       </div>
     </>

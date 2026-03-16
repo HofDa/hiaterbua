@@ -150,37 +150,41 @@ export function GrazingSessionHistoryPanel({
 
   return (
     <>
-      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:hidden">
-        <button
-          type="button"
-          onClick={onToggleHistoryExpanded}
-          className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-left shadow-sm"
-        >
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-950">Weidegang-Historie</h2>
-            <div className="mt-1 text-sm font-medium text-neutral-700">
-              {safeRecentSessions.length} gespeicherte Weidegänge
+      <div className="space-y-4 lg:hidden">
+        <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+          <GrazingSessionSurveyAreasPanel
+            safeSurveyAreas={safeSurveyAreas}
+            selectedSurveyArea={selectedSurveyArea}
+            selectedSurveyAreaId={selectedSurveyAreaId}
+            onFocusSurveyArea={onFocusSurveyArea}
+          />
+        </div>
+
+        <div className="overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+          <button
+            type="button"
+            onClick={onToggleHistoryExpanded}
+            className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-left shadow-sm"
+          >
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-950">Weidegang-Historie</h2>
+              <div className="mt-1 text-sm font-medium text-neutral-700">
+                {safeRecentSessions.length} gespeicherte Weidegänge
+              </div>
             </div>
-          </div>
-          <span className="text-lg font-semibold text-neutral-900">
-            {isHistoryExpanded ? '−' : '+'}
-          </span>
-        </button>
+            <span className="text-lg font-semibold text-neutral-900">
+              {isHistoryExpanded ? '−' : '+'}
+            </span>
+          </button>
 
-        <GrazingSessionSurveyAreasPanel
-          safeSurveyAreas={safeSurveyAreas}
-          selectedSurveyArea={selectedSurveyArea}
-          selectedSurveyAreaId={selectedSurveyAreaId}
-          onFocusSurveyArea={onFocusSurveyArea}
-        />
-
-        {isHistoryExpanded ? (
-          <>
-            <GrazingSessionHistoryStatsGrid sessionHistoryStats={sessionHistoryStats} />
-            {historyGroups}
-            {historyFocusDetails}
-          </>
-        ) : null}
+          {isHistoryExpanded ? (
+            <>
+              <GrazingSessionHistoryStatsGrid sessionHistoryStats={sessionHistoryStats} />
+              {historyGroups}
+              {historyFocusDetails}
+            </>
+          ) : null}
+        </div>
       </div>
 
       <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:flex">
@@ -189,27 +193,20 @@ export function GrazingSessionHistoryPanel({
           <p className="mt-1 text-sm text-neutral-700">{summary}</p>
         </div>
 
-        <div className="mt-4 min-h-0 flex flex-1 flex-col">
-          <div className="shrink-0">
-            <GrazingSessionSurveyAreasPanel
-              safeSurveyAreas={safeSurveyAreas}
-              selectedSurveyArea={selectedSurveyArea}
-              selectedSurveyAreaId={selectedSurveyAreaId}
-              onFocusSurveyArea={onFocusSurveyArea}
-            />
-            <GrazingSessionHistoryStatsGrid sessionHistoryStats={sessionHistoryStats} />
-            {historyFocusDetails}
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-neutral-950">Gespeicherte Weidegänge</div>
-              <div className="text-xs font-medium text-neutral-600">
-                {safeRecentSessions.length}
-              </div>
-            </div>
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+          <GrazingSessionSurveyAreasPanel
+            safeSurveyAreas={safeSurveyAreas}
+            selectedSurveyArea={selectedSurveyArea}
+            selectedSurveyAreaId={selectedSurveyAreaId}
+            onFocusSurveyArea={onFocusSurveyArea}
+          />
+          <GrazingSessionHistoryStatsGrid sessionHistoryStats={sessionHistoryStats} />
+          {historyFocusDetails}
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-neutral-950">Gespeicherte Weidegänge</div>
+            <div className="text-xs font-medium text-neutral-600">{safeRecentSessions.length}</div>
           </div>
-
-          <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-            {historyGroups}
-          </div>
+          <div className="pb-1">{historyGroups}</div>
         </div>
       </section>
     </>

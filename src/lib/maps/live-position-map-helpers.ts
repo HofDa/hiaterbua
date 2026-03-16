@@ -32,10 +32,12 @@ export {
 } from '@/lib/maps/live-position-map-geometry'
 export {
   buildActiveAssignmentsByEnclosureId,
+  buildActiveAssignmentsByHerdId,
   buildAnimalsByHerdId,
   buildAssignmentHistoryByEnclosureId,
   buildEnclosureStatsById,
   buildFilteredEnclosures,
   buildHerdsById,
   getEffectiveHerdCount,
+  getAssignableHerds,
 } from '@/lib/maps/live-position-map-enclosure-stats'

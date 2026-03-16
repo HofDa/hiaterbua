@@ -15,6 +15,7 @@ type UseLivePositionMapEnclosureControllerOptions = {
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
   activeAssignmentsByEnclosureId: Map<string, EnclosureAssignment>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   editAreaM2: number
   selectedEnclosureId: string | null
   editingEnclosureId: string | null
@@ -51,6 +52,7 @@ export function useLivePositionMapEnclosureController({
   herdsById,
   animalsByHerdId,
   activeAssignmentsByEnclosureId,
+  activeAssignmentsByHerdId,
   editAreaM2,
   selectedEnclosureId,
   editingEnclosureId,
@@ -118,6 +120,7 @@ export function useLivePositionMapEnclosureController({
     herdsById,
     animalsByHerdId,
     activeAssignmentsByEnclosureId,
+    activeAssignmentsByHerdId,
     assignmentHerdId,
     assignmentCount,
     assignmentNotes,

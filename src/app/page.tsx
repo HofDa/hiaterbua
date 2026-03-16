@@ -6,9 +6,9 @@ import { db } from '@/lib/db/dexie'
 
 const fieldStartLinks = [
   {
-    href: '/enclosures',
-    title: 'Karte',
-    description: 'Pferch zeichnen, Walk starten und Kartenausschnitt sichern.',
+    href: '/work',
+    title: 'Arbeit',
+    description: 'Arbeitszeit im Feld mit Erinnerung erfassen.',
     className:
       'border-[#ccb98a] bg-[#fffdf6] shadow-[0_18px_36px_rgba(40,34,26,0.08)]',
     titleClass: 'text-[#17130f]',
@@ -24,9 +24,9 @@ const fieldStartLinks = [
     descriptionClass: 'text-[#4f473c]',
   },
   {
-    href: '/work',
-    title: 'Arbeit',
-    description: 'Arbeitszeit im Feld mit Erinnerung erfassen.',
+    href: '/enclosures',
+    title: 'Pferch',
+    description: 'Pferch zeichnen, Walk starten und Belegung prüfen.',
     className:
       'border-[#ccb98a] bg-[#fffdf6] shadow-[0_18px_36px_rgba(40,34,26,0.08)]',
     titleClass: 'text-[#17130f]',

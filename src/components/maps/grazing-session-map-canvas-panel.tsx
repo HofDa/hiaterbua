@@ -135,37 +135,145 @@ export function GrazingSessionMapCanvasPanel({
   onCancelEditSession,
 }: GrazingSessionMapCanvasPanelProps) {
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
+  const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(false)
 
   const hasMobileToolbar = !editingSessionId
+  const managementOverlay = !editingSessionId ? (
+    <GrazingSessionMapDesktopManagementOverlay
+      safeHerds={safeHerds}
+      selectedHerdId={selectedHerdId}
+      selectedAnimalCount={selectedAnimalCount}
+      sessionNotes={sessionNotes}
+      currentSessionStatus={currentSessionStatus}
+      isSaving={isSaving}
+      isEventSaving={isEventSaving}
+      eventNote={eventNote}
+      eventStatus={eventStatus}
+      actionError={actionError}
+      safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
+      currentMetrics={currentMetrics}
+      safeCurrentSessionEvents={safeCurrentSessionEvents}
+      onSelectedHerdIdChange={onSelectedHerdIdChange}
+      onAdjustAnimalCount={onAdjustAnimalCount}
+      onSessionNotesChange={onSessionNotesChange}
+      onStartSession={onStartOrResumeSession}
+      onPauseSession={onPauseSession}
+      onResumeSession={onResumeSession}
+      onStopSession={onStopSession}
+      onEventNoteChange={onEventNoteChange}
+      onAddSessionMarkerEvent={onAddSessionMarkerEvent}
+    />
+  ) : null
+  const mapTopControls = (
+    <MobileMapTopControls>
+      <div className="mb-2 flex justify-start gap-2">
+        <button
+          type="button"
+          aria-label="Auf aktuelle Position zentrieren"
+          onClick={onCenterMap}
+          disabled={!position}
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg disabled:opacity-50"
+        >
+          <CenterIcon />
+        </button>
+        <button
+          type="button"
+          aria-label="Kartengrundlage wählen"
+          onClick={onToggleBaseLayerMenu}
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg"
+        >
+          <LayersIcon />
+        </button>
+        <button
+          type="button"
+          aria-label={
+            isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
+          }
+          aria-expanded={isDesktopToolbarOpen}
+          onClick={() => setIsDesktopToolbarOpen((current) => !current)}
+          className={[
+            'hidden h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] shadow-lg transition-colors lg:flex',
+            isDesktopToolbarOpen ? 'text-neutral-950' : 'text-neutral-600',
+          ].join(' ')}
+          title={
+            isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
+          }
+        >
+          <ControlsIcon />
+        </button>
+      </div>
+
+      {isBaseLayerMenuOpen ? (
+        <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-[#ccb98a] bg-[rgba(255,253,246,0.96)] p-1.5 shadow-lg">
+          <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
+            Kartengrundlage
+          </div>
+          <button
+            type="button"
+            onClick={() => void onUpdateBaseLayer('south-tyrol-orthophoto-2023')}
+            className={[
+              'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
+              baseLayer === 'south-tyrol-orthophoto-2023'
+                ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                : 'bg-[#f1efeb] text-neutral-950',
+            ].join(' ')}
+          >
+            Orthofoto 2023
+          </button>
+          <button
+            type="button"
+            onClick={() => void onUpdateBaseLayer('south-tyrol-basemap')}
+            className={[
+              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
+              baseLayer === 'south-tyrol-basemap'
+                ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
+                : 'bg-[#f1efeb] text-neutral-950',
+            ].join(' ')}
+          >
+            BaseMap Südtirol
+          </button>
+          <button
+            type="button"
+            onClick={onToggleShowSurveyAreas}
+            className={[
+              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
+              showSurveyAreas ? 'bg-[#efe4c8] text-[#17130f]' : 'bg-[#f1efeb] text-neutral-950',
+            ].join(' ')}
+          >
+            Flächen {showSurveyAreas ? 'an' : 'aus'}
+          </button>
+          <button
+            type="button"
+            onClick={onToggleShowSessionEventsOnMap}
+            className={[
+              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
+              showSessionEventsOnMap
+                ? 'bg-[#efe4c8] text-[#17130f]'
+                : 'bg-[#f1efeb] text-neutral-950',
+            ].join(' ')}
+          >
+            Ereignisse {showSessionEventsOnMap ? 'an' : 'aus'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void onPrefetchVisibleMapArea()}
+            disabled={prefetchingMapArea}
+            className="mt-1.5 w-full rounded-xl border border-[#ccb98a] bg-[#fffdf6] px-2.5 py-2 text-left text-xs font-medium text-[#17130f] disabled:opacity-50"
+          >
+            {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
+          </button>
+          {prefetchStatus ? (
+            <div className="mt-1.5 rounded-xl bg-[#f1efeb] px-2.5 py-2 text-[11px] font-medium text-neutral-900">
+              {prefetchStatus}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </MobileMapTopControls>
+  )
 
   return (
     <div className="relative overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:sticky lg:top-4">
-      {!editingSessionId ? (
-        <GrazingSessionMapDesktopManagementOverlay
-          safeHerds={safeHerds}
-          selectedHerdId={selectedHerdId}
-          selectedAnimalCount={selectedAnimalCount}
-          sessionNotes={sessionNotes}
-          currentSessionStatus={currentSessionStatus}
-          isSaving={isSaving}
-          isEventSaving={isEventSaving}
-          eventNote={eventNote}
-          eventStatus={eventStatus}
-          actionError={actionError}
-          safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
-          currentMetrics={currentMetrics}
-          safeCurrentSessionEvents={safeCurrentSessionEvents}
-          onSelectedHerdIdChange={onSelectedHerdIdChange}
-          onAdjustAnimalCount={onAdjustAnimalCount}
-          onSessionNotesChange={onSessionNotesChange}
-          onStartSession={onStartOrResumeSession}
-          onPauseSession={onPauseSession}
-          onResumeSession={onResumeSession}
-          onStopSession={onStopSession}
-          onEventNoteChange={onEventNoteChange}
-          onAddSessionMarkerEvent={onAddSessionMarkerEvent}
-        />
-      ) : null}
       <div
         ref={containerRef}
         className="h-[420px] w-full bg-[#fffdf6] sm:h-[520px] lg:h-[calc(100vh-8rem)]"
@@ -231,94 +339,9 @@ export function GrazingSessionMapCanvasPanel({
           </MobileMapToolbar>
         </div>
       ) : null}
-      <MobileMapTopControls>
-        <div className="mb-2 flex justify-start gap-2">
-          <button
-            type="button"
-            aria-label="Auf aktuelle Position zentrieren"
-            onClick={onCenterMap}
-            disabled={!position}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg disabled:opacity-50"
-          >
-            <CenterIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="Kartengrundlage wählen"
-            onClick={onToggleBaseLayerMenu}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg"
-          >
-            <LayersIcon />
-          </button>
-        </div>
-
-        {isBaseLayerMenuOpen ? (
-          <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-[#ccb98a] bg-[rgba(255,253,246,0.96)] p-1.5 shadow-lg">
-            <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
-              Kartengrundlage
-            </div>
-            <button
-              type="button"
-              onClick={() => void onUpdateBaseLayer('south-tyrol-orthophoto-2023')}
-              className={[
-                'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-                baseLayer === 'south-tyrol-orthophoto-2023'
-                  ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                  : 'bg-[#f1efeb] text-neutral-950',
-              ].join(' ')}
-            >
-              Orthofoto 2023
-            </button>
-            <button
-              type="button"
-              onClick={() => void onUpdateBaseLayer('south-tyrol-basemap')}
-              className={[
-                'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-                baseLayer === 'south-tyrol-basemap'
-                  ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                  : 'bg-[#f1efeb] text-neutral-950',
-              ].join(' ')}
-            >
-              BaseMap Südtirol
-            </button>
-            <button
-              type="button"
-              onClick={onToggleShowSurveyAreas}
-              className={[
-                'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-                showSurveyAreas ? 'bg-[#efe4c8] text-[#17130f]' : 'bg-[#f1efeb] text-neutral-950',
-              ].join(' ')}
-            >
-              Flächen {showSurveyAreas ? 'an' : 'aus'}
-            </button>
-            <button
-              type="button"
-              onClick={onToggleShowSessionEventsOnMap}
-              className={[
-                'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-                showSessionEventsOnMap
-                  ? 'bg-[#efe4c8] text-[#17130f]'
-                  : 'bg-[#f1efeb] text-neutral-950',
-              ].join(' ')}
-            >
-              Ereignisse {showSessionEventsOnMap ? 'an' : 'aus'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void onPrefetchVisibleMapArea()}
-              disabled={prefetchingMapArea}
-              className="mt-1.5 w-full rounded-xl border border-[#ccb98a] bg-[#fffdf6] px-2.5 py-2 text-left text-xs font-medium text-[#17130f] disabled:opacity-50"
-            >
-              {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
-            </button>
-            {prefetchStatus ? (
-              <div className="mt-1.5 rounded-xl bg-[#f1efeb] px-2.5 py-2 text-[11px] font-medium text-neutral-900">
-                {prefetchStatus}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </MobileMapTopControls>
+      {isDesktopToolbarOpen ? managementOverlay : null}
+      <div className="hidden lg:block">{mapTopControls}</div>
+      <div className="lg:hidden">{mapTopControls}</div>
       {editingSessionId ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 sm:p-4">
           <MobileMapFloatingCard>

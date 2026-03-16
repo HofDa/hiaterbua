@@ -135,7 +135,8 @@ export function LivePositionMapCanvasPanel({
   onPersistEditedEnclosure,
   onCancelEditEnclosure,
 }: LivePositionMapCanvasPanelProps) {
-  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
+  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false)
+  const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(false)
 
   const hasMobileToolbar =
     !editingEnclosureId && (mobilePanel === 'draw' || mobilePanel === 'walk')
@@ -184,59 +185,104 @@ export function LivePositionMapCanvasPanel({
           onDiscardWalkMode={onDiscardWalkMode}
         />
       ) : null}
-      {!editingEnclosureId ? (
-        <LivePositionMapDesktopDrawOverlay
-          mobilePanel={mobilePanel}
-          draftPointsLength={draftPointsLength}
-          draftAreaM2={draftAreaM2}
-          isDrawing={isDrawing}
-          name={name}
-          notes={notes}
-          saveError={saveError}
-          isSaving={isSaving}
-          isWalking={isWalking}
-          walkPoints={walkPoints}
-          walkAreaM2={walkAreaM2}
-          walkName={walkName}
-          walkNotes={walkNotes}
-          walkError={walkError}
-          isWalkSaving={isWalkSaving}
-          isWalkPointsOpen={isWalkPointsOpen}
-          selectedWalkPointIndex={selectedWalkPointIndex}
-          selectedWalkPoint={selectedWalkPoint}
-          onModeChange={onMobilePanelChange}
-          onStartDrawing={onStartDrawing}
-          onFinishDrawing={onFinishDrawing}
-          onUndoLastPoint={onUndoLastPoint}
-          onClearDraft={onClearDraft}
-          onNameChange={onNameChange}
-          onNotesChange={onNotesChange}
-          onSaveEnclosure={onSaveEnclosure}
-          onToggleWalkPoints={onToggleWalkPoints}
-          onSelectedWalkPointIndexChange={onSelectedWalkPointIndexChange}
-          onStartWalkMode={onStartWalkMode}
-          onStopWalkMode={onStopWalkMode}
-          onUndoLastWalkPoint={onUndoLastWalkPoint}
-          onRemoveWalkPointAtIndex={onRemoveWalkPointAtIndex}
-          onDiscardWalkMode={onDiscardWalkMode}
-          onWalkNameChange={onWalkNameChange}
-          onWalkNotesChange={onWalkNotesChange}
-          onSaveWalkEnclosure={onSaveWalkEnclosure}
+      <div
+        aria-hidden={!isDesktopToolbarOpen}
+        className={[
+          'pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden p-3 lg:block xl:p-4',
+          isDesktopToolbarOpen ? 'opacity-100' : 'opacity-0',
+          'transition-opacity duration-200',
+        ].join(' ')}
+      >
+        {isDesktopToolbarOpen ? (
+          <LivePositionMapDesktopDrawOverlay
+            mobilePanel={mobilePanel}
+            draftPointsLength={draftPointsLength}
+            draftAreaM2={draftAreaM2}
+            isDrawing={isDrawing}
+            name={name}
+            notes={notes}
+            saveError={saveError}
+            isSaving={isSaving}
+            isWalking={isWalking}
+            walkPoints={walkPoints}
+            walkAreaM2={walkAreaM2}
+            walkName={walkName}
+            walkNotes={walkNotes}
+            walkError={walkError}
+            isWalkSaving={isWalkSaving}
+            isWalkPointsOpen={isWalkPointsOpen}
+            selectedWalkPointIndex={selectedWalkPointIndex}
+            selectedWalkPoint={selectedWalkPoint}
+            onModeChange={onMobilePanelChange}
+            onStartDrawing={onStartDrawing}
+            onFinishDrawing={onFinishDrawing}
+            onUndoLastPoint={onUndoLastPoint}
+            onClearDraft={onClearDraft}
+            onNameChange={onNameChange}
+            onNotesChange={onNotesChange}
+            onSaveEnclosure={onSaveEnclosure}
+            onToggleWalkPoints={onToggleWalkPoints}
+            onSelectedWalkPointIndexChange={onSelectedWalkPointIndexChange}
+            onStartWalkMode={onStartWalkMode}
+            onStopWalkMode={onStopWalkMode}
+            onUndoLastWalkPoint={onUndoLastWalkPoint}
+            onRemoveWalkPointAtIndex={onRemoveWalkPointAtIndex}
+            onDiscardWalkMode={onDiscardWalkMode}
+            onWalkNameChange={onWalkNameChange}
+            onWalkNotesChange={onWalkNotesChange}
+            onSaveWalkEnclosure={onSaveWalkEnclosure}
+          />
+        ) : null}
+      </div>
+      <div className="hidden lg:block">
+        <LivePositionMapTopControls
+          positionAvailable={Boolean(position)}
+          isBaseLayerMenuOpen={isBaseLayerMenuOpen}
+          baseLayer={baseLayer}
+          showSurveyAreas={showSurveyAreas}
+          prefetchingMapArea={prefetchingMapArea}
+          prefetchStatus={prefetchStatus}
+          onCenterMap={onCenterMap}
+          onToggleBaseLayerMenu={onToggleBaseLayerMenu}
+          onUpdateBaseLayer={onUpdateBaseLayer}
+          onToggleShowSurveyAreas={onToggleShowSurveyAreas}
+          onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
+          extraControls={
+            <button
+              type="button"
+              aria-label={
+                isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
+              }
+              aria-expanded={isDesktopToolbarOpen}
+              onClick={() => setIsDesktopToolbarOpen((current) => !current)}
+              className={[
+                'hidden h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] shadow-lg transition-colors lg:flex',
+                isDesktopToolbarOpen ? 'text-neutral-950' : 'text-neutral-600',
+              ].join(' ')}
+              title={
+                isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
+              }
+            >
+              <ControlsIcon />
+            </button>
+          }
         />
-      ) : null}
-      <LivePositionMapTopControls
-        positionAvailable={Boolean(position)}
-        isBaseLayerMenuOpen={isBaseLayerMenuOpen}
-        baseLayer={baseLayer}
-        showSurveyAreas={showSurveyAreas}
-        prefetchingMapArea={prefetchingMapArea}
-        prefetchStatus={prefetchStatus}
-        onCenterMap={onCenterMap}
-        onToggleBaseLayerMenu={onToggleBaseLayerMenu}
-        onUpdateBaseLayer={onUpdateBaseLayer}
-        onToggleShowSurveyAreas={onToggleShowSurveyAreas}
-        onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
-      />
+      </div>
+      <div className="lg:hidden">
+        <LivePositionMapTopControls
+          positionAvailable={Boolean(position)}
+          isBaseLayerMenuOpen={isBaseLayerMenuOpen}
+          baseLayer={baseLayer}
+          showSurveyAreas={showSurveyAreas}
+          prefetchingMapArea={prefetchingMapArea}
+          prefetchStatus={prefetchStatus}
+          onCenterMap={onCenterMap}
+          onToggleBaseLayerMenu={onToggleBaseLayerMenu}
+          onUpdateBaseLayer={onUpdateBaseLayer}
+          onToggleShowSurveyAreas={onToggleShowSurveyAreas}
+          onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
+        />
+      </div>
       {editingEnclosureId ? (
         <LivePositionMapEditOverlay
           editGeometryPointsLength={editGeometryPointsLength}

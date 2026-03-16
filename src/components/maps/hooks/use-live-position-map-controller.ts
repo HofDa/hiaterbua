@@ -17,6 +17,7 @@ type UseLivePositionMapControllerOptions = {
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
   activeAssignmentsByEnclosureId: Map<string, EnclosureAssignment>
+  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   acceptedPositionRef: MutableRefObject<PositionData | null>
   positionAccuracy: number | null
   draftAreaM2: number
@@ -82,6 +83,7 @@ export function useLivePositionMapController({
   herdsById,
   animalsByHerdId,
   activeAssignmentsByEnclosureId,
+  activeAssignmentsByHerdId,
   acceptedPositionRef,
   positionAccuracy,
   draftAreaM2,
@@ -205,6 +207,7 @@ export function useLivePositionMapController({
     herdsById,
     animalsByHerdId,
     activeAssignmentsByEnclosureId,
+    activeAssignmentsByHerdId,
     editAreaM2,
     selectedEnclosureId,
     editingEnclosureId,

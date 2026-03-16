@@ -74,16 +74,18 @@ export function useLivePositionMapSync({
   setSelectedSurveyAreaId,
 }: UseLivePositionMapSyncOptions) {
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('saved-enclosures') as GeoJSONSource | undefined
     if (!source) return
     source.setData(savedFeatureCollection)
-  }, [mapRef, savedFeatureCollection])
+  }, [mapReady, mapRef, savedFeatureCollection])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('survey-areas') as GeoJSONSource | undefined
     if (!source) return
     source.setData(surveyAreaFeatureCollection)
-  }, [mapRef, surveyAreaFeatureCollection])
+  }, [mapReady, mapRef, surveyAreaFeatureCollection])
 
   useEffect(() => {
     const map = mapRef.current
@@ -114,46 +116,52 @@ export function useLivePositionMapSync({
   ])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('draft-enclosure') as GeoJSONSource | undefined
     if (!source) return
     source.setData(draftFeatureCollection)
-  }, [draftFeatureCollection, mapRef])
+  }, [draftFeatureCollection, mapReady, mapRef])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('edit-enclosure') as GeoJSONSource | undefined
     if (!source) return
     source.setData(editingEnclosureId ? editFeatureCollection : emptyFeatureCollection)
-  }, [editFeatureCollection, editingEnclosureId, mapRef])
+  }, [editFeatureCollection, editingEnclosureId, mapReady, mapRef])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('walk-track') as GeoJSONSource | undefined
     if (!source) return
     source.setData(walkFeatureCollection)
-  }, [mapRef, walkFeatureCollection])
+  }, [mapReady, mapRef, walkFeatureCollection])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('selected-walk-point') as
       | GeoJSONSource
       | undefined
     if (!source) return
     source.setData(selectedWalkPointFeatureCollection)
-  }, [mapRef, selectedWalkPointFeatureCollection])
+  }, [mapReady, mapRef, selectedWalkPointFeatureCollection])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('selected-enclosure') as
       | GeoJSONSource
       | undefined
     if (!source) return
     source.setData(selectedFeatureCollection)
-  }, [mapRef, selectedFeatureCollection])
+  }, [mapReady, mapRef, selectedFeatureCollection])
 
   useEffect(() => {
+    if (!mapReady) return
     const source = mapRef.current?.getSource('selected-walk-track') as
       | GeoJSONSource
       | undefined
     if (!source) return
     source.setData(showSelectedTrack ? selectedTrackFeatureCollection : emptyFeatureCollection)
-  }, [mapRef, selectedTrackFeatureCollection, showSelectedTrack])
+  }, [mapReady, mapRef, selectedTrackFeatureCollection, showSelectedTrack])
 
   useEffect(() => {
     if (!showSelectedTrack || !mapRef.current || safeSelectedTrackpoints.length === 0) return

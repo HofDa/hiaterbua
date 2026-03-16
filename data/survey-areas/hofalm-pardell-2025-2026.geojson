@@ -1,0 +1,696 @@
+{
+  "type": "FeatureCollection",
+  "name": "survey-areas",
+  "generatedAt": "2026-03-16T17:43:13.302Z",
+  "featureCount": 18,
+  "warnings": [
+    "Hofalm_August 2025_Polygonpunkte: \"Schafweide 2 LU\" hat unvollstaendige Koordinaten und wird nur als Hinweis gespeichert.",
+    "Hofalm_August 2025_Polygonpunkte: \"Schafweide 2\" wurde uebersprungen, weil weniger als zwei gueltige Eckpunkte vorhanden sind."
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-dichte-zwergstrauchheide-1",
+        "name": "Dichte Zwergstrauchheide 1",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.808717,
+              46.86265
+            ],
+            [
+              11.808764,
+              46.86265
+            ],
+            [
+              11.808764,
+              46.862763
+            ],
+            [
+              11.808717,
+              46.862763
+            ],
+            [
+              11.808717,
+              46.86265
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-dichte-zwergstrauchheide-2",
+        "name": "Dichte Zwergstrauchheide 2",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.810428,
+              46.863823
+            ],
+            [
+              11.810485,
+              46.863823
+            ],
+            [
+              11.810485,
+              46.863949
+            ],
+            [
+              11.810428,
+              46.863949
+            ],
+            [
+              11.810428,
+              46.863823
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-moor-1",
+        "name": "Moor 1",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.810844,
+              46.868995
+            ],
+            [
+              11.81097,
+              46.868995
+            ],
+            [
+              11.81097,
+              46.869035
+            ],
+            [
+              11.810844,
+              46.869035
+            ],
+            [
+              11.810844,
+              46.868995
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-moor-2",
+        "name": "Moor 2",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.810139,
+              46.868861
+            ],
+            [
+              11.8102,
+              46.868861
+            ],
+            [
+              11.8102,
+              46.868966
+            ],
+            [
+              11.810139,
+              46.868966
+            ],
+            [
+              11.810139,
+              46.868861
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-schafweide-1",
+        "name": "Schafweide 1",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.805968,
+              46.866266
+            ],
+            [
+              11.806135,
+              46.866266
+            ],
+            [
+              11.806135,
+              46.866343
+            ],
+            [
+              11.805968,
+              46.866343
+            ],
+            [
+              11.805968,
+              46.866266
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-ubergang-zwgstrhd-weide-1",
+        "name": "Übergang ZwgStrHd-Weide 1",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.811479,
+              46.864958
+            ],
+            [
+              11.811517,
+              46.864958
+            ],
+            [
+              11.811517,
+              46.865044
+            ],
+            [
+              11.811479,
+              46.865044
+            ],
+            [
+              11.811479,
+              46.864958
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-ubergang-zwgstrhd-weide-2",
+        "name": "Übergang ZwgStrHd-Weide 2",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.811712,
+              46.868756
+            ],
+            [
+              11.811778,
+              46.868756
+            ],
+            [
+              11.811778,
+              46.868938
+            ],
+            [
+              11.811712,
+              46.868938
+            ],
+            [
+              11.811712,
+              46.868756
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-verfilztes-nardetum-1",
+        "name": "Verfilztes Nardetum 1",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.810493,
+              46.867495
+            ],
+            [
+              11.810535,
+              46.867495
+            ],
+            [
+              11.810535,
+              46.867598
+            ],
+            [
+              11.810493,
+              46.867598
+            ],
+            [
+              11.810493,
+              46.867495
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-verfilztes-nardetum-2",
+        "name": "Verfilztes Nardetum 2",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.808762,
+              46.867454
+            ],
+            [
+              11.808837,
+              46.867454
+            ],
+            [
+              11.808837,
+              46.86761
+            ],
+            [
+              11.808762,
+              46.86761
+            ],
+            [
+              11.808762,
+              46.867454
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-waldweide-1",
+        "name": "Waldweide 1",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.804111,
+              46.86349
+            ],
+            [
+              11.804189,
+              46.86349
+            ],
+            [
+              11.804189,
+              46.863511
+            ],
+            [
+              11.804111,
+              46.863511
+            ],
+            [
+              11.804111,
+              46.86349
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-hofalm-august-2025-polygonpunkte-waldweide-2",
+        "name": "Waldweide 2",
+        "description": "",
+        "source": "Hofalm_August 2025_Polygonpunkte",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.801433,
+              46.861767
+            ],
+            [
+              11.801475,
+              46.861767
+            ],
+            [
+              11.801475,
+              46.861838
+            ],
+            [
+              11.801433,
+              46.861838
+            ],
+            [
+              11.801433,
+              46.861767
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-pardell-2025-polygonpunkte-neu-2026-adlerfarn-strauchinsel-dicht-schlehe",
+        "name": "Adlerfarn + Strauchinsel dicht (Schlehe)",
+        "description": "",
+        "source": "Pardell_2025_Polygonpunkte_neu_2026",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.697479,
+              46.795991
+            ],
+            [
+              11.697676,
+              46.795991
+            ],
+            [
+              11.697676,
+              46.79601
+            ],
+            [
+              11.697479,
+              46.79601
+            ],
+            [
+              11.697479,
+              46.795991
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-pardell-2025-polygonpunkte-neu-2026-kuhweide-birkenwald-tobias",
+        "name": "Kuhweide Birkenwald Tobias",
+        "description": "",
+        "source": "Pardell_2025_Polygonpunkte_neu_2026",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.697507,
+              46.791408
+            ],
+            [
+              11.697674,
+              46.791408
+            ],
+            [
+              11.697674,
+              46.79142
+            ],
+            [
+              11.697507,
+              46.79142
+            ],
+            [
+              11.697507,
+              46.791408
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-pardell-2025-polygonpunkte-neu-2026-pappelschosslinge",
+        "name": "Pappelschösslinge",
+        "description": "",
+        "source": "Pardell_2025_Polygonpunkte_neu_2026",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.698956,
+              46.79441
+            ],
+            [
+              11.699161,
+              46.79441
+            ],
+            [
+              11.699161,
+              46.794421
+            ],
+            [
+              11.698956,
+              46.794421
+            ],
+            [
+              11.698956,
+              46.79441
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-pardell-2025-polygonpunkte-neu-2026-pappelschosslinge-mit-wacholder-auf-weide-bei-laubwald",
+        "name": "Pappelschösslinge mit Wacholder auf Weide bei Laubwald",
+        "description": "",
+        "source": "Pardell_2025_Polygonpunkte_neu_2026",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.698112,
+              46.793718
+            ],
+            [
+              11.698284,
+              46.793718
+            ],
+            [
+              11.698284,
+              46.793724
+            ],
+            [
+              11.698112,
+              46.793724
+            ],
+            [
+              11.698112,
+              46.793718
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-pardell-2025-polygonpunkte-neu-2026-schlehdorn-dicht-mit-ein-bisschen-weide",
+        "name": "Schlehdorn dicht mit ein bisschen Weide",
+        "description": "",
+        "source": "Pardell_2025_Polygonpunkte_neu_2026",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.698956,
+              46.792986
+            ],
+            [
+              11.699088,
+              46.792986
+            ],
+            [
+              11.699088,
+              46.793044
+            ],
+            [
+              11.698956,
+              46.793044
+            ],
+            [
+              11.698956,
+              46.792986
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-pardell-2025-polygonpunkte-neu-2026-verbuschende-weide-mit-wacholder",
+        "name": "Verbuschende Weide mit Wacholder",
+        "description": "",
+        "source": "Pardell_2025_Polygonpunkte_neu_2026",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.696747,
+              46.792446
+            ],
+            [
+              11.696847,
+              46.792446
+            ],
+            [
+              11.696847,
+              46.792449
+            ],
+            [
+              11.696747,
+              46.792449
+            ],
+            [
+              11.696747,
+              46.792446
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "survey-pardell-2025-polygonpunkte-neu-2026-weide-mit-straucher",
+        "name": "Weide mit Sträucher",
+        "description": "",
+        "source": "Pardell_2025_Polygonpunkte_neu_2026",
+        "createdAt": "2026-03-16T17:43:13.302Z",
+        "updatedAt": "2026-03-16T17:43:13.302Z"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.695492,
+              46.794743
+            ],
+            [
+              11.695635,
+              46.794743
+            ],
+            [
+              11.695635,
+              46.794756
+            ],
+            [
+              11.695492,
+              46.794756
+            ],
+            [
+              11.695492,
+              46.794743
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
