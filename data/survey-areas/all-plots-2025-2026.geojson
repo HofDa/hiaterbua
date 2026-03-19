@@ -8,7 +8,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Par1",
+        "id": "1",
         "name": "Par1: Kuhweide Birkenwald Tobias",
         "description": "Vor 2 Jahren Birken entfernt, Gehölze kommen auf",
         "source": "Pardell_2025_Polygonpunkte_neu_2026",
@@ -46,7 +46,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Par2",
+        "id": "2",
         "name": "Par2: Verbuschende Weide mit Wacholder",
         "description": "Wacholder < 50%",
         "source": "Pardell_2025_Polygonpunkte_neu_2026",
@@ -84,7 +84,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Par3",
+        "id": "3",
         "name": "Par3: Schlehdorn dicht mit ein bisschen Weide",
         "description": "Dichte Strauchinsel",
         "source": "Pardell_2025_Polygonpunkte_neu_2026",
@@ -122,7 +122,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Par4",
+        "id": "4",
         "name": "Par4: Pappelschösslinge mit Wacholder auf Weide bei Laubwald",
         "description": "Jungbaumbestand",
         "source": "Pardell_2025_Polygonpunkte_neu_2026",
@@ -164,7 +164,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Par5",
+        "id": "5",
         "name": "Par5: Pappelschösslinge",
         "description": "Adlerfarn und Gehölzschösslinge",
         "source": "Pardell_2025_Polygonpunkte_neu_2026",
@@ -202,7 +202,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Par6",
+        "id": "6",
         "name": "Par6: Weide mit Sträucher",
         "description": "Sträucher",
         "source": "Pardell_2025_Polygonpunkte_neu_2026",
@@ -240,7 +240,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Par7",
+        "id": "7",
         "name": "Par7: Adlerfarn + Strauchinsel dicht (Schlehe)",
         "description": "Strauchinsel und Adlerfarn",
         "source": "Pardell_2025_Polygonpunkte_neu_2026",
@@ -278,7 +278,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof1",
+        "id": "8",
         "name": "Hof1: Dichte Zwergstrauchheide 1",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
@@ -316,7 +316,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof2",
+        "id": "9",
         "name": "Hof2: Dichte Zwergstrauchheide 2",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
@@ -354,8 +354,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof4",
-        "name": "Hof4: Übergang ZwgStrHd-Weide 1",
+        "id": "10",
+        "name": "Hof3: Übergang ZwgStrHd-Weide 1",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -400,8 +400,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof5",
-        "name": "Hof5: Übergang ZwgStrHd-Weide 2",
+        "id": "11",
+        "name": "Hof4: Übergang ZwgStrHd-Weide 2",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -442,8 +442,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof6",
-        "name": "Hof6: Moor 1",
+        "id": "12",
+        "name": "Hof5: Moor 1",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -480,8 +480,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof7",
-        "name": "Hof7: Moor 2",
+        "id": "13",
+        "name": "Hof6: Moor 2",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -538,8 +538,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof8",
-        "name": "Hof8: Verfilztes Nardetum 1",
+        "id": "14",
+        "name": "Hof7: Verfilztes Nardetum 1",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -612,8 +612,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof9",
-        "name": "Hof9: Verfilztes Nardetum 2",
+        "id": "15",
+        "name": "Hof8: Verfilztes Nardetum 2",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -670,8 +670,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof12",
-        "name": "Hof12: Waldweide 1",
+        "id": "16",
+        "name": "Hof11: Waldweide 1",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -708,8 +708,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof11",
-        "name": "Hof11: Schafweide 2",
+        "id": "17",
+        "name": "Hof10: Schafweide 2",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -746,8 +746,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof10",
-        "name": "Hof10: Schafweide 1",
+        "id": "18",
+        "name": "Hof9: Schafweide 1",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
@@ -784,8 +784,8 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "Hof3",
-        "name": "Hof3: Waldweide 2",
+        "id": "19",
+        "name": "Hof12: Waldweide 2",
         "description": "",
         "source": "Hofalm_August_2025_Polygonpunkte",
         "createdAt": "2026-03-18T10:45:27.240Z",
