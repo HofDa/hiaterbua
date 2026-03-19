@@ -110,6 +110,7 @@ export interface SurveyArea {
   areaHa: number
   createdAt: string
   updatedAt: string
+  importOrder?: number
 }
 
 export interface EnclosureAssignment {

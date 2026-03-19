@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '@/lib/db/dexie'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
+import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
 import {
   buildActiveAssignmentsByEnclosureId,
   buildActiveAssignmentsByHerdId,
@@ -54,7 +55,7 @@ export function useLivePositionMapData({
     []
   )
   const surveyAreas = useLiveQuery(
-    () => db.surveyAreas.orderBy('updatedAt').reverse().toArray(),
+    () => db.surveyAreas.orderBy('id').toArray(),
     []
   )
   const settings = useLiveQuery(() => db.settings.get('app'), [])
@@ -70,7 +71,10 @@ export function useLivePositionMapData({
   }, [selectedEnclosureId])
 
   const safeEnclosures = useMemo(() => enclosures ?? [], [enclosures])
-  const safeSurveyAreas = useMemo(() => surveyAreas ?? [], [surveyAreas])
+  const safeSurveyAreas = useMemo(
+    () => sortSurveyAreasByImportOrder(surveyAreas ?? []),
+    [surveyAreas]
+  )
   const safeHerds = useMemo(() => herds ?? [], [herds])
   const safeAnimals = useMemo(() => animals ?? [], [animals])
   const safeAssignments = useMemo(() => assignments ?? [], [assignments])

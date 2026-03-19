@@ -27,23 +27,28 @@ export function SurveyAreasPanel({
 
   return (
     <div
-      className={`min-w-0 overflow-hidden rounded-[1.25rem] bg-[#fffdf6] px-3 py-3 sm:px-4 sm:py-4 ${className}`.trim()}
+      className={`mx-auto w-full min-w-0 overflow-hidden rounded-[1.25rem] bg-[#fffdf6] px-3 py-3 sm:px-4 sm:py-4 ${className}`.trim()}
     >
       <button
         type="button"
         onClick={() => setIsMobileExpanded((current) => !current)}
         aria-expanded={isMobileExpanded}
-        className="flex w-full items-center justify-between gap-3 rounded-[1rem] border border-[#ccb98a] bg-[#fff8ea] px-3 py-3 text-left shadow-sm lg:hidden"
+        className="flex w-full min-w-0 items-start justify-between gap-3 overflow-hidden rounded-[1rem] border border-[#ccb98a] bg-[#fff8ea] px-3 py-3 text-left shadow-sm lg:hidden"
       >
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <h2 className="text-base font-semibold text-neutral-950">Untersuchungsflächen</h2>
-          <div className="mt-1 truncate text-xs text-neutral-700">
-            {selectedSurveyArea
-              ? `Fokus: ${selectedSurveyArea.name}`
-              : `${safeSurveyAreas.length} importierte Flächen`}
-          </div>
+          {selectedSurveyArea ? (
+            <div className="mt-1 min-w-0 text-xs text-neutral-700">
+              <div className="font-medium text-neutral-800">Fokus</div>
+              <div className="[overflow-wrap:anywhere]">{selectedSurveyArea.name}</div>
+            </div>
+          ) : (
+            <div className="mt-1 text-xs text-neutral-700">
+              {safeSurveyAreas.length} importierte Flächen
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 self-center">
           <span className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-2 py-1 text-[11px] font-semibold text-neutral-900">
             {safeSurveyAreas.length}
           </span>
@@ -59,37 +64,51 @@ export function SurveyAreasPanel({
       </div>
 
       <div className={[isMobileExpanded ? 'mt-3 block' : 'hidden', 'lg:mt-2 lg:block'].join(' ')}>
-        <p className="text-sm text-neutral-700">{description}</p>
-
-        {selectedSurveyArea ? (
-          <div className="mt-3 rounded-xl border border-[#d2cbc0] bg-[#efe4c8] px-3 py-2 text-sm text-[#17130f]">
-            Fokus: <span className="font-medium">{selectedSurveyArea.name}</span> ·{' '}
-            {formatArea(selectedSurveyArea.areaM2)}
-          </div>
-        ) : null}
+        <p className="text-sm text-neutral-700 break-words">{description}</p>
 
         {safeSurveyAreas.length === 0 ? (
           <p className="mt-3 text-sm text-neutral-600">Noch keine Untersuchungsflächen importiert.</p>
         ) : (
-          <div className="mt-3 max-h-52 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 sm:max-h-60 lg:max-h-64">
-            <div className="space-y-2">
+          <div className="mt-3 w-full min-w-0 overflow-visible lg:max-h-64 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+            <div className="w-full min-w-0 space-y-2">
+              {selectedSurveyArea ? (
+                <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-[#d2cbc0] bg-[#efe4c8] px-3 py-2 text-sm text-[#17130f]">
+                  <div className="text-xs font-semibold uppercase tracking-[0.04em] text-neutral-700">
+                    Fokus
+                  </div>
+                  <div className="font-medium [overflow-wrap:anywhere]">{selectedSurveyArea.name}</div>
+                  <div className="mt-1 text-xs text-neutral-700">
+                    {formatArea(selectedSurveyArea.areaM2)}
+                  </div>
+                  <div className="mt-1 text-xs text-neutral-600 break-all font-mono">
+                    ID: {selectedSurveyArea.id}
+                  </div>
+                </div>
+              ) : null}
+
               {safeSurveyAreas.map((surveyArea) => (
                 <div
                   key={surveyArea.id}
                   className={[
-                    'w-full rounded-xl border px-3 py-2.5',
+                    'w-full min-w-0 max-w-full overflow-hidden rounded-xl border px-3 py-2.5',
                     selectedSurveyAreaId === surveyArea.id
                       ? 'border-[#d2cbc0] bg-[#efe4c8]'
                       : 'border-[#ccb98a] bg-[#fffdf6]',
                   ].join(' ')}
                 >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-neutral-900 break-words">
+                      <div className="text-sm font-medium text-neutral-900 [overflow-wrap:anywhere]">
                         {surveyArea.name}
                       </div>
                       <div className="mt-1 text-[11px] text-neutral-600">
-                        {formatArea(surveyArea.areaM2)} · {formatUpdatedAt(surveyArea.updatedAt)}
+                        {formatArea(surveyArea.areaM2)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-neutral-600 [overflow-wrap:anywhere]">
+                        {formatUpdatedAt(surveyArea.updatedAt)}
+                      </div>
+                      <div className="mt-1 text-[10px] font-mono text-neutral-500 break-all">
+                        ID: {surveyArea.id}
                       </div>
                     </div>
                     <button

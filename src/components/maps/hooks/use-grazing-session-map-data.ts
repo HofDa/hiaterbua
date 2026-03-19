@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { db } from '@/lib/db/dexie'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { buildAnimalsByHerdId } from '@/lib/maps/live-position-map-helpers'
+import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
 import {
   buildEditableTrackpointsFeatureCollection,
   buildMergedSessionEventFeatureCollection,
@@ -37,7 +38,7 @@ export function useGrazingSessionMapData({
   const herds = useLiveQuery(() => db.herds.orderBy('name').toArray(), [])
   const animals = useLiveQuery(() => db.animals.toArray(), [])
   const surveyAreas = useLiveQuery(
-    () => db.surveyAreas.orderBy('updatedAt').reverse().toArray(),
+    () => db.surveyAreas.orderBy('id').toArray(),
     []
   )
   const settings = useLiveQuery(() => db.settings.get('app'), [])
@@ -80,7 +81,10 @@ export function useGrazingSessionMapData({
     [herds]
   )
   const safeAnimals = useMemo(() => animals ?? [], [animals])
-  const safeSurveyAreas = useMemo(() => surveyAreas ?? [], [surveyAreas])
+  const safeSurveyAreas = useMemo(
+    () => sortSurveyAreasByImportOrder(surveyAreas ?? []),
+    [surveyAreas]
+  )
   const safeRecentSessions = useMemo(() => recentSessions ?? [], [recentSessions])
   const safeCurrentTrackpoints = useMemo(() => currentTrackpoints ?? [], [currentTrackpoints])
   const safeSelectedTrackpoints = useMemo(() => selectedTrackpoints ?? [], [selectedTrackpoints])

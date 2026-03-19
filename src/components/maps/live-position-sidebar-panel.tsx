@@ -149,7 +149,7 @@ export function LivePositionSidebarPanel({
     }
 
     return (
-      <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
+        <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f] break-words">
         Fokus: <span className="font-medium">{selectedEnclosure.name}</span>. Auf ein Polygon in der Karte tippen, um die Bearbeitung direkt zu öffnen.
       </div>
     )
@@ -253,8 +253,8 @@ export function LivePositionSidebarPanel({
 
   return (
     <>
-      <div className="space-y-4 lg:hidden">
-        <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+      <div className="min-w-0 space-y-4 lg:hidden">
+        <div className="min-w-0 overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
           <LivePositionSurveyAreasPanel
             safeSurveyAreas={safeSurveyAreas}
             selectedSurveyArea={selectedSurveyArea}
@@ -265,7 +265,7 @@ export function LivePositionSidebarPanel({
 
         <div
           className={[
-            'rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]',
+            'min-w-0 overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]',
             mobilePanel === 'saved' ? 'block' : 'hidden',
           ].join(' ')}
         >

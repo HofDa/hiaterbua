@@ -299,6 +299,7 @@ export function buildSurveyAreasFromGeoJson(
               : undefined,
         areaM2: metrics.areaM2,
         areaHa: metrics.areaHa,
+        importOrder: index,
         createdAt:
           typeof properties.createdAt === 'string' ? properties.createdAt : importedAt,
         updatedAt:

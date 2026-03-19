@@ -454,10 +454,10 @@ export function LivePositionSavedEnclosuresMobilePanel({
               aria-expanded={isSelectedEnclosureInfoOpen}
               className="flex w-full items-center justify-between gap-3 text-left"
             >
-              <span>
+              <span className="min-w-0 break-words">
                 Fokus: <span className="font-medium">{detailEnclosure.name}</span>
               </span>
-              <span className="text-base text-[#17130f]">
+              <span className="shrink-0 text-base text-[#17130f]">
                 {isSelectedEnclosureInfoOpen ? '−' : '+'}
               </span>
             </button>
