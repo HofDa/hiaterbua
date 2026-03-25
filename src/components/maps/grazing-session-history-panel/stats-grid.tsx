@@ -3,13 +3,14 @@ import {
   formatDuration,
   type SessionHistoryStats,
 } from '@/lib/maps/grazing-session-map-helpers'
+import { Card } from '@/components/ui/card'
 
 function HistoryStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
+    <Card className="min-w-0 px-4 py-3 shadow-sm">
       <div className="text-xs leading-tight text-neutral-700">{label}</div>
       <div className="mt-1 font-medium text-neutral-900">{value}</div>
-    </div>
+    </Card>
   )
 }
 

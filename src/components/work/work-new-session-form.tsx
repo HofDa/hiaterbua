@@ -11,6 +11,9 @@ import {
   type WorkPickerSectionId,
   type WorkSelection,
 } from '@/lib/work/work-session-helpers'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormSelect, FormTextarea, FormButton } from '@/components/ui/form'
+import { Alert } from '@/components/ui/alert'
 import type { Enclosure, Herd, WorkActivityId, WorkType } from '@/types/domain'
 
 const quickReminderOptions = [
@@ -140,9 +143,9 @@ export function WorkNewSessionForm({
                   <span className="block [overflow-wrap:anywhere]">Keine Zuordnung</span>
                 </button>
                 {activeHerds.length === 0 ? (
-                  <div className="col-span-2 rounded-[1.25rem] border-2 border-dashed border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-600">
+                  <Alert variant="info" className="col-span-2 text-sm text-neutral-600">
                     Noch keine aktive Herde angelegt.
-                  </div>
+                  </Alert>
                 ) : (
                   activeHerds.map((herd) => {
                     const isSelected = selectedHerdId === herd.id
@@ -168,8 +171,8 @@ export function WorkNewSessionForm({
               </div>
             </div>
 
-            <select
-              className="hidden w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm sm:block"
+            <FormSelect
+              className="hidden w-full text-base shadow-sm sm:block"
               value={selectedHerdId}
               onChange={(event) => onSelectedHerdIdChange(event.target.value)}
             >
@@ -179,7 +182,7 @@ export function WorkNewSessionForm({
                   {herd.name}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           </div>
 
           <div>
@@ -200,9 +203,9 @@ export function WorkNewSessionForm({
                   <span className="block [overflow-wrap:anywhere]">Keine Zuordnung</span>
                 </button>
                 {activeEnclosures.length === 0 ? (
-                  <div className="col-span-2 rounded-[1.25rem] border-2 border-dashed border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-600">
+                  <Alert variant="info" className="col-span-2 text-sm text-neutral-600">
                     Noch keine Pferche angelegt.
-                  </div>
+                  </Alert>
                 ) : (
                   activeEnclosures.map((enclosure) => {
                     const isSelected = selectedEnclosureId === enclosure.id
@@ -228,8 +231,8 @@ export function WorkNewSessionForm({
               </div>
             </div>
 
-            <select
-              className="hidden w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm sm:block"
+            <FormSelect
+              className="hidden w-full text-base shadow-sm sm:block"
               value={selectedEnclosureId}
               onChange={(event) => onSelectedEnclosureIdChange(event.target.value)}
             >
@@ -239,20 +242,19 @@ export function WorkNewSessionForm({
                   {enclosure.name}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Notiz</label>
-          <textarea
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+        <FormField>
+          <FormLabel>Notiz</FormLabel>
+          <FormTextarea
             rows={3}
             value={notes}
-            onChange={(event) => onNotesChange(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onNotesChange(event.target.value)}
             placeholder="optionale Bemerkung zum Einsatz"
           />
-        </div>
+        </FormField>
       </>
     )
   }
@@ -400,25 +402,27 @@ export function WorkNewSessionForm({
 
             {renderReminderButtons()}
 
-            <button
+            <FormButton
               type="submit"
               disabled={isSaving}
-              className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-[#5a5347] bg-[linear-gradient(180deg,#f6f2e9,#ece3cf)] px-4 py-4 text-lg font-semibold text-[#17130f] shadow-[0_16px_32px_rgba(40,34,26,0.14)] disabled:opacity-50"
+              variant="primary"
+              className="w-full min-h-[4.75rem] rounded-[1.35rem]"
             >
               {isSaving ? 'Startet ...' : 'Arbeitseinsatz starten'}
-            </button>
+            </FormButton>
 
-            <button
+            <FormButton
               type="button"
               onClick={() => {
                 setHasStartedFlow(true)
                 setIsMobileDetailsOpen((currentValue) => !currentValue)
               }}
-              className="w-full rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950"
+              variant="secondary"
+              className="w-full rounded-[1.1rem]"
               aria-expanded={isMobileDetailsOpen}
             >
               {isMobileDetailsOpen ? 'Zuordnung & Details ausblenden' : 'Zuordnung & Details'}
-            </button>
+            </FormButton>
 
             {isMobileDetailsOpen ? <div className="space-y-4">{renderDetailFields()}</div> : null}
           </>
@@ -438,13 +442,14 @@ export function WorkNewSessionForm({
         {renderDetailFields()}
         {renderReminderButtons()}
 
-        <button
+        <FormButton
           type="submit"
           disabled={isSaving}
-          className="w-full min-h-[4.5rem] rounded-[1.3rem] border-2 border-[#5a5347] bg-[linear-gradient(180deg,#f6f2e9,#ece3cf)] px-4 py-4 text-lg font-semibold text-[#17130f] shadow-[0_16px_32px_rgba(40,34,26,0.14)] disabled:opacity-50"
+          variant="primary"
+          className="w-full min-h-[4.5rem] rounded-[1.3rem]"
         >
           {isSaving ? 'Startet ...' : 'Arbeitseinsatz starten'}
-        </button>
+        </FormButton>
       </div>
     </form>
   )

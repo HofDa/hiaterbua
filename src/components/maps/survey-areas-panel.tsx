@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { formatArea } from '@/lib/maps/map-core'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormButton } from '@/components/ui/form'
+import { Alert } from '@/components/ui/alert'
 import type { SurveyArea } from '@/types/domain'
 
 type SurveyAreasPanelProps = {
@@ -26,14 +29,15 @@ export function SurveyAreasPanel({
   const [isMobileExpanded, setIsMobileExpanded] = useState(Boolean(selectedSurveyAreaId))
 
   return (
-    <div
-      className={`mx-auto w-full min-w-0 overflow-hidden rounded-[1.25rem] bg-[#fffdf6] px-3 py-3 sm:px-4 sm:py-4 ${className}`.trim()}
+    <Card
+      className={`mx-auto w-full min-w-0 overflow-hidden px-3 py-3 sm:px-4 sm:py-4 ${className}`.trim()}
     >
-      <button
+      <FormButton
         type="button"
         onClick={() => setIsMobileExpanded((current) => !current)}
         aria-expanded={isMobileExpanded}
-        className="flex w-full min-w-0 items-start justify-between gap-3 overflow-hidden rounded-[1rem] border border-[#ccb98a] bg-[#fff8ea] px-3 py-3 text-left shadow-sm lg:hidden"
+        variant="secondary"
+        className="flex w-full min-w-0 items-start justify-between gap-3 overflow-hidden rounded-[1rem] px-3 py-3 text-left lg:hidden"
       >
         <div className="min-w-0 flex-1 overflow-hidden">
           <h2 className="text-base font-semibold text-neutral-950">Untersuchungsflächen</h2>
@@ -56,7 +60,7 @@ export function SurveyAreasPanel({
             {isMobileExpanded ? '−' : '+'}
           </span>
         </div>
-      </button>
+      </FormButton>
 
       <div className="hidden items-center justify-between gap-3 lg:flex">
         <h2 className="text-lg font-semibold text-neutral-950">Untersuchungsflächen</h2>
@@ -67,12 +71,14 @@ export function SurveyAreasPanel({
         <p className="text-sm text-neutral-700 break-words">{description}</p>
 
         {safeSurveyAreas.length === 0 ? (
-          <p className="mt-3 text-sm text-neutral-600">Noch keine Untersuchungsflächen importiert.</p>
+          <Alert variant="info" className="mt-3 text-sm text-neutral-600">
+            Noch keine Untersuchungsflächen importiert.
+          </Alert>
         ) : (
           <div className="mt-3 w-full min-w-0 overflow-visible lg:max-h-64 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             <div className="w-full min-w-0 space-y-2">
               {selectedSurveyArea ? (
-                <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-[#d2cbc0] bg-[#efe4c8] px-3 py-2 text-sm text-[#17130f]">
+                <Card className="w-full min-w-0 max-w-full overflow-hidden px-3 py-2 text-sm text-[#17130f]">
                   <div className="text-xs font-semibold uppercase tracking-[0.04em] text-neutral-700">
                     Fokus
                   </div>
@@ -83,7 +89,7 @@ export function SurveyAreasPanel({
                   <div className="mt-1 text-xs text-neutral-600 break-all font-mono">
                     ID: {selectedSurveyArea.id}
                   </div>
-                </div>
+                </Card>
               ) : null}
 
               {safeSurveyAreas.map((surveyArea) => (
@@ -111,16 +117,17 @@ export function SurveyAreasPanel({
                         ID: {surveyArea.id}
                       </div>
                     </div>
-                    <button
+                    <FormButton
                       type="button"
                       onClick={() => {
                         setIsMobileExpanded(true)
                         onFocusSurveyArea(surveyArea)
                       }}
-                      className="w-full rounded-full border border-[#ccb98a] bg-[#fffdf6] px-2.5 py-1.5 text-[11px] font-semibold text-neutral-950 shadow-sm sm:w-auto sm:shrink-0"
+                      variant="secondary"
+                      className="w-full rounded-full px-2.5 py-1.5 text-[11px] font-semibold sm:w-auto sm:shrink-0"
                     >
                       Fokus
-                    </button>
+                    </FormButton>
                   </div>
                 </div>
               ))}
@@ -128,6 +135,6 @@ export function SurveyAreasPanel({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   )
 }

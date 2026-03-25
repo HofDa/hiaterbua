@@ -1,6 +1,7 @@
 'use client'
 
 import { EarTagScanPanel } from '@/components/animals/ear-tag-scan-panel'
+import { FormField, FormLabel, FormInput, FormSelect, FormTextarea } from '@/components/ui/form'
 import type { Species } from '@/types/domain'
 
 export const speciesOptions: { value: Species; label: string }[] = [
@@ -54,20 +55,18 @@ export function AnimalFormFields({
         onApplyValue={onEarTagChange}
       />
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">Ohrmarke</label>
-        <input
-          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+      <FormField>
+        <FormLabel>Ohrmarke</FormLabel>
+        <FormInput
           value={earTag}
           onChange={(event) => onEarTagChange(event.target.value)}
           placeholder={earTagPlaceholder}
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">Tierart</label>
-        <select
-          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+      <FormField>
+        <FormLabel>Tierart</FormLabel>
+        <FormSelect
           value={species}
           onChange={(event) => onSpeciesChange(event.target.value as Species)}
         >
@@ -76,29 +75,27 @@ export function AnimalFormFields({
               {option.label}
             </option>
           ))}
-        </select>
-      </div>
+        </FormSelect>
+      </FormField>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">Name (optional)</label>
-        <input
-          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+      <FormField>
+        <FormLabel>Name (optional)</FormLabel>
+        <FormInput
           value={name}
           onChange={(event) => onNameChange(event.target.value)}
           placeholder={namePlaceholder}
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">Notiz</label>
-        <textarea
-          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+      <FormField>
+        <FormLabel>Notiz</FormLabel>
+        <FormTextarea
           rows={3}
           value={notes}
-          onChange={(event) => onNotesChange(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onNotesChange(event.target.value)}
           placeholder={notesPlaceholder}
         />
-      </div>
+      </FormField>
     </>
   )
 }

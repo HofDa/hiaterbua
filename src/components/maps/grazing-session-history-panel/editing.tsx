@@ -3,6 +3,9 @@ import {
   formatDuration,
   type SessionMetrics,
 } from '@/lib/maps/grazing-session-map-helpers'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/form'
+import { Alert, ErrorAlert } from '@/components/ui/alert'
 import type { GrazingSession } from '@/types/domain'
 
 export function GrazingSessionHistoryEditingSummary({
@@ -19,10 +22,10 @@ export function GrazingSessionHistoryEditingSummary({
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
+    <Alert variant="info" className="mt-4 text-sm text-[#17130f]">
       Bearbeitung aktiv: {formatDistance(editMetrics.distanceM)} ·{' '}
       {formatDuration(editMetrics.durationS)} · {editTrackpointsLength} Punkte
-    </div>
+    </Alert>
   )
 }
 
@@ -55,82 +58,82 @@ export function GrazingSessionHistoryEditingForm({
 
   if (selectedSession.status !== 'finished') {
     return (
-      <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#fffdf6] px-4 py-4 shadow-sm">
-        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
-          Zeitkorrektur
-        </div>
-        <p className="mt-2 text-sm text-neutral-700">
-          Die manuelle Zeitkorrektur ist nur fuer abgeschlossene Weidegaenge verfuegbar.
-        </p>
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={onCancelEditSession}
-            className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950"
-          >
-            Bearbeitung beenden
-          </button>
-        </div>
-      </div>
+      <Card className="mt-4">
+        <CardContent>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+            Zeitkorrektur
+          </div>
+          <p className="mt-2 text-sm text-neutral-700">
+            Die manuelle Zeitkorrektur ist nur fuer abgeschlossene Weidegaenge verfuegbar.
+          </p>
+          <div className="mt-3">
+            <FormButton
+              type="button"
+              onClick={onCancelEditSession}
+              variant="secondary"
+            >
+              Bearbeitung beenden
+            </FormButton>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#fffdf6] px-4 py-4 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
-        Zeitkorrektur
-      </div>
-      <p className="mt-2 text-sm text-neutral-700">
-        Beginn und Ende des abgeschlossenen Weidegangs koennen hier manuell korrigiert werden.
-      </p>
-
-      {actionError ? (
-        <div className="mt-3 rounded-[1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-          {actionError}
+    <Card className="mt-4">
+      <CardContent>
+        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+          Zeitkorrektur
         </div>
-      ) : null}
+        <p className="mt-2 text-sm text-neutral-700">
+          Beginn und Ende des abgeschlossenen Weidegangs koennen hier manuell korrigiert werden.
+        </p>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-900">Beginn</label>
-          <input
-            type="datetime-local"
-            step={60}
-            value={editStartTime}
-            onChange={(event) => onEditStartTimeChange(event.target.value)}
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-          />
+        {actionError && (
+          <ErrorAlert>{actionError}</ErrorAlert>
+        )}
+
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <FormField>
+            <FormLabel>Beginn</FormLabel>
+            <FormInput
+              type="datetime-local"
+              step={60}
+              value={editStartTime}
+              onChange={(event) => onEditStartTimeChange(event.target.value)}
+            />
+          </FormField>
+
+          <FormField>
+            <FormLabel>Ende</FormLabel>
+            <FormInput
+              type="datetime-local"
+              step={60}
+              value={editEndTime}
+              onChange={(event) => onEditEndTimeChange(event.target.value)}
+            />
+          </FormField>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-900">Ende</label>
-          <input
-            type="datetime-local"
-            step={60}
-            value={editEndTime}
-            onChange={(event) => onEditEndTimeChange(event.target.value)}
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-          />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <FormButton
+            type="button"
+            onClick={() => void onSaveEditedSession()}
+            disabled={isSaving}
+            variant="primary"
+          >
+            {isSaving ? 'Speichert ...' : 'Änderungen speichern'}
+          </FormButton>
+          <FormButton
+            type="button"
+            onClick={onCancelEditSession}
+            variant="secondary"
+          >
+            Abbrechen
+          </FormButton>
         </div>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => void onSaveEditedSession()}
-          disabled={isSaving}
-          className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
-        >
-          {isSaving ? 'Speichert ...' : 'Änderungen speichern'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancelEditSession}
-          className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950"
-        >
-          Abbrechen
-        </button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

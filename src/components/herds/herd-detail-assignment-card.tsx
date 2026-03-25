@@ -5,6 +5,9 @@ import {
   formatDateTime,
   formatDurationFromIso,
 } from '@/lib/herds/herd-detail-helpers'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
+import { Alert, ErrorAlert } from '@/components/ui/alert'
 import type { Enclosure, EnclosureAssignment } from '@/types/domain'
 
 type HerdDetailAssignmentCardProps = {
@@ -47,64 +50,66 @@ export function HerdDetailAssignmentCard({
   onEndAssignment,
 }: HerdDetailAssignmentCardProps) {
   return (
-    <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-[-0.02em]">1. Pferch-Belegung</h2>
-          <p className="mt-2 text-sm text-neutral-700">
-            Aktuellen Pferch der Herde sehen und direkte Wechsel erfassen.
-          </p>
+    <Card>
+      <CardContent>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-[-0.02em]">1. Pferch-Belegung</h2>
+            <p className="mt-2 text-sm text-neutral-700">
+              Aktuellen Pferch der Herde sehen und direkte Wechsel erfassen.
+            </p>
+          </div>
+
+          <Link
+            href="/enclosures"
+            className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
+          >
+            Zu Pferchen
+          </Link>
         </div>
 
-        <Link
-          href="/enclosures"
-          className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
-        >
-          Zu Pferchen
-        </Link>
-      </div>
-
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-        <div className="rounded-[1.15rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
+        <Card className="px-4 py-3 shadow-sm">
           <div className="text-neutral-700">Aktiver Pferch</div>
           <div className="mt-1 font-medium text-neutral-900">
             {currentEnclosureName ?? 'Keiner'}
           </div>
-        </div>
-        <div className="rounded-[1.15rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
+        </Card>
+        <Card className="px-4 py-3 shadow-sm">
           <div className="text-neutral-700">Aktueller Besatz</div>
           <div className="mt-1 font-medium text-neutral-900">
             {activeAssignment?.count ?? effectiveHerdCount ?? 'unbekannt'}
           </div>
-        </div>
-        <div className="rounded-[1.15rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
+        </Card>
+        <Card className="px-4 py-3 shadow-sm">
           <div className="text-neutral-700">Seit</div>
           <div className="mt-1 font-medium text-neutral-900">
             {activeAssignment?.startTime
               ? formatDateTime(activeAssignment.startTime)
               : 'Nicht zugewiesen'}
           </div>
-        </div>
+        </Card>
       </div>
 
       {activeAssignment && currentEnclosureName ? (
-        <div className="mt-4 rounded-[1.25rem] border border-[#d2cbc0] bg-[#efe4c8] px-4 py-4 text-sm text-[#17130f]">
+        <Card className="mt-4 px-4 py-4 text-sm text-[#17130f]">
           <div className="font-medium">{currentEnclosureName}</div>
           <div className="mt-1">
             Verweildauer {formatDurationFromIso(activeAssignment.startTime)}
           </div>
           {activeAssignment.notes ? <div className="mt-1">{activeAssignment.notes}</div> : null}
-          <button
+          <FormButton
             type="button"
             onClick={() => void onEndAssignment(activeAssignment)}
             disabled={endingAssignmentId === activeAssignment.id}
-            className="mt-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+            variant="secondary"
+            className="mt-3"
           >
             {endingAssignmentId === activeAssignment.id
               ? 'Weist aus ...'
               : 'Aus aktuellem Pferch ausweisen'}
-          </button>
-        </div>
+          </FormButton>
+        </Card>
       ) : (
         <form className="mt-4 space-y-4" onSubmit={onSubmit}>
           <div>
@@ -134,43 +139,39 @@ export function HerdDetailAssignmentCard({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Tierzahl</label>
-              <input
+            <FormField>
+              <FormLabel>Tierzahl</FormLabel>
+              <FormInput
                 type="number"
                 min="0"
                 inputMode="numeric"
-                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
                 value={assignmentCount}
                 onChange={(event) => onAssignmentCountChange(event.target.value)}
                 placeholder="automatisch aus Herde"
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">Notiz</label>
-              <input
-                className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+            <FormField>
+              <FormLabel>Notiz</FormLabel>
+              <FormInput
                 value={assignmentNotes}
                 onChange={(event) => onAssignmentNotesChange(event.target.value)}
                 placeholder="optionale Bemerkung"
               />
-            </div>
+            </FormField>
           </div>
 
-          {assignmentError ? (
-            <div className="rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-              {assignmentError}
-            </div>
-          ) : null}
+          {assignmentError && (
+            <ErrorAlert>{assignmentError}</ErrorAlert>
+          )}
 
-          <button
+          <FormButton
             type="submit"
             disabled={assignmentSaving || !selectedEnclosureId}
-            className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
+            variant="primary"
           >
             {assignmentSaving ? 'Speichert ...' : 'In Pferch einweisen'}
-          </button>
+          </FormButton>
         </form>
       )}
 
@@ -179,19 +180,16 @@ export function HerdDetailAssignmentCard({
           Letzte Aufenthalte
         </h3>
         {recentAssignments.length === 0 ? (
-          <div className="mt-2 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm text-neutral-700 shadow-sm">
+          <Alert variant="info" className="mt-2 text-sm text-neutral-700">
             Noch keine Pferchwechsel für diese Herde vorhanden.
-          </div>
+          </Alert>
         ) : (
           <div className="mt-3 space-y-2">
             {recentAssignments.map((assignment) => {
               const enclosure = enclosuresById.get(assignment.enclosureId)
 
               return (
-                <div
-                  key={assignment.id}
-                  className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm shadow-sm"
-                >
+                <Card key={assignment.id} className="px-4 py-3 text-sm shadow-sm">
                   <div className="font-medium text-neutral-900">
                     {enclosure?.name ?? 'Unbekannter Pferch'}
                   </div>
@@ -206,12 +204,13 @@ export function HerdDetailAssignmentCard({
                     {' '}
                     Besatz {assignment.count ?? effectiveHerdCount ?? 'unbekannt'}
                   </div>
-                </div>
+                </Card>
               )
             })}
           </div>
         )}
       </div>
-    </section>
+      </CardContent>
+    </Card>
   )
 }
