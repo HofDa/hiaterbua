@@ -3,6 +3,9 @@
 import Image from 'next/image'
 import type { EarTagSuggestion, KnownEarTagMatch } from '@/lib/animals/ear-tag-ocr'
 import type { CameraStep } from '@/components/animals/ear-tag-scan-types'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/form'
+import { Alert, StatusAlert, ErrorAlert } from '@/components/ui/alert'
 
 type EarTagScanResultCardProps = {
   disabled: boolean
@@ -36,41 +39,43 @@ export function EarTagScanResultCard({
   onApplyDraft,
 }: EarTagScanResultCardProps) {
   return (
-    <div className="rounded-[1.2rem] border border-[#ccb98a] bg-[#fffdf6] p-4 shadow-sm">
-      {ocrPreviewUrl ? (
-        <div className="mb-4 overflow-hidden rounded-[1.1rem] border border-[#d8ccb2] bg-[#f3ede0]">
-          <div className="border-b border-[#d8ccb2] px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-700">
-            OCR-Fokus
+    <Card>
+      <CardContent>
+        {ocrPreviewUrl ? (
+          <div className="mb-4 overflow-hidden rounded-[1.1rem] border border-[#d8ccb2] bg-[#f3ede0]">
+            <div className="border-b border-[#d8ccb2] px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-700">
+              OCR-Fokus
+            </div>
+            <div className="relative aspect-[3/1] bg-[#f7f2e7]">
+              <Image
+                src={ocrPreviewUrl}
+                alt="Vorbereiteter OCR-Ausschnitt"
+                fill
+                unoptimized
+                className="object-cover"
+              />
+            </div>
           </div>
-          <div className="relative aspect-[3/1] bg-[#f7f2e7]">
-            <Image
-              src={ocrPreviewUrl}
-              alt="Vorbereiteter OCR-Ausschnitt"
-              fill
-              unoptimized
-              className="object-cover"
-            />
-          </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      <label className="mb-1 block text-sm font-medium text-neutral-900">Scan-Ergebnis</label>
-      <input
-        className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-        value={effectiveDraft}
-        onChange={(event) => onDraftChange(event.target.value)}
-        placeholder="erkannte oder manuell korrigierte Ohrmarke"
-        disabled={disabled || isReadingOcr}
-      />
-      <div className="mt-2 text-sm text-neutral-700">{ocrMessage}</div>
+        <FormField>
+          <FormLabel>Scan-Ergebnis</FormLabel>
+          <FormInput
+            value={effectiveDraft}
+            onChange={(event) => onDraftChange(event.target.value)}
+            placeholder="erkannte oder manuell korrigierte Ohrmarke"
+            disabled={disabled || isReadingOcr}
+          />
+        </FormField>
+        <div className="mt-2 text-sm text-neutral-700">{ocrMessage}</div>
 
-      {selectedKnownConflict ? (
-        <div className="mt-3 rounded-[1rem] border border-[#d9b37a] bg-[#fbf2dd] px-4 py-3 text-sm font-medium text-[#5e4320]">
+      {selectedKnownConflict && (
+        <Alert className="mt-3 rounded-[1rem] border border-[#d9b37a] bg-[#fbf2dd] text-sm font-medium text-[#5e4320]">
           {selectedKnownConflict.relationship === 'exact'
             ? `Diese Ohrmarke ist bereits in der Datenbank vorhanden: ${selectedKnownConflict.canonical}`
             : `Der erkannte Ziffernblock passt zu einer vorhandenen Ohrmarke: ${selectedKnownConflict.canonical}`}
-        </div>
-      ) : null}
+        </Alert>
+      )}
 
       {ocrSuggestions.length ? (
         <div className="mt-4">
@@ -120,24 +125,25 @@ export function EarTagScanResultCard({
         </div>
       ) : null}
 
-      {ocrError ? (
-        <div className="mt-3 rounded-[1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-          {ocrError}
-        </div>
-      ) : cameraStep === 'captured' ? (
-        <div className="mt-3 rounded-[1rem] border border-[#d8ccb2] bg-[#f7f2e7] px-4 py-3 text-sm text-neutral-700">
+      {ocrError && (
+        <ErrorAlert className="mt-3">{ocrError}</ErrorAlert>
+      )}
+      {cameraStep === 'captured' && !ocrError && (
+        <Alert className="mt-3 rounded-[1rem] border border-[#d8ccb2] bg-[#f7f2e7] text-sm text-neutral-700">
           Erstes OCR kann etwas länger dauern, weil Sprachdaten einmalig geladen und lokal gecacht werden.
-        </div>
-      ) : null}
+        </Alert>
+      )}
 
-      <button
+      <FormButton
         type="button"
         onClick={onApplyDraft}
         disabled={disabled || !cleanedDraft}
-        className="mt-3 rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+        variant="primary"
+        className="mt-3"
       >
         In Ohrmarke übernehmen
-      </button>
-    </div>
+      </FormButton>
+      </CardContent>
+    </Card>
   )
 }

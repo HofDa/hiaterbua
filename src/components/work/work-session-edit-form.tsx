@@ -8,6 +8,9 @@ import {
   type WorkSelection,
 } from '@/lib/work/work-session-helpers'
 import type { Enclosure, Herd, WorkActivityId, WorkStatus, WorkType } from '@/types/domain'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormSelect, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
+import { Alert, ErrorAlert } from '@/components/ui/alert'
 
 type WorkSessionEditFormProps = {
   isSaving: boolean
@@ -63,133 +66,121 @@ export function WorkSessionEditForm({
   onCancel,
 }: WorkSessionEditFormProps) {
   return (
-    <div className="mt-4 space-y-4 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4">
-      <div className="rounded-[1rem] border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
-        Status aktuell: <span className="font-semibold">{getWorkStatusLabel(status)}</span>. Ende
-        leer lassen fuer laufende oder pausierte Einsaetze. Sobald ein Ende gesetzt ist, wird der
-        Einsatz als beendet gespeichert.
-      </div>
+    <Card className="mt-4 space-y-4">
+      <CardContent>
+        <Alert className="rounded-[1rem] border border-[#d2cbc0] bg-[#efe4c8] text-sm text-[#17130f]">
+          Status aktuell: <span className="font-semibold">{getWorkStatusLabel(status)}</span>. Ende
+          leer lassen fuer laufende oder pausierte Einsaetze. Sobald ein Ende gesetzt ist, wird der
+          Einsatz als beendet gespeichert.
+        </Alert>
 
-      {errorMessage ? (
-        <div className="rounded-[1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-          {errorMessage}
-        </div>
-      ) : null}
+        {errorMessage && (
+          <ErrorAlert>{errorMessage}</ErrorAlert>
+        )}
 
-      <div className="space-y-4">
         <WorkActivityPicker
           sectionId={editWorkPickerSectionId}
           workType={editWorkType}
           activityId={editWorkActivityId}
-          initialMobileStep="option"
           onSectionChange={onEditWorkPickerSectionChange}
           onSelectionChange={onEditWorkSelectionChange}
         />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Erinnerung</label>
-          <select
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-            value={editReminderIntervalMin}
-            onChange={(event) => onEditReminderIntervalMinChange(event.target.value)}
-          >
-            {reminderOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField>
+            <FormLabel>Erinnerung</FormLabel>
+            <FormSelect
+              value={editReminderIntervalMin}
+              onChange={(event) => onEditReminderIntervalMinChange(event.target.value)}
+            >
+              {reminderOptions.map(({ label, value }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </FormSelect>
+          </FormField>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Herde</label>
-          <select
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-            value={editSelectedHerdId}
-            onChange={(event) => onEditSelectedHerdIdChange(event.target.value)}
-          >
-            <option value="">Keine Zuordnung</option>
-            {herds
-              .filter((herd) => !herd.isArchived)
-              .map((herd) => (
+          <FormField>
+            <FormLabel>Herde</FormLabel>
+            <FormSelect
+              value={editSelectedHerdId}
+              onChange={(event) => onEditSelectedHerdIdChange(event.target.value)}
+            >
+              <option value="">Keine Herde</option>
+              {herds.map((herd) => (
                 <option key={herd.id} value={herd.id}>
                   {herd.name}
                 </option>
               ))}
-          </select>
+            </FormSelect>
+          </FormField>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Pferch</label>
-          <select
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
+        <FormField>
+          <FormLabel>Pferch</FormLabel>
+          <FormSelect
             value={editSelectedEnclosureId}
             onChange={(event) => onEditSelectedEnclosureIdChange(event.target.value)}
           >
-            <option value="">Keine Zuordnung</option>
+            <option value="">Kein Pferch</option>
             {enclosures.map((enclosure) => (
               <option key={enclosure.id} value={enclosure.id}>
                 {enclosure.name}
               </option>
             ))}
-          </select>
-        </div>
-      </div>
+          </FormSelect>
+        </FormField>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Beginn</label>
-          <input
-            type="datetime-local"
-            step={60}
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-            value={editStartTime}
-            onChange={(event) => onEditStartTimeChange(event.target.value)}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField>
+            <FormLabel>Beginn</FormLabel>
+            <FormInput
+              type="datetime-local"
+              step={60}
+              value={editStartTime}
+              onChange={(event) => onEditStartTimeChange(event.target.value)}
+            />
+          </FormField>
+
+          <FormField>
+            <FormLabel>Ende</FormLabel>
+            <FormInput
+              type="datetime-local"
+              step={60}
+              value={editEndTime}
+              onChange={(event) => onEditEndTimeChange(event.target.value)}
+            />
+          </FormField>
+        </div>
+
+        <FormField>
+          <FormLabel>Notiz</FormLabel>
+          <FormTextarea
+            rows={3}
+            value={editNotes}
+            onChange={(event) => onEditNotesChange(event.target.value)}
           />
+        </FormField>
+
+        <div className="flex gap-2">
+          <FormButton
+            type="button"
+            onClick={() => void onSave()}
+            disabled={isSaving}
+            variant="primary"
+          >
+            {isSaving ? 'Speichert ...' : 'Änderungen speichern'}
+          </FormButton>
+          <FormButton
+            type="button"
+            onClick={onCancel}
+            variant="secondary"
+          >
+            Abbrechen
+          </FormButton>
         </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium">Ende</label>
-          <input
-            type="datetime-local"
-            step={60}
-            className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-            value={editEndTime}
-            onChange={(event) => onEditEndTimeChange(event.target.value)}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">Notiz</label>
-        <textarea
-          className="w-full rounded-[1.1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-base shadow-sm"
-          rows={3}
-          value={editNotes}
-          onChange={(event) => onEditNotesChange(event.target.value)}
-          placeholder="optionale Bemerkung zum Einsatz"
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => void onSave()}
-          disabled={isSaving}
-          className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
-        >
-          {isSaving ? 'Speichert ...' : 'Änderungen speichern'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950"
-        >
-          Abbrechen
-        </button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

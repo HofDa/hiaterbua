@@ -9,6 +9,9 @@ import {
   type CaptureGuide,
 } from '@/lib/animals/ear-tag-ocr'
 import type { CameraStatus, CameraStep } from '@/components/animals/ear-tag-scan-types'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormButton } from '@/components/ui/form'
+import { ErrorAlert } from '@/components/ui/alert'
 
 type EarTagScanCameraCardProps = {
   disabled: boolean
@@ -50,13 +53,16 @@ export function EarTagScanCameraCard({
   onRereadCapture,
 }: EarTagScanCameraCardProps) {
   return (
-    <div className="rounded-[1.3rem] border border-[#ccb98a] bg-[#fffdf6] p-4 shadow-sm">
-      <div className="rounded-[1rem] border border-[#d8ccb2] bg-[#f7f2e7] px-4 py-3 shadow-sm">
-        <div className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-700">
-          {cameraGuideTitle}
-        </div>
-        <div className="mt-1 text-sm font-medium text-neutral-900">{cameraGuideDetail}</div>
-      </div>
+    <Card>
+      <CardContent>
+        <Card className="rounded-[1rem] border border-[#d8ccb2] bg-[#f7f2e7] px-4 py-3 shadow-sm">
+          <CardContent>
+            <div className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-700">
+              {cameraGuideTitle}
+            </div>
+            <div className="mt-1 text-sm font-medium text-neutral-900">{cameraGuideDetail}</div>
+          </CardContent>
+        </Card>
 
       <div className="mt-4 overflow-hidden rounded-[1.5rem] border-2 border-[#3a342a] bg-[linear-gradient(180deg,#d4ccb9,#bdb39f)] p-3 sm:p-4">
         <div className="relative flex aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/3] items-center justify-center overflow-hidden rounded-[1.2rem] border border-[#b6a889] bg-[radial-gradient(circle_at_top,#f5f1e7_0%,#d1c6b0_58%,#b5a78d_100%)]">
@@ -117,76 +123,75 @@ export function EarTagScanCameraCard({
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {cameraStep === 'ready' ? (
-          <button
+        {cameraStep === 'ready' && (
+          <FormButton
             type="button"
             onClick={onStartCameraFraming}
             disabled={disabled || !supportsCamera}
-            className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+            variant="primary"
           >
             {supportsCamera ? 'Kamera vorbereiten' : 'Kamera nicht verfügbar'}
-          </button>
-        ) : null}
+          </FormButton>
+        )}
 
-        {cameraStep === 'framing' ? (
+        {cameraStep === 'framing' && (
           <>
-            <button
+            <FormButton
               type="button"
               onClick={onCapturePreview}
               disabled={disabled || cameraStatus !== 'live' || isCapturingPhoto}
-              className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+              variant="primary"
             >
               {cameraStatus === 'starting'
                 ? 'Kamera startet ...'
                 : isCapturingPhoto
                   ? 'Foto wird aufgenommen ...'
                   : 'Foto aufnehmen'}
-            </button>
-            <button
+            </FormButton>
+            <FormButton
               type="button"
               onClick={onResetCapture}
-              className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
+              variant="secondary"
             >
               Abbrechen
-            </button>
+            </FormButton>
           </>
-        ) : null}
+        )}
 
-        {cameraStep === 'captured' ? (
+        {cameraStep === 'captured' && (
           <>
-            <button
+            <FormButton
               type="button"
               onClick={onRereadCapture}
               disabled={disabled || isReadingOcr}
-              className="rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+              variant="primary"
             >
               {isReadingOcr ? 'OCR liest ...' : 'Erneut lesen'}
-            </button>
-            <button
+            </FormButton>
+            <FormButton
               type="button"
               onClick={onStartCameraFraming}
               disabled={isReadingOcr}
-              className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+              variant="secondary"
             >
               Neu aufnehmen
-            </button>
-            <button
+            </FormButton>
+            <FormButton
               type="button"
               onClick={onResetCapture}
               disabled={isReadingOcr}
-              className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm disabled:opacity-50"
+              variant="secondary"
             >
               Verwerfen
-            </button>
+            </FormButton>
           </>
-        ) : null}
+        )}
       </div>
 
-      {cameraError ? (
-        <div className="mt-4 rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-          {cameraError}
-        </div>
-      ) : null}
-    </div>
+      {cameraError && (
+        <ErrorAlert className="mt-4">{cameraError}</ErrorAlert>
+      )}
+      </CardContent>
+    </Card>
   )
 }
