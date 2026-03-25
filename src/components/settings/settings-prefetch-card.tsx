@@ -6,6 +6,9 @@ import {
   prefetchLayerOptions,
   type PrefetchLayerChoice,
 } from '@/components/settings/settings-options'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormInput, FormSelect, FormButton } from '@/components/ui/form'
+import { Alert, StatusAlert, ErrorAlert, LoadingAlert } from '@/components/ui/alert'
 
 type PrefetchProgress = {
   completed: number
@@ -52,62 +55,61 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
   const previewZoom = Number(state.prefetchZoomLevel)
 
   return (
-    <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
-      <button
-        type="button"
-        onClick={actions.onToggleOpen}
-        aria-expanded={state.isOpen}
-        className="flex w-full items-start justify-between gap-3 text-left"
-      >
-        <div>
-          <h2 className="text-lg font-semibold">Kartenausschnitt vorladen</h2>
-          <p className="mt-2 text-sm font-medium text-neutral-800">
-            Bestimmten Ausschnitt gezielt in den Tile-Cache laden, statt nur beim normalen
-            Kartenaufruf.
-          </p>
-        </div>
-        <div className="text-base text-neutral-900">{state.isOpen ? '−' : '+'}</div>
-      </button>
+    <Card>
+      <CardHeader>
+        <button
+          type="button"
+          onClick={actions.onToggleOpen}
+          aria-expanded={state.isOpen}
+          className="flex w-full items-start justify-between gap-3 text-left"
+        >
+          <div>
+            <CardTitle className="text-lg">Kartenausschnitt vorladen</CardTitle>
+            <p className="mt-2 text-sm font-medium text-neutral-800">
+              Bestimmten Ausschnitt gezielt in den Tile-Cache laden, statt nur beim normalen
+              Kartenaufruf.
+            </p>
+          </div>
+          <div className="text-base text-neutral-900">{state.isOpen ? '−' : '+'}</div>
+        </button>
+      </CardHeader>
 
       {state.isOpen ? (
-        <form className="mt-4 space-y-4" onSubmit={actions.onSubmit}>
+        <CardContent>
+          <form className="mt-4 space-y-4" onSubmit={actions.onSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Breitengrad</label>
-              <input
-                className="w-full rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm"
+            <FormField>
+              <FormLabel>Breitengrad</FormLabel>
+              <FormInput
                 value={state.prefetchLat}
                 onChange={(event) => actions.onPrefetchLatChange(event.target.value)}
                 placeholder="z. B. 46.65"
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Längengrad</label>
-              <input
-                className="w-full rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm"
+            </FormField>
+            <FormField>
+              <FormLabel>Längengrad</FormLabel>
+              <FormInput
                 value={state.prefetchLon}
                 onChange={(event) => actions.onPrefetchLonChange(event.target.value)}
                 placeholder="z. B. 11.35"
               />
-            </div>
+            </FormField>
           </div>
 
-          <button
+          <FormButton
             type="button"
             onClick={actions.onApplyCurrentPosition}
             disabled={state.currentPositionLoading}
-            className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900"
+            variant="secondary"
           >
             {state.currentPositionLoading
               ? 'Standort wird bestimmt ...'
               : 'Aktuellen Standort übernehmen'}
-          </button>
+          </FormButton>
 
-          {state.currentPositionStatus ? (
-            <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm font-semibold text-emerald-900">
-              {state.currentPositionStatus}
-            </div>
-          ) : null}
+          {state.currentPositionStatus && (
+            <StatusAlert>{state.currentPositionStatus}</StatusAlert>
+          )}
 
           {state.parsedPreviewPosition ? (
             <div className="space-y-2">
@@ -120,24 +122,23 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
           ) : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Radius (km)</label>
-              <input
+            <FormField>
+              <FormLabel>Radius (km)</FormLabel>
+              <FormInput
                 type="number"
                 min={0.1}
                 step={0.1}
-                className="w-full rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm"
                 value={state.prefetchRadiusKm}
                 onChange={(event) => actions.onPrefetchRadiusKmChange(event.target.value)}
               />
-            </div>
+            </FormField>
             <div>
-              <label className="mb-1 flex items-center justify-between gap-3 text-sm font-medium">
+              <FormLabel className="mb-1 flex items-center justify-between gap-3">
                 <span>Zoomlevel</span>
                 <span className="rounded-full bg-[#f1efeb] px-2 py-0.5 text-xs text-neutral-700">
                   {state.prefetchZoomLevel}
                 </span>
-              </label>
+              </FormLabel>
               <input
                 type="range"
                 min={1}
@@ -153,10 +154,9 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
             </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Layer</label>
-            <select
-              className="w-full rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm"
+          <FormField>
+            <FormLabel>Layer</FormLabel>
+            <FormSelect
               value={state.prefetchLayerChoice}
               onChange={(event) =>
                 actions.onPrefetchLayerChoiceChange(event.target.value as PrefetchLayerChoice)
@@ -167,8 +167,8 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
                   {option.label}
                 </option>
               ))}
-            </select>
-          </div>
+            </FormSelect>
+          </FormField>
 
           <p className="text-xs font-medium text-neutral-700">
             Größere Radius-/Zoom-Kombinationen erzeugen sehr viele Tiles. Der Vorlade-Block
@@ -176,46 +176,48 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
           </p>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <div className="rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
+            <Card className="px-4 py-4 text-sm text-neutral-900">
               <div className="font-medium">Südtirol Übersicht</div>
               <div className="mt-1 text-neutral-700">
                 Lädt die komplette Landesfläche mit sicheren Übersichts-Zoomstufen 8 bis 12.
               </div>
-              <button
+              <FormButton
                 type="button"
                 onClick={() => void actions.onPrefetchWholeSouthTyrol()}
                 disabled={
                   state.southTyrolPrefetching || state.prefetching || state.highDetailPrefetching
                 }
-                className="mt-3 rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+                variant="secondary"
+                className="mt-3"
               >
                 {state.southTyrolPrefetching
                   ? 'Lädt Übersicht ...'
                   : 'Südtirol Übersicht sichern'}
-              </button>
-            </div>
+              </FormButton>
+            </Card>
 
-            <div className="rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
+            <Card className="px-4 py-4 text-sm text-neutral-900">
               <div className="font-medium">Einsatzgebiet hoch detailliert</div>
               <div className="mt-1 text-neutral-700">
                 Nutzt den aktuellen Standort im Formular und lädt einen Radius von 2 km in Zoom
                 13 bis 17.
               </div>
-              <button
+              <FormButton
                 type="button"
                 onClick={() => void actions.onPrefetchHighDetailArea()}
                 disabled={
                   state.highDetailPrefetching || state.prefetching || state.southTyrolPrefetching
                 }
-                className="mt-3 rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+                variant="secondary"
+                className="mt-3"
               >
                 {state.highDetailPrefetching ? 'Lädt Detailgebiet ...' : 'Detailgebiet sichern'}
-              </button>
-            </div>
+              </FormButton>
+            </Card>
           </div>
 
-          {state.prefetchProgress ? (
-            <div className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900">
+          {state.prefetchProgress && (
+            <Alert variant="info" className="text-sm font-medium text-neutral-900">
               Fortschritt:{' '}
               <span className="font-medium text-neutral-900">
                 {state.prefetchProgress.completed}
@@ -223,30 +225,28 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
               {' / '}
               <span className="font-medium text-neutral-900">{state.prefetchProgress.total}</span>{' '}
               Tiles
-            </div>
-          ) : null}
+            </Alert>
+          )}
 
-          {state.prefetchError ? (
-            <div className="rounded-2xl border border-red-300 bg-red-100 px-4 py-3 text-sm font-semibold text-red-900">
-              {state.prefetchError}
-            </div>
-          ) : null}
+          {state.prefetchError && (
+            <ErrorAlert>{state.prefetchError}</ErrorAlert>
+          )}
 
           {state.prefetchStatus ? (
-            <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm font-semibold text-emerald-900">
-              {state.prefetchStatus}
-            </div>
+            <StatusAlert>{state.prefetchStatus}</StatusAlert>
           ) : null}
 
-          <button
+          <FormButton
             type="submit"
             disabled={state.prefetching}
-            className="rounded-[1.25rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
+            variant="primary"
+            className="rounded-[1.25rem]"
           >
             {state.prefetching ? 'Lädt Tiles ...' : 'Ausschnitt vorladen'}
-          </button>
+          </FormButton>
         </form>
+        </CardContent>
       ) : null}
-    </section>
+    </Card>
   )
 }

@@ -6,6 +6,7 @@ import { TopBar } from '@/components/layout/top-bar'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { AppAccessGate } from '@/components/pwa/app-access-gate'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -45,7 +46,9 @@ export default function RootLayout({
           <AppAccessGate />
           <TopBar />
           <StatusStrip />
-          <PageContainer>{children}</PageContainer>
+          <ErrorBoundary>
+            <PageContainer>{children}</PageContainer>
+          </ErrorBoundary>
           <BottomNav />
         </div>
       </body>

@@ -3,6 +3,8 @@
 import type { FormEvent } from 'react'
 import { formatAccuracy, formatArea, formatTimestamp } from '@/lib/maps/map-core'
 import { formatPointTimestamp } from '@/lib/maps/live-position-map-helpers'
+import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
+import { Alert, ErrorAlert } from '@/components/ui/alert'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 
 type LivePositionWalkWorkspaceProps = {
@@ -216,40 +218,37 @@ export function LivePositionWalkWorkspace({
       ) : null}
 
       <form className="mt-4 space-y-4" onSubmit={onSubmit}>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Pferchname</label>
-          <input
-            className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+        <FormField>
+          <FormLabel>Pferchname</FormLabel>
+          <FormInput
             value={walkName}
             onChange={(event) => onWalkNameChange(event.target.value)}
             placeholder="z. B. Weidekante Ost"
           />
-        </div>
+        </FormField>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Notiz</label>
-          <textarea
-            className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+        <FormField>
+          <FormLabel>Notiz</FormLabel>
+          <FormTextarea
             rows={3}
             value={walkNotes}
-            onChange={(event) => onWalkNotesChange(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onWalkNotesChange(event.target.value)}
             placeholder="optionale Notiz zum abgelaufenen Pferch"
           />
-        </div>
+        </FormField>
 
-        {walkError ? (
-          <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-            {walkError}
-          </div>
-        ) : null}
+        {walkError && (
+          <ErrorAlert>{walkError}</ErrorAlert>
+        )}
 
-        <button
+        <FormButton
           type="submit"
           disabled={isWalkSaving || walkPoints.length < 3}
-          className="w-full rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-medium text-[#17130f] disabled:opacity-50"
+          variant="primary"
+          className="w-full"
         >
           {isWalkSaving ? 'Speichert ...' : 'Abgelaufenen Pferch speichern'}
-        </button>
+        </FormButton>
       </form>
     </>
   )

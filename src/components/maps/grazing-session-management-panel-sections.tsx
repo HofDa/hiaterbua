@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatAccuracy } from '@/lib/maps/map-core'
+import { FormField, FormLabel, FormSelect, FormTextarea, FormButton } from '@/components/ui/form'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   formatDateTime,
   formatDistance,
@@ -64,11 +66,11 @@ export function GrazingSessionManagementSetupFields({
           )}
         </div>
 
-        <select
+        <FormSelect
           value={selectedHerdId}
           onChange={(event) => onSelectedHerdIdChange(event.target.value)}
           disabled={currentSessionStatus !== null}
-          className="hidden w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 lg:block"
+          className="hidden lg:block"
         >
           <option value="">Bitte wählen</option>
           {safeHerds.map((herd) => (
@@ -76,7 +78,7 @@ export function GrazingSessionManagementSetupFields({
               {herd.name}
             </option>
           ))}
-        </select>
+        </FormSelect>
       </div>
     </div>
   )
@@ -315,16 +317,15 @@ export function GrazingSessionMobileStartFlow({
 
           {isDetailsOpen ? (
             <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium">Notiz zum Weidegang</label>
-                <textarea
+              <FormField>
+                <FormLabel>Notiz zum Weidegang</FormLabel>
+                <FormTextarea
                   rows={3}
                   value={sessionNotes}
-                  onChange={(event) => onSessionNotesChange(event.target.value)}
-                  className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onSessionNotesChange(event.target.value)}
                   placeholder="optionale Begleitnotiz"
                 />
-              </div>
+              </FormField>
             </div>
           ) : null}
         </>
@@ -537,22 +538,22 @@ export function GrazingSessionEventCapturePanel({
       </div>
 
       <div className="mt-3 space-y-2">
-        <label className="block text-sm font-medium text-neutral-900">Freie Notiz</label>
-        <textarea
+        <FormLabel>Freie Notiz</FormLabel>
+        <FormTextarea
           rows={2}
           value={eventNote}
-          onChange={(event) => onEventNoteChange(event.target.value)}
-          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onEventNoteChange(event.target.value)}
           placeholder="Bemerkung zum aktuellen Weidegang"
         />
-        <button
+        <FormButton
           type="button"
           onClick={() => void onAddSessionMarkerEvent('note', eventNote)}
           disabled={isEventSaving || !eventNote.trim()}
-          className="w-full rounded-[1.05rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
+          variant="primary"
+          className="w-full rounded-[1.05rem]"
         >
           Notiz speichern
-        </button>
+        </FormButton>
       </div>
 
       {eventStatus ? (

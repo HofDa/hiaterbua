@@ -18,6 +18,8 @@ import {
   MobileMapToolbarStat,
 } from '@/components/maps/mobile-map-toolbar'
 import { MobileMapFloatingCard } from '@/components/maps/mobile-map-ui'
+import { FormField, FormLabel, FormSelect, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
+import { Alert, StatusAlert, ErrorAlert } from '@/components/ui/alert'
 import type {
   Herd,
   SessionEvent,
@@ -162,12 +164,12 @@ export function GrazingSessionMapDesktopManagementOverlay({
             >
               Herde
             </label>
-            <select
+            <FormSelect
               id="desktop-grazing-herd"
               value={selectedHerdId}
               onChange={(event) => onSelectedHerdIdChange(event.target.value)}
               disabled={currentSessionStatus !== null}
-              className="h-11 w-full rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 text-sm text-neutral-950"
+              className="h-11 w-full"
             >
               <option value="">Bitte wählen</option>
               {safeHerds.map((herd) => (
@@ -175,7 +177,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
                   {herd.name}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           </div>
 
           <div className="min-w-[11rem] flex-[0_1_13rem]">
@@ -214,12 +216,12 @@ export function GrazingSessionMapDesktopManagementOverlay({
             >
               Notiz zum Weidegang
             </label>
-            <input
+            <FormInput
               id="desktop-grazing-session-note"
               value={sessionNotes}
               onChange={(event) => onSessionNotesChange(event.target.value)}
               disabled={currentSessionStatus !== null}
-              className="h-11 w-full rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 text-sm text-neutral-950 placeholder:text-neutral-500"
+              className="h-11 w-full"
               placeholder="optionale Begleitnotiz"
             />
           </div>
@@ -248,11 +250,11 @@ export function GrazingSessionMapDesktopManagementOverlay({
               >
                 Ereignisnotiz
               </label>
-              <input
+              <FormInput
                 id="desktop-grazing-event-note"
                 value={eventNote}
                 onChange={(event) => onEventNoteChange(event.target.value)}
-                className="h-10 w-full rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 text-sm text-neutral-950 placeholder:text-neutral-500"
+                className="h-10 w-full"
                 placeholder="Bemerkung zum aktuellen Weidegang"
               />
             </div>
@@ -268,17 +270,13 @@ export function GrazingSessionMapDesktopManagementOverlay({
           </div>
         ) : null}
 
-        {eventStatus ? (
-          <div className="mt-3 rounded-2xl border border-[#c5d3c8] bg-[#edf1ec] px-4 py-2 text-sm text-[#243228]">
-            {eventStatus}
-          </div>
-        ) : null}
+        {eventStatus && (
+          <StatusAlert className="mt-3">{eventStatus}</StatusAlert>
+        )}
 
-        {actionError ? (
-          <div className="mt-3 rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-700">
-            {actionError}
-          </div>
-        ) : null}
+        {actionError && (
+          <ErrorAlert className="mt-3">{actionError}</ErrorAlert>
+        )}
       </MobileMapFloatingCard>
     </div>
   )

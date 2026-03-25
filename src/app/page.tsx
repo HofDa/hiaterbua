@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { FormButton } from '@/components/ui/form'
 import { db } from '@/lib/db/dexie'
 
 const fieldStartLinks = [
@@ -84,103 +86,114 @@ export default function HomePage() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
-        <div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-800">
-              Feldstart
-            </p>
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-neutral-950">
-              Häufigste Aktionen im Außeneinsatz
-            </h2>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-800">
+            Feldstart
+          </CardTitle>
+          <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-neutral-950">
+            Häufigste Aktionen im Außeneinsatz
+          </h2>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {fieldStartLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-[1.5rem] border px-4 py-4 ${link.className}`}
+              >
+                <div className={`text-lg font-semibold tracking-[-0.02em] ${link.titleClass}`}>
+                  {link.title}
+                </div>
+                <div className={`mt-2 text-sm font-medium ${link.descriptionClass}`}>
+                  {link.description}
+                </div>
+              </Link>
+            ))}
           </div>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {fieldStartLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-[1.5rem] border px-4 py-4 ${link.className}`}
-            >
-              <div className={`text-lg font-semibold tracking-[-0.02em] ${link.titleClass}`}>
-                {link.title}
-              </div>
-              <div className={`mt-2 text-sm font-medium ${link.descriptionClass}`}>
-                {link.description}
-              </div>
-            </Link>
-          ))}
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {utilityLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-full border-2 px-4 py-2 text-sm font-semibold shadow-sm ${link.className}`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      </section>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {utilityLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-full border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-2 text-sm font-semibold shadow-sm ${link.className}`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      <section className="rounded-[1.7rem] border-2 border-[#3a342a] bg-[#fff8ea] px-5 py-4 shadow-[0_18px_40px_rgba(23,20,18,0.1)]">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <Card>
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-800">
+            <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-800">
               Einsatzbereit
-            </p>
-            <p className="mt-1 text-sm font-medium text-neutral-900">
+            </CardTitle>
+            <CardDescription className="mt-1">
               Vor Ort nur kurz prüfen: App installiert, Kartenbereich offline gesichert, GPS empfangbar.
-            </p>
+            </CardDescription>
           </div>
-          <Link
-            href="/settings"
-            className="inline-flex rounded-full border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-2 text-sm font-semibold text-neutral-950 shadow-sm"
-          >
-            Offline & GPS prüfen
+          <Link href="/settings">
+            <FormButton variant="secondary" className="rounded-full py-2 text-sm">
+              Offline & GPS prüfen
+            </FormButton>
           </Link>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
-          <div className="text-sm font-semibold text-neutral-800">Aktive Herden</div>
-          <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-            {dashboardData?.herdsCount ?? '...'}
-          </div>
-        </div>
-        <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
-          <div className="text-sm font-semibold text-neutral-800">Pferche</div>
-          <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-            {dashboardData?.enclosuresCount ?? '...'}
-          </div>
-        </div>
-        <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
-          <div className="text-sm font-semibold text-neutral-800">Laufende Weidegänge</div>
-          <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-            {dashboardData?.activeSessionsCount ?? '...'}
-          </div>
-        </div>
-        <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
-          <div className="text-sm font-semibold text-neutral-800">Weidegänge gesamt</div>
-          <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-            {dashboardData?.sessionsCount ?? '...'}
-          </div>
-        </div>
-        <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
-          <div className="text-sm font-semibold text-neutral-800">Aktive Pferch-Belegungen</div>
-          <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-            {dashboardData?.activeAssignmentsCount ?? '...'}
-          </div>
-        </div>
-        <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.12)]">
-          <div className="text-sm font-semibold text-neutral-800">Arbeit läuft</div>
-          <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-            {dashboardData?.activeWorkSessionsCount ?? '...'}
-          </div>
-        </div>
-      </section>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <Card variant="dashboard">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-neutral-800">Aktive Herden</div>
+            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
+              {dashboardData?.herdsCount ?? '...'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card variant="dashboard">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-neutral-800">Pferche</div>
+            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
+              {dashboardData?.enclosuresCount ?? '...'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card variant="dashboard">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-neutral-800">Laufende Weidegänge</div>
+            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
+              {dashboardData?.activeSessionsCount ?? '...'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card variant="dashboard">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-neutral-800">Weidegänge gesamt</div>
+            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
+              {dashboardData?.sessionsCount ?? '...'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card variant="dashboard">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-neutral-800">Aktive Pferch-Belegungen</div>
+            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
+              {dashboardData?.activeAssignmentsCount ?? '...'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card variant="dashboard">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-neutral-800">Arbeit läuft</div>
+            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
+              {dashboardData?.activeWorkSessionsCount ?? '...'}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

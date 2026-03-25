@@ -1,5 +1,8 @@
 'use client'
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormButton, FormLabel, FormSelect } from '@/components/ui/form'
+import { LoadingAlert } from '@/components/ui/alert'
 import type { Herd } from '@/types/domain'
 
 type ExportHerdCardProps = {
@@ -18,48 +21,47 @@ export function ExportHerdCard({
   onExportSingleHerd,
 }: ExportHerdCardProps) {
   return (
-    <section className="rounded-3xl border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
-      <h2 className="text-lg font-semibold">Einzelne Herde exportieren</h2>
-      <p className="mt-2 text-sm font-medium text-neutral-800">
-        Exportiert genau eine Herde als eigene JSON-Datei mit Stammdaten, Tieren, Belegungen,
-        zugehörigen Pferchen, Weidegängen und Arbeitseinsätzen.
-      </p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Einzelne Herde exportieren</CardTitle>
+        <CardDescription>
+          Exportiert genau eine Herde als eigene JSON-Datei mit Stammdaten, Tieren, Belegungen,
+          zugehörigen Pferchen, Weidegängen und Arbeitseinsätzen.
+        </CardDescription>
+      </CardHeader>
 
-      {exportableHerds === null ? (
-        <div className="mt-4 rounded-2xl border border-[#ccb98a] bg-[#efe4c8] px-4 py-3 text-sm font-semibold text-neutral-900">
-          Lade Herden ...
-        </div>
-      ) : exportableHerds.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-800">
-          Keine Herde vorhanden.
-        </div>
-      ) : (
-        <>
-          <label className="mt-4 block text-sm font-medium text-neutral-900">
-            Herde wählen
-            <select
-              value={activeHerdExportId}
-              onChange={(event) => onSelectedHerdChange(event.target.value)}
-              className="mt-2 w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-neutral-950"
+      <CardContent>
+        {exportableHerds === null ? (
+          <LoadingAlert>Lade Herden ...</LoadingAlert>
+        ) : exportableHerds.length === 0 ? (
+          <LoadingAlert>Keine Herde vorhanden.</LoadingAlert>
+        ) : (
+          <>
+            <FormLabel>
+              Herde wählen
+              <FormSelect
+                value={activeHerdExportId}
+                onChange={(event) => onSelectedHerdChange(event.target.value)}
+                className="mt-2"
+              >
+                {exportableHerds.map((herd) => (
+                  <option key={herd.id} value={herd.id}>
+                    {herd.name}
+                  </option>
+                ))}
+              </FormSelect>
+            </FormLabel>
+
+            <FormButton
+              onClick={() => void onExportSingleHerd()}
+              disabled={isExportingHerd}
+              className="mt-4"
             >
-              {exportableHerds.map((herd) => (
-                <option key={herd.id} value={herd.id}>
-                  {herd.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <button
-            type="button"
-            onClick={() => void onExportSingleHerd()}
-            disabled={isExportingHerd}
-            className="mt-4 rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-[#17130f] disabled:opacity-50"
-          >
-            {isExportingHerd ? 'Erstellt Herden-JSON ...' : 'Herde als JSON herunterladen'}
-          </button>
-        </>
-      )}
-    </section>
+              {isExportingHerd ? 'Erstellt Herden-JSON ...' : 'Herde als JSON herunterladen'}
+            </FormButton>
+          </>
+        )}
+      </CardContent>
+    </Card>
   )
 }

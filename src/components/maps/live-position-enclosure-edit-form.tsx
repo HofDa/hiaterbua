@@ -2,6 +2,9 @@
 
 import type { FormEvent } from 'react'
 import { formatArea } from '@/lib/maps/map-core'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
+import { Alert, ErrorAlert } from '@/components/ui/alert'
 
 type LivePositionEnclosureEditFormProps = {
   editName: string
@@ -38,26 +41,24 @@ export function LivePositionEnclosureEditForm({
 }: LivePositionEnclosureEditFormProps) {
   return (
     <form className="mt-4 space-y-3" onSubmit={onSaveEditedEnclosure}>
-      <div>
-        <label className="mb-1 block text-sm font-medium">Pferchname</label>
-        <input
-          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+      <FormField>
+        <FormLabel>Pferchname</FormLabel>
+        <FormInput
           value={editName}
           onChange={(event) => onEditNameChange(event.target.value)}
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">Notiz</label>
-        <textarea
-          className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+      <FormField>
+        <FormLabel>Notiz</FormLabel>
+        <FormTextarea
           rows={3}
           value={editNotes}
-          onChange={(event) => onEditNotesChange(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onEditNotesChange(event.target.value)}
         />
-      </div>
+      </FormField>
 
-      <div className="rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f]">
+      <Alert variant="info" className="text-sm">
         Punkte auf der Karte antippen und danach die neue Position in der Karte klicken. Mit
         Hinzufügen setzt der nächste Kartenklick einen neuen Punkt. Aktuell:{' '}
         <span className="font-medium">{editGeometryPointsLength}</span> Punkte · Fläche{' '}
@@ -68,45 +69,45 @@ export function LivePositionEnclosureEditForm({
         {isAddingEditPoint ? (
           <span> · Neuer Punkt wird mit dem nächsten Kartenklick gesetzt</span>
         ) : null}
-      </div>
+      </Alert>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <FormButton
           type="button"
           onClick={onStartAddEditPoint}
-          className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-[#17130f]"
+          variant="secondary"
         >
           Punkt hinzufügen
-        </button>
-        <button
+        </FormButton>
+        <FormButton
           type="button"
           onClick={onRemoveSelectedEditPoint}
           disabled={selectedEditPointIndex === null || editGeometryPointsLength <= 3}
-          className="rounded-2xl bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
+          variant="secondary"
         >
           Ausgewählten Punkt entfernen
-        </button>
+        </FormButton>
       </div>
 
-      {editError ? (
-        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{editError}</div>
-      ) : null}
+      {editError && (
+        <ErrorAlert>{editError}</ErrorAlert>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <FormButton
           type="submit"
           disabled={isEditing}
-          className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 py-4 text-sm font-medium text-[#17130f] disabled:opacity-50"
+          variant="primary"
         >
           {isEditing ? 'Speichert ...' : 'Pferch speichern'}
-        </button>
-        <button
+        </FormButton>
+        <FormButton
           type="button"
           onClick={onCancelEditEnclosure}
-          className="rounded-2xl bg-[#fffdf6] px-4 py-4 text-sm font-medium text-neutral-900"
+          variant="secondary"
         >
           Abbrechen
-        </button>
+        </FormButton>
       </div>
     </form>
   )

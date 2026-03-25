@@ -6,6 +6,8 @@ import {
   getEffectiveHerdCount,
   getAssignableHerds,
 } from '@/lib/maps/live-position-map-helpers'
+import { FormField, FormLabel, FormTextarea } from '@/components/ui/form'
+import { ErrorAlert } from '@/components/ui/alert'
 import type {
   Animal,
   Enclosure,
@@ -191,22 +193,19 @@ export function LivePositionEnclosureAssignmentPanel({
               </div>
             </div>
 
-            <div className="min-w-0">
-              <label className="mb-1 block text-sm font-medium">Notiz</label>
-              <textarea
-                className="w-full min-w-0 rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+            <FormField className="min-w-0">
+              <FormLabel>Notiz</FormLabel>
+              <FormTextarea
                 rows={2}
                 value={assignmentNotes}
-                onChange={(event) => onAssignmentNotesChange(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onAssignmentNotesChange(event.target.value)}
                 placeholder="optionale Bemerkung zur Belegung"
               />
-            </div>
+            </FormField>
 
-            {assignmentError ? (
-              <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                {assignmentError}
-              </div>
-            ) : null}
+            {assignmentError && (
+              <ErrorAlert>{assignmentError}</ErrorAlert>
+            )}
 
             <div className="grid grid-cols-2 gap-2">
               <button

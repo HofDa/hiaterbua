@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
 import { ExportHerdCard } from '@/components/export/export-herd-card'
 import { ExportImportCard } from '@/components/export/export-import-card'
 import { ExportPageHeader } from '@/components/export/export-page-header'
 import { ExportWorkCard } from '@/components/export/export-work-card'
 import { ExportZipCard } from '@/components/export/export-zip-card'
-import { db } from '@/lib/db/dexie'
+import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
 import { downloadBlob } from '@/lib/import-export/file-formats'
 import {
   buildAppExportArchive,
@@ -18,250 +17,155 @@ import {
   prepareDbImportFromPreview,
   type ImportPreview,
 } from '@/lib/import-export/export-page-helpers'
-import type { Herd } from '@/types/domain'
+import { useAsyncOperation } from '@/hooks/use-async-operation'
+import { useExportPageData } from '@/hooks/use-export-page'
 
 export default function ExportPage() {
-  const [isExporting, setIsExporting] = useState(false)
-  const [isExportingHerd, setIsExportingHerd] = useState(false)
-  const [isExportingWorkSessions, setIsExportingWorkSessions] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
-  const [status, setStatus] = useState('')
-  const [error, setError] = useState('')
-  const [exportableHerds, setExportableHerds] = useState<Herd[] | null>(null)
-  const [workSessionCount, setWorkSessionCount] = useState<number | null>(null)
-  const [workEventCount, setWorkEventCount] = useState<number | null>(null)
-  const [replaceExisting, setReplaceExisting] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [selectedHerdExportId, setSelectedHerdExportId] = useState('')
-  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null)
-  const [isAnalyzingImport, setIsAnalyzingImport] = useState(false)
+  const pageData = useExportPageData()
+  const exportZip = useAsyncOperation<{ blob: Blob; filename: string }>()
+  const exportHerd = useAsyncOperation<{ blob: Blob; filename: string; herdName: string }>()
+  const exportWork = useAsyncOperation<{ blob: Blob; filename: string; counts: { workSessions: number; workEvents: number } }>()
+  const importData = useAsyncOperation<{
+    herds: number
+    animals: number
+    enclosures: number
+    surveyAreas: number
+    enclosureAssignments: number
+    grazingSessions: number
+    trackpoints: number
+    sessionEvents: number
+    workSessions: number
+    workEvents: number
+    settings: number
+  }>()
+  const analyzeImport = useAsyncOperation<ImportPreview>()
 
-  const selectedFileLabel = useMemo(() => {
-    if (!selectedFile) return 'Keine Datei gewählt.'
-    return `${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)`
-  }, [selectedFile])
+  const canReplaceExisting = canImportPreviewReplaceExisting(pageData.importPreview)
 
-  const canReplaceExisting = useMemo(
-    () => canImportPreviewReplaceExisting(importPreview),
-    [importPreview]
-  )
-
-  const activeHerdExportId = useMemo(() => {
-    if (!exportableHerds || exportableHerds.length === 0) {
-      return ''
-    }
-
-    if (selectedHerdExportId && exportableHerds.some((herd) => herd.id === selectedHerdExportId)) {
-      return selectedHerdExportId
-    }
-
-    return exportableHerds[0].id
-  }, [exportableHerds, selectedHerdExportId])
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadExportData() {
-      const [herdList, nextWorkSessionCount, nextWorkEventCount] = await Promise.all([
-        db.herds.orderBy('name').toArray(),
-        db.workSessions.count(),
-        db.workEvents.count(),
-      ])
-
-      if (!cancelled) {
-        setExportableHerds(herdList)
-        setWorkSessionCount(nextWorkSessionCount)
-        setWorkEventCount(nextWorkEventCount)
-      }
-    }
-
-    void loadExportData()
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        void loadExportData()
-      }
-    }
-
-    window.addEventListener('focus', loadExportData)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      cancelled = true
-      window.removeEventListener('focus', loadExportData)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [])
 
   async function handleExportZip() {
-    setIsExporting(true)
-    setStatus('')
-    setError('')
-
-    try {
+    await exportZip.execute(async () => {
       const { blob, filename } = await buildAppExportArchive()
       downloadBlob(blob, filename)
-      setStatus('ZIP-Export erstellt.')
-    } catch (currentError) {
-      setError(
-        currentError instanceof Error
-          ? currentError.message
-          : 'Export konnte nicht erstellt werden.'
-      )
-    } finally {
-      setIsExporting(false)
-    }
+      return { blob, filename }
+    }, {
+      loadingMessage: 'Erstelle ZIP-Export...',
+      successMessage: 'ZIP-Export erstellt.'
+    })
   }
 
   async function handleExportSingleHerd() {
-    if (!activeHerdExportId) {
-      setError('Bitte zuerst eine Herde wählen.')
+    if (!pageData.activeHerdExportId) {
+      exportZip.setError('Bitte zuerst eine Herde wählen.')
       return
     }
 
-    setIsExportingHerd(true)
-    setStatus('')
-    setError('')
-
-    try {
-      const { blob, filename, herdName } = await buildSingleHerdExportArchive(activeHerdExportId)
-      downloadBlob(blob, filename)
-      setStatus(`Herde "${herdName}" als JSON exportiert.`)
-    } catch (currentError) {
-      setError(
-        currentError instanceof Error
-          ? currentError.message
-          : 'Herde konnte nicht exportiert werden.'
-      )
-    } finally {
-      setIsExportingHerd(false)
-    }
+    await exportHerd.execute(async () => {
+      const result = await buildSingleHerdExportArchive(pageData.activeHerdExportId)
+      downloadBlob(result.blob, result.filename)
+      return result
+    }, {
+      loadingMessage: 'Erstellt Herden-JSON...',
+      successMessage: (result) => `Herde "${result.herdName}" als JSON exportiert.`
+    })
   }
 
   async function handleExportWorkSessions() {
-    setIsExportingWorkSessions(true)
-    setStatus('')
-    setError('')
-
-    try {
-      const { blob, filename, counts } = await buildWorkSessionsExportArchive()
-      downloadBlob(blob, filename)
-      setStatus(
-        `${counts.workSessions} Arbeitseinsätze und ${counts.workEvents} Arbeitsereignisse als JSON exportiert.`
-      )
-    } catch (currentError) {
-      setError(
-        currentError instanceof Error
-          ? currentError.message
-          : 'Arbeitseinsätze konnten nicht exportiert werden.'
-      )
-    } finally {
-      setIsExportingWorkSessions(false)
-    }
+    await exportWork.execute(async () => {
+      const result = await buildWorkSessionsExportArchive()
+      downloadBlob(result.blob, result.filename)
+      return result
+    }, {
+      loadingMessage: 'Erstelle Arbeitseinsätze-Export...',
+      successMessage: (result) => 
+        `${result.counts.workSessions} Arbeitseinsätze und ${result.counts.workEvents} Arbeitsereignisse als JSON exportiert.`
+    })
   }
 
   async function handleImport() {
-    if (!selectedFile || !importPreview) {
-      setError('Bitte zuerst eine Importdatei wählen.')
+    if (!pageData.selectedFile || !pageData.importPreview) {
+      importData.setError('Bitte zuerst eine Importdatei wählen.')
       return
     }
 
-    setIsImporting(true)
-    setStatus('')
-    setError('')
-
-    try {
-      const preparedImport = await prepareDbImportFromPreview(importPreview, replaceExisting)
+    await importData.execute(async () => {
+      const preparedImport = await prepareDbImportFromPreview(pageData.importPreview!, pageData.replaceExisting)
       const counts = await importPayloadIntoDb(preparedImport)
-      setStatus(
-        `Import abgeschlossen (${replaceExisting ? 'Ersetzen' : 'Zusammenführen'}). Herden: ${counts.herds}, Tiere: ${counts.animals}, Pferche: ${counts.enclosures}, Untersuchungsflächen: ${counts.surveyAreas}, Belegungen: ${counts.enclosureAssignments}, Weidegänge: ${counts.grazingSessions}, Trackpunkte: ${counts.trackpoints}, Ereignisse: ${counts.sessionEvents}, Arbeit: ${counts.workSessions}, Arbeitsereignisse: ${counts.workEvents}, Settings: ${counts.settings}.`
-      )
-    } catch (currentError) {
-      setError(
-        currentError instanceof Error
-          ? currentError.message
-          : 'Import konnte nicht durchgeführt werden.'
-      )
-    } finally {
-      setIsImporting(false)
-    }
+      return counts
+    }, {
+      successMessage: (counts) =>
+        `Import abgeschlossen (${pageData.replaceExisting ? 'Ersetzen' : 'Zusammenführen'}). Herden: ${counts.herds}, Tiere: ${counts.animals}, Pferche: ${counts.enclosures}, Untersuchungsflächen: ${counts.surveyAreas}, Belegungen: ${counts.enclosureAssignments}, Weidegänge: ${counts.grazingSessions}, Trackpunkte: ${counts.trackpoints}, Ereignisse: ${counts.sessionEvents}, Arbeit: ${counts.workSessions}, Arbeitsereignisse: ${counts.workEvents}, Settings: ${counts.settings}.`
+    })
   }
 
   async function handleFileSelection(file: File | null) {
-    setSelectedFile(file)
-    setImportPreview(null)
-    setStatus('')
-    setError('')
+    pageData.setSelectedFile(file)
+    pageData.setImportPreview(null)
+    exportZip.reset()
+    exportHerd.reset()
+    exportWork.reset()
+    importData.reset()
 
     if (!file) {
       return
     }
 
-    setIsAnalyzingImport(true)
-
-    try {
+    await analyzeImport.execute(async () => {
       const preview = await buildImportPreview(file)
-      if (replaceExisting && !canImportPreviewReplaceExisting(preview)) {
-        setReplaceExisting(false)
+      if (pageData.replaceExisting && !canImportPreviewReplaceExisting(preview)) {
+        pageData.setReplaceExisting(false)
       }
-      setImportPreview(preview)
-      setStatus(`Import-Datei geprüft: ${preview.sourceLabel}.`)
-    } catch (currentError) {
-      setImportPreview(null)
-      setError(
-        currentError instanceof Error
-          ? currentError.message
-          : 'Datei konnte nicht analysiert werden.'
-      )
-    } finally {
-      setIsAnalyzingImport(false)
-    }
+      pageData.setImportPreview(preview)
+      return preview
+    }, {
+      successMessage: (preview) => `Import-Datei geprüft: ${preview.sourceLabel}.`
+    })
   }
 
   return (
     <div className="space-y-4">
       <ExportPageHeader />
 
-      <ExportZipCard isExporting={isExporting} onExportZip={handleExportZip} />
+      <ExportZipCard isExporting={exportZip.isLoading} onExportZip={handleExportZip} />
 
       <ExportHerdCard
-        exportableHerds={exportableHerds}
-        activeHerdExportId={activeHerdExportId}
-        isExportingHerd={isExportingHerd}
-        onSelectedHerdChange={setSelectedHerdExportId}
+        exportableHerds={pageData.exportableHerds}
+        activeHerdExportId={pageData.activeHerdExportId}
+        isExportingHerd={exportHerd.isLoading}
+        onSelectedHerdChange={pageData.setSelectedHerdExportId}
         onExportSingleHerd={handleExportSingleHerd}
       />
 
       <ExportWorkCard
-        workSessionCount={workSessionCount}
-        workEventCount={workEventCount}
-        isExportingWorkSessions={isExportingWorkSessions}
+        workSessionCount={pageData.workSessionCount}
+        workEventCount={pageData.workEventCount}
+        isExportingWorkSessions={exportWork.isLoading}
         onExportWorkSessions={handleExportWorkSessions}
       />
 
       <ExportImportCard
-        selectedFileLabel={selectedFileLabel}
-        isAnalyzingImport={isAnalyzingImport}
-        importPreview={importPreview}
-        replaceExisting={replaceExisting}
+        selectedFileLabel={pageData.selectedFileLabel}
+        isAnalyzingImport={analyzeImport.isLoading}
+        importPreview={pageData.importPreview}
+        replaceExisting={pageData.replaceExisting}
         canReplaceExisting={canReplaceExisting}
-        canStartImport={Boolean(selectedFile && importPreview)}
-        isImporting={isImporting}
+        canStartImport={Boolean(pageData.selectedFile && pageData.importPreview)}
+        isImporting={importData.isLoading}
         onFileSelection={handleFileSelection}
-        onReplaceExistingChange={setReplaceExisting}
+        onReplaceExistingChange={pageData.setReplaceExisting}
         onImport={handleImport}
       />
 
-      {status ? (
-        <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm font-semibold text-emerald-900">
-          {status}
-        </div>
+      {(exportZip.status || exportHerd.status || exportWork.status || importData.status) ? (
+        <StatusAlert>
+          {exportZip.status || exportHerd.status || exportWork.status || importData.status}
+        </StatusAlert>
       ) : null}
 
-      {error ? (
-        <div className="rounded-2xl border border-red-300 bg-red-100 px-4 py-3 text-sm font-semibold text-red-900">
-          {error}
-        </div>
+      {(exportZip.error || exportHerd.error || exportWork.error || importData.error) ? (
+        <ErrorAlert>
+          {exportZip.error || exportHerd.error || exportWork.error || importData.error}
+        </ErrorAlert>
       ) : null}
     </div>
   )

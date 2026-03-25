@@ -1,5 +1,8 @@
 'use client'
 
+import { Card, CardContent } from '@/components/ui/card'
+import { FormButton } from '@/components/ui/form'
+import { Alert } from '@/components/ui/alert'
 import type { SettingsStorageMode } from '@/components/settings/settings-options'
 
 export type SettingsTileCachePanelProps = {
@@ -47,92 +50,94 @@ export function SettingsTileCachePanel({
   ].join(' ')
 
   return (
-    <div className="rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4">
-      <button
-        type="button"
-        onClick={onToggleOpen}
-        aria-expanded={isOpen}
-        className="flex w-full items-start justify-between gap-3 text-left"
-      >
-        <div>
-          <div className="text-sm font-medium text-neutral-900">Tile-Cache</div>
-          <div className="mt-1 text-sm font-medium text-neutral-800">
-            {tileCacheSupported
-              ? hasStoredTiles
-                ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
-                : tileCachingEnabled
-                  ? 'Tile-Caching ist aktiv. Neu geladene Tiles werden lokal auf dem Gerät gespeichert.'
-                  : 'Caching ist ausgeschaltet. Bereits geladene Tiles können geleert werden.'
-              : 'Dieser Browser stellt die Cache-API nicht bereit.'}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className={storageBadgeClass}>
-              {tileCacheLoading
-                ? 'Tiles werden geprüft'
-                : hasStoredTiles
-                  ? `${tileCacheCount} Tiles auf Gerät`
-                  : 'Keine Tiles auf Gerät'}
-            </span>
-            <span className={storageBadgeClass}>
-              {hasStoredTiles ? 'Offline nutzbar' : 'Offline noch nicht vorbereitet'}
-            </span>
-            <span className={persistenceBadgeClass}>
+    <Card className="border-[#ccb98a] bg-[#fffdf6] p-4">
+      <CardContent className="p-0">
+        <button
+          type="button"
+          onClick={onToggleOpen}
+          aria-expanded={isOpen}
+          className="flex w-full items-start justify-between gap-3 text-left"
+        >
+          <div>
+            <div className="text-sm font-medium text-neutral-900">Tile-Cache</div>
+            <div className="mt-1 text-sm font-medium text-neutral-800">
+              {tileCacheSupported
+                ? hasStoredTiles
+                  ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
+                  : tileCachingEnabled
+                    ? 'Tile-Caching ist aktiv. Neu geladene Tiles werden lokal auf dem Gerät gespeichert.'
+                    : 'Caching ist ausgeschaltet. Bereits geladene Tiles können geleert werden.'
+                : 'Dieser Browser stellt die Cache-API nicht bereit.'}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className={storageBadgeClass}>
+                {tileCacheLoading
+                  ? 'Tiles werden geprüft'
+                  : hasStoredTiles
+                    ? `${tileCacheCount} Tiles auf Gerät`
+                    : 'Keine Tiles auf Gerät'}
+              </span>
+              <span className={storageBadgeClass}>
+                {hasStoredTiles ? 'Offline nutzbar' : 'Offline noch nicht vorbereitet'}
+              </span>
+              <span className={persistenceBadgeClass}>
+                {persistentStorageGranted === null
+                  ? 'Persistenz unbekannt'
+                  : persistentStorageGranted
+                    ? 'Persistenter Speicher aktiv'
+                    : 'Speicher nicht zugesichert'}
+              </span>
+            </div>
+            <div className="mt-2 text-xs font-medium text-neutral-700">
+              Speichermodus: {settingsStorageMode === 'db' ? 'App-Datenbank' : 'iOS-Fallback'}
+            </div>
+            <div className="mt-1 text-xs font-medium text-neutral-700">
+              Persistenter Speicher:{' '}
               {persistentStorageGranted === null
-                ? 'Persistenz unbekannt'
-                : persistentStorageGranted
-                  ? 'Persistenter Speicher aktiv'
-                  : 'Speicher nicht zugesichert'}
-            </span>
-          </div>
-          <div className="mt-2 text-xs font-medium text-neutral-700">
-            Speichermodus: {settingsStorageMode === 'db' ? 'App-Datenbank' : 'iOS-Fallback'}
-          </div>
-          <div className="mt-1 text-xs font-medium text-neutral-700">
-            Persistenter Speicher:{' '}
-            {persistentStorageGranted === null
-              ? 'unbekannt'
-              : persistentStorageGranted
-                ? 'aktiv'
-                : 'nicht zugesichert'}
-          </div>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1 text-xs font-semibold text-neutral-700">
-            {tileCacheLoading
-              ? 'prüft ...'
-              : tileCacheCount === null
                 ? 'unbekannt'
-                : `${tileCacheCount} Tiles`}
+                : persistentStorageGranted
+                  ? 'aktiv'
+                  : 'nicht zugesichert'}
+            </div>
           </div>
-          <div className="mt-1 text-base text-neutral-900">{isOpen ? '−' : '+'}</div>
-        </div>
-      </button>
+          <div className="shrink-0 text-right">
+            <div className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1 text-xs font-semibold text-neutral-700">
+              {tileCacheLoading
+                ? 'prüft ...'
+                : tileCacheCount === null
+                  ? 'unbekannt'
+                  : `${tileCacheCount} Tiles`}
+            </div>
+            <div className="mt-1 text-base text-neutral-900">{isOpen ? '−' : '+'}</div>
+          </div>
+        </button>
 
-      {isOpen ? (
-        <>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void onEnablePersistentStorage()}
-              disabled={persistentStorageLoading}
-              className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
-            >
-              {persistentStorageLoading ? 'Fragt an ...' : 'Persistenten Speicher anfragen'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void onClearTileCache()}
-              disabled={!tileCacheSupported || tileCacheClearing}
-              className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900 disabled:opacity-50"
-            >
-              {tileCacheClearing ? 'Leert ...' : 'Cache leeren'}
-            </button>
-          </div>
-          <p className="mt-2 text-xs font-medium text-neutral-700">
-            Die Anzeige ist eine grobe Anzahl lokal gespeicherter Kartentiles.
-          </p>
-        </>
-      ) : null}
-    </div>
+        {isOpen ? (
+          <>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <FormButton
+                onClick={() => void onEnablePersistentStorage()}
+                disabled={persistentStorageLoading}
+                variant="secondary"
+                className="py-3 text-sm"
+              >
+                {persistentStorageLoading ? 'Fragt an ...' : 'Persistenten Speicher anfragen'}
+              </FormButton>
+              <FormButton
+                onClick={() => void onClearTileCache()}
+                disabled={!tileCacheSupported || tileCacheClearing}
+                variant="secondary"
+                className="py-3 text-sm"
+              >
+                {tileCacheClearing ? 'Leert ...' : 'Cache leeren'}
+              </FormButton>
+            </div>
+            <Alert variant="info" className="mt-2 text-xs">
+              Die Anzeige ist eine grobe Anzahl lokal gespeicherter Kartentiles.
+            </Alert>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }

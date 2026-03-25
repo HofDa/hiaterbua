@@ -7,6 +7,9 @@ import {
   getEffectiveHerdCount,
 } from '@/lib/maps/live-position-map-helpers'
 import { formatArea } from '@/lib/maps/map-core'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormField, FormLabel, FormTextarea, FormButton } from '@/components/ui/form'
+import { Alert, ErrorAlert } from '@/components/ui/alert'
 import type { FilteredEnclosureItem } from '@/lib/maps/live-position-map-helpers'
 import type {
   Animal,
@@ -247,25 +250,22 @@ function LivePositionMobileAssignmentFlow({
           </button>
 
           {isDetailsOpen ? (
-            <div>
-              <label className="mb-1 block text-sm font-medium">Notiz</label>
-              <textarea
-                className="w-full rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3"
+            <FormField>
+              <FormLabel>Notiz</FormLabel>
+              <FormTextarea
                 rows={3}
                 value={assignmentNotes}
-                onChange={(event) => onAssignmentNotesChange(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onAssignmentNotesChange(event.target.value)}
                 placeholder="optionale Bemerkung zur Belegung"
               />
-            </div>
+            </FormField>
           ) : null}
         </div>
       ) : null}
 
-      {assignmentError ? (
-        <div className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          {assignmentError}
-        </div>
-      ) : null}
+      {assignmentError && (
+        <ErrorAlert className="mt-3">{assignmentError}</ErrorAlert>
+      )}
     </div>
   )
 }

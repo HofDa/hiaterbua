@@ -2,6 +2,8 @@
 
 import { WorkActiveSessionPanel } from '@/components/work/work-active-session-panel'
 import { WorkNewSessionForm } from '@/components/work/work-new-session-form'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
 import type { WorkActivityId, Enclosure, Herd, WorkSession, WorkStatus, WorkType } from '@/types/domain'
 import type { WorkPickerSectionId, WorkSelection } from '@/lib/work/work-session-helpers'
 
@@ -61,55 +63,56 @@ export function WorkSessionControlCard({
   onNotesChange,
 }: WorkSessionControlCardProps) {
   return (
-    <div
-      data-work-session-control-card="true"
-      className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]"
-    >
-      <h2 className="text-lg font-semibold tracking-[-0.02em]">Neuer Arbeitseinsatz</h2>
+    <Card data-work-session-control-card="true">
+      <CardHeader>
+        <CardTitle>Neuer Arbeitseinsatz</CardTitle>
+      </CardHeader>
 
-      {activeSession ? (
-        <WorkActiveSessionPanel
-          activeSession={activeSession}
-          nextReminderMs={nextReminderMs}
-          nowMs={nowMs}
-          herdsById={herdsById}
-          enclosuresById={enclosuresById}
-          isSaving={isSaving}
-          onUpdateStatus={onUpdateWorkSessionStatus}
-        />
-      ) : (
-        <WorkNewSessionForm
-          isSaving={isSaving}
-          workPickerSectionId={workPickerSectionId}
-          workType={workType}
-          workActivityId={workActivityId}
-          selectedHerdId={selectedHerdId}
-          selectedEnclosureId={selectedEnclosureId}
-          reminderIntervalMin={reminderIntervalMin}
-          notes={notes}
-          herds={herds}
-          enclosures={enclosures}
-          onSubmit={onStartWorkSession}
-          onWorkPickerSectionChange={onWorkPickerSectionChange}
-          onWorkSelectionChange={onWorkSelectionChange}
-          onSelectedHerdIdChange={onSelectedHerdIdChange}
-          onSelectedEnclosureIdChange={onSelectedEnclosureIdChange}
-          onReminderIntervalMinChange={onReminderIntervalMinChange}
-          onNotesChange={onNotesChange}
-        />
-      )}
+      <CardContent>
+        {activeSession ? (
+          <WorkActiveSessionPanel
+            activeSession={activeSession}
+            nextReminderMs={nextReminderMs}
+            nowMs={nowMs}
+            herdsById={herdsById}
+            enclosuresById={enclosuresById}
+            isSaving={isSaving}
+            onUpdateStatus={onUpdateWorkSessionStatus}
+          />
+        ) : (
+          <WorkNewSessionForm
+            isSaving={isSaving}
+            workPickerSectionId={workPickerSectionId}
+            workType={workType}
+            workActivityId={workActivityId}
+            selectedHerdId={selectedHerdId}
+            selectedEnclosureId={selectedEnclosureId}
+            reminderIntervalMin={reminderIntervalMin}
+            notes={notes}
+            herds={herds}
+            enclosures={enclosures}
+            onSubmit={onStartWorkSession}
+            onWorkPickerSectionChange={onWorkPickerSectionChange}
+            onWorkSelectionChange={onWorkSelectionChange}
+            onSelectedHerdIdChange={onSelectedHerdIdChange}
+            onSelectedEnclosureIdChange={onSelectedEnclosureIdChange}
+            onReminderIntervalMinChange={onReminderIntervalMinChange}
+            onNotesChange={onNotesChange}
+          />
+        )}
 
-      {error ? (
-        <div className="mt-4 rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-          {error}
-        </div>
-      ) : null}
+        {error ? (
+          <ErrorAlert className="mt-4">
+            {error}
+          </ErrorAlert>
+        ) : null}
 
-      {statusMessage ? (
-        <div className="mt-4 rounded-[1.1rem] border border-[#c5d3c8] bg-[#edf1ec] px-4 py-3 text-sm font-semibold text-[#243228]">
-          {statusMessage}
-        </div>
-      ) : null}
-    </div>
+        {statusMessage ? (
+          <StatusAlert className="mt-4">
+            {statusMessage}
+          </StatusAlert>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }
