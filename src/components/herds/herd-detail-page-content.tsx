@@ -74,7 +74,6 @@ export function HerdDetailPageContent({
     enclosuresById,
   })
 
-  const knownEarTags = useMemo(() => allAnimals.map((animal) => animal.earTag), [allAnimals])
   const editingAnimal = useMemo(
     () => animals.find((animal) => animal.id === animalController.editingAnimalId) ?? null,
     [animalController.editingAnimalId, animals]
@@ -147,7 +146,6 @@ export function HerdDetailPageContent({
         herdName={herd.name}
         saving={animalController.saving}
         error={animalController.error}
-        knownEarTags={knownEarTags}
         earTag={animalController.earTag}
         species={animalController.species}
         name={animalController.name}
@@ -161,8 +159,6 @@ export function HerdDetailPageContent({
 
       {animalController.editingAnimalId ? (
         <HerdDetailAnimalEditCard
-          knownEarTags={knownEarTags}
-          conflictIgnoreEarTag={editingAnimal?.earTag ?? null}
           editSaving={animalController.editSaving}
           editError={animalController.editError}
           editEarTag={animalController.editEarTag}

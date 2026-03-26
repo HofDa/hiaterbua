@@ -357,7 +357,7 @@ export function WorkUserCard() {
                     Freigeben
                   </FormButton>
                   <InlineAlert variant="info">
-                    Ohne Passwort wird der Cache nach {ACCESS_SESSION_DURATION_MINUTES} Minuten geloescht.
+                    Ohne Passwort wird der Cache nach {ACCESS_SESSION_DURATION_MINUTES} Minuten gelöscht.
                   </InlineAlert>
                 </div>
               )}

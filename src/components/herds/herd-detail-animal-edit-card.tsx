@@ -7,8 +7,6 @@ import { ErrorAlert } from '@/components/ui/alert'
 import type { Species } from '@/types/domain'
 
 type HerdDetailAnimalEditCardProps = {
-  knownEarTags: string[]
-  conflictIgnoreEarTag: string | null
   editSaving: boolean
   editError: string
   editEarTag: string
@@ -24,8 +22,6 @@ type HerdDetailAnimalEditCardProps = {
 }
 
 export function HerdDetailAnimalEditCard({
-  knownEarTags,
-  conflictIgnoreEarTag,
   editSaving,
   editError,
   editEarTag,
@@ -49,8 +45,6 @@ export function HerdDetailAnimalEditCard({
             disabled={editSaving}
             earTag={editEarTag}
             onEarTagChange={onEarTagChange}
-            knownEarTags={knownEarTags}
-            conflictIgnoreEarTag={conflictIgnoreEarTag}
             species={editSpecies}
             onSpeciesChange={onSpeciesChange}
             name={editName}

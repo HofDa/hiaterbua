@@ -1,6 +1,5 @@
 'use client'
 
-import { EarTagScanPanel } from '@/components/animals/ear-tag-scan-panel'
 import { FormField, FormLabel, FormInput, FormSelect, FormTextarea } from '@/components/ui/form'
 import type { Species } from '@/types/domain'
 
@@ -16,8 +15,6 @@ type AnimalFormFieldsProps = {
   disabled?: boolean
   earTag: string
   onEarTagChange: (value: string) => void
-  knownEarTags: string[]
-  conflictIgnoreEarTag?: string | null
   species: Species
   onSpeciesChange: (value: Species) => void
   name: string
@@ -33,8 +30,6 @@ export function AnimalFormFields({
   disabled = false,
   earTag,
   onEarTagChange,
-  knownEarTags,
-  conflictIgnoreEarTag = null,
   species,
   onSpeciesChange,
   name,
@@ -47,14 +42,6 @@ export function AnimalFormFields({
 }: AnimalFormFieldsProps) {
   return (
     <>
-      <EarTagScanPanel
-        disabled={disabled}
-        knownEarTags={knownEarTags}
-        conflictIgnoreEarTag={conflictIgnoreEarTag}
-        value={earTag}
-        onApplyValue={onEarTagChange}
-      />
-
       <FormField>
         <FormLabel>Ohrmarke</FormLabel>
         <FormInput

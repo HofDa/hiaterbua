@@ -7,7 +7,6 @@ type HerdDetailAddAnimalCardProps = {
   herdName: string
   saving: boolean
   error: string
-  knownEarTags: string[]
   earTag: string
   species: Species
   name: string
@@ -23,7 +22,6 @@ export function HerdDetailAddAnimalCard({
   herdName,
   saving,
   error,
-  knownEarTags,
   earTag,
   species,
   name,
@@ -53,7 +51,6 @@ export function HerdDetailAddAnimalCard({
           disabled={saving}
           earTag={earTag}
           onEarTagChange={onEarTagChange}
-          knownEarTags={knownEarTags}
           species={species}
           onSpeciesChange={onSpeciesChange}
           name={name}

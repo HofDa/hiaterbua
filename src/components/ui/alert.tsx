@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react'
+import { CheckCircle, Info, XCircle } from 'lucide-react'
 import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils/cn'
 
@@ -23,12 +23,7 @@ const alertVariants = cva(
 
 type AlertProps = ComponentProps<'div'> & VariantProps<typeof alertVariants>
 
-export function Alert({
-  className,
-  variant,
-  children,
-  ...props
-}: AlertProps) {
+export function Alert({ className, variant, children, ...props }: AlertProps) {
   return (
     <div
       role="alert"
@@ -40,13 +35,9 @@ export function Alert({
   )
 }
 
-export function StatusAlert({
-  className,
-  children,
-  ...props
-}: ComponentProps<'div'>) {
+export function StatusAlert({ className, children, ...props }: ComponentProps<'div'>) {
   return (
-    <Alert variant="success" className={cn(className)} {...props}>
+    <Alert variant="success" className={className} {...props}>
       <CheckCircle className="h-4 w-4" />
       <AlertTitle>Success</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
@@ -54,13 +45,9 @@ export function StatusAlert({
   )
 }
 
-export function ErrorAlert({
-  className,
-  children,
-  ...props
-}: ComponentProps<'div'>) {
+export function ErrorAlert({ className, children, ...props }: ComponentProps<'div'>) {
   return (
-    <Alert variant="destructive" className={cn(className)} {...props}>
+    <Alert variant="destructive" className={className} {...props}>
       <XCircle className="h-4 w-4" />
       <AlertTitle>Error</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
@@ -68,13 +55,9 @@ export function ErrorAlert({
   )
 }
 
-export function LoadingAlert({
-  className,
-  children,
-  ...props
-}: ComponentProps<'div'>) {
+export function LoadingAlert({ className, children, ...props }: ComponentProps<'div'>) {
   return (
-    <Alert variant="default" className={cn(className)} {...props}>
+    <Alert variant="default" className={className} {...props}>
       <Info className="h-4 w-4" />
       <AlertTitle>Loading</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
