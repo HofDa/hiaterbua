@@ -2,16 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-const navItems = [
-  { href: '/', label: 'Start' },
-  { href: '/work', label: 'Arbeit' },
-  { href: '/sessions', label: 'Weidegänge' },
-  { href: '/enclosures', label: 'Pferche' },
-  { href: '/herds', label: 'Herde' },
-  { href: '/export', label: 'Im-/Export' },
-  { href: '/settings', label: 'Einstellungen' },
-]
+import { cn } from '@/lib/utils/cn'
+import { navItems } from './nav-items'
 
 export function TopBar() {
   const pathname = usePathname()
@@ -34,12 +26,12 @@ export function TopBar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={[
+                className={cn(
                   'rounded-full border px-4 py-2 text-sm font-semibold transition-colors',
                   active
                     ? 'border-white bg-[#2f6b4d] !text-white shadow-[0_12px_28px_rgba(9,28,20,0.28)]'
                     : 'border-[#0a2018] bg-[#fffdf8] !text-[#111111] shadow-[0_8px_18px_rgba(9,28,20,0.16)] hover:bg-[#f7f4eb]',
-                ].join(' ')}
+                )}
               >
                 {item.label}
               </Link>

@@ -1,40 +1,96 @@
+import { cva, type VariantProps } from 'class-variance-authority'
+import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react'
 import type { ComponentProps } from 'react'
+import { cn } from '@/lib/utils/cn'
 
-type AlertProps = ComponentProps<'div'> & {
-  variant?: 'info' | 'success' | 'warning' | 'error'
-}
+const alertVariants = cva(
+  'relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground',
+  {
+    variants: {
+      variant: {
+        default: 'bg-background text-foreground',
+        destructive:
+          'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
+        success: 'border-green-500/50 text-green-500 dark:border-green-500 [&>svg]:text-green-500',
+        info: 'border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-500',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  },
+)
 
-export function Alert({ className = '', variant = 'info', children, ...props }: AlertProps) {
-  const baseClasses = 'rounded-2xl border px-4 py-3 text-sm font-medium'
-  
-  const variantClasses = {
-    info: 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
-    success: 'border-[#c5d3c8] bg-[#edf1ec] text-[#243228] font-semibold',
-    warning: 'border-[#ccb98a] bg-[#efe4c8] text-neutral-900 font-semibold',
-    error: 'border-red-200 bg-red-50 text-red-800'
-  }
-  
+type AlertProps = ComponentProps<'div'> & VariantProps<typeof alertVariants>
+
+export function Alert({
+  className,
+  variant,
+  children,
+  ...props
+}: AlertProps) {
   return (
-    <div className={`${baseClasses} ${variantClasses[variant]} ${className}`} {...props}>
+    <div
+      role="alert"
+      className={cn(alertVariants({ variant }), className)}
+      {...props}
+    >
       {children}
     </div>
   )
 }
 
-export function StatusAlert({ className = '', ...props }: ComponentProps<'div'>) {
+export function StatusAlert({
+  className,
+  children,
+  ...props
+}: ComponentProps<'div'>) {
   return (
-    <Alert variant="success" className={className} {...props} />
+    <Alert variant="success" className={cn(className)} {...props}>
+      <CheckCircle className="h-4 w-4" />
+      <AlertTitle>Success</AlertTitle>
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
   )
 }
 
-export function ErrorAlert({ className = '', ...props }: ComponentProps<'div'>) {
+export function ErrorAlert({
+  className,
+  children,
+  ...props
+}: ComponentProps<'div'>) {
   return (
-    <Alert variant="error" className={className} {...props} />
+    <Alert variant="destructive" className={cn(className)} {...props}>
+      <XCircle className="h-4 w-4" />
+      <AlertTitle>Error</AlertTitle>
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
   )
 }
 
-export function LoadingAlert({ className = '', ...props }: ComponentProps<'div'>) {
+export function LoadingAlert({
+  className,
+  children,
+  ...props
+}: ComponentProps<'div'>) {
   return (
-    <Alert variant="warning" className={className} {...props} />
+    <Alert variant="default" className={cn(className)} {...props}>
+      <Info className="h-4 w-4" />
+      <AlertTitle>Loading</AlertTitle>
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
   )
+}
+
+function AlertTitle({ className, ...props }: ComponentProps<'h5'>) {
+  return (
+    <h5
+      className={cn('mb-1 font-medium leading-none tracking-tight', className)}
+      {...props}
+    />
+  )
+}
+
+function AlertDescription({ className, ...props }: ComponentProps<'div'>) {
+  return <div className={cn('text-sm [&_p]:leading-relaxed', className)} {...props} />
 }

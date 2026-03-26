@@ -1,10 +1,12 @@
+import { cn } from '@/lib/utils/cn'
+import { GeistSans } from 'geist/font/sans'
 import type { Metadata, Viewport } from 'next'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
-import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { AppAccessGate } from '@/components/pwa/app-access-gate'
+import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import './globals.css'
@@ -38,8 +40,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="de">
-      <body className="antialiased">
+    <html lang="de" suppressHydrationWarning>
+      <body className={cn('min-h-screen bg-background font-sans antialiased', GeistSans.variable)}>
         <div className="min-h-screen text-neutral-950">
           <ServiceWorkerSync />
           <AppRoutePrefetch />

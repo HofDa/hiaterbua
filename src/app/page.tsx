@@ -3,60 +3,36 @@
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { FormButton } from '@/components/ui/form'
+import { buttonVariants } from '@/components/ui/button'
 import { db } from '@/lib/db/dexie'
+import { cn } from '@/lib/utils/cn'
+
+function DashboardStat({ label, value }: { label: string; value: number | string }) {
+  return (
+    <Card variant="dashboard">
+      <CardContent className="p-5">
+        <div className="text-sm font-semibold text-neutral-800">{label}</div>
+        <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">{value}</div>
+      </CardContent>
+    </Card>
+  )
+}
 
 const fieldStartLinks = [
-  {
-    href: '/work',
-    title: 'Arbeit',
-    description: 'Arbeitszeit im Feld mit Erinnerung erfassen.',
-    className:
-      'border-[#ccb98a] bg-[#fffdf6] shadow-[0_18px_36px_rgba(40,34,26,0.08)]',
-    titleClass: 'text-[#17130f]',
-    descriptionClass: 'text-[#4f473c]',
-  },
-  {
-    href: '/sessions',
-    title: 'Weidegang',
-    description: 'Geführten Weidegang direkt starten oder fortsetzen.',
-    className:
-      'border-[#ccb98a] bg-[#fffdf6] shadow-[0_18px_36px_rgba(40,34,26,0.08)]',
-    titleClass: 'text-[#17130f]',
-    descriptionClass: 'text-[#4f473c]',
-  },
-  {
-    href: '/enclosures',
-    title: 'Pferch',
-    description: 'Pferch zeichnen, Walk starten und Belegung prüfen.',
-    className:
-      'border-[#ccb98a] bg-[#fffdf6] shadow-[0_18px_36px_rgba(40,34,26,0.08)]',
-    titleClass: 'text-[#17130f]',
-    descriptionClass: 'text-[#4f473c]',
-  },
-  {
-    href: '/herds',
-    title: 'Herde',
-    description: 'Herde öffnen, Tiere prüfen und Belegungen anpassen.',
-    className:
-      'border-[#ccb98a] bg-[#fffdf6] shadow-[0_18px_36px_rgba(40,34,26,0.08)]',
-    titleClass: 'text-[#17130f]',
-    descriptionClass: 'text-[#4f473c]',
-  },
+  { href: '/work', title: 'Arbeit', description: 'Arbeitszeit im Feld mit Erinnerung erfassen.' },
+  { href: '/sessions', title: 'Weidegang', description: 'Geführten Weidegang direkt starten oder fortsetzen.' },
+  { href: '/enclosures', title: 'Pferch', description: 'Pferch zeichnen, Walk starten und Belegung prüfen.' },
+  { href: '/herds', title: 'Herde', description: 'Herde öffnen, Tiere prüfen und Belegungen anpassen.' },
 ]
 
 const utilityLinks = [
   {
     href: '/export',
     label: 'Im-/Export',
-    className:
-      'border-[#ccb98a] bg-[#fffdf6] text-[#17130f]',
   },
   {
     href: '/settings',
     label: 'Einstellungen',
-    className:
-      'border-[#ccb98a] bg-[#fffdf6] text-[#17130f]',
   },
 ]
 
@@ -101,12 +77,12 @@ export default function HomePage() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-[1.5rem] border px-4 py-4 ${link.className}`}
+                className="rounded-[1.5rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 shadow-[0_18px_36px_rgba(40,34,26,0.08)]"
               >
-                <div className={`text-lg font-semibold tracking-[-0.02em] ${link.titleClass}`}>
+                <div className="text-lg font-semibold tracking-[-0.02em] text-[#17130f]">
                   {link.title}
                 </div>
-                <div className={`mt-2 text-sm font-medium ${link.descriptionClass}`}>
+                <div className="mt-2 text-sm font-medium text-[#4f473c]">
                   {link.description}
                 </div>
               </Link>
@@ -117,7 +93,7 @@ export default function HomePage() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-2 text-sm font-semibold shadow-sm ${link.className}`}
+                className={cn(buttonVariants({ variant: 'secondary' }), 'rounded-full')}
               >
                 {link.label}
               </Link>
@@ -136,63 +112,22 @@ export default function HomePage() {
               Vor Ort nur kurz prüfen: App installiert, Kartenbereich offline gesichert, GPS empfangbar.
             </CardDescription>
           </div>
-          <Link href="/settings">
-            <FormButton variant="secondary" className="rounded-full py-2 text-sm">
-              Offline & GPS prüfen
-            </FormButton>
+          <Link
+            href="/settings"
+            className={cn(buttonVariants({ variant: 'secondary' }), 'rounded-full')}
+          >
+            Offline & GPS prüfen
           </Link>
         </CardContent>
       </Card>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <Card variant="dashboard">
-          <CardContent className="p-5">
-            <div className="text-sm font-semibold text-neutral-800">Aktive Herden</div>
-            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-              {dashboardData?.herdsCount ?? '...'}
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="dashboard">
-          <CardContent className="p-5">
-            <div className="text-sm font-semibold text-neutral-800">Pferche</div>
-            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-              {dashboardData?.enclosuresCount ?? '...'}
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="dashboard">
-          <CardContent className="p-5">
-            <div className="text-sm font-semibold text-neutral-800">Laufende Weidegänge</div>
-            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-              {dashboardData?.activeSessionsCount ?? '...'}
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="dashboard">
-          <CardContent className="p-5">
-            <div className="text-sm font-semibold text-neutral-800">Weidegänge gesamt</div>
-            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-              {dashboardData?.sessionsCount ?? '...'}
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="dashboard">
-          <CardContent className="p-5">
-            <div className="text-sm font-semibold text-neutral-800">Aktive Pferch-Belegungen</div>
-            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-              {dashboardData?.activeAssignmentsCount ?? '...'}
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="dashboard">
-          <CardContent className="p-5">
-            <div className="text-sm font-semibold text-neutral-800">Arbeit läuft</div>
-            <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">
-              {dashboardData?.activeWorkSessionsCount ?? '...'}
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardStat label="Aktive Herden" value={dashboardData?.herdsCount ?? '...'} />
+        <DashboardStat label="Pferche" value={dashboardData?.enclosuresCount ?? '...'} />
+        <DashboardStat label="Laufende Weidegänge" value={dashboardData?.activeSessionsCount ?? '...'} />
+        <DashboardStat label="Weidegänge gesamt" value={dashboardData?.sessionsCount ?? '...'} />
+        <DashboardStat label="Aktive Pferch-Belegungen" value={dashboardData?.activeAssignmentsCount ?? '...'} />
+        <DashboardStat label="Arbeit läuft" value={dashboardData?.activeWorkSessionsCount ?? '...'} />
       </div>
     </div>
   )

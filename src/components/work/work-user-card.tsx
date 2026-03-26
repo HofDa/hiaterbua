@@ -18,6 +18,10 @@ import {
   writeFallbackSettings,
 } from '@/lib/settings/page-helpers'
 import type { AppSettings } from '@/types/domain'
+import { Card } from '@/components/ui/card'
+import { FormInput, FormButton } from '@/components/ui/form'
+import { Alert } from '@/components/ui/alert'
+import { cn } from '@/lib/utils/cn'
 
 function UserBadgeIcon() {
   return (
@@ -25,6 +29,57 @@ function UserBadgeIcon() {
       <circle cx="12" cy="8" r="3.25" strokeWidth="1.8" />
       <path d="M5.5 18.25c1.1-3 3.57-4.5 6.5-4.5s5.4 1.5 6.5 4.5" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
+  )
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5e5549]">
+      {children}
+    </div>
+  )
+}
+
+function ExpandToggle({
+  isExpanded,
+  onToggle,
+}: {
+  isExpanded: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5a5347] bg-[#f1efeb] text-base font-semibold text-[#17130f] sm:h-10 sm:w-10 sm:text-lg"
+      aria-expanded={isExpanded}
+      aria-label={isExpanded ? 'Benutzerkarte einklappen' : 'Benutzerkarte aufklappen'}
+    >
+      {isExpanded ? '-' : '+'}
+    </button>
+  )
+}
+
+function ReadonlyField({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cn('min-h-[3rem] rounded-[1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm font-medium text-[#17130f] shadow-sm sm:min-h-[3.5rem] sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base', className)}>
+      {children}
+    </div>
+  )
+}
+
+function InlineAlert({ variant, children }: { variant: 'error' | 'success' | 'warning' | 'info'; children: React.ReactNode }) {
+  const styles = {
+    error: 'border-red-200 bg-red-50 text-red-800 font-medium',
+    success: 'border-[#c5d3c8] bg-[#edf1ec] text-[#243228] font-semibold',
+    warning: 'border-amber-300 bg-amber-50 text-amber-900 font-medium',
+    info: 'border-[#d2cbc0] bg-[#f8f1e2] text-[#17130f]',
+  }
+
+  return (
+    <Alert className={`mt-3 rounded-[1rem] px-3.5 py-2.5 text-sm sm:mt-4 sm:px-4 sm:py-3 ${styles[variant]}`}>
+      {children}
+    </Alert>
   )
 }
 
@@ -46,6 +101,14 @@ export function WorkUserCard() {
     () => false
   )
 
+  function applySettings(nextSettings: AppSettings) {
+    const isEmpty = nextSettings.userName.trim().length === 0
+    setSettings(nextSettings)
+    setDraftUserName(nextSettings.userName)
+    setIsEditing(isEmpty)
+    setIsExpanded(isEmpty)
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -53,18 +116,13 @@ export function WorkUserCard() {
       const fallbackSettings = readFallbackSettings()
 
       if (fallbackSettings && !cancelled) {
-        setSettings(fallbackSettings)
-        setDraftUserName(fallbackSettings.userName)
-        setIsEditing(fallbackSettings.userName.trim().length === 0)
-        setIsExpanded(fallbackSettings.userName.trim().length === 0)
+        applySettings(fallbackSettings)
       }
 
       try {
         const storedSettings = await withTimeout(db.settings.get('app'))
 
-        if (cancelled) {
-          return
-        }
+        if (cancelled) return
 
         const nextSettings = normalizeSettingsValue(
           storedSettings ?? fallbackSettings ?? defaultAppSettings
@@ -78,26 +136,16 @@ export function WorkUserCard() {
           }
         }
 
-        setSettings(nextSettings)
-        setDraftUserName(nextSettings.userName)
-        setIsEditing(nextSettings.userName.trim().length === 0)
-        setIsExpanded(nextSettings.userName.trim().length === 0)
+        applySettings(nextSettings)
         writeFallbackSettings(nextSettings)
       } catch {
-        if (cancelled) {
-          return
-        }
+        if (cancelled) return
 
         const nextSettings = normalizeSettingsValue(fallbackSettings ?? defaultAppSettings)
-        setSettings(nextSettings)
-        setDraftUserName(nextSettings.userName)
-        setIsEditing(nextSettings.userName.trim().length === 0)
-        setIsExpanded(nextSettings.userName.trim().length === 0)
+        applySettings(nextSettings)
         writeFallbackSettings(nextSettings)
       } finally {
-        if (!cancelled) {
-          setIsReady(true)
-        }
+        if (!cancelled) setIsReady(true)
       }
     }
 
@@ -106,7 +154,7 @@ export function WorkUserCard() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveUserName() {
     const trimmedUserName = draftUserName.trim()
@@ -198,59 +246,37 @@ export function WorkUserCard() {
           </button>
         </div>
 
-        <section className="hidden rounded-[1.55rem] border-2 border-[#3a342a] bg-[#fff8ea] p-4 shadow-[0_18px_40px_rgba(40,34,26,0.08)] sm:block sm:rounded-[1.9rem] sm:p-5">
+        <Card className="hidden sm:block" variant="compact">
           <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5e5549]">
-                Benutzer
-              </div>
-              <p className="mt-1.5 max-w-[min(58vw,15rem)] truncate text-sm font-semibold text-[#17130f] sm:mt-2 sm:max-w-none sm:text-base">
+              <SectionHeading>Benutzer</SectionHeading>
+              <p className="mt-1.5 truncate text-sm font-semibold text-[#17130f] sm:mt-2 sm:text-base">
                 {trimmedUserName}
               </p>
             </div>
-
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-              <button
-                type="button"
-                onClick={() => setIsExpanded((currentValue) => !currentValue)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5a5347] bg-[#f1efeb] text-base font-semibold text-[#17130f] sm:h-10 sm:w-10 sm:text-lg"
-                aria-expanded={isExpanded}
-                aria-label={isExpanded ? 'Benutzerkarte einklappen' : 'Benutzerkarte aufklappen'}
-              >
-                {isExpanded ? '-' : '+'}
-              </button>
-            </div>
+            <ExpandToggle
+              isExpanded={isExpanded}
+              onToggle={() => setIsExpanded((v) => !v)}
+            />
           </div>
-        </section>
+        </Card>
       </>
     )
   }
 
   return (
-    <section className="rounded-[1.55rem] border-2 border-[#3a342a] bg-[#fff8ea] p-4 shadow-[0_18px_40px_rgba(40,34,26,0.08)] sm:rounded-[1.9rem] sm:p-5">
+    <Card variant="compact">
       <div className="flex items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5e5549]">
-            Benutzer
-          </div>
-          <p
-            className="mt-1.5 max-w-[min(58vw,15rem)] truncate text-sm font-semibold text-[#17130f] sm:mt-2 sm:max-w-none sm:text-base"
-          >
+          <SectionHeading>Benutzer</SectionHeading>
+          <p className="mt-1.5 max-w-[min(58vw,15rem)] truncate text-sm font-semibold text-[#17130f] sm:mt-2 sm:max-w-none sm:text-base">
             {isMissingUserName ? 'Noch kein Name gesetzt' : trimmedUserName}
           </p>
         </div>
-
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <button
-            type="button"
-            onClick={() => setIsExpanded((currentValue) => !currentValue)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5a5347] bg-[#f1efeb] text-base font-semibold text-[#17130f] sm:h-10 sm:w-10 sm:text-lg"
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? 'Benutzerkarte einklappen' : 'Benutzerkarte aufklappen'}
-          >
-            {isExpanded ? '-' : '+'}
-          </button>
-        </div>
+        <ExpandToggle
+          isExpanded={isExpanded}
+          onToggle={() => setIsExpanded((v) => !v)}
+        />
       </div>
 
       {isExpanded ? (
@@ -261,7 +287,7 @@ export function WorkUserCard() {
 
               {isEditing ? (
                 <div className="space-y-2.5 sm:space-y-3">
-                  <input
+                  <FormInput
                     type="text"
                     value={draftUserName}
                     onChange={(event) => {
@@ -269,45 +295,37 @@ export function WorkUserCard() {
                       setValidationMessage('')
                     }}
                     placeholder="z. B. Vorname Nachname"
-                    className="w-full rounded-[1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm shadow-sm sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base"
                     autoComplete="name"
                     disabled={!isReady || isSaving}
                   />
 
                   <div className="flex flex-wrap gap-2">
-                    <button
+                    <FormButton
                       type="button"
                       onClick={() => void saveUserName()}
                       disabled={!isReady || isSaving}
-                      className="rounded-[1rem] border border-[#5a5347] bg-[#f1efeb] px-3.5 py-2.5 text-sm font-semibold text-[#17130f] disabled:opacity-50 sm:rounded-[1.1rem] sm:px-4 sm:py-3"
                     >
                       {isSaving ? 'Speichert ...' : 'Speichern'}
-                    </button>
+                    </FormButton>
 
                     {!isMissingUserName ? (
-                      <button
+                      <FormButton
                         type="button"
                         onClick={cancelEditing}
                         disabled={isSaving}
-                        className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm font-semibold text-neutral-950 disabled:opacity-50 sm:rounded-[1.1rem] sm:px-4 sm:py-3"
+                        variant="secondary"
                       >
                         Abbrechen
-                      </button>
+                      </FormButton>
                     ) : null}
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
-                  <div className="min-h-[3rem] flex-1 rounded-[1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm font-medium text-[#17130f] shadow-sm sm:min-h-[3.5rem] sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base">
-                    {trimmedUserName}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={startEditing}
-                    className="rounded-[1rem] border border-[#5a5347] bg-[#f1efeb] px-3.5 py-2.5 text-sm font-semibold text-[#17130f] sm:rounded-[1.1rem] sm:px-4 sm:py-3"
-                  >
+                  <ReadonlyField className="flex-1">{trimmedUserName}</ReadonlyField>
+                  <FormButton type="button" onClick={startEditing}>
                     Bearbeiten
-                  </button>
+                  </FormButton>
                 </div>
               )}
             </div>
@@ -317,21 +335,14 @@ export function WorkUserCard() {
 
               {isAccessApproved ? (
                 <div className="space-y-2.5 sm:space-y-3">
-                  <div className="min-h-[3rem] rounded-[1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm font-medium text-[#17130f] shadow-sm sm:min-h-[3.5rem] sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base">
-                    Cache-Schutz aktiv
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={resetAccess}
-                    className="rounded-[1rem] border border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm font-semibold text-neutral-950 sm:rounded-[1.1rem] sm:px-4 sm:py-3"
-                  >
+                  <ReadonlyField>Cache-Schutz aktiv</ReadonlyField>
+                  <FormButton type="button" onClick={resetAccess} variant="secondary">
                     Zurücksetzen
-                  </button>
+                  </FormButton>
                 </div>
               ) : (
                 <div className="space-y-2.5 sm:space-y-3">
-                  <input
+                  <FormInput
                     type="password"
                     value={draftAccessPassword}
                     onChange={(event) => {
@@ -340,57 +351,30 @@ export function WorkUserCard() {
                       setAccessMessage('')
                     }}
                     placeholder="Passwort eingeben"
-                    className="w-full rounded-[1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm shadow-sm sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base"
                     autoComplete="off"
                   />
-
-                  <button
-                    type="button"
-                    onClick={unlockAccess}
-                    className="rounded-[1rem] border border-[#5a5347] bg-[#f1efeb] px-3.5 py-2.5 text-sm font-semibold text-[#17130f] sm:rounded-[1.1rem] sm:px-4 sm:py-3"
-                  >
+                  <FormButton type="button" onClick={unlockAccess}>
                     Freigeben
-                  </button>
-
-                  <div className="rounded-[1rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-2.5 text-sm text-[#17130f] shadow-sm sm:rounded-[1.1rem] sm:px-4 sm:py-3">
+                  </FormButton>
+                  <InlineAlert variant="info">
                     Ohne Passwort wird der Cache nach {ACCESS_SESSION_DURATION_MINUTES} Minuten geloescht.
-                  </div>
+                  </InlineAlert>
                 </div>
               )}
             </div>
           </div>
 
-          {validationMessage ? (
-            <div className="mt-3 rounded-[1rem] border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800 sm:mt-4 sm:px-4 sm:py-3">
-              {validationMessage}
-            </div>
-          ) : null}
-
-          {statusMessage ? (
-            <div className="mt-3 rounded-[1rem] border border-[#c5d3c8] bg-[#edf1ec] px-3.5 py-2.5 text-sm font-semibold text-[#243228] sm:mt-4 sm:px-4 sm:py-3">
-              {statusMessage}
-            </div>
-          ) : null}
-
-          {accessValidationMessage ? (
-            <div className="mt-3 rounded-[1rem] border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800 sm:mt-4 sm:px-4 sm:py-3">
-              {accessValidationMessage}
-            </div>
-          ) : null}
-
-          {accessMessage ? (
-            <div className="mt-3 rounded-[1rem] border border-[#c5d3c8] bg-[#edf1ec] px-3.5 py-2.5 text-sm font-semibold text-[#243228] sm:mt-4 sm:px-4 sm:py-3">
-              {accessMessage}
-            </div>
-          ) : null}
-
+          {validationMessage ? <InlineAlert variant="error">{validationMessage}</InlineAlert> : null}
+          {statusMessage ? <InlineAlert variant="success">{statusMessage}</InlineAlert> : null}
+          {accessValidationMessage ? <InlineAlert variant="error">{accessValidationMessage}</InlineAlert> : null}
+          {accessMessage ? <InlineAlert variant="success">{accessMessage}</InlineAlert> : null}
           {isMissingUserName ? (
-            <div className="mt-3 rounded-[1rem] border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-sm font-medium text-amber-900 sm:mt-4 sm:px-4 sm:py-3">
+            <InlineAlert variant="warning">
               Für saubere Exportdateien den Benutzernamen einmal setzen.
-            </div>
+            </InlineAlert>
           ) : null}
         </>
       ) : null}
-    </section>
+    </Card>
   )
 }

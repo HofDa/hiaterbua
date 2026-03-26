@@ -11,8 +11,7 @@ import {
   type WorkPickerSectionId,
   type WorkSelection,
 } from '@/lib/work/work-session-helpers'
-import { Card, CardContent } from '@/components/ui/card'
-import { FormField, FormLabel, FormSelect, FormTextarea, FormButton } from '@/components/ui/form'
+import { FormField, FormLabel, FormSelect, FormTextarea, FormButton, ToggleButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
 import type { Enclosure, Herd, WorkActivityId, WorkType } from '@/types/domain'
 
@@ -22,6 +21,33 @@ const quickReminderOptions = [
   { value: '45', label: '45 min' },
   { value: '60', label: '60 min' },
 ] as const
+
+function MobileStepHeader({
+  label,
+  sublabel,
+  onBack,
+}: {
+  label: string
+  sublabel: string
+  onBack: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-3 text-[#17130f]">
+      <FormButton
+        type="button"
+        onClick={onBack}
+        className="shrink-0 rounded-full px-3 py-1.5"
+        variant="secondary"
+      >
+        Zurück
+      </FormButton>
+      <div className="min-w-0 text-right">
+        <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">{label}</div>
+        <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700 [overflow-wrap:anywhere]">{sublabel}</div>
+      </div>
+    </div>
+  )
+}
 
 function ReminderClockIcon({ minutes }: { minutes: string }) {
   const handPosition =
@@ -92,7 +118,6 @@ export function WorkNewSessionForm({
   const [hasStartedFlow, setHasStartedFlow] = useState(false)
   const activeSection = getWorkPickerSection(workPickerSectionId)
   const activeHerds = herds.filter((herd) => !herd.isArchived)
-  const activeEnclosures = enclosures
   const selectedOptionId = getWorkSelection({ type: workType, activityId: workActivityId }).activityId
   const selectedOption =
     activeSection.options.find((option) => option.id === selectedOptionId) ?? activeSection.options[0]
@@ -129,44 +154,26 @@ export function WorkNewSessionForm({
             <label className="mb-1 block text-sm font-medium">Herde</label>
             <div className="grid gap-3 sm:hidden">
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
+                <ToggleButton
+                  pressed={selectedHerdId === ''}
                   onClick={() => onSelectedHerdIdChange('')}
-                  aria-pressed={selectedHerdId === ''}
-                  className={[
-                    'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
-                    selectedHerdId === ''
-                      ? 'border-[#5a5347] bg-[#efe4c8] text-[#17130f]'
-                      : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
-                  ].join(' ')}
                 >
-                  <span className="block [overflow-wrap:anywhere]">Keine Zuordnung</span>
-                </button>
+                  Keine Zuordnung
+                </ToggleButton>
                 {activeHerds.length === 0 ? (
                   <Alert variant="info" className="col-span-2 text-sm text-neutral-600">
                     Noch keine aktive Herde angelegt.
                   </Alert>
                 ) : (
-                  activeHerds.map((herd) => {
-                    const isSelected = selectedHerdId === herd.id
-
-                    return (
-                      <button
-                        key={herd.id}
-                        type="button"
-                        onClick={() => onSelectedHerdIdChange(herd.id)}
-                        aria-pressed={isSelected}
-                        className={[
-                          'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
-                          isSelected
-                            ? 'border-[#5a5347] bg-[#efe4c8] text-[#17130f]'
-                            : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
-                        ].join(' ')}
-                      >
-                        <span className="block [overflow-wrap:anywhere]">{herd.name}</span>
-                      </button>
-                    )
-                  })
+                  activeHerds.map((herd) => (
+                    <ToggleButton
+                      key={herd.id}
+                      pressed={selectedHerdId === herd.id}
+                      onClick={() => onSelectedHerdIdChange(herd.id)}
+                    >
+                      {herd.name}
+                    </ToggleButton>
+                  ))
                 )}
               </div>
             </div>
@@ -189,44 +196,26 @@ export function WorkNewSessionForm({
             <label className="mb-1 block text-sm font-medium">Pferch</label>
             <div className="grid gap-3 sm:hidden">
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
+                <ToggleButton
+                  pressed={selectedEnclosureId === ''}
                   onClick={() => onSelectedEnclosureIdChange('')}
-                  aria-pressed={selectedEnclosureId === ''}
-                  className={[
-                    'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
-                    selectedEnclosureId === ''
-                      ? 'border-[#5a5347] bg-[#efe4c8] text-[#17130f]'
-                      : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
-                  ].join(' ')}
                 >
-                  <span className="block [overflow-wrap:anywhere]">Keine Zuordnung</span>
-                </button>
-                {activeEnclosures.length === 0 ? (
+                  Keine Zuordnung
+                </ToggleButton>
+                {enclosures.length === 0 ? (
                   <Alert variant="info" className="col-span-2 text-sm text-neutral-600">
                     Noch keine Pferche angelegt.
                   </Alert>
                 ) : (
-                  activeEnclosures.map((enclosure) => {
-                    const isSelected = selectedEnclosureId === enclosure.id
-
-                    return (
-                      <button
-                        key={enclosure.id}
-                        type="button"
-                        onClick={() => onSelectedEnclosureIdChange(enclosure.id)}
-                        aria-pressed={isSelected}
-                        className={[
-                          'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
-                          isSelected
-                            ? 'border-[#5a5347] bg-[#efe4c8] text-[#17130f]'
-                            : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
-                        ].join(' ')}
-                      >
-                        <span className="block [overflow-wrap:anywhere]">{enclosure.name}</span>
-                      </button>
-                    )
-                  })
+                  enclosures.map((enclosure) => (
+                    <ToggleButton
+                      key={enclosure.id}
+                      pressed={selectedEnclosureId === enclosure.id}
+                      onClick={() => onSelectedEnclosureIdChange(enclosure.id)}
+                    >
+                      {enclosure.name}
+                    </ToggleButton>
+                  ))
                 )}
               </div>
             </div>
@@ -237,7 +226,7 @@ export function WorkNewSessionForm({
               onChange={(event) => onSelectedEnclosureIdChange(event.target.value)}
             >
               <option value="">Keine Zuordnung</option>
-              {activeEnclosures.map((enclosure) => (
+              {enclosures.map((enclosure) => (
                 <option key={enclosure.id} value={enclosure.id}>
                   {enclosure.name}
                 </option>
@@ -268,21 +257,15 @@ export function WorkNewSessionForm({
             const isSelected = reminderIntervalMin === option.value
 
             return (
-              <button
+              <ToggleButton
                 key={option.value}
-                type="button"
+                pressed={isSelected}
                 onClick={() => onReminderIntervalMinChange(isSelected ? '0' : option.value)}
-                aria-pressed={isSelected}
-                className={[
-                  'flex min-h-[4.75rem] items-center justify-center gap-3 rounded-[1.3rem] border-2 px-4 py-3 text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors sm:text-base',
-                  isSelected
-                    ? 'border-[#5a5347] bg-[#efe4c8] text-[#17130f]'
-                    : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
-                ].join(' ')}
+                className="min-h-[4.75rem] flex items-center justify-center gap-3 rounded-[1.3rem] sm:text-base"
               >
                 <ReminderClockIcon minutes={option.value} />
-                <span className="block [overflow-wrap:anywhere]">{option.label}</span>
-              </button>
+                {option.label}
+              </ToggleButton>
             )
           })}
         </div>
@@ -295,110 +278,60 @@ export function WorkNewSessionForm({
       <div className="space-y-4 sm:hidden">
         {mobileStep === 'section' ? (
           <div className="grid grid-cols-2 gap-3">
-            {workPickerSections.map((section) => {
-              const isActive = section.id === workPickerSectionId
-
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => {
-                    setHasStartedFlow(true)
-                    onWorkPickerSectionChange(section.id)
-                    onWorkSelectionChange(getDefaultWorkSelectionForSection(section.id))
-                    setIsMobileDetailsOpen(false)
-                    setMobileStep('option')
-                  }}
-                  className={[
-                    'min-h-[4.5rem] rounded-[1.35rem] border-2 px-4 py-4 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
-                    isActive
-                      ? 'border-[#3a342a] bg-[#efe4c8] text-[#17130f]'
-                      : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
-                  ].join(' ')}
-                  aria-pressed={isActive}
-                >
-                  <span className="block [overflow-wrap:anywhere]">{section.label}</span>
-                </button>
-              )
-            })}
+            {workPickerSections.map((section) => (
+              <ToggleButton
+                key={section.id}
+                pressed={section.id === workPickerSectionId}
+                onClick={() => {
+                  setHasStartedFlow(true)
+                  onWorkPickerSectionChange(section.id)
+                  onWorkSelectionChange(getDefaultWorkSelectionForSection(section.id))
+                  setIsMobileDetailsOpen(false)
+                  setMobileStep('option')
+                }}
+                className="min-h-[4.5rem] rounded-[1.35rem]"
+              >
+                {section.label}
+              </ToggleButton>
+            ))}
           </div>
         ) : null}
 
         {mobileStep === 'option' ? (
           <>
-            <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-3 text-[#17130f]">
-              <button
-                type="button"
-                onClick={() => {
-                  setHasStartedFlow(true)
-                  setMobileStep('section')
-                }}
-                className="shrink-0 rounded-full border border-[#5a5347] bg-[#fffdf6] px-3 py-1.5 text-sm font-semibold text-[#17130f]"
-              >
-                Zurück
-              </button>
-              <div className="min-w-0 text-right">
-                <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
-                  {activeSection.label}
-                </div>
-                <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700 [overflow-wrap:anywhere]">
-                  {activeSection.description}
-                </div>
-              </div>
-            </div>
+            <MobileStepHeader
+              label={activeSection.label}
+              sublabel={activeSection.description}
+              onBack={() => { setHasStartedFlow(true); setMobileStep('section') }}
+            />
 
             <div className="grid grid-cols-2 gap-3">
-              {activeSection.options.map((option) => {
-                const isActive = option.id === selectedOptionId
-
-                return (
-                  <button
-                    key={option.id}
-                  type="button"
+              {activeSection.options.map((option) => (
+                <ToggleButton
+                  key={option.id}
+                  pressed={option.id === selectedOptionId}
                   onClick={() => {
-                      setHasStartedFlow(true)
-                      onWorkSelectionChange(getWorkSelectionForOption(workPickerSectionId, option.id))
-                      setIsMobileDetailsOpen(false)
-                      setMobileStep('confirm')
-                    }}
-                    className={[
-                      'min-h-[4.75rem] rounded-[1.25rem] border-2 px-4 py-4 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
-                      isActive
-                        ? 'border-[#3a342a] bg-[#efe4c8] text-[#17130f]'
-                        : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
-                    ].join(' ')}
-                    aria-pressed={isActive}
-                  >
-                    <span className="block [overflow-wrap:anywhere]">{option.label}</span>
-                  </button>
-                )
-              })}
+                    setHasStartedFlow(true)
+                    onWorkSelectionChange(getWorkSelectionForOption(workPickerSectionId, option.id))
+                    setIsMobileDetailsOpen(false)
+                    setMobileStep('confirm')
+                  }}
+                  className="min-h-[4.75rem]"
+                >
+                  {option.label}
+                </ToggleButton>
+              ))}
             </div>
           </>
         ) : null}
 
         {mobileStep === 'confirm' ? (
           <>
-            <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-3 text-[#17130f]">
-              <button
-                type="button"
-                onClick={() => {
-                  setHasStartedFlow(true)
-                  setMobileStep('option')
-                }}
-                className="shrink-0 rounded-full border border-[#5a5347] bg-[#fffdf6] px-3 py-1.5 text-sm font-semibold text-[#17130f]"
-              >
-                Zurück
-              </button>
-              <div className="min-w-0 text-right">
-                <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
-                  {activeSection.label}
-                </div>
-                <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700 [overflow-wrap:anywhere]">
-                  {selectedOption.label}
-                </div>
-              </div>
-            </div>
+            <MobileStepHeader
+              label={activeSection.label}
+              sublabel={selectedOption.label}
+              onBack={() => { setHasStartedFlow(true); setMobileStep('option') }}
+            />
 
             {renderReminderButtons()}
 
