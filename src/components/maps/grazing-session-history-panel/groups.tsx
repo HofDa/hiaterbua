@@ -46,7 +46,7 @@ function GrazingSessionHistorySessionCard({
     <div
       className={[
         'rounded-2xl px-4 py-3',
-        isSelected ? 'bg-[#efe4c8]' : 'bg-neutral-50',
+        isSelected ? 'bg-accent' : 'bg-neutral-50',
       ].join(' ')}
     >
       <button
@@ -76,13 +76,13 @@ function GrazingSessionHistorySessionCard({
       {isExpanded ? (
         <>
           <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl bg-[#fffdf6] px-3 py-3">
+            <div className="rounded-2xl bg-surface-raised px-3 py-3">
               <div className="text-neutral-500">Dauer</div>
               <div className="mt-1 font-medium text-neutral-900">
                 {formatDuration(session.durationS)}
               </div>
             </div>
-            <div className="rounded-2xl bg-[#fffdf6] px-3 py-3">
+            <div className="rounded-2xl bg-surface-raised px-3 py-3">
               <div className="text-neutral-500">Genauigkeit</div>
               <div className="mt-1 font-medium text-neutral-900">
                 {formatAccuracy(session.avgAccuracyM)}
@@ -97,14 +97,14 @@ function GrazingSessionHistorySessionCard({
               <button
                 type="button"
                 onClick={() => onSelectSession(session.id)}
-                className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
+                className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-neutral-900"
               >
                 Spur anzeigen
               </button>
               <button
                 type="button"
                 onClick={() => onStartEditSession(session.id)}
-                className="rounded-2xl bg-[#fffdf6] px-3 py-3 text-sm font-medium text-neutral-900"
+                className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-neutral-900"
               >
                 Bearbeiten
               </button>
@@ -151,7 +151,7 @@ export function GrazingSessionHistoryGroups({
             <button
               type="button"
               onClick={() => onToggleHistoryDay(group.dayKey)}
-              className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-left shadow-sm"
+              className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-left shadow-sm"
             >
               <div>
                 <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-neutral-700">

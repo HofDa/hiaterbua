@@ -34,9 +34,9 @@ function LivePositionMapDesktopWalkPointsList({
   }
 
   return (
-    <div className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-3 py-3">
+    <div className="rounded-2xl border border-border bg-surface-raised px-3 py-3">
       {selectedWalkPoint ? (
-        <div className="rounded-2xl bg-[#efe4c8] px-3 py-2 text-sm text-[#17130f]">
+        <div className="rounded-2xl bg-accent px-3 py-2 text-sm text-ink">
           Aktiv: Punkt {selectedWalkPointIndex !== null ? selectedWalkPointIndex + 1 : ''} um{' '}
           {formatPointTimestamp(selectedWalkPoint.timestamp)} mit{' '}
           {formatAccuracy(selectedWalkPoint.accuracy)}.
@@ -48,7 +48,7 @@ function LivePositionMapDesktopWalkPointsList({
             key={`${point.timestamp}-${index}`}
             className={[
               'grid grid-cols-[1fr_auto] gap-3 rounded-2xl px-3 py-3 text-sm',
-              selectedWalkPointIndex === index ? 'bg-[#efe4c8]' : 'bg-neutral-50',
+              selectedWalkPointIndex === index ? 'bg-accent' : 'bg-neutral-50',
             ].join(' ')}
           >
             <button
@@ -64,7 +64,7 @@ function LivePositionMapDesktopWalkPointsList({
             <button
               type="button"
               onClick={() => onRemoveWalkPointAtIndex(index)}
-              className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-3 py-2 text-xs font-medium text-neutral-900"
+              className="rounded-2xl border border-border bg-surface-raised px-3 py-2 text-xs font-medium text-neutral-900"
             >
               Entfernen
             </button>
@@ -174,7 +174,7 @@ export function LivePositionMapDesktopWalkMode({
       </div>
 
       <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-        <div className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm">
+        <div className="rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm">
           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-600">
             Genauigkeit
           </div>
@@ -182,7 +182,7 @@ export function LivePositionMapDesktopWalkMode({
             {averageAccuracy !== null ? formatAccuracy(averageAccuracy) : 'noch keine Daten'}
           </div>
         </div>
-        <div className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm">
+        <div className="rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm">
           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-600">
             Letzter Punkt
           </div>
@@ -195,7 +195,7 @@ export function LivePositionMapDesktopWalkMode({
             type="button"
             onClick={onToggleWalkPoints}
             aria-expanded={isWalkPointsOpen}
-            className="h-full min-h-11 rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950"
+            className="h-full min-h-11 rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-neutral-950"
           >
             {isWalkPointsOpen ? 'Punkte zu' : 'Punkte'}
           </button>
@@ -217,7 +217,7 @@ export function LivePositionMapDesktopWalkMode({
         </label>
         <input
           id="desktop-walk-enclosure-name"
-          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-[#5a5347]"
+          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
           value={walkName}
           onChange={(event) => onWalkNameChange(event.target.value)}
           placeholder="Pferchname"
@@ -228,7 +228,7 @@ export function LivePositionMapDesktopWalkMode({
         </label>
         <input
           id="desktop-walk-enclosure-notes"
-          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-[#5a5347]"
+          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
           value={walkNotes}
           onChange={(event) => onWalkNotesChange(event.target.value)}
           placeholder="Notiz optional"
@@ -237,7 +237,7 @@ export function LivePositionMapDesktopWalkMode({
         <button
           type="submit"
           disabled={isWalkSaving || walkPoints.length < 3}
-          className="h-11 shrink-0 rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 text-sm font-semibold text-[#17130f] disabled:opacity-50"
+          className="h-11 shrink-0 rounded-2xl border border-border-strong bg-surface-muted px-4 text-sm font-semibold text-ink disabled:opacity-50"
         >
           {isWalkSaving ? 'Speichert ...' : 'GPS-Pferch speichern'}
         </button>

@@ -151,7 +151,7 @@ export function GrazingSessionHistoryPanel({
   return (
     <>
       <div className="space-y-4 lg:hidden">
-        <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <div className="rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
           <GrazingSessionSurveyAreasPanel
             safeSurveyAreas={safeSurveyAreas}
             selectedSurveyArea={selectedSurveyArea}
@@ -160,11 +160,11 @@ export function GrazingSessionHistoryPanel({
           />
         </div>
 
-        <div className="overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <div className="overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
           <button
             type="button"
             onClick={onToggleHistoryExpanded}
-            className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-left shadow-sm"
+            className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-left shadow-sm"
           >
             <div>
               <h2 className="text-lg font-semibold text-neutral-950">Weidegang-Historie</h2>
@@ -187,8 +187,8 @@ export function GrazingSessionHistoryPanel({
         </div>
       </div>
 
-      <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:flex">
-        <div className="min-w-0 border-b border-[#ccb98a] pb-4">
+      <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:flex">
+        <div className="min-w-0 border-b border-border pb-4">
           <h2 className="text-lg font-semibold text-neutral-950">Weidegang-Historie</h2>
           <p className="mt-1 text-sm text-neutral-700">{summary}</p>
         </div>

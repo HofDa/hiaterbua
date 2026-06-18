@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type {
-  Map as MapLibreMap,
-  Marker,
-} from 'maplibre-gl'
+import type { Map as MapLibreMap } from 'maplibre-gl'
 import { registerGrazingSessionMapSetup } from '@/lib/maps/grazing-session-map-setup'
-import { createDefaultMarker, createRasterMap } from '@/lib/maps/maplibre-runtime'
+import { useRasterMapInstance } from '@/components/maps/hooks/use-raster-map-instance'
 import type { EditableTrackPoint } from '@/lib/maps/grazing-session-map-helpers'
 import { nowIso } from '@/lib/utils/time'
 
@@ -30,131 +27,58 @@ export function useGrazingSessionMapSetup({
   setIsAddingEditTrackpoint,
   setActionError,
 }: UseGrazingSessionMapSetupOptions) {
-  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null)
-  const mapRef = useRef<MapLibreMap | null>(null)
-  const markerRef = useRef<Marker | null>(null)
-  const [mapReady, setMapReady] = useState(false)
-  const containerRef = useCallback((node: HTMLDivElement | null) => {
-    setContainerElement(node)
-  }, [])
+  const registerLayers = useCallback(
+    (map: MapLibreMap) => {
+      registerGrazingSessionMapSetup(map, {
+        onMapClick: (event) => {
+          if (editingSessionIdRef.current && isAddingEditTrackpointRef.current) {
+            setEditTrackpoints((currentPoints) => [
+              ...currentPoints,
+              {
+                lat: event.lngLat.lat,
+                lon: event.lngLat.lng,
+                timestamp: nowIso(),
+                accuracyM: positionAccuracyRef.current,
+                speedMps: null,
+                headingDeg: null,
+              },
+            ])
+            setIsAddingEditTrackpoint(false)
+            setActionError('')
+            return
+          }
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function setupMap() {
-      if (!containerElement || mapRef.current) return
-
-      const maplibre = await import('maplibre-gl')
-      if (cancelled || !containerElement) return
-
-      const map = createRasterMap(maplibre, containerElement)
-
-      map.on('load', () => {
-        if (cancelled) return
-        registerGrazingSessionMapSetup(map, {
-          onMapClick: (event) => {
-            if (editingSessionIdRef.current && isAddingEditTrackpointRef.current) {
-              setEditTrackpoints((currentPoints) => [
-                ...currentPoints,
-                {
-                  lat: event.lngLat.lat,
-                  lon: event.lngLat.lng,
-                  timestamp: nowIso(),
-                  accuracyM: positionAccuracyRef.current,
-                  speedMps: null,
-                  headingDeg: null,
-                },
-              ])
-              setIsAddingEditTrackpoint(false)
-              setActionError('')
-              return
-            }
-
-            if (
-              editingSessionIdRef.current &&
-              selectedEditTrackpointIndexRef.current !== null
-            ) {
-              setEditTrackpoints((currentPoints) =>
-                currentPoints.map((point, index) =>
-                  index === selectedEditTrackpointIndexRef.current
-                    ? { ...point, lat: event.lngLat.lat, lon: event.lngLat.lng }
-                    : point
-                )
+          if (
+            editingSessionIdRef.current &&
+            selectedEditTrackpointIndexRef.current !== null
+          ) {
+            setEditTrackpoints((currentPoints) =>
+              currentPoints.map((point, index) =>
+                index === selectedEditTrackpointIndexRef.current
+                  ? { ...point, lat: event.lngLat.lat, lon: event.lngLat.lng }
+                  : point
               )
-              setSelectedEditTrackpointIndex(null)
-              setActionError('')
-            }
-          },
-          onSelectedTrackpointClick: (index) => {
-            setSelectedEditTrackpointIndex(index)
-          },
-        })
-
-        setMapReady(true)
-
-        requestAnimationFrame(() => {
-          map.resize()
-          window.setTimeout(() => map.resize(), 250)
-          window.setTimeout(() => map.resize(), 800)
-        })
+            )
+            setSelectedEditTrackpointIndex(null)
+            setActionError('')
+          }
+        },
+        onSelectedTrackpointClick: (index) => {
+          setSelectedEditTrackpointIndex(index)
+        },
       })
+    },
+    [
+      editingSessionIdRef,
+      isAddingEditTrackpointRef,
+      positionAccuracyRef,
+      selectedEditTrackpointIndexRef,
+      setActionError,
+      setEditTrackpoints,
+      setIsAddingEditTrackpoint,
+      setSelectedEditTrackpointIndex,
+    ]
+  )
 
-      mapRef.current = map
-      markerRef.current = createDefaultMarker(maplibre)
-    }
-
-    void setupMap()
-
-    return () => {
-      cancelled = true
-      markerRef.current?.remove()
-      markerRef.current = null
-      mapRef.current?.remove()
-      mapRef.current = null
-    }
-  }, [
-    containerElement,
-    editingSessionIdRef,
-    isAddingEditTrackpointRef,
-    positionAccuracyRef,
-    selectedEditTrackpointIndexRef,
-    setActionError,
-    setEditTrackpoints,
-    setIsAddingEditTrackpoint,
-    setSelectedEditTrackpointIndex,
-  ])
-
-  useEffect(() => {
-    if (!mapReady || !containerElement || typeof ResizeObserver === 'undefined') {
-      return
-    }
-
-    let frameId = 0
-
-    const resizeMap = () => {
-      cancelAnimationFrame(frameId)
-      frameId = requestAnimationFrame(() => {
-        mapRef.current?.resize()
-      })
-    }
-
-    const observer = new ResizeObserver(() => {
-      resizeMap()
-    })
-
-    observer.observe(containerElement)
-    resizeMap()
-
-    return () => {
-      cancelAnimationFrame(frameId)
-      observer.disconnect()
-    }
-  }, [containerElement, mapReady])
-
-  return {
-    containerRef,
-    mapRef,
-    markerRef,
-    mapReady,
-  }
+  return useRasterMapInstance({ registerLayers })
 }

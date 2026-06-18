@@ -16,7 +16,7 @@ type MobileMapToolbarButtonProps = {
 
 export function MobileMapToolbar({ children }: MobileMapToolbarProps) {
   return (
-    <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-[1.35rem] border-2 border-[#3a342a] bg-[#fff8ea] px-2 py-2 shadow-[0_12px_30px_rgba(40,34,26,0.12)]">
+    <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-[1.35rem] border-2 border-border-ink bg-surface px-2 py-2 shadow-[0_12px_30px_rgba(40,34,26,0.12)]">
       {children}
     </div>
   )
@@ -24,7 +24,7 @@ export function MobileMapToolbar({ children }: MobileMapToolbarProps) {
 
 export function MobileMapToolbarStat({ children }: MobileMapToolbarStatProps) {
   return (
-    <div className="shrink-0 rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-2 text-[11px] font-semibold text-neutral-950 shadow-sm">
+    <div className="shrink-0 rounded-full border border-border bg-surface-raised px-3 py-2 text-[11px] font-semibold text-neutral-950 shadow-sm">
       {children}
     </div>
   )
@@ -40,8 +40,8 @@ export function MobileMapToolbarButton({
 }: MobileMapToolbarButtonProps) {
   const variantClass =
     variant === 'primary'
-      ? 'border-[#5a5347] bg-[#f1efeb] text-[#17130f] disabled:bg-[#e1ddd7] disabled:text-neutral-500'
-      : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-950 disabled:bg-[#f3eee4] disabled:text-neutral-400'
+      ? 'border-border-strong bg-surface-muted text-ink disabled:bg-surface-disabled-strong disabled:text-neutral-500'
+      : 'border-border bg-surface-raised text-neutral-950 disabled:bg-surface-disabled disabled:text-neutral-400'
 
   return (
     <button

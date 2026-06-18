@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Dispatch, FormEvent, MutableRefObject, SetStateAction } from 'react'
+import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   appendWalkTrackpoint,
   discardWalkTrack,
@@ -7,6 +8,8 @@ import {
   saveWalkEnclosureRecord,
 } from '@/lib/maps/live-position-actions'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
+import { getFreshPosition } from '@/lib/maps/map-core'
+import { isQuotaExceededError } from '@/lib/utils/storage-health'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 import { createId } from '@/lib/utils/ids'
 
@@ -28,6 +31,14 @@ type UseLivePositionMapWalkControllerOptions = {
   setSelectedEnclosureId: Dispatch<SetStateAction<string | null>>
   setEditingEnclosureId: Dispatch<SetStateAction<string | null>>
   focusWalkPoints: (points: PositionData[]) => void
+}
+
+function buildWalkRecordingErrorMessage(error: unknown) {
+  if (isQuotaExceededError(error)) {
+    return 'Speicher voll – GPS-Punkte können nicht gespeichert werden. Bitte Speicher freigeben (z. B. Tile-Cache leeren).'
+  }
+
+  return 'GPS-Punkt konnte nicht gespeichert werden. Der nächste akzeptierte Standort wird erneut versucht.'
 }
 
 export function useLivePositionMapWalkController({
@@ -53,7 +64,6 @@ export function useLivePositionMapWalkController({
   const walkEnclosureIdRef = useRef<string | null>(null)
   const walkSeqRef = useRef(0)
   const walkLastTimestampRef = useRef<number | null>(null)
-  const appendWalkPointRef = useRef<(nextPosition: PositionData) => Promise<void>>(async () => {})
 
   useEffect(() => {
     if (selectedWalkPointIndex === null) return
@@ -70,6 +80,9 @@ export function useLivePositionMapWalkController({
       lastTimestamp: walkLastTimestampRef.current,
       nextSeq: walkSeqRef.current + 1,
       nextPosition,
+    }).catch((error) => {
+      setWalkError(buildWalkRecordingErrorMessage(error))
+      return null
     })
 
     if (!result) {
@@ -78,6 +91,7 @@ export function useLivePositionMapWalkController({
 
     walkSeqRef.current = result.nextSeq
     walkLastTimestampRef.current = result.lastTimestamp
+    setWalkError('')
 
     let nextPoints: PositionData[] = []
     setWalkPoints((currentPoints) => {
@@ -87,7 +101,7 @@ export function useLivePositionMapWalkController({
     focusWalkPoints(nextPoints)
   }
 
-  appendWalkPointRef.current = appendWalkPoint
+  const appendWalkPointRef = useLatestValueRef(appendWalkPoint)
 
   const handleAcceptedPositionRef = useLatestValueRef<((next: PositionData) => void) | null>(
     (next) => {
@@ -112,8 +126,9 @@ export function useLivePositionMapWalkController({
     setSelectedEnclosureId(null)
     setEditingEnclosureId(null)
 
-    if (acceptedPositionRef.current) {
-      await appendWalkPoint(acceptedPositionRef.current)
+    const currentPosition = getFreshPosition(acceptedPositionRef.current)
+    if (currentPosition) {
+      await appendWalkPoint(currentPosition)
     }
   }
 
@@ -202,33 +217,33 @@ export function useLivePositionMapWalkController({
       return
     }
 
-    setIsWalkSaving(true)
-    setWalkError('')
+    await runSavingAction({
+      setSaving: setIsWalkSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setWalkError,
+      errorMessage: 'Abgelaufener Pferch konnte nicht gespeichert werden.',
+      action: async () => {
+        const enclosure = await saveWalkEnclosureRecord({
+          enclosureId,
+          name: cleanedName,
+          notes: walkNotes,
+          walkPoints,
+          walkAreaM2,
+        })
 
-    try {
-      const enclosure = await saveWalkEnclosureRecord({
-        enclosureId,
-        name: cleanedName,
-        notes: walkNotes,
-        walkPoints,
-        walkAreaM2,
-      })
-
-      setSelectedEnclosureId(enclosure.id)
-      setWalkPoints([])
-      setWalkName('')
-      setWalkNotes('')
-      setSelectedWalkPointIndex(null)
-      setIsWalking(false)
-      isWalkingRef.current = false
-      walkEnclosureIdRef.current = null
-      walkSeqRef.current = 0
-      walkLastTimestampRef.current = null
-    } catch {
-      setWalkError('Abgelaufener Pferch konnte nicht gespeichert werden.')
-    } finally {
-      setIsWalkSaving(false)
-    }
+        setSelectedEnclosureId(enclosure.id)
+        setWalkPoints([])
+        setWalkName('')
+        setWalkNotes('')
+        setSelectedWalkPointIndex(null)
+        setIsWalking(false)
+        isWalkingRef.current = false
+        walkEnclosureIdRef.current = null
+        walkSeqRef.current = 0
+        walkLastTimestampRef.current = null
+      },
+    })
   }
 
   return {

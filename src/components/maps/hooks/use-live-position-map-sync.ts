@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import type * as GeoJSON from 'geojson'
 import type {
-  GeoJSONSource,
   LngLatLike,
   Map as MapLibreMap,
   Marker,
@@ -15,6 +14,7 @@ import {
   emptyFeatureCollection,
   getBoundsFromTrackpoints,
 } from '@/lib/maps/map-core'
+import { setGeoJsonSourceData } from '@/lib/maps/maplibre-runtime'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 import type {
   MapBaseLayer,
@@ -75,16 +75,12 @@ export function useLivePositionMapSync({
 }: UseLivePositionMapSyncOptions) {
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('saved-enclosures') as GeoJSONSource | undefined
-    if (!source) return
-    source.setData(savedFeatureCollection)
+    setGeoJsonSourceData(mapRef.current, 'saved-enclosures', savedFeatureCollection)
   }, [mapReady, mapRef, savedFeatureCollection])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('survey-areas') as GeoJSONSource | undefined
-    if (!source) return
-    source.setData(surveyAreaFeatureCollection)
+    setGeoJsonSourceData(mapRef.current, 'survey-areas', surveyAreaFeatureCollection)
   }, [mapReady, mapRef, surveyAreaFeatureCollection])
 
   useEffect(() => {
@@ -117,50 +113,44 @@ export function useLivePositionMapSync({
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('draft-enclosure') as GeoJSONSource | undefined
-    if (!source) return
-    source.setData(draftFeatureCollection)
+    setGeoJsonSourceData(mapRef.current, 'draft-enclosure', draftFeatureCollection)
   }, [draftFeatureCollection, mapReady, mapRef])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('edit-enclosure') as GeoJSONSource | undefined
-    if (!source) return
-    source.setData(editingEnclosureId ? editFeatureCollection : emptyFeatureCollection)
+    setGeoJsonSourceData(
+      mapRef.current,
+      'edit-enclosure',
+      editingEnclosureId ? editFeatureCollection : emptyFeatureCollection
+    )
   }, [editFeatureCollection, editingEnclosureId, mapReady, mapRef])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('walk-track') as GeoJSONSource | undefined
-    if (!source) return
-    source.setData(walkFeatureCollection)
+    setGeoJsonSourceData(mapRef.current, 'walk-track', walkFeatureCollection)
   }, [mapReady, mapRef, walkFeatureCollection])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('selected-walk-point') as
-      | GeoJSONSource
-      | undefined
-    if (!source) return
-    source.setData(selectedWalkPointFeatureCollection)
+    setGeoJsonSourceData(
+      mapRef.current,
+      'selected-walk-point',
+      selectedWalkPointFeatureCollection
+    )
   }, [mapReady, mapRef, selectedWalkPointFeatureCollection])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('selected-enclosure') as
-      | GeoJSONSource
-      | undefined
-    if (!source) return
-    source.setData(selectedFeatureCollection)
+    setGeoJsonSourceData(mapRef.current, 'selected-enclosure', selectedFeatureCollection)
   }, [mapReady, mapRef, selectedFeatureCollection])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('selected-walk-track') as
-      | GeoJSONSource
-      | undefined
-    if (!source) return
-    source.setData(showSelectedTrack ? selectedTrackFeatureCollection : emptyFeatureCollection)
+    setGeoJsonSourceData(
+      mapRef.current,
+      'selected-walk-track',
+      showSelectedTrack ? selectedTrackFeatureCollection : emptyFeatureCollection
+    )
   }, [mapReady, mapRef, selectedTrackFeatureCollection, showSelectedTrack])
 
   useEffect(() => {

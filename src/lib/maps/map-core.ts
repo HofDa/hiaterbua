@@ -7,6 +7,8 @@ export type PositionDecision =
   | { accepted: true; reason: 'initial' | 'accepted' }
   | { accepted: false; reason: 'accuracy' | 'time' | 'distance' }
 
+export const FRESH_POSITION_MAX_AGE_MS = 60_000
+
 type PositionSample = {
   latitude: number
   longitude: number
@@ -35,6 +37,30 @@ export function formatTimestamp(timestamp: number) {
     minute: '2-digit',
     second: '2-digit',
   }).format(timestamp)
+}
+
+export function isPositionFresh(
+  position: Pick<PositionSample, 'timestamp'> | null | undefined,
+  maxAgeMs = FRESH_POSITION_MAX_AGE_MS,
+  nowMs = Date.now()
+) {
+  if (!position || !Number.isFinite(position.timestamp)) {
+    return false
+  }
+
+  return position.timestamp <= nowMs + 5_000 && nowMs - position.timestamp <= maxAgeMs
+}
+
+export function getFreshPosition<T extends Pick<PositionSample, 'timestamp'>>(
+  position: T | null | undefined,
+  maxAgeMs = FRESH_POSITION_MAX_AGE_MS,
+  nowMs = Date.now()
+): T | null {
+  if (!isPositionFresh(position, maxAgeMs, nowMs)) {
+    return null
+  }
+
+  return position ?? null
 }
 
 export function haversineDistanceM(

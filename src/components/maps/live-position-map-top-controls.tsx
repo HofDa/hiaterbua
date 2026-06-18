@@ -42,7 +42,7 @@ export function LivePositionMapTopControls({
           aria-label="Auf aktuelle Position zentrieren"
           onClick={onCenterMap}
           disabled={!positionAvailable}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg disabled:opacity-50"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg disabled:opacity-50"
         >
           <CenterIcon />
         </button>
@@ -50,7 +50,7 @@ export function LivePositionMapTopControls({
           type="button"
           aria-label="Kartengrundlage wählen"
           onClick={onToggleBaseLayerMenu}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-neutral-950 shadow-lg"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg"
         >
           <LayersIcon />
         </button>
@@ -58,7 +58,7 @@ export function LivePositionMapTopControls({
       </div>
 
       {isBaseLayerMenuOpen ? (
-        <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-[#ccb98a] bg-[rgba(255,253,246,0.96)] p-1.5 shadow-lg">
+        <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-border bg-surface-raised/96 p-1.5 shadow-lg">
           <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
             Kartengrundlage
           </div>
@@ -68,8 +68,8 @@ export function LivePositionMapTopControls({
             className={[
               'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
               baseLayer === 'south-tyrol-orthophoto-2023'
-                ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                : 'bg-[#f1efeb] text-neutral-950',
+                ? 'border border-border-strong bg-surface-muted text-ink'
+                : 'bg-surface-muted text-neutral-950',
             ].join(' ')}
           >
             Orthofoto 2023
@@ -80,8 +80,8 @@ export function LivePositionMapTopControls({
             className={[
               'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
               baseLayer === 'south-tyrol-basemap'
-                ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                : 'bg-[#f1efeb] text-neutral-950',
+                ? 'border border-border-strong bg-surface-muted text-ink'
+                : 'bg-surface-muted text-neutral-950',
             ].join(' ')}
           >
             BaseMap Südtirol
@@ -91,7 +91,7 @@ export function LivePositionMapTopControls({
             onClick={onToggleShowSurveyAreas}
             className={[
               'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              showSurveyAreas ? 'bg-[#efe4c8] text-[#17130f]' : 'bg-[#f1efeb] text-neutral-950',
+              showSurveyAreas ? 'bg-accent text-ink' : 'bg-surface-muted text-neutral-950',
             ].join(' ')}
           >
             Flächen {showSurveyAreas ? 'an' : 'aus'}
@@ -100,12 +100,12 @@ export function LivePositionMapTopControls({
             type="button"
             onClick={() => void onPrefetchVisibleMapArea()}
             disabled={prefetchingMapArea}
-            className="mt-1.5 w-full rounded-xl border border-[#ccb98a] bg-[#fffdf6] px-2.5 py-2 text-left text-xs font-medium text-[#17130f] disabled:opacity-50"
+            className="mt-1.5 w-full rounded-xl border border-border bg-surface-raised px-2.5 py-2 text-left text-xs font-medium text-ink disabled:opacity-50"
           >
             {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
           </button>
           {prefetchStatus ? (
-            <div className="mt-1.5 rounded-xl bg-[#f1efeb] px-2.5 py-2 text-[11px] font-medium text-neutral-900">
+            <div className="mt-1.5 rounded-xl bg-surface-muted px-2.5 py-2 text-[11px] font-medium text-neutral-900">
               {prefetchStatus}
             </div>
           ) : null}

@@ -11,9 +11,12 @@ import {
   clearRuntimeSessionState,
   getDefaultAnimalCount,
 } from '@/components/maps/hooks/grazing-session-map-session-controller-helpers'
+import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import { useGrazingSessionMapSessionRuntime } from '@/components/maps/hooks/use-grazing-session-map-session-runtime'
 import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/use-grazing-session-map-trackpoint-recorder'
 import { getSessionEventLabel } from '@/lib/maps/grazing-session-map-helpers'
+import { getFreshPosition } from '@/lib/maps/map-core'
+import { getStorageEstimate } from '@/lib/utils/storage-health'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type {
   Animal,
@@ -87,10 +90,24 @@ export function useGrazingSessionMapSessionController({
   const { appendSessionPoint, handleAcceptedPositionRef } =
     useGrazingSessionMapTrackpointRecorder({
       runtimeRefs,
+      onRecordingErrorChange: setActionError,
     })
+
+  async function warnIfStorageNearlyFull() {
+    const estimate = await getStorageEstimate()
+    if (estimate && estimate.ratio >= 0.9) {
+      setActionError(
+        `Gerätespeicher fast voll (${Math.round(estimate.ratio * 100)} %). Die Aufzeichnung könnte abbrechen – bitte Speicher freigeben.`
+      )
+    }
+  }
 
   function getResolvedAnimalCount(herdId: string) {
     return sessionAnimalCount ?? getDefaultAnimalCount(herdId, safeHerds, animalsByHerdId)
+  }
+
+  function getFreshAcceptedPosition() {
+    return getFreshPosition(acceptedPositionRef.current)
   }
 
   function changeSelectedHerdId(nextHerdId: string) {
@@ -112,37 +129,42 @@ export function useGrazingSessionMapSessionController({
       return
     }
 
-    setIsSaving(true)
-    setActionError('')
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: 'Weidegang konnte nicht gestartet werden.',
+      action: async () => {
+        const currentPosition = getFreshAcceptedPosition()
+        const animalCount = getResolvedAnimalCount(selectedHerdId)
+        const session = await createGrazingSessionRecord({
+          herdId: selectedHerdId,
+          animalCount,
+          notes: sessionNotes,
+          position: currentPosition,
+        })
 
-    try {
-      const animalCount = getResolvedAnimalCount(selectedHerdId)
-      const session = await createGrazingSessionRecord({
-        herdId: selectedHerdId,
-        animalCount,
-        notes: sessionNotes,
-        position: acceptedPositionRef.current,
-      })
+        runtimeRefs.currentSessionIdRef.current = session.id
+        runtimeRefs.currentSessionStatusRef.current = 'active'
+        runtimeRefs.currentSessionStartTimeRef.current = session.startTime
+        runtimeRefs.currentTrackpointsRef.current = []
+        runtimeRefs.currentSeqRef.current = 0
+        runtimeRefs.currentLastTimestampRef.current = null
+        setCurrentSessionId(session.id)
+        setCurrentSessionStatus('active')
+        setSessionAnimalCount(animalCount)
+        setSelectedSessionId(null)
 
-      runtimeRefs.currentSessionIdRef.current = session.id
-      runtimeRefs.currentSessionStatusRef.current = 'active'
-      runtimeRefs.currentSessionStartTimeRef.current = session.startTime
-      runtimeRefs.currentTrackpointsRef.current = []
-      runtimeRefs.currentSeqRef.current = 0
-      runtimeRefs.currentLastTimestampRef.current = null
-      setCurrentSessionId(session.id)
-      setCurrentSessionStatus('active')
-      setSessionAnimalCount(animalCount)
-      setSelectedSessionId(null)
+        if (currentPosition) {
+          await appendSessionPoint(currentPosition)
+        }
 
-      if (acceptedPositionRef.current) {
-        await appendSessionPoint(acceptedPositionRef.current)
-      }
-    } catch {
-      setActionError('Weidegang konnte nicht gestartet werden.')
-    } finally {
-      setIsSaving(false)
-    }
+        // Surface low device storage up front so the user can free space before
+        // a long recording rather than discovering it mid-walk.
+        void warnIfStorageNearlyFull()
+      },
+    })
   }
 
   async function pauseSession() {
@@ -150,50 +172,51 @@ export function useGrazingSessionMapSessionController({
     const startTime = runtimeRefs.currentSessionStartTimeRef.current
     if (!sessionId || !startTime) return
 
-    setIsSaving(true)
-    setActionError('')
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: 'Weidegang konnte nicht pausiert werden.',
+      action: async () => {
+        await pauseGrazingSessionRecord({
+          sessionId,
+          startTime,
+          trackpoints: runtimeRefs.currentTrackpointsRef.current,
+          position: getFreshAcceptedPosition(),
+        })
 
-    try {
-      await pauseGrazingSessionRecord({
-        sessionId,
-        startTime,
-        trackpoints: runtimeRefs.currentTrackpointsRef.current,
-        position: acceptedPositionRef.current,
-      })
-
-      runtimeRefs.currentSessionStatusRef.current = 'paused'
-      setCurrentSessionStatus('paused')
-    } catch {
-      setActionError('Weidegang konnte nicht pausiert werden.')
-    } finally {
-      setIsSaving(false)
-    }
+        runtimeRefs.currentSessionStatusRef.current = 'paused'
+        setCurrentSessionStatus('paused')
+      },
+    })
   }
 
   async function resumeSession() {
     const sessionId = runtimeRefs.currentSessionIdRef.current
     if (!sessionId) return
 
-    setIsSaving(true)
-    setActionError('')
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: 'Weidegang konnte nicht fortgesetzt werden.',
+      action: async () => {
+        const currentPosition = getFreshAcceptedPosition()
+        await resumeGrazingSessionRecord({
+          sessionId,
+          position: currentPosition,
+        })
 
-    try {
-      await resumeGrazingSessionRecord({
-        sessionId,
-        position: acceptedPositionRef.current,
-      })
+        runtimeRefs.currentSessionStatusRef.current = 'active'
+        setCurrentSessionStatus('active')
 
-      runtimeRefs.currentSessionStatusRef.current = 'active'
-      setCurrentSessionStatus('active')
-
-      if (acceptedPositionRef.current) {
-        await appendSessionPoint(acceptedPositionRef.current)
-      }
-    } catch {
-      setActionError('Weidegang konnte nicht fortgesetzt werden.')
-    } finally {
-      setIsSaving(false)
-    }
+        if (currentPosition) {
+          await appendSessionPoint(currentPosition)
+        }
+      },
+    })
   }
 
   async function stopSession() {
@@ -201,35 +224,35 @@ export function useGrazingSessionMapSessionController({
     const startTime = runtimeRefs.currentSessionStartTimeRef.current
     if (!sessionId || !startTime) return
 
-    setIsSaving(true)
-    setActionError('')
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: 'Weidegang konnte nicht beendet werden.',
+      action: async () => {
+        await stopGrazingSessionRecord({
+          sessionId,
+          startTime,
+          trackpoints: runtimeRefs.currentTrackpointsRef.current,
+          position: getFreshAcceptedPosition(),
+        })
 
-    try {
-      await stopGrazingSessionRecord({
-        sessionId,
-        startTime,
-        trackpoints: runtimeRefs.currentTrackpointsRef.current,
-        position: acceptedPositionRef.current,
-      })
-
-      setSelectedSessionId(sessionId)
-      clearRuntimeSessionState({
-        runtimeRefs,
-        selectedHerdId,
-        safeHerds,
-        animalsByHerdId,
-        setCurrentSessionId,
-        setCurrentSessionStatus,
-        setSessionAnimalCount,
-        setEventNote,
-        setEventStatus,
-        setSessionNotes,
-      })
-    } catch {
-      setActionError('Weidegang konnte nicht beendet werden.')
-    } finally {
-      setIsSaving(false)
-    }
+        setSelectedSessionId(sessionId)
+        clearRuntimeSessionState({
+          runtimeRefs,
+          selectedHerdId,
+          safeHerds,
+          animalsByHerdId,
+          setCurrentSessionId,
+          setCurrentSessionStatus,
+          setSessionAnimalCount,
+          setEventNote,
+          setEventStatus,
+          setSessionNotes,
+        })
+      },
+    })
   }
 
   async function adjustSessionAnimalCount(delta: number) {
@@ -272,27 +295,33 @@ export function useGrazingSessionMapSessionController({
       return
     }
 
-    setIsEventSaving(true)
-    setActionError('')
     setEventStatus('')
 
-    try {
-      await addGrazingSessionEventRecord({
-        sessionId,
-        type,
-        position: acceptedPositionRef.current,
-        comment: cleanedComment,
-      })
-      setEventStatus(`${getSessionEventLabel(type)} gespeichert.`)
+    await runSavingAction({
+      setSaving: setIsEventSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: 'Ereignis konnte nicht gespeichert werden.',
+      action: async () => {
+        const currentPosition = getFreshAcceptedPosition()
+        await addGrazingSessionEventRecord({
+          sessionId,
+          type,
+          position: currentPosition,
+          comment: cleanedComment,
+        })
+        setEventStatus(
+          currentPosition
+            ? `${getSessionEventLabel(type)} gespeichert.`
+            : `${getSessionEventLabel(type)} gespeichert (ohne aktuelle GPS-Position).`
+        )
 
-      if (type === 'note') {
-        setEventNote('')
-      }
-    } catch {
-      setActionError('Ereignis konnte nicht gespeichert werden.')
-    } finally {
-      setIsEventSaving(false)
-    }
+        if (type === 'note') {
+          setEventNote('')
+        }
+      },
+    })
   }
 
   return {

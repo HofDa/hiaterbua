@@ -18,8 +18,8 @@ import {
   MobileMapToolbarStat,
 } from '@/components/maps/mobile-map-toolbar'
 import { MobileMapFloatingCard } from '@/components/maps/mobile-map-ui'
-import { FormField, FormLabel, FormSelect, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
-import { Alert, StatusAlert, ErrorAlert } from '@/components/ui/alert'
+import { FormSelect, FormInput } from '@/components/ui/form'
+import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
 import type {
   Herd,
   SessionEvent,
@@ -29,7 +29,7 @@ import type {
 
 const quickEventButtons: Array<{ type: SessionEventType; label: string }> = [
   { type: 'water', label: 'Wasser' },
-  { type: 'rest', label: 'Rast' },
+  { type: 'rest', label: 'Rast-Ort' },
   { type: 'disturbance', label: 'Störung' },
   { type: 'move', label: 'Punkt' },
 ]
@@ -93,8 +93,8 @@ export function GrazingSessionMapDesktopManagementOverlay({
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden p-4 lg:block">
-      <MobileMapFloatingCard className="bg-[rgba(255,248,234,0.97)] p-3 backdrop-blur-[3px] xl:p-4">
-        <div className="flex flex-wrap items-center gap-2 border-b border-[#ccb98a] pb-3 xl:gap-3">
+      <MobileMapFloatingCard className="bg-surface-glass p-3 backdrop-blur-[3px] xl:p-4">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3 xl:gap-3">
           <div className="min-w-[11rem] flex-1">
             <div className="text-lg font-semibold text-neutral-950">Weidegang verwalten</div>
             <div className="mt-1 text-xs font-medium text-neutral-700">{summary}</div>
@@ -184,13 +184,13 @@ export function GrazingSessionMapDesktopManagementOverlay({
             <div className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-700">
               Tiere im Weidegang
             </div>
-            <div className="flex h-11 items-center gap-2 rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-2">
+            <div className="flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface-raised px-2">
               <button
                 type="button"
                 onClick={() => void onAdjustAnimalCount(-1)}
                 disabled={!hasSelectedHerd || animalCount <= 0}
                 aria-label="Tierzahl verringern"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#5a5347] bg-[#f1efeb] text-base font-semibold text-[#17130f] disabled:opacity-40"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border-strong bg-surface-muted text-base font-semibold text-ink disabled:opacity-40"
               >
                 −
               </button>
@@ -202,7 +202,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
                 onClick={() => void onAdjustAnimalCount(1)}
                 disabled={!hasSelectedHerd}
                 aria-label="Tierzahl erhöhen"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#5a5347] bg-[#f1efeb] text-base font-semibold text-[#17130f] disabled:opacity-40"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border-strong bg-surface-muted text-base font-semibold text-ink disabled:opacity-40"
               >
                 +
               </button>
@@ -228,7 +228,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
         </div>
 
         {currentSessionStatus ? (
-          <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-[#ccb98a] pt-3 xl:gap-3">
+          <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-border pt-3 xl:gap-3">
             <div className="flex flex-wrap gap-2">
               {quickEventButtons.map((eventButton) => (
                 <button
@@ -236,7 +236,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
                   type="button"
                   onClick={() => void onAddSessionMarkerEvent(eventButton.type)}
                   disabled={isEventSaving}
-                  className="pointer-events-auto h-10 rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-3 text-sm font-semibold text-[#17130f] disabled:opacity-50"
+                  className="pointer-events-auto h-10 rounded-2xl border border-border bg-surface-raised px-3 text-sm font-semibold text-ink disabled:opacity-50"
                 >
                   {eventButton.label}
                 </button>
@@ -263,7 +263,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
               type="button"
               onClick={() => void onAddSessionMarkerEvent('note', eventNote)}
               disabled={isEventSaving || !eventNote.trim()}
-              className="pointer-events-auto h-10 shrink-0 rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 text-sm font-semibold text-[#17130f] disabled:opacity-50"
+              className="pointer-events-auto h-10 shrink-0 rounded-2xl border border-border-strong bg-surface-muted px-4 text-sm font-semibold text-ink disabled:opacity-50"
             >
               Notiz speichern
             </button>

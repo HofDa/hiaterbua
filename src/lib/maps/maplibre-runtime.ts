@@ -1,4 +1,5 @@
-import type { Map as MapLibreMap } from 'maplibre-gl'
+import type { FeatureCollection } from 'geojson'
+import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl'
 import {
   fallbackCenter,
   rasterStyle,
@@ -44,6 +45,16 @@ export function addGeoJsonSource(map: MapLibreMap, sourceId: string) {
     type: 'geojson',
     data: emptyFeatureCollection,
   })
+}
+
+// Update a GeoJSON source's data, no-op if the map or source isn't ready yet.
+export function setGeoJsonSourceData(
+  map: MapLibreMap | null | undefined,
+  sourceId: string,
+  data: FeatureCollection
+) {
+  const source = map?.getSource(sourceId) as GeoJSONSource | undefined
+  source?.setData(data)
 }
 
 export function addSurveyAreaLayers(map: MapLibreMap) {

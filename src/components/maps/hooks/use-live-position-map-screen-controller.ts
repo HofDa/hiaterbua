@@ -2,6 +2,7 @@ import { useGeolocationWatcher } from '@/components/maps/hooks/use-geolocation-w
 import { useLivePositionMapController } from '@/components/maps/hooks/use-live-position-map-controller'
 import { useLivePositionMapPanelProps } from '@/components/maps/hooks/use-live-position-map-panel-props'
 import { useLivePositionMapPresentation } from '@/components/maps/hooks/use-live-position-map-presentation'
+import { getFreshPosition } from '@/lib/maps/map-core'
 import type { LivePositionMapScreenData } from '@/components/maps/hooks/use-live-position-map-screen-data'
 import type { LivePositionMapState } from '@/components/maps/hooks/use-live-position-map-state'
 
@@ -25,7 +26,7 @@ export function useLivePositionMapScreenController({
     activeAssignmentsByEnclosureId: data.activeAssignmentsByEnclosureId,
     activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
     acceptedPositionRef: refs.acceptedPositionRef,
-    positionAccuracy: gps.position?.accuracy ?? null,
+    positionAccuracy: getFreshPosition(gps.position)?.accuracy ?? null,
     draftAreaM2: data.draftAreaM2,
     editAreaM2: data.editAreaM2,
     walkAreaM2: data.walkAreaM2,

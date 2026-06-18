@@ -127,7 +127,7 @@ export function GrazingSessionManagementPanel({
   return (
     <div
       data-grazing-session-management-card="true"
-      className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:hidden"
+      className="rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:hidden"
     >
       <h2 className="text-lg font-semibold">Weidegang verwalten</h2>
       <div className="mt-4">{panelContent}</div>

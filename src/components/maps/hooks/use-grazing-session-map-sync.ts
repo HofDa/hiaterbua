@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import type * as GeoJSON from 'geojson'
 import type {
-  GeoJSONSource,
   LngLatLike,
   Map as MapLibreMap,
   Marker,
@@ -12,6 +11,7 @@ import {
   southTyrolOrthoLayerId,
 } from '@/lib/maps/base-map-style'
 import { getBoundsFromTrackpoints } from '@/lib/maps/map-core'
+import { setGeoJsonSourceData } from '@/lib/maps/maplibre-runtime'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type {
   MapBaseLayer,
@@ -64,25 +64,21 @@ export function useGrazingSessionMapSync({
 }: UseGrazingSessionMapSyncOptions) {
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('current-session-track') as
-      | GeoJSONSource
-      | undefined
-    if (!source) return
-    source.setData(currentTrackFeatureCollection)
+    setGeoJsonSourceData(
+      mapRef.current,
+      'current-session-track',
+      currentTrackFeatureCollection
+    )
   }, [currentTrackFeatureCollection, mapReady, mapRef])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('survey-areas') as GeoJSONSource | undefined
-    if (!source) return
-    source.setData(surveyAreaFeatureCollection)
+    setGeoJsonSourceData(mapRef.current, 'survey-areas', surveyAreaFeatureCollection)
   }, [mapReady, mapRef, surveyAreaFeatureCollection])
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('session-events') as GeoJSONSource | undefined
-    if (!source) return
-    source.setData(sessionEventFeatureCollection)
+    setGeoJsonSourceData(mapRef.current, 'session-events', sessionEventFeatureCollection)
   }, [mapReady, mapRef, sessionEventFeatureCollection])
 
   useEffect(() => {
@@ -124,11 +120,9 @@ export function useGrazingSessionMapSync({
 
   useEffect(() => {
     if (!mapReady) return
-    const source = mapRef.current?.getSource('selected-session-track') as
-      | GeoJSONSource
-      | undefined
-    if (!source) return
-    source.setData(
+    setGeoJsonSourceData(
+      mapRef.current,
+      'selected-session-track',
       editingSessionId && editingSessionId === selectedSessionId
         ? editTrackFeatureCollection
         : selectedTrackFeatureCollection

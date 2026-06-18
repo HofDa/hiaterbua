@@ -47,18 +47,23 @@ export async function appendSessionTrackpoint(params: {
     accepted: true,
   }
 
-  await db.trackpoints.add(trackPoint)
-
   const nextTrackpoints = [...currentTrackpoints, trackPoint]
   const metrics = buildSessionMetrics(nextTrackpoints, startTime)
 
-  await db.sessions.update(sessionId, {
-    durationS: metrics.durationS,
-    movingTimeS: metrics.movingTimeS,
-    distanceM: metrics.distanceM,
-    avgSpeedMps: metrics.avgSpeedMps,
-    avgAccuracyM: metrics.avgAccuracyM,
-    updatedAt: nowIso(),
+  await db.transaction('rw', db.trackpoints, db.sessions, async () => {
+    await db.trackpoints.add(trackPoint)
+    const updatedCount = await db.sessions.update(sessionId, {
+      durationS: metrics.durationS,
+      movingTimeS: metrics.movingTimeS,
+      distanceM: metrics.distanceM,
+      avgSpeedMps: metrics.avgSpeedMps,
+      avgAccuracyM: metrics.avgAccuracyM,
+      updatedAt: nowIso(),
+    })
+
+    if (updatedCount === 0) {
+      throw new Error('Weidegang wurde nicht gefunden.')
+    }
   })
 
   return {
@@ -95,8 +100,11 @@ export async function createGrazingSessionRecord(params: {
     updatedAt: timestamp,
   }
 
-  await db.sessions.add(session)
-  await logSessionEvent(session.id, 'start', position)
+  await db.transaction('rw', db.sessions, db.events, async () => {
+    await db.sessions.add(session)
+    await logSessionEvent(session.id, 'start', position)
+  })
+
   return session
 }
 
@@ -121,17 +129,23 @@ export async function pauseGrazingSessionRecord(params: {
   const { sessionId, startTime, trackpoints, position } = params
   const metrics = buildSessionMetrics(trackpoints, startTime)
 
-  await db.sessions.update(sessionId, {
-    status: 'paused',
-    durationS: metrics.durationS,
-    movingTimeS: metrics.movingTimeS,
-    distanceM: metrics.distanceM,
-    avgSpeedMps: metrics.avgSpeedMps,
-    avgAccuracyM: metrics.avgAccuracyM,
-    updatedAt: nowIso(),
-  })
+  await db.transaction('rw', db.sessions, db.events, async () => {
+    const updatedCount = await db.sessions.update(sessionId, {
+      status: 'paused',
+      durationS: metrics.durationS,
+      movingTimeS: metrics.movingTimeS,
+      distanceM: metrics.distanceM,
+      avgSpeedMps: metrics.avgSpeedMps,
+      avgAccuracyM: metrics.avgAccuracyM,
+      updatedAt: nowIso(),
+    })
 
-  await logSessionEvent(sessionId, 'pause', position)
+    if (updatedCount === 0) {
+      throw new Error('Weidegang wurde nicht gefunden.')
+    }
+
+    await logSessionEvent(sessionId, 'pause', position)
+  })
 }
 
 export async function resumeGrazingSessionRecord(params: {
@@ -140,12 +154,18 @@ export async function resumeGrazingSessionRecord(params: {
 }) {
   const { sessionId, position } = params
 
-  await db.sessions.update(sessionId, {
-    status: 'active',
-    updatedAt: nowIso(),
-  })
+  await db.transaction('rw', db.sessions, db.events, async () => {
+    const updatedCount = await db.sessions.update(sessionId, {
+      status: 'active',
+      updatedAt: nowIso(),
+    })
 
-  await logSessionEvent(sessionId, 'resume', position)
+    if (updatedCount === 0) {
+      throw new Error('Weidegang wurde nicht gefunden.')
+    }
+
+    await logSessionEvent(sessionId, 'resume', position)
+  })
 }
 
 export async function stopGrazingSessionRecord(params: {
@@ -158,18 +178,24 @@ export async function stopGrazingSessionRecord(params: {
   const endTime = nowIso()
   const metrics = buildSessionMetrics(trackpoints, startTime, endTime)
 
-  await db.sessions.update(sessionId, {
-    status: 'finished',
-    endTime,
-    durationS: metrics.durationS,
-    movingTimeS: metrics.movingTimeS,
-    distanceM: metrics.distanceM,
-    avgSpeedMps: metrics.avgSpeedMps,
-    avgAccuracyM: metrics.avgAccuracyM,
-    updatedAt: endTime,
-  })
+  await db.transaction('rw', db.sessions, db.events, async () => {
+    const updatedCount = await db.sessions.update(sessionId, {
+      status: 'finished',
+      endTime,
+      durationS: metrics.durationS,
+      movingTimeS: metrics.movingTimeS,
+      distanceM: metrics.distanceM,
+      avgSpeedMps: metrics.avgSpeedMps,
+      avgAccuracyM: metrics.avgAccuracyM,
+      updatedAt: endTime,
+    })
 
-  await logSessionEvent(sessionId, 'stop', position)
+    if (updatedCount === 0) {
+      throw new Error('Weidegang wurde nicht gefunden.')
+    }
+
+    await logSessionEvent(sessionId, 'stop', position)
+  })
 }
 
 export async function addGrazingSessionEventRecord(params: {

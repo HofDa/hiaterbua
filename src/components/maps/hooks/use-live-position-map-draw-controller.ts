@@ -1,4 +1,5 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
+import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import { saveDrawnEnclosureRecord } from '@/lib/maps/live-position-actions'
 import {
   getDraftPolygon,
@@ -91,34 +92,34 @@ export function useLivePositionMapDrawController({
       return
     }
 
-    setIsSaving(true)
-    setSaveError('')
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setSaveError,
+      errorMessage: 'Pferch konnte nicht gespeichert werden.',
+      action: async () => {
+        const enclosure = await saveDrawnEnclosureRecord({
+          name: cleanedName,
+          notes,
+          geometry: draftPolygon.geometry,
+          areaM2: draftAreaM2,
+          points: draftPoints,
+          accuracyM: positionAccuracy,
+        })
 
-    try {
-      const enclosure = await saveDrawnEnclosureRecord({
-        name: cleanedName,
-        notes,
-        geometry: draftPolygon.geometry,
-        areaM2: draftAreaM2,
-        points: draftPoints,
-        accuracyM: positionAccuracy,
-      })
-
-      setSelectedEnclosureId(enclosure.id)
-      setShowSelectedTrack(false)
-      setIsSelectedEnclosureInfoOpen(true)
-      setEditingEnclosureId(null)
-      setAssignmentEditorEnclosureId(null)
-      focusEnclosure(enclosure)
-      setName('')
-      setNotes('')
-      setDraftPoints([])
-      setIsDrawing(false)
-    } catch {
-      setSaveError('Pferch konnte nicht gespeichert werden.')
-    } finally {
-      setIsSaving(false)
-    }
+        setSelectedEnclosureId(enclosure.id)
+        setShowSelectedTrack(false)
+        setIsSelectedEnclosureInfoOpen(true)
+        setEditingEnclosureId(null)
+        setAssignmentEditorEnclosureId(null)
+        focusEnclosure(enclosure)
+        setName('')
+        setNotes('')
+        setDraftPoints([])
+        setIsDrawing(false)
+      },
+    })
   }
 
   return {

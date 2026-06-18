@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { formatArea } from '@/lib/maps/map-core'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
 import type { SurveyArea } from '@/types/domain'
@@ -53,7 +53,7 @@ export function SurveyAreasPanel({
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2 self-center">
-          <span className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-2 py-1 text-[11px] font-semibold text-neutral-900">
+          <span className="rounded-full border border-border bg-surface-raised px-2 py-1 text-[11px] font-semibold text-neutral-900">
             {safeSurveyAreas.length}
           </span>
           <span className="text-lg font-semibold text-neutral-900">
@@ -78,7 +78,7 @@ export function SurveyAreasPanel({
           <div className="mt-3 w-full min-w-0 overflow-visible lg:max-h-64 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             <div className="w-full min-w-0 space-y-2">
               {selectedSurveyArea ? (
-                <Card className="w-full min-w-0 max-w-full overflow-hidden px-3 py-2 text-sm text-[#17130f]">
+                <Card className="w-full min-w-0 max-w-full overflow-hidden px-3 py-2 text-sm text-ink">
                   <div className="text-xs font-semibold uppercase tracking-[0.04em] text-neutral-700">
                     Fokus
                   </div>
@@ -98,8 +98,8 @@ export function SurveyAreasPanel({
                   className={[
                     'w-full min-w-0 max-w-full overflow-hidden rounded-xl border px-3 py-2.5',
                     selectedSurveyAreaId === surveyArea.id
-                      ? 'border-[#d2cbc0] bg-[#efe4c8]'
-                      : 'border-[#ccb98a] bg-[#fffdf6]',
+                      ? 'border-border-soft bg-accent'
+                      : 'border-border bg-surface-raised',
                   ].join(' ')}
                 >
                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">

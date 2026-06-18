@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
+import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   assignHerdToEnclosureRecord,
   endEnclosureAssignmentRecord,
@@ -115,41 +116,39 @@ export function useLivePositionMapAssignmentController({
       return
     }
 
-    setIsAssignmentSaving(true)
-    setAssignmentError('')
+    await runSavingAction({
+      setSaving: setIsAssignmentSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setAssignmentError,
+      errorMessage: (error) =>
+        error instanceof Error ? error.message : 'Zuweisung konnte nicht gespeichert werden.',
+      action: async () => {
+        await assignHerdToEnclosureRecord({
+          enclosure,
+          herdId: herd.id,
+          count: parsedCount,
+          notes: assignmentNotes,
+        })
 
-    try {
-      await assignHerdToEnclosureRecord({
-        enclosure,
-        herdId: herd.id,
-        count: parsedCount,
-        notes: assignmentNotes,
-      })
-
-      resetAssignmentState()
-      setSelectedEnclosureId(enclosure.id)
-    } catch (error) {
-      setAssignmentError(
-        error instanceof Error ? error.message : 'Zuweisung konnte nicht gespeichert werden.'
-      )
-    } finally {
-      setIsAssignmentSaving(false)
-    }
+        resetAssignmentState()
+        setSelectedEnclosureId(enclosure.id)
+      },
+    })
   }
 
   async function endEnclosureAssignment(assignment: EnclosureAssignment) {
-    setEndingAssignmentId(assignment.id)
-    setAssignmentError('')
-
-    try {
-      await endEnclosureAssignmentRecord(assignment)
-    } catch (error) {
-      setAssignmentError(
-        error instanceof Error ? error.message : 'Ausweisung konnte nicht gespeichert werden.'
-      )
-    } finally {
-      setEndingAssignmentId(null)
-    }
+    await runSavingAction({
+      setSaving: setEndingAssignmentId,
+      savingValue: assignment.id,
+      idleValue: null,
+      setError: setAssignmentError,
+      errorMessage: (error) =>
+        error instanceof Error ? error.message : 'Ausweisung konnte nicht gespeichert werden.',
+      action: async () => {
+        await endEnclosureAssignmentRecord(assignment)
+      },
+    })
   }
 
   return {

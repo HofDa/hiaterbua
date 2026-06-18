@@ -3,6 +3,7 @@ import { useGrazingSessionMapData } from '@/components/maps/hooks/use-grazing-se
 import { useGrazingSessionMapRuntime } from '@/components/maps/hooks/use-grazing-session-map-runtime'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type { GrazingSessionMapState } from '@/components/maps/hooks/use-grazing-session-map-state'
+import { getFreshPosition } from '@/lib/maps/map-core'
 import { defaultAppSettings } from '@/lib/settings/defaults'
 
 export function useGrazingSessionMapScreenData(state: GrazingSessionMapState) {
@@ -34,7 +35,7 @@ export function useGrazingSessionMapScreenData(state: GrazingSessionMapState) {
   const runtime = useGrazingSessionMapRuntime({
     settings: data.settings,
     position: gps.position,
-    positionAccuracy: gps.position?.accuracy ?? null,
+    positionAccuracy: getFreshPosition(gps.position)?.accuracy ?? null,
     safeCurrentTrackpoints: data.safeCurrentTrackpoints,
     safeSelectedTrackpoints: data.safeSelectedTrackpoints,
     safeSurveyAreas: data.safeSurveyAreas,

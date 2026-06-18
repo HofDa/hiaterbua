@@ -131,24 +131,28 @@ export function useGrazingSessionMapRuntime({
     setBaseLayer(nextBaseLayer)
     setIsBaseLayerMenuOpen(false)
 
-    const existingSettings = await db.settings.get('app')
+    try {
+      const existingSettings = await db.settings.get('app')
 
-    await db.settings.put({
-      id: 'app',
-      userName: existingSettings?.userName ?? defaultAppSettings.userName,
-      accessPasswordHash:
-        existingSettings?.accessPasswordHash ?? defaultAppSettings.accessPasswordHash,
-      language: existingSettings?.language ?? defaultAppSettings.language,
-      mapBaseLayer: nextBaseLayer,
-      gpsAccuracyThresholdM:
-        existingSettings?.gpsAccuracyThresholdM ?? defaultAppSettings.gpsAccuracyThresholdM,
-      gpsMinTimeS: existingSettings?.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS,
-      gpsMinDistanceM:
-        existingSettings?.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM,
-      tileCachingEnabled:
-        existingSettings?.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
-      theme: existingSettings?.theme ?? defaultAppSettings.theme,
-    })
+      await db.settings.put({
+        id: 'app',
+        userName: existingSettings?.userName ?? defaultAppSettings.userName,
+        accessPasswordHash:
+          existingSettings?.accessPasswordHash ?? defaultAppSettings.accessPasswordHash,
+        language: existingSettings?.language ?? defaultAppSettings.language,
+        mapBaseLayer: nextBaseLayer,
+        gpsAccuracyThresholdM:
+          existingSettings?.gpsAccuracyThresholdM ?? defaultAppSettings.gpsAccuracyThresholdM,
+        gpsMinTimeS: existingSettings?.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS,
+        gpsMinDistanceM:
+          existingSettings?.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM,
+        tileCachingEnabled:
+          existingSettings?.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
+        theme: existingSettings?.theme ?? defaultAppSettings.theme,
+      })
+    } catch {
+      setActionError('Kartenlayer konnte nicht als Einstellung gespeichert werden.')
+    }
   }
 
   async function prefetchVisibleMapArea() {
@@ -190,10 +194,16 @@ export function useGrazingSessionMapRuntime({
 
     try {
       const cacheCountBefore = await getTileCacheCount()
-      await prefetchTileUrls(urls)
+      const result = await prefetchTileUrls(urls)
       const cacheCount = await getTileCacheCount()
+      const tileSummary =
+        result.failed === 0
+          ? `${result.succeeded} Tiles`
+          : result.succeeded > 0
+            ? `${result.succeeded} von ${result.total} Tiles (${result.failed} fehlgeschlagen)`
+            : `keine Tiles (${result.failed} fehlgeschlagen)`
       setPrefetchStatus(
-        `${urls.length} Tiles für diesen Ausschnitt gesichert.${
+        `${tileSummary} für diesen Ausschnitt gesichert.${
           cacheCountBefore !== null && cacheCount !== null
             ? ` Cache: ${cacheCountBefore} -> ${cacheCount}`
             : cacheCount !== null

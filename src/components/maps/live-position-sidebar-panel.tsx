@@ -149,7 +149,7 @@ export function LivePositionSidebarPanel({
     }
 
     return (
-        <div className="mt-4 rounded-2xl border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f] break-words">
+        <div className="mt-4 rounded-2xl border border-border-soft bg-accent px-4 py-3 text-sm text-ink break-words">
         Fokus: <span className="font-medium">{selectedEnclosure.name}</span>. Auf ein Polygon in der Karte tippen, um die Bearbeitung direkt zu öffnen.
       </div>
     )
@@ -236,8 +236,8 @@ export function LivePositionSidebarPanel({
               className={[
                 'rounded-2xl px-3 py-3 text-sm font-medium',
                 enclosureListFilter === filterOption.id
-                  ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                  : 'bg-[#f1efeb] text-neutral-950',
+                  ? 'border border-border-strong bg-surface-muted text-ink'
+                  : 'bg-surface-muted text-neutral-950',
               ].join(' ')}
             >
               {filterOption.label}
@@ -254,7 +254,7 @@ export function LivePositionSidebarPanel({
   return (
     <>
       <div className="min-w-0 space-y-4 lg:hidden">
-        <div className="min-w-0 overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+        <div className="min-w-0 overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
           <LivePositionSurveyAreasPanel
             safeSurveyAreas={safeSurveyAreas}
             selectedSurveyArea={selectedSurveyArea}
@@ -265,7 +265,7 @@ export function LivePositionSidebarPanel({
 
         <div
           className={[
-            'min-w-0 overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]',
+            'min-w-0 overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]',
             mobilePanel === 'saved' ? 'block' : 'hidden',
           ].join(' ')}
         >
@@ -273,8 +273,8 @@ export function LivePositionSidebarPanel({
         </div>
       </div>
 
-      <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:flex">
-        <div className="min-w-0 border-b border-[#ccb98a] pb-4">
+      <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:flex">
+        <div className="min-w-0 border-b border-border pb-4">
           <h2 className="text-lg font-semibold text-neutral-950">Pferche & Flächen</h2>
           <p className="mt-1 text-sm text-neutral-700">
             {safeSurveyAreas.length} Flächen · {filteredEnclosures.length} Pferche

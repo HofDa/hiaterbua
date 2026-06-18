@@ -46,7 +46,7 @@ export function LivePositionMapEditOverlay({
                   : 'Punkt antippen und neu setzen oder unten Aktion wählen.'}
             </div>
           </div>
-          <div className="shrink-0 rounded-full border border-[#ccb98a] bg-[#fffdf6] px-2 py-1 text-[11px] font-medium text-[#17130f] sm:px-3 sm:text-xs">
+          <div className="shrink-0 rounded-full border border-border bg-surface-raised px-2 py-1 text-[11px] font-medium text-ink sm:px-3 sm:text-xs">
             {editGeometryPointsLength} Punkte
           </div>
         </div>
@@ -55,7 +55,7 @@ export function LivePositionMapEditOverlay({
           <button
             type="button"
             onClick={onStartAddEditPoint}
-            className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-2 py-2.5 text-xs font-medium text-[#17130f] sm:px-3 sm:py-3 sm:text-sm"
+            className="rounded-2xl border border-border bg-surface-raised px-2 py-2.5 text-xs font-medium text-ink sm:px-3 sm:py-3 sm:text-sm"
           >
             Punkt +
           </button>
@@ -63,7 +63,7 @@ export function LivePositionMapEditOverlay({
             type="button"
             onClick={onRemoveSelectedEditPoint}
             disabled={selectedEditPointIndex === null || editGeometryPointsLength <= 3}
-            className="rounded-2xl bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+            className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
           >
             Punkt -
           </button>
@@ -71,14 +71,14 @@ export function LivePositionMapEditOverlay({
             type="button"
             onClick={() => void onPersistEditedEnclosure()}
             disabled={isEditing}
-            className="rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-[#17130f] disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+            className="rounded-2xl border border-border-strong bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
           >
             {isEditing ? '...' : 'Pferch speichern'}
           </button>
           <button
             type="button"
             onClick={onCancelEditEnclosure}
-            className="rounded-2xl bg-[#f1efeb] px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
+            className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
           >
             Schließen
           </button>

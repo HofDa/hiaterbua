@@ -50,8 +50,8 @@ export function LivePositionMapDesktopDrawOverlay({
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden p-3 lg:block xl:p-4">
-      <MobileMapFloatingCard className="bg-[rgba(255,248,234,0.97)] p-3 backdrop-blur-[3px] xl:p-4">
-        <div className="grid grid-cols-2 gap-2 border-b border-[#ccb98a] pb-3">
+      <MobileMapFloatingCard className="bg-surface-glass p-3 backdrop-blur-[3px] xl:p-4">
+        <div className="grid grid-cols-2 gap-2 border-b border-border pb-3">
           <MobileMapSegmentButton
             active={activeMode === 'draw'}
             className="text-sm"

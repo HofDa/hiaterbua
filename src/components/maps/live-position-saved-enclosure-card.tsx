@@ -121,7 +121,7 @@ export function LivePositionSavedEnclosureCard({
     <div
       className={[
         'min-w-0 overflow-hidden rounded-2xl px-4 py-3',
-        isSelected ? 'bg-[#efe4c8]' : 'bg-neutral-50',
+        isSelected ? 'bg-accent' : 'bg-neutral-50',
       ].join(' ')}
     >
       <button

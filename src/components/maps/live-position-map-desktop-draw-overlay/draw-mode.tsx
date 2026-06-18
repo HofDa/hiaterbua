@@ -88,7 +88,7 @@ export function LivePositionMapDesktopDrawMode({
         </label>
         <input
           id="desktop-draw-enclosure-name"
-          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-[#5a5347]"
+          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
           value={name}
           onChange={(event) => onNameChange(event.target.value)}
           placeholder="Pferchname"
@@ -99,7 +99,7 @@ export function LivePositionMapDesktopDrawMode({
         </label>
         <input
           id="desktop-draw-enclosure-notes"
-          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-[#5a5347]"
+          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
           value={notes}
           onChange={(event) => onNotesChange(event.target.value)}
           placeholder="Notiz optional"
@@ -108,7 +108,7 @@ export function LivePositionMapDesktopDrawMode({
         <button
           type="submit"
           disabled={isSaving || draftPointsLength < 3}
-          className="h-11 shrink-0 rounded-2xl border border-[#5a5347] bg-[#f1efeb] px-4 text-sm font-semibold text-[#17130f] disabled:opacity-50"
+          className="h-11 shrink-0 rounded-2xl border border-border-strong bg-surface-muted px-4 text-sm font-semibold text-ink disabled:opacity-50"
         >
           {isSaving ? 'Speichert ...' : 'Pferch speichern'}
         </button>

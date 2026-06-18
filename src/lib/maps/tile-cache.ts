@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import { logError } from '@/lib/utils/log'
 import type { MapBaseLayer } from '@/types/domain'
 import type { MapTileRecord } from '@/types/domain'
 
@@ -7,6 +8,12 @@ export const TILE_DB_NAME = 'hirtenapp-tile-db'
 export const MAX_PREFETCH_TILES = 1200
 export const PREFETCH_CONCURRENCY = 8
 export const TILE_CACHE_CHANGED_EVENT = 'hirtenapp:tile-cache-changed'
+
+export type PrefetchTileResult = {
+  succeeded: number
+  failed: number
+  total: number
+}
 
 export const tileTemplates: Record<MapBaseLayer, string> = {
   'south-tyrol-orthophoto-2023':
@@ -142,7 +149,8 @@ export async function getTileCacheCount() {
 
   try {
     return await tileDb.mapTiles.count()
-  } catch {
+  } catch (error) {
+    logError('getTileCacheCount', error)
     return null
   }
 }
@@ -161,7 +169,8 @@ export async function clearTileCacheStorage() {
 
     dispatchTileCacheChanged()
     return true
-  } catch {
+  } catch (error) {
+    logError('clearTileCacheStorage', error)
     return false
   }
 }
@@ -173,7 +182,8 @@ export async function getPersistentStorageStatus() {
 
   try {
     return await navigator.storage.persisted()
-  } catch {
+  } catch (error) {
+    logError('getPersistentStorageStatus', error)
     return null
   }
 }
@@ -185,70 +195,119 @@ export async function requestPersistentStorage() {
 
   try {
     return await navigator.storage.persist()
-  } catch {
+  } catch (error) {
+    logError('requestPersistentStorage', error)
     return null
   }
 }
 
-async function persistTileResponse(
+async function persistTileResponseBestEffort(
   request: Request,
   response: Response,
   cache?: Cache | null
 ) {
+  let didPersist = false
+
   if (cache) {
-    await cache.put(request, response.clone())
+    try {
+      await cache.put(request, response.clone())
+      didPersist = true
+    } catch (error) {
+      logError('persistTileResponseBestEffort.cache', error)
+    }
   }
 
   // Opaque responses cannot be reliably serialized into IndexedDB.
   if (response.type === 'opaque') {
-    return
+    return didPersist
   }
 
-  const blob = await response.clone().blob()
-  await tileDb.mapTiles.put({
-    url: request.url,
-    blob,
-    contentType: response.headers.get('content-type') ?? undefined,
-    status: response.status,
-    statusText: response.statusText || undefined,
-    updatedAt: new Date().toISOString(),
-  })
+  try {
+    const blob = await response.clone().blob()
+    await tileDb.mapTiles.put({
+      url: request.url,
+      blob,
+      contentType: response.headers.get('content-type') ?? undefined,
+      status: response.status,
+      statusText: response.statusText || undefined,
+      updatedAt: new Date().toISOString(),
+    })
+    didPersist = true
+  } catch (error) {
+    logError('persistTileResponseBestEffort.db', error)
+  }
+
+  return didPersist
 }
 
 export async function prefetchTileUrls(
   urls: string[],
   onProgress?: (completed: number, total: number) => void
-) {
+): Promise<PrefetchTileResult> {
   if (typeof window === 'undefined') {
     throw new Error('Browser-APIs sind nicht verfuegbar.')
   }
 
-  const cache = 'caches' in window ? await window.caches.open(TILE_CACHE_NAME) : null
-  let completed = 0
-
-  for (let index = 0; index < urls.length; index += PREFETCH_CONCURRENCY) {
-    const batch = urls.slice(index, index + PREFETCH_CONCURRENCY)
-
-    await Promise.all(
-      batch.map(async (url) => {
-        const request = new Request(url, {
-          method: 'GET',
-          mode: 'cors',
-          cache: 'reload',
-        })
-        const response = await fetch(request)
-
-        if (response.ok || response.type === 'opaque') {
-          await persistTileResponse(request, response, cache)
-        } else {
-          throw new Error(`Tile konnte nicht geladen werden: ${response.status}`)
-        }
-
-        completed += 1
-        onProgress?.(completed, urls.length)
+  const cache = 'caches' in window
+    ? await window.caches.open(TILE_CACHE_NAME).catch((error) => {
+        logError('prefetchTileUrls.openCache', error)
+        return null
       })
-    )
+    : null
+  let completed = 0
+  let succeeded = 0
+  let failed = 0
+  let firstTileError: unknown = null
+
+  try {
+    for (let index = 0; index < urls.length; index += PREFETCH_CONCURRENCY) {
+      const batch = urls.slice(index, index + PREFETCH_CONCURRENCY)
+
+      await Promise.all(
+        batch.map(async (url) => {
+          try {
+            const request = new Request(url, {
+              method: 'GET',
+              mode: 'cors',
+              cache: 'reload',
+            })
+            const response = await fetch(request)
+
+            if (!response.ok && response.type !== 'opaque') {
+              throw new Error(`Tile konnte nicht geladen werden: ${response.status}`)
+            }
+
+            const didPersist = await persistTileResponseBestEffort(request, response, cache)
+            if (!didPersist) {
+              throw new Error('Tile konnte nicht lokal gespeichert werden.')
+            }
+
+            succeeded += 1
+          } catch (error) {
+            failed += 1
+            firstTileError ??= error
+          } finally {
+            completed += 1
+            onProgress?.(completed, urls.length)
+          }
+        })
+      )
+    }
+  } finally {
+    dispatchTileCacheChanged()
   }
 
-  dispatchTileCacheChanged()
+  if (failed > 0 && firstTileError) {
+    logError('prefetchTileUrls.failedTiles', {
+      failed,
+      total: urls.length,
+      firstError: firstTileError,
+    })
+  }
+
+  return {
+    succeeded,
+    failed,
+    total: urls.length,
+  }
 }

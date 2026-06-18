@@ -1,4 +1,5 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
+import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   deleteEnclosureRecord,
   updateEditedEnclosureRecord,
@@ -126,28 +127,29 @@ export function useLivePositionMapEditController({
       return false
     }
 
-    setIsEditing(true)
-    setEditError('')
+    const saved = await runSavingAction({
+      setSaving: setIsEditing,
+      savingValue: true,
+      idleValue: false,
+      setError: setEditError,
+      errorMessage: 'Pferch konnte nicht aktualisiert werden.',
+      action: async () => {
+        await updateEditedEnclosureRecord({
+          enclosureId: editingEnclosureId,
+          name: cleanedName,
+          notes: editNotes,
+          geometry: editPolygon.geometry,
+          areaM2: editAreaM2,
+          pointsCount: editGeometryPoints.length,
+        })
 
-    try {
-      await updateEditedEnclosureRecord({
-        enclosureId: editingEnclosureId,
-        name: cleanedName,
-        notes: editNotes,
-        geometry: editPolygon.geometry,
-        areaM2: editAreaM2,
-        pointsCount: editGeometryPoints.length,
-      })
+        setEditingEnclosureId(null)
+        setSelectedEnclosureId(editingEnclosureId)
+        return true
+      },
+    })
 
-      setEditingEnclosureId(null)
-      setSelectedEnclosureId(editingEnclosureId)
-      return true
-    } catch {
-      setEditError('Pferch konnte nicht aktualisiert werden.')
-      return false
-    } finally {
-      setIsEditing(false)
-    }
+    return saved ?? false
   }
 
   async function saveEditedEnclosure(event: FormEvent<HTMLFormElement>) {
@@ -162,15 +164,25 @@ export function useLivePositionMapEditController({
 
     if (!confirmed) return
 
-    await deleteEnclosureRecord(enclosure.id)
+    await runSavingAction({
+      setSaving: setIsEditing,
+      savingValue: true,
+      idleValue: false,
+      setError: setEditError,
+      errorMessage: (error) =>
+        error instanceof Error ? error.message : 'Pferch konnte nicht gelöscht werden.',
+      action: async () => {
+        await deleteEnclosureRecord(enclosure.id)
 
-    if (selectedEnclosureId === enclosure.id) {
-      setSelectedEnclosureId(null)
-    }
+        if (selectedEnclosureId === enclosure.id) {
+          setSelectedEnclosureId(null)
+        }
 
-    if (editingEnclosureId === enclosure.id) {
-      resetEditState()
-    }
+        if (editingEnclosureId === enclosure.id) {
+          resetEditState()
+        }
+      },
+    })
   }
 
   return {

@@ -22,7 +22,7 @@ export function GrazingSessionHistoryEditingSummary({
   }
 
   return (
-    <Alert variant="info" className="mt-4 text-sm text-[#17130f]">
+    <Alert variant="info" className="mt-4 text-sm text-ink">
       Bearbeitung aktiv: {formatDistance(editMetrics.distanceM)} ·{' '}
       {formatDuration(editMetrics.durationS)} · {editTrackpointsLength} Punkte
     </Alert>

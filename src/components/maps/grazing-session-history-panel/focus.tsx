@@ -21,7 +21,7 @@ export function GrazingSessionHistoryFocusSummary({
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-[#c5d3c8] bg-[#edf1ec] px-4 py-3 text-sm text-[#243228]">
+    <div className="mt-4 rounded-2xl border border-success-border bg-success-surface px-4 py-3 text-sm text-success-ink">
       Fokus: <span className="font-medium">{formatDateTime(selectedSession.startTime)}</span> ·{' '}
       {formatDistance(selectedMetrics.distanceM)} · {formatDuration(selectedMetrics.durationS)} ·{' '}
       {safeSelectedTrackpoints.length} Punkte
@@ -44,7 +44,7 @@ export function GrazingSessionHistoryFocusEvents({
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 shadow-sm">
+    <div className="mt-4 rounded-2xl border border-border bg-surface-raised px-4 py-4 shadow-sm">
       <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
         Ereignisse im Fokus-Weidegang
       </div>
@@ -55,7 +55,7 @@ export function GrazingSessionHistoryFocusEvents({
           {safeSelectedSessionEvents.slice(0, 8).map((sessionEvent) => (
             <div
               key={sessionEvent.id}
-              className="rounded-[1rem] bg-[#fffdf6] px-3 py-3 text-sm text-neutral-800"
+              className="rounded-[1rem] bg-surface-raised px-3 py-3 text-sm text-neutral-800"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="font-medium text-neutral-950">

@@ -4,6 +4,7 @@ import {
   deleteGrazingSessionRecord,
   saveEditedGrazingSessionRecord,
 } from '@/lib/maps/grazing-session-actions'
+import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   formatDateTimeInputValue,
   formatDateTime,
@@ -194,28 +195,28 @@ export function useGrazingSessionMapHistoryEditController({
       nextEndTime = parsedEndTime
     }
 
-    setIsSaving(true)
-    setActionError('')
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: 'Weidegang konnte nicht aktualisiert werden.',
+      action: async () => {
+        await saveEditedGrazingSessionRecord({
+          sessionId: editingSessionId,
+          editTrackpoints,
+          editedStartTime: nextStartTime,
+          editedEndTime: nextEndTime,
+          existingTrackpoints: safeSelectedTrackpoints,
+        })
 
-    try {
-      await saveEditedGrazingSessionRecord({
-        sessionId: editingSessionId,
-        editTrackpoints,
-        editedStartTime: nextStartTime,
-        editedEndTime: nextEndTime,
-        existingTrackpoints: safeSelectedTrackpoints,
-      })
-
-      setEditingSessionId(null)
-      setEditStartTime('')
-      setEditEndTime('')
-      setSelectedEditTrackpointIndex(null)
-      setIsAddingEditTrackpoint(false)
-    } catch {
-      setActionError('Weidegang konnte nicht aktualisiert werden.')
-    } finally {
-      setIsSaving(false)
-    }
+        setEditingSessionId(null)
+        setEditStartTime('')
+        setEditEndTime('')
+        setSelectedEditTrackpointIndex(null)
+        setIsAddingEditTrackpoint(false)
+      },
+    })
   }
 
   async function deleteSession(session: GrazingSession) {
@@ -234,24 +235,24 @@ export function useGrazingSessionMapHistoryEditController({
 
     if (!confirmed) return
 
-    setIsSaving(true)
-    setActionError('')
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: 'Weidegang konnte nicht gelöscht werden.',
+      action: async () => {
+        await deleteGrazingSessionRecord(session.id)
 
-    try {
-      await deleteGrazingSessionRecord(session.id)
+        if (selectedSessionId === session.id) {
+          setSelectedSessionId(null)
+        }
 
-      if (selectedSessionId === session.id) {
-        setSelectedSessionId(null)
-      }
-
-      if (editingSessionId === session.id) {
-        cancelEditSession()
-      }
-    } catch {
-      setActionError('Weidegang konnte nicht gelöscht werden.')
-    } finally {
-      setIsSaving(false)
-    }
+        if (editingSessionId === session.id) {
+          cancelEditSession()
+        }
+      },
+    })
   }
 
   return {

@@ -2,7 +2,6 @@
 
 import type { FormEvent } from 'react'
 import { formatArea } from '@/lib/maps/map-core'
-import { Card, CardContent } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
 import { Alert, ErrorAlert } from '@/components/ui/alert'
 

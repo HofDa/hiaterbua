@@ -42,7 +42,7 @@ export function GrazingSessionMap() {
           </div>
 
           <div className="lg:hidden">
-            <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+            <div className="rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-neutral-950">Karte</h2>
@@ -53,7 +53,7 @@ export function GrazingSessionMap() {
                   onClick={() => setIsMapExpanded((current) => !current)}
                   aria-expanded={isMapExpanded}
                   aria-label={isMapExpanded ? 'Karte schließen' : 'Karte öffnen'}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ccb98a] bg-[#fffdf6] text-lg font-semibold text-neutral-900 shadow-sm"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface-raised text-lg font-semibold text-neutral-900 shadow-sm"
                 >
                   {isMapExpanded ? '−' : '+'}
                 </button>
