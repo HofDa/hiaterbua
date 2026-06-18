@@ -6,6 +6,7 @@ import { LivePositionSidebarPanel } from '@/components/maps/live-position-sideba
 import { LivePositionStatusCard } from '@/components/maps/live-position-status-card'
 import { LivePositionWorkflowPanels } from '@/components/maps/live-position-workflow-panels'
 import { useLivePositionMapScreen } from '@/components/maps/hooks/use-live-position-map-screen'
+import type { MobilePanel } from '@/components/maps/live-position-map-types'
 import { cn } from '@/lib/utils/cn'
 
 export function LivePositionMap() {
@@ -13,7 +14,7 @@ export function LivePositionMap() {
   const {
     containerRef,
     resizeMap,
-    workflowPanelsProps,
+    onMobilePanelChange,
     sidebarPanelProps,
   } = useLivePositionMapScreen()
 
@@ -27,8 +28,8 @@ export function LivePositionMap() {
     resizeMap()
   }, [isMobileMapOpen, resizeMap])
 
-  function handleMobilePanelChange(nextPanel: typeof workflowPanelsProps.mobilePanel) {
-    workflowPanelsProps.onMobilePanelChange(nextPanel)
+  function handleMobilePanelChange(nextPanel: MobilePanel) {
+    onMobilePanelChange(nextPanel)
 
     if (nextPanel === 'draw') {
       setIsMobileMapOpen(true)
@@ -47,10 +48,6 @@ export function LivePositionMap() {
   ) {
     setIsMobileMapOpen(true)
     sidebarPanelProps.onStartEditEnclosure(enclosure)
-  }
-
-  function handleSelectedEnclosureChange(nextId: string) {
-    workflowPanelsProps.onSelectedEnclosureChange(nextId)
   }
 
   return (
@@ -94,11 +91,7 @@ export function LivePositionMap() {
             </div>
 
             <div className="lg:hidden">
-              <LivePositionWorkflowPanels
-                {...workflowPanelsProps}
-                onMobilePanelChange={handleMobilePanelChange}
-                onSelectedEnclosureChange={handleSelectedEnclosureChange}
-              />
+              <LivePositionWorkflowPanels onMobilePanelChange={handleMobilePanelChange} />
             </div>
           </div>
         </div>

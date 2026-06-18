@@ -1,6 +1,5 @@
-import type { Dispatch, Ref, SetStateAction } from 'react'
+import type { Dispatch, FormEvent, Ref, SetStateAction } from 'react'
 import type { LivePositionSidebarPanelProps } from '@/components/maps/live-position-sidebar-panel'
-import type { LivePositionWorkflowPanelsProps } from '@/components/maps/live-position-workflow-panels'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 import type { LivePositionMapState } from '@/components/maps/hooks/use-live-position-map-state'
 import type {
@@ -73,8 +72,8 @@ export type LivePositionMapPanelActions = {
   persistEditedEnclosure: () => Promise<boolean>
   saveEditedEnclosure: LivePositionSidebarPanelProps['onSaveEditedEnclosure']
   deleteEnclosure: (enclosure: Enclosure) => Promise<void>
-  saveWalkEnclosure: LivePositionWorkflowPanelsProps['onSaveWalkEnclosure']
-  saveEnclosure: LivePositionWorkflowPanelsProps['onSaveEnclosure']
+  saveWalkEnclosure: (event: FormEvent<HTMLFormElement>) => void
+  saveEnclosure: (event: FormEvent<HTMLFormElement>) => void
 }
 
 export type LivePositionMapPanelPresentation = {
@@ -91,97 +90,6 @@ export type UseLivePositionMapPanelPropsOptions = {
   runtime: LivePositionMapPanelRuntime
   actions: LivePositionMapPanelActions
   presentation: LivePositionMapPanelPresentation
-}
-
-export function buildWorkflowPanelsProps({
-  state,
-  data,
-  actions,
-  presentation,
-}: Pick<UseLivePositionMapPanelPropsOptions, 'state' | 'data' | 'actions' | 'presentation'>): LivePositionWorkflowPanelsProps {
-  const { draw, walk, selection, assignment } = state
-
-  return {
-    mobilePanel: selection.mobilePanel,
-    isDrawing: draw.isDrawing,
-    draftPointsCount: draw.draftPoints.length,
-    draftAreaM2: data.draftAreaM2,
-    name: draw.name,
-    notes: draw.notes,
-    saveError: draw.saveError,
-    isSaving: draw.isSaving,
-    isWalking: walk.isWalking,
-    walkPoints: walk.walkPoints,
-    walkAreaM2: data.walkAreaM2,
-    walkName: walk.walkName,
-    walkNotes: walk.walkNotes,
-    walkError: walk.walkError,
-    isWalkSaving: walk.isWalkSaving,
-    isWalkPointsOpen: walk.isWalkPointsOpen,
-    selectedWalkPointIndex: walk.selectedWalkPointIndex,
-    selectedWalkPoint: data.selectedWalkPoint,
-    filteredEnclosures: data.filteredEnclosures,
-    selectedEnclosure: data.selectedEnclosure,
-    selectedEnclosureId: selection.selectedEnclosureId,
-    assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
-    assignmentHerdId: assignment.assignmentHerdId,
-    assignmentCount: assignment.assignmentCount,
-    assignmentNotes: assignment.assignmentNotes,
-    assignmentError: assignment.assignmentError,
-    isAssignmentSaving: assignment.isAssignmentSaving,
-    endingAssignmentId: assignment.endingAssignmentId,
-    safeHerds: data.safeHerds,
-    herdsById: data.herdsById,
-    animalsByHerdId: data.animalsByHerdId,
-    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
-    isSelectedEnclosureInfoOpen: selection.isSelectedEnclosureInfoOpen,
-    showSelectedTrack: selection.showSelectedTrack,
-    onMobilePanelChange: selection.setMobilePanel,
-    onStartDrawing: actions.startDrawing,
-    onFinishDrawing: actions.finishDrawing,
-    onUndoLastPoint: actions.undoLastPoint,
-    onClearDraft: actions.clearDraft,
-    onNameChange: draw.setName,
-    onNotesChange: draw.setNotes,
-    onSaveEnclosure: actions.saveEnclosure,
-    onToggleWalkPoints: () => walk.setIsWalkPointsOpen((current) => !current),
-    onSelectedWalkPointIndexChange: walk.setSelectedWalkPointIndex,
-    onStartWalkMode: () => {
-      void actions.startWalkMode()
-    },
-    onStopWalkMode: actions.stopWalkMode,
-    onUndoLastWalkPoint: () => {
-      void actions.undoLastWalkPoint()
-    },
-    onRemoveWalkPointAtIndex: (pointIndex: number) => {
-      void actions.removeWalkPointAtIndex(pointIndex)
-    },
-    onDiscardWalkMode: () => {
-      void actions.discardWalkMode()
-    },
-    onWalkNameChange: walk.setWalkName,
-    onWalkNotesChange: walk.setWalkNotes,
-    onSaveWalkEnclosure: actions.saveWalkEnclosure,
-    onSelectedEnclosureChange: presentation.handleMobileSelectedEnclosureChange,
-    onToggleSelectedEnclosureInfo: () =>
-      selection.setIsSelectedEnclosureInfoOpen((current) => !current),
-    onToggleShowSelectedTrack: () => {
-      if (data.selectedEnclosure) {
-        actions.toggleSelectedTrackForEnclosure(data.selectedEnclosure.id)
-      }
-    },
-    onOpenAssignmentEditor: actions.openAssignmentEditor,
-    onCancelAssignmentEditor: actions.cancelAssignmentEditor,
-    onAssignHerdToEnclosure: (enclosure: Enclosure) => {
-      void actions.assignHerdToEnclosure(enclosure)
-    },
-    onAssignmentHerdIdChange: actions.handleAssignmentHerdIdChange,
-    onAssignmentCountChange: assignment.setAssignmentCount,
-    onAssignmentNotesChange: assignment.setAssignmentNotes,
-    onEndEnclosureAssignment: (assignmentRecord: EnclosureAssignment) => {
-      void actions.endEnclosureAssignment(assignmentRecord)
-    },
-  }
 }
 
 export function buildSidebarPanelProps({

@@ -1,14 +1,6 @@
 'use client'
 
-import type { FormEvent } from 'react'
-import type {
-  FilteredEnclosureItem,
-} from '@/lib/maps/live-position-map-helpers'
 import { LivePositionDrawWorkspace } from '@/components/maps/live-position-draw-workspace'
-import {
-  MobilePanel,
-  PositionData,
-} from '@/components/maps/live-position-map-types'
 import { LivePositionSavedEnclosuresMobilePanel } from '@/components/maps/live-position-saved-enclosures-mobile-panel'
 import { LivePositionWalkWorkspace } from '@/components/maps/live-position-walk-workspace'
 import {
@@ -16,142 +8,82 @@ import {
   MobileMapSegmentButton,
   MobileMapSegmentedControl,
 } from '@/components/maps/mobile-map-ui'
-import type {
-  Animal,
-  Enclosure,
-  EnclosureAssignment,
-  Herd,
-} from '@/types/domain'
+import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
+import type { MobilePanel } from '@/components/maps/live-position-map-types'
 
 export type LivePositionWorkflowPanelsProps = {
-  mobilePanel: MobilePanel
-  isDrawing: boolean
-  draftPointsCount: number
-  draftAreaM2: number
-  name: string
-  notes: string
-  saveError: string
-  isSaving: boolean
-  isWalking: boolean
-  walkPoints: PositionData[]
-  walkAreaM2: number
-  walkName: string
-  walkNotes: string
-  walkError: string
-  isWalkSaving: boolean
-  isWalkPointsOpen: boolean
-  selectedWalkPointIndex: number | null
-  selectedWalkPoint: PositionData | null
-  filteredEnclosures: FilteredEnclosureItem[]
-  selectedEnclosure: Enclosure | null
-  selectedEnclosureId: string | null
-  assignmentEditorEnclosureId: string | null
-  assignmentHerdId: string
-  assignmentCount: string
-  assignmentNotes: string
-  assignmentError: string
-  isAssignmentSaving: boolean
-  endingAssignmentId: string | null
-  safeHerds: Herd[]
-  herdsById: Map<string, Herd>
-  animalsByHerdId: Map<string, Animal[]>
-  activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
-  isSelectedEnclosureInfoOpen: boolean
-  showSelectedTrack: boolean
   onMobilePanelChange: (panel: MobilePanel) => void
-  onStartDrawing: () => void
-  onFinishDrawing: () => void
-  onUndoLastPoint: () => void
-  onClearDraft: () => void
-  onNameChange: (value: string) => void
-  onNotesChange: (value: string) => void
-  onSaveEnclosure: (event: FormEvent<HTMLFormElement>) => void
-  onToggleWalkPoints: () => void
-  onSelectedWalkPointIndexChange: (index: number | null) => void
-  onStartWalkMode: () => void
-  onStopWalkMode: () => void
-  onUndoLastWalkPoint: () => void
-  onRemoveWalkPointAtIndex: (index: number) => void
-  onDiscardWalkMode: () => void
-  onWalkNameChange: (value: string) => void
-  onWalkNotesChange: (value: string) => void
-  onSaveWalkEnclosure: (event: FormEvent<HTMLFormElement>) => void
-  onSelectedEnclosureChange: (nextId: string) => void
-  onToggleSelectedEnclosureInfo: () => void
-  onToggleShowSelectedTrack: () => void
-  onOpenAssignmentEditor: (enclosure: Enclosure) => void
-  onCancelAssignmentEditor: () => void
-  onAssignHerdToEnclosure: (enclosure: Enclosure) => void
-  onAssignmentHerdIdChange: (nextHerdId: string) => void
-  onAssignmentCountChange: (value: string) => void
-  onAssignmentNotesChange: (value: string) => void
-  onEndEnclosureAssignment: (assignment: EnclosureAssignment) => void
 }
 
 export function LivePositionWorkflowPanels({
-  mobilePanel,
-  isDrawing,
-  draftPointsCount,
-  draftAreaM2,
-  name,
-  notes,
-  saveError,
-  isSaving,
-  isWalking,
-  walkPoints,
-  walkAreaM2,
-  walkName,
-  walkNotes,
-  walkError,
-  isWalkSaving,
-  isWalkPointsOpen,
-  selectedWalkPointIndex,
-  selectedWalkPoint,
-  filteredEnclosures,
-  selectedEnclosure,
-  selectedEnclosureId,
-  assignmentEditorEnclosureId,
-  assignmentHerdId,
-  assignmentCount,
-  assignmentNotes,
-  assignmentError,
-  isAssignmentSaving,
-  endingAssignmentId,
-  safeHerds,
-  herdsById,
-  animalsByHerdId,
-  activeAssignmentsByHerdId,
-  isSelectedEnclosureInfoOpen,
-  showSelectedTrack,
   onMobilePanelChange,
-  onStartDrawing,
-  onFinishDrawing,
-  onUndoLastPoint,
-  onClearDraft,
-  onNameChange,
-  onNotesChange,
-  onSaveEnclosure,
-  onToggleWalkPoints,
-  onSelectedWalkPointIndexChange,
-  onStartWalkMode,
-  onStopWalkMode,
-  onUndoLastWalkPoint,
-  onRemoveWalkPointAtIndex,
-  onDiscardWalkMode,
-  onWalkNameChange,
-  onWalkNotesChange,
-  onSaveWalkEnclosure,
-  onSelectedEnclosureChange,
-  onToggleSelectedEnclosureInfo,
-  onToggleShowSelectedTrack,
-  onOpenAssignmentEditor,
-  onCancelAssignmentEditor,
-  onAssignHerdToEnclosure,
-  onAssignmentHerdIdChange,
-  onAssignmentCountChange,
-  onAssignmentNotesChange,
-  onEndEnclosureAssignment,
 }: LivePositionWorkflowPanelsProps) {
+  const {
+    mobilePanel,
+    isDrawing,
+    draftPointsCount,
+    draftAreaM2,
+    name,
+    notes,
+    saveError,
+    isSaving,
+    isWalking,
+    walkPoints,
+    walkAreaM2,
+    walkName,
+    walkNotes,
+    walkError,
+    isWalkSaving,
+    isWalkPointsOpen,
+    selectedWalkPointIndex,
+    selectedWalkPoint,
+    filteredEnclosures,
+    selectedEnclosure,
+    selectedEnclosureId,
+    assignmentEditorEnclosureId,
+    assignmentHerdId,
+    assignmentCount,
+    assignmentNotes,
+    assignmentError,
+    isAssignmentSaving,
+    endingAssignmentId,
+    safeHerds,
+    herdsById,
+    animalsByHerdId,
+    activeAssignmentsByHerdId,
+    isSelectedEnclosureInfoOpen,
+    showSelectedTrack,
+  } = useLivePositionMapStore((state) => state.workflow)
+  const {
+    onStartDrawing,
+    onFinishDrawing,
+    onUndoLastPoint,
+    onClearDraft,
+    onNameChange,
+    onNotesChange,
+    onSaveEnclosure,
+    onToggleWalkPoints,
+    onSelectedWalkPointIndexChange,
+    onStartWalkMode,
+    onStopWalkMode,
+    onUndoLastWalkPoint,
+    onRemoveWalkPointAtIndex,
+    onDiscardWalkMode,
+    onWalkNameChange,
+    onWalkNotesChange,
+    onSaveWalkEnclosure,
+    onSelectedEnclosureChange,
+    onToggleSelectedEnclosureInfo,
+    onToggleShowSelectedTrack,
+    onOpenAssignmentEditor,
+    onCancelAssignmentEditor,
+    onAssignHerdToEnclosure,
+    onAssignmentHerdIdChange,
+    onAssignmentCountChange,
+    onAssignmentNotesChange,
+    onEndEnclosureAssignment,
+  } = useLivePositionMapStore((state) => state.workflowHandles)
+
   return (
     <>
       <MobileMapSegmentedControl>

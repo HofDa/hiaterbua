@@ -1,6 +1,5 @@
 import {
   buildSidebarPanelProps,
-  buildWorkflowPanelsProps,
   type UseLivePositionMapPanelPropsOptions,
 } from '@/components/maps/hooks/live-position-map-panel-prop-builders'
 
@@ -12,7 +11,6 @@ export function useLivePositionMapPanelProps({
   presentation,
 }: UseLivePositionMapPanelPropsOptions) {
   return {
-    workflowPanelsProps: buildWorkflowPanelsProps({ state, data, actions, presentation }),
     sidebarPanelProps: buildSidebarPanelProps({
       state,
       data,

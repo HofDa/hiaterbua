@@ -11,6 +11,8 @@ import {
   useLivePositionMapStore,
   type LivePositionCanvasHandles,
   type LivePositionCanvasSlice,
+  type LivePositionWorkflowHandles,
+  type LivePositionWorkflowSlice,
 } from '@/components/maps/hooks/use-live-position-map-store'
 import { useStableHandles } from '@/components/maps/hooks/use-stable-handles'
 import {
@@ -460,6 +462,101 @@ export function useLivePositionMapScreen() {
     setCanvasHandles(canvasHandles)
   }, [canvasHandles, setCanvasHandles])
 
+  // Same pattern for the mobile workflow panels. `onMobilePanelChange` is intentionally
+  // not included here — it stays a parent-wired prop because it also opens the mobile map.
+  const workflowValues: LivePositionWorkflowSlice = {
+    mobilePanel: selection.mobilePanel,
+    isDrawing: draw.isDrawing,
+    draftPointsCount: draw.draftPoints.length,
+    draftAreaM2: data.draftAreaM2,
+    name: draw.name,
+    notes: draw.notes,
+    saveError: draw.saveError,
+    isSaving: draw.isSaving,
+    isWalking: walk.isWalking,
+    walkPoints: walk.walkPoints,
+    walkAreaM2: data.walkAreaM2,
+    walkName: walk.walkName,
+    walkNotes: walk.walkNotes,
+    walkError: walk.walkError,
+    isWalkSaving: walk.isWalkSaving,
+    isWalkPointsOpen: walk.isWalkPointsOpen,
+    selectedWalkPointIndex: walk.selectedWalkPointIndex,
+    selectedWalkPoint: data.selectedWalkPoint,
+    filteredEnclosures: data.filteredEnclosures,
+    selectedEnclosure: data.selectedEnclosure,
+    selectedEnclosureId: selection.selectedEnclosureId,
+    assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
+    assignmentHerdId: assignment.assignmentHerdId,
+    assignmentCount: assignment.assignmentCount,
+    assignmentNotes: assignment.assignmentNotes,
+    assignmentError: assignment.assignmentError,
+    isAssignmentSaving: assignment.isAssignmentSaving,
+    endingAssignmentId: assignment.endingAssignmentId,
+    safeHerds: data.safeHerds,
+    herdsById: data.herdsById,
+    animalsByHerdId: data.animalsByHerdId,
+    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
+    isSelectedEnclosureInfoOpen: selection.isSelectedEnclosureInfoOpen,
+    showSelectedTrack: selection.showSelectedTrack,
+  }
+
+  const workflowHandles = useStableHandles<LivePositionWorkflowHandles>({
+    onStartDrawing: actions.startDrawing,
+    onFinishDrawing: actions.finishDrawing,
+    onUndoLastPoint: actions.undoLastPoint,
+    onClearDraft: actions.clearDraft,
+    onNameChange: draw.setName,
+    onNotesChange: draw.setNotes,
+    onSaveEnclosure: actions.saveEnclosure,
+    onToggleWalkPoints: () => walk.setIsWalkPointsOpen((current) => !current),
+    onSelectedWalkPointIndexChange: walk.setSelectedWalkPointIndex,
+    onStartWalkMode: () => {
+      void actions.startWalkMode()
+    },
+    onStopWalkMode: actions.stopWalkMode,
+    onUndoLastWalkPoint: () => {
+      void actions.undoLastWalkPoint()
+    },
+    onRemoveWalkPointAtIndex: (pointIndex) => {
+      void actions.removeWalkPointAtIndex(pointIndex)
+    },
+    onDiscardWalkMode: () => {
+      void actions.discardWalkMode()
+    },
+    onWalkNameChange: walk.setWalkName,
+    onWalkNotesChange: walk.setWalkNotes,
+    onSaveWalkEnclosure: actions.saveWalkEnclosure,
+    onSelectedEnclosureChange: presentation.handleMobileSelectedEnclosureChange,
+    onToggleSelectedEnclosureInfo: () =>
+      selection.setIsSelectedEnclosureInfoOpen((current) => !current),
+    onToggleShowSelectedTrack: () => {
+      if (data.selectedEnclosure) {
+        actions.toggleSelectedTrackForEnclosure(data.selectedEnclosure.id)
+      }
+    },
+    onOpenAssignmentEditor: actions.openAssignmentEditor,
+    onCancelAssignmentEditor: actions.cancelAssignmentEditor,
+    onAssignHerdToEnclosure: (enclosure) => {
+      void actions.assignHerdToEnclosure(enclosure)
+    },
+    onAssignmentHerdIdChange: actions.handleAssignmentHerdIdChange,
+    onAssignmentCountChange: assignment.setAssignmentCount,
+    onAssignmentNotesChange: assignment.setAssignmentNotes,
+    onEndEnclosureAssignment: (assignmentRecord) => {
+      void actions.endEnclosureAssignment(assignmentRecord)
+    },
+  })
+
+  const setWorkflow = useLivePositionMapStore((store) => store.setWorkflow)
+  const setWorkflowHandles = useLivePositionMapStore((store) => store.setWorkflowHandles)
+  useEffect(() => {
+    setWorkflow(workflowValues)
+  })
+  useEffect(() => {
+    setWorkflowHandles(workflowHandles)
+  }, [workflowHandles, setWorkflowHandles])
+
   const panelProps = useLivePositionMapPanelProps({
     state,
     data: {
@@ -504,5 +601,8 @@ export function useLivePositionMapScreen() {
     ...panelProps,
     containerRef: runtime.containerRef,
     resizeMap: runtime.resizeMap,
+    // The workflow panel reads everything from the store except this — the parent wraps
+    // it to also open the mobile map when switching to the draw tab.
+    onMobilePanelChange: selection.setMobilePanel,
   }
 }
