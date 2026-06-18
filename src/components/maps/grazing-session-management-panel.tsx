@@ -1,6 +1,5 @@
 'use client'
 
-import type { SessionMetrics } from '@/lib/maps/grazing-session-map-helpers'
 import {
   GrazingSessionActiveSummary,
   GrazingSessionEventCapturePanel,
@@ -8,62 +7,35 @@ import {
   GrazingSessionMetricsGrid,
   GrazingSessionMobileControls,
 } from '@/components/maps/grazing-session-management-panel-sections'
-import type {
-  Herd,
-  SessionEvent,
-  SessionEventType,
-  SessionStatus,
-} from '@/types/domain'
+import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 
-type GrazingSessionManagementPanelProps = {
-  safeHerds: Herd[]
-  selectedHerdId: string
-  selectedAnimalCount: number | null
-  sessionNotes: string
-  currentSessionStatus: SessionStatus | null
-  isSaving: boolean
-  isEventSaving: boolean
-  eventNote: string
-  eventStatus: string
-  actionError: string
-  safeCurrentTrackpointsLength: number
-  currentMetrics: SessionMetrics | null
-  safeCurrentSessionEvents: SessionEvent[]
-  onSelectedHerdIdChange: (value: string) => void
-  onAdjustAnimalCount: (delta: number) => void | Promise<void>
-  onSessionNotesChange: (value: string) => void
-  onStartSession: () => void | Promise<void>
-  onPauseSession: () => void | Promise<void>
-  onResumeSession: () => void | Promise<void>
-  onStopSession: () => void | Promise<void>
-  onEventNoteChange: (value: string) => void
-  onAddSessionMarkerEvent: (type: SessionEventType, comment?: string) => void | Promise<void>
-}
-
-export function GrazingSessionManagementPanel({
-  safeHerds,
-  selectedHerdId,
-  selectedAnimalCount,
-  sessionNotes,
-  currentSessionStatus,
-  isSaving,
-  isEventSaving,
-  eventNote,
-  eventStatus,
-  actionError,
-  safeCurrentTrackpointsLength,
-  currentMetrics,
-  safeCurrentSessionEvents,
-  onSelectedHerdIdChange,
-  onAdjustAnimalCount,
-  onSessionNotesChange,
-  onStartSession,
-  onPauseSession,
-  onResumeSession,
-  onStopSession,
-  onEventNoteChange,
-  onAddSessionMarkerEvent,
-}: GrazingSessionManagementPanelProps) {
+export function GrazingSessionManagementPanel() {
+  const {
+    safeHerds,
+    selectedHerdId,
+    selectedAnimalCount,
+    sessionNotes,
+    currentSessionStatus,
+    isSaving,
+    isEventSaving,
+    eventNote,
+    eventStatus,
+    actionError,
+    safeCurrentTrackpointsLength,
+    currentMetrics,
+    safeCurrentSessionEvents,
+  } = useGrazingSessionMapStore((state) => state.management)
+  const {
+    onSelectedHerdIdChange,
+    onAdjustAnimalCount,
+    onSessionNotesChange,
+    onStartSession,
+    onPauseSession,
+    onResumeSession,
+    onStopSession,
+    onEventNoteChange,
+    onAddSessionMarkerEvent,
+  } = useGrazingSessionMapStore((state) => state.managementHandles)
   const panelContent = (
     <>
       {currentSessionStatus === null ? (

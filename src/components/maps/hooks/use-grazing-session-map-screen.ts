@@ -9,6 +9,10 @@ import {
   useGrazingSessionMapStore,
   type GrazingCanvasHandles,
   type GrazingCanvasSlice,
+  type GrazingHistoryHandles,
+  type GrazingHistorySlice,
+  type GrazingManagementHandles,
+  type GrazingManagementSlice,
   type GrazingStatusSlice,
 } from '@/components/maps/hooks/use-grazing-session-map-store'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
@@ -343,72 +347,97 @@ export function useGrazingSessionMapScreen() {
     setCanvasHandles(canvasHandles)
   }, [canvasHandles, setCanvasHandles])
 
+  const managementValues: GrazingManagementSlice = {
+    safeHerds: data.safeHerds,
+    selectedHerdId: session.selectedHerdId,
+    selectedAnimalCount: session.sessionAnimalCount,
+    sessionNotes: session.sessionNotes,
+    currentSessionStatus: session.currentSessionStatus,
+    isSaving: session.isSaving,
+    isEventSaving: session.isEventSaving,
+    eventNote: session.eventNote,
+    eventStatus: session.eventStatus,
+    actionError: session.actionError,
+    safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
+    currentMetrics: data.currentMetrics,
+    safeCurrentSessionEvents: data.safeCurrentSessionEvents,
+  }
+
+  const managementHandles = useStableHandles<GrazingManagementHandles>({
+    onSelectedHerdIdChange: controller.changeSelectedHerdId,
+    onAdjustAnimalCount: controller.adjustSessionAnimalCount,
+    onSessionNotesChange: session.setSessionNotes,
+    onStartSession: controller.startSession,
+    onPauseSession: controller.pauseSession,
+    onResumeSession: controller.resumeSession,
+    onStopSession: controller.stopSession,
+    onEventNoteChange: session.setEventNote,
+    onAddSessionMarkerEvent: controller.addSessionMarkerEvent,
+  })
+
+  const historyValues: GrazingHistorySlice = {
+    isHistoryExpanded: history.isHistoryExpanded,
+    safeRecentSessions: data.safeRecentSessions,
+    safeHerds: data.safeHerds,
+    safeSurveyAreas: data.safeSurveyAreas,
+    selectedSurveyArea: data.selectedSurveyArea,
+    selectedSurveyAreaId: selection.selectedSurveyAreaId,
+    sessionHistoryStats: data.sessionHistoryStats,
+    groupedSessionHistory: data.groupedSessionHistory,
+    expandedHistoryDays: history.expandedHistoryDays,
+    expandedHistorySessionId: history.expandedHistorySessionId,
+    selectedSessionId: selection.selectedSessionId,
+    selectedSession: data.selectedSession,
+    selectedMetrics: data.selectedMetrics,
+    safeSelectedTrackpoints: data.safeSelectedTrackpoints,
+    safeSelectedSessionEvents: data.safeSelectedSessionEvents,
+    editingSessionId: edit.editingSessionId,
+    editMetrics: data.editMetrics,
+    editTrackpointsLength: edit.editTrackpoints.length,
+    editStartTime: edit.editStartTime,
+    editEndTime: edit.editEndTime,
+    actionError: session.actionError,
+    isSaving: session.isSaving,
+  }
+
+  const historyHandles = useStableHandles<GrazingHistoryHandles>({
+    onToggleHistoryExpanded: () => history.setIsHistoryExpanded((current) => !current),
+    onToggleHistoryDay: controller.toggleHistoryDay,
+    onExpandedHistorySessionChange: controller.toggleExpandedHistorySession,
+    onFocusSurveyArea: runtime.focusSurveyArea,
+    onSelectSession: selection.setSelectedSessionId,
+    onStartEditSession: controller.startEditSession,
+    onEditStartTimeChange: edit.setEditStartTime,
+    onEditEndTimeChange: edit.setEditEndTime,
+    onSaveEditedSession: controller.saveEditedSession,
+    onCancelEditSession: controller.cancelEditSession,
+    onDeleteSession: controller.deleteSession,
+  })
+
+  const setManagement = useGrazingSessionMapStore((store) => store.setManagement)
+  const setManagementHandles = useGrazingSessionMapStore((store) => store.setManagementHandles)
+  const setHistory = useGrazingSessionMapStore((store) => store.setHistory)
+  const setHistoryHandles = useGrazingSessionMapStore((store) => store.setHistoryHandles)
+  useEffect(() => {
+    setManagement(managementValues)
+  })
+  useEffect(() => {
+    setManagementHandles(managementHandles)
+  }, [managementHandles, setManagementHandles])
+  useEffect(() => {
+    setHistory(historyValues)
+  })
+  useEffect(() => {
+    setHistoryHandles(historyHandles)
+  }, [historyHandles, setHistoryHandles])
+
   return {
     // Wired synchronously (map mount ref) / consumed by the screen component (resize +
-    // the mobile-map summary line). The status and canvas panels self-source from the store.
+    // the mobile-map summary line). All four panels self-source from the store.
     containerRef: runtime.containerRef,
     resizeMap: runtime.resizeMap,
     safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
     currentDistanceM: data.currentMetrics?.distanceM ?? 0,
     currentDurationS: data.currentMetrics?.durationS ?? 0,
-    managementPanelProps: {
-      safeHerds: data.safeHerds,
-      selectedHerdId: session.selectedHerdId,
-      selectedAnimalCount: session.sessionAnimalCount,
-      sessionNotes: session.sessionNotes,
-      currentSessionStatus: session.currentSessionStatus,
-      isSaving: session.isSaving,
-      isEventSaving: session.isEventSaving,
-      eventNote: session.eventNote,
-      eventStatus: session.eventStatus,
-      actionError: session.actionError,
-      safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
-      currentMetrics: data.currentMetrics,
-      safeCurrentSessionEvents: data.safeCurrentSessionEvents,
-      onSelectedHerdIdChange: controller.changeSelectedHerdId,
-      onAdjustAnimalCount: controller.adjustSessionAnimalCount,
-      onSessionNotesChange: session.setSessionNotes,
-      onStartSession: controller.startSession,
-      onPauseSession: controller.pauseSession,
-      onResumeSession: controller.resumeSession,
-      onStopSession: controller.stopSession,
-      onEventNoteChange: session.setEventNote,
-      onAddSessionMarkerEvent: controller.addSessionMarkerEvent,
-    },
-    historyPanelProps: {
-      isHistoryExpanded: history.isHistoryExpanded,
-      safeRecentSessions: data.safeRecentSessions,
-      safeHerds: data.safeHerds,
-      safeSurveyAreas: data.safeSurveyAreas,
-      selectedSurveyArea: data.selectedSurveyArea,
-      selectedSurveyAreaId: selection.selectedSurveyAreaId,
-      sessionHistoryStats: data.sessionHistoryStats,
-      groupedSessionHistory: data.groupedSessionHistory,
-      expandedHistoryDays: history.expandedHistoryDays,
-      expandedHistorySessionId: history.expandedHistorySessionId,
-      selectedSessionId: selection.selectedSessionId,
-      selectedSession: data.selectedSession,
-      selectedMetrics: data.selectedMetrics,
-      safeSelectedTrackpoints: data.safeSelectedTrackpoints,
-      safeSelectedSessionEvents: data.safeSelectedSessionEvents,
-      editingSessionId: edit.editingSessionId,
-      editMetrics: data.editMetrics,
-      editTrackpointsLength: edit.editTrackpoints.length,
-      editStartTime: edit.editStartTime,
-      editEndTime: edit.editEndTime,
-      actionError: session.actionError,
-      isSaving: session.isSaving,
-      onToggleHistoryExpanded: () => history.setIsHistoryExpanded((current) => !current),
-      onToggleHistoryDay: controller.toggleHistoryDay,
-      onExpandedHistorySessionChange: controller.toggleExpandedHistorySession,
-      onFocusSurveyArea: runtime.focusSurveyArea,
-      onSelectSession: selection.setSelectedSessionId,
-      onStartEditSession: controller.startEditSession,
-      onEditStartTimeChange: edit.setEditStartTime,
-      onEditEndTimeChange: edit.setEditEndTime,
-      onSaveEditedSession: controller.saveEditedSession,
-      onCancelEditSession: controller.cancelEditSession,
-      onDeleteSession: controller.deleteSession,
-    },
   }
 }

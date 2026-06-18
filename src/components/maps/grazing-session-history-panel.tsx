@@ -1,11 +1,6 @@
 'use client'
 
 import {
-  type GroupedSessionHistory,
-  type SessionHistoryStats,
-  type SessionMetrics,
-} from '@/lib/maps/grazing-session-map-helpers'
-import {
   GrazingSessionHistoryEditingForm,
   GrazingSessionHistoryEditingSummary,
   GrazingSessionHistoryFocusEvents,
@@ -14,85 +9,46 @@ import {
   GrazingSessionHistoryStatsGrid,
 } from '@/components/maps/grazing-session-history-panel-sections'
 import { GrazingSessionSurveyAreasPanel } from '@/components/maps/grazing-session-survey-areas-panel'
-import type {
-  GrazingSession,
-  Herd,
-  SessionEvent,
-  SurveyArea,
-  TrackPoint,
-} from '@/types/domain'
+import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 
-type GrazingSessionHistoryPanelProps = {
-  isHistoryExpanded: boolean
-  safeRecentSessions: GrazingSession[]
-  safeHerds: Herd[]
-  safeSurveyAreas: SurveyArea[]
-  selectedSurveyArea: SurveyArea | null
-  selectedSurveyAreaId: string | null
-  sessionHistoryStats: SessionHistoryStats
-  groupedSessionHistory: GroupedSessionHistory[]
-  expandedHistoryDays: string[]
-  expandedHistorySessionId: string | null
-  selectedSessionId: string | null
-  selectedSession: GrazingSession | null
-  selectedMetrics: SessionMetrics | null
-  safeSelectedTrackpoints: TrackPoint[]
-  safeSelectedSessionEvents: SessionEvent[]
-  editingSessionId: string | null
-  editMetrics: SessionMetrics | null
-  editTrackpointsLength: number
-  editStartTime: string
-  editEndTime: string
-  actionError: string
-  isSaving: boolean
-  onToggleHistoryExpanded: () => void
-  onToggleHistoryDay: (dayKey: string) => void
-  onExpandedHistorySessionChange: (sessionId: string) => void
-  onFocusSurveyArea: (surveyArea: SurveyArea) => void
-  onSelectSession: (sessionId: string) => void
-  onStartEditSession: (sessionId: string) => void
-  onEditStartTimeChange: (value: string) => void
-  onEditEndTimeChange: (value: string) => void
-  onSaveEditedSession: () => void | Promise<void>
-  onCancelEditSession: () => void
-  onDeleteSession: (session: GrazingSession) => void | Promise<void>
-}
-
-export function GrazingSessionHistoryPanel({
-  isHistoryExpanded,
-  safeRecentSessions,
-  safeHerds,
-  safeSurveyAreas,
-  selectedSurveyArea,
-  selectedSurveyAreaId,
-  sessionHistoryStats,
-  groupedSessionHistory,
-  expandedHistoryDays,
-  expandedHistorySessionId,
-  selectedSessionId,
-  selectedSession,
-  selectedMetrics,
-  safeSelectedTrackpoints,
-  safeSelectedSessionEvents,
-  editingSessionId,
-  editMetrics,
-  editTrackpointsLength,
-  editStartTime,
-  editEndTime,
-  actionError,
-  isSaving,
-  onToggleHistoryExpanded,
-  onToggleHistoryDay,
-  onExpandedHistorySessionChange,
-  onFocusSurveyArea,
-  onSelectSession,
-  onStartEditSession,
-  onEditStartTimeChange,
-  onEditEndTimeChange,
-  onSaveEditedSession,
-  onCancelEditSession,
-  onDeleteSession,
-}: GrazingSessionHistoryPanelProps) {
+export function GrazingSessionHistoryPanel() {
+  const {
+    isHistoryExpanded,
+    safeRecentSessions,
+    safeHerds,
+    safeSurveyAreas,
+    selectedSurveyArea,
+    selectedSurveyAreaId,
+    sessionHistoryStats,
+    groupedSessionHistory,
+    expandedHistoryDays,
+    expandedHistorySessionId,
+    selectedSessionId,
+    selectedSession,
+    selectedMetrics,
+    safeSelectedTrackpoints,
+    safeSelectedSessionEvents,
+    editingSessionId,
+    editMetrics,
+    editTrackpointsLength,
+    editStartTime,
+    editEndTime,
+    actionError,
+    isSaving,
+  } = useGrazingSessionMapStore((state) => state.history)
+  const {
+    onToggleHistoryExpanded,
+    onToggleHistoryDay,
+    onExpandedHistorySessionChange,
+    onFocusSurveyArea,
+    onSelectSession,
+    onStartEditSession,
+    onEditStartTimeChange,
+    onEditEndTimeChange,
+    onSaveEditedSession,
+    onCancelEditSession,
+    onDeleteSession,
+  } = useGrazingSessionMapStore((state) => state.historyHandles)
   const summary = selectedSession
     ? `${safeRecentSessions.length} Weidegänge · Fokus aktiv`
     : `${safeRecentSessions.length} gespeicherte Weidegänge`

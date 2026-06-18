@@ -20,8 +20,6 @@ export function GrazingSessionMap() {
     safeCurrentTrackpointsLength,
     currentDistanceM,
     currentDurationS,
-    managementPanelProps,
-    historyPanelProps,
   } = useGrazingSessionMapScreen()
 
   const mobileMapSummary = `${safeCurrentTrackpointsLength} Punkte · ${formatDistance(
@@ -41,7 +39,7 @@ export function GrazingSessionMap() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(360px,420px)] lg:items-start">
         <div className="space-y-4">
           <div className="lg:hidden">
-            <GrazingSessionManagementPanel {...managementPanelProps} />
+            <GrazingSessionManagementPanel />
           </div>
 
           <div className="lg:hidden">
@@ -72,13 +70,13 @@ export function GrazingSessionMap() {
           </div>
 
           <div className="lg:hidden">
-            <GrazingSessionHistoryPanel {...historyPanelProps} />
+            <GrazingSessionHistoryPanel />
           </div>
         </div>
 
         <div className="hidden space-y-4 lg:block">
-          <GrazingSessionManagementPanel {...managementPanelProps} />
-          <GrazingSessionHistoryPanel {...historyPanelProps} />
+          <GrazingSessionManagementPanel />
+          <GrazingSessionHistoryPanel />
         </div>
       </div>
     </section>
