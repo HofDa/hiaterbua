@@ -15,26 +15,28 @@ import { cn } from '@/lib/utils/cn'
 export function GrazingSessionMap() {
   const [isMapExpanded, setIsMapExpanded] = useState(false)
   const {
-    liveStatusCardProps,
-    canvasPanelProps,
+    containerRef,
+    resizeMap,
+    safeCurrentTrackpointsLength,
+    currentDistanceM,
+    currentDurationS,
     managementPanelProps,
     historyPanelProps,
   } = useGrazingSessionMapScreen()
 
-  const mobileMapSummary = `${canvasPanelProps.safeCurrentTrackpointsLength} Punkte · ${formatDistance(
-    canvasPanelProps.currentDistanceM
-  )} · ${formatDuration(canvasPanelProps.currentDurationS)}`
-  const resizeMap = canvasPanelProps.onResizeMap
+  const mobileMapSummary = `${safeCurrentTrackpointsLength} Punkte · ${formatDistance(
+    currentDistanceM
+  )} · ${formatDuration(currentDurationS)}`
 
   useEffect(() => {
     if (!isMapExpanded) return
 
-    resizeMap?.()
+    resizeMap()
   }, [isMapExpanded, resizeMap])
 
   return (
     <section className="space-y-4">
-      <GrazingSessionLiveStatusCard {...liveStatusCardProps} />
+      <GrazingSessionLiveStatusCard />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(360px,420px)] lg:items-start">
         <div className="space-y-4">
@@ -66,7 +68,7 @@ export function GrazingSessionMap() {
             aria-hidden={!isMapExpanded}
             className={cn(isMapExpanded ? 'block' : 'hidden', 'lg:block')}
           >
-            <GrazingSessionMapCanvasPanel {...canvasPanelProps} />
+            <GrazingSessionMapCanvasPanel containerRef={containerRef} />
           </div>
 
           <div className="lg:hidden">

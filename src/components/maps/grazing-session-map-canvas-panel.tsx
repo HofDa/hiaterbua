@@ -1,11 +1,7 @@
 'use client'
 
 import { useState, type Ref } from 'react'
-import {
-  formatDistance,
-  formatDuration,
-  type SessionMetrics,
-} from '@/lib/maps/grazing-session-map-helpers'
+import { formatDistance, formatDuration } from '@/lib/maps/grazing-session-map-helpers'
 import { GrazingSessionMapDesktopManagementOverlay } from '@/components/maps/grazing-session-map-desktop-management-overlay'
 import {
   ControlsIcon,
@@ -21,116 +17,66 @@ import {
   MobileMapToolbarButton,
   MobileMapToolbarStat,
 } from '@/components/maps/mobile-map-toolbar'
+import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 import { cn } from '@/lib/utils/cn'
-import type { PositionData } from '@/components/maps/grazing-session-map-types'
-import type {
-  Herd,
-  MapBaseLayer,
-  SessionEvent,
-  SessionEventType,
-  SessionStatus,
-} from '@/types/domain'
 
-type GrazingSessionMapCanvasPanelProps = {
+export type GrazingSessionMapCanvasPanelProps = {
   containerRef: Ref<HTMLDivElement>
-  editingSessionId: string | null
-  safeCurrentTrackpointsLength: number
-  currentDistanceM: number
-  currentDurationS: number
-  safeHerds: Herd[]
-  selectedHerdId: string
-  selectedAnimalCount: number | null
-  sessionNotes: string
-  currentSessionStatus: SessionStatus | null
-  isSaving: boolean
-  isEventSaving: boolean
-  hasHerds: boolean
-  eventNote: string
-  eventStatus: string
-  actionError: string
-  currentMetrics: SessionMetrics | null
-  safeCurrentSessionEvents: SessionEvent[]
-  position: PositionData | null
-  isBaseLayerMenuOpen: boolean
-  baseLayer: MapBaseLayer
-  showSurveyAreas: boolean
-  showSessionEventsOnMap: boolean
-  prefetchingMapArea: boolean
-  prefetchStatus: string
-  isAddingEditTrackpoint: boolean
-  selectedEditTrackpointIndex: number | null
-  editTrackpointsLength: number
-  onSelectedHerdIdChange: (value: string) => void
-  onAdjustAnimalCount: (delta: number) => void | Promise<void>
-  onSessionNotesChange: (value: string) => void
-  onStartOrResumeSession: () => void | Promise<void>
-  onPauseSession: () => void | Promise<void>
-  onResumeSession: () => void | Promise<void>
-  onStopSession: () => void | Promise<void>
-  onEventNoteChange: (value: string) => void
-  onAddSessionMarkerEvent: (type: SessionEventType, comment?: string) => void | Promise<void>
-  onCenterMap: () => void
-  onToggleBaseLayerMenu: () => void
-  onUpdateBaseLayer: (nextBaseLayer: MapBaseLayer) => void | Promise<void>
-  onToggleShowSurveyAreas: () => void
-  onToggleShowSessionEventsOnMap: () => void
-  onPrefetchVisibleMapArea: () => void | Promise<void>
-  onResizeMap?: () => void
-  onStartAddEditTrackpoint: () => void
-  onRemoveSelectedEditTrackpoint: () => void
-  onSaveEditedSession: () => void | Promise<void>
-  onCancelEditSession: () => void
 }
 
 export function GrazingSessionMapCanvasPanel({
   containerRef,
-  editingSessionId,
-  safeCurrentTrackpointsLength,
-  currentDistanceM,
-  currentDurationS,
-  safeHerds,
-  selectedHerdId,
-  selectedAnimalCount,
-  sessionNotes,
-  currentSessionStatus,
-  isSaving,
-  isEventSaving,
-  hasHerds,
-  eventNote,
-  eventStatus,
-  actionError,
-  currentMetrics,
-  safeCurrentSessionEvents,
-  position,
-  isBaseLayerMenuOpen,
-  baseLayer,
-  showSurveyAreas,
-  showSessionEventsOnMap,
-  prefetchingMapArea,
-  prefetchStatus,
-  isAddingEditTrackpoint,
-  selectedEditTrackpointIndex,
-  editTrackpointsLength,
-  onSelectedHerdIdChange,
-  onAdjustAnimalCount,
-  onSessionNotesChange,
-  onStartOrResumeSession,
-  onPauseSession,
-  onResumeSession,
-  onStopSession,
-  onEventNoteChange,
-  onAddSessionMarkerEvent,
-  onCenterMap,
-  onToggleBaseLayerMenu,
-  onUpdateBaseLayer,
-  onToggleShowSurveyAreas,
-  onToggleShowSessionEventsOnMap,
-  onPrefetchVisibleMapArea,
-  onStartAddEditTrackpoint,
-  onRemoveSelectedEditTrackpoint,
-  onSaveEditedSession,
-  onCancelEditSession,
 }: GrazingSessionMapCanvasPanelProps) {
+  const {
+    editingSessionId,
+    safeCurrentTrackpointsLength,
+    currentDistanceM,
+    currentDurationS,
+    safeHerds,
+    selectedHerdId,
+    selectedAnimalCount,
+    sessionNotes,
+    currentSessionStatus,
+    isSaving,
+    isEventSaving,
+    hasHerds,
+    eventNote,
+    eventStatus,
+    actionError,
+    currentMetrics,
+    safeCurrentSessionEvents,
+    position,
+    isBaseLayerMenuOpen,
+    baseLayer,
+    showSurveyAreas,
+    showSessionEventsOnMap,
+    prefetchingMapArea,
+    prefetchStatus,
+    isAddingEditTrackpoint,
+    selectedEditTrackpointIndex,
+    editTrackpointsLength,
+  } = useGrazingSessionMapStore((state) => state.canvas)
+  const {
+    onSelectedHerdIdChange,
+    onAdjustAnimalCount,
+    onSessionNotesChange,
+    onStartOrResumeSession,
+    onPauseSession,
+    onResumeSession,
+    onStopSession,
+    onEventNoteChange,
+    onAddSessionMarkerEvent,
+    onCenterMap,
+    onToggleBaseLayerMenu,
+    onUpdateBaseLayer,
+    onToggleShowSurveyAreas,
+    onToggleShowSessionEventsOnMap,
+    onPrefetchVisibleMapArea,
+    onStartAddEditTrackpoint,
+    onRemoveSelectedEditTrackpoint,
+    onSaveEditedSession,
+    onCancelEditSession,
+  } = useGrazingSessionMapStore((state) => state.canvasHandles)
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
   const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(false)
 

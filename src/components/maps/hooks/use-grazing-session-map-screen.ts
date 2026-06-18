@@ -5,7 +5,14 @@ import { useGrazingSessionMapController } from '@/components/maps/hooks/use-graz
 import { useGrazingSessionMapData } from '@/components/maps/hooks/use-grazing-session-map-data'
 import { useGrazingSessionMapPresentation } from '@/components/maps/hooks/use-grazing-session-map-presentation'
 import { useGrazingSessionMapState } from '@/components/maps/hooks/use-grazing-session-map-state'
+import {
+  useGrazingSessionMapStore,
+  type GrazingCanvasHandles,
+  type GrazingCanvasSlice,
+  type GrazingStatusSlice,
+} from '@/components/maps/hooks/use-grazing-session-map-store'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
+import { useStableHandles } from '@/components/maps/hooks/use-stable-handles'
 import {
   getPositionLngLat,
   useMapKernel,
@@ -255,73 +262,95 @@ export function useGrazingSessionMapScreen() {
 
   useWakeLock(session.currentSessionStatus === 'active')
 
+  // Publish the status + canvas slices to the store; the panels read them via selectors
+  // instead of receiving prop bags rebuilt on every screen render.
+  const statusValues: GrazingStatusSlice = {
+    gpsState: gps.gpsState,
+    gpsLabel: presentation.gpsLabel,
+    gpsDetail: presentation.gpsDetail,
+    gpsFilterDetail: presentation.gpsFilterDetail,
+    herdLabel: presentation.herdLabel,
+    statusLabel: presentation.statusLabel,
+    coordinatesLabel: presentation.coordinatesLabel,
+    updateLabel: presentation.updateLabel,
+  }
+
+  const canvasValues: GrazingCanvasSlice = {
+    editingSessionId: edit.editingSessionId,
+    safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
+    currentDistanceM: data.currentMetrics?.distanceM ?? 0,
+    currentDurationS: data.currentMetrics?.durationS ?? 0,
+    safeHerds: data.safeHerds,
+    selectedHerdId: session.selectedHerdId,
+    selectedAnimalCount: session.sessionAnimalCount,
+    sessionNotes: session.sessionNotes,
+    currentSessionStatus: session.currentSessionStatus,
+    isSaving: session.isSaving,
+    isEventSaving: session.isEventSaving,
+    hasHerds: data.safeHerds.length > 0,
+    eventNote: session.eventNote,
+    eventStatus: session.eventStatus,
+    actionError: session.actionError,
+    currentMetrics: data.currentMetrics,
+    safeCurrentSessionEvents: data.safeCurrentSessionEvents,
+    position: gps.position,
+    isBaseLayerMenuOpen: runtime.isBaseLayerMenuOpen,
+    baseLayer: runtime.baseLayer,
+    showSurveyAreas: runtime.showSurveyAreas,
+    showSessionEventsOnMap,
+    prefetchingMapArea: runtime.prefetchingMapArea,
+    prefetchStatus: runtime.prefetchStatus,
+    isAddingEditTrackpoint: edit.isAddingEditTrackpoint,
+    selectedEditTrackpointIndex: edit.selectedEditTrackpointIndex,
+    editTrackpointsLength: edit.editTrackpoints.length,
+  }
+
+  const canvasHandles = useStableHandles<GrazingCanvasHandles>({
+    onSelectedHerdIdChange: controller.changeSelectedHerdId,
+    onAdjustAnimalCount: controller.adjustSessionAnimalCount,
+    onSessionNotesChange: session.setSessionNotes,
+    onStartOrResumeSession:
+      session.currentSessionStatus === 'paused'
+        ? controller.resumeSession
+        : controller.startSession,
+    onPauseSession: controller.pauseSession,
+    onResumeSession: controller.resumeSession,
+    onStopSession: controller.stopSession,
+    onEventNoteChange: session.setEventNote,
+    onAddSessionMarkerEvent: controller.addSessionMarkerEvent,
+    onCenterMap: runtime.centerMapOnPosition,
+    onToggleBaseLayerMenu: () => runtime.setIsBaseLayerMenuOpen((current) => !current),
+    onUpdateBaseLayer: runtime.updateBaseLayer,
+    onToggleShowSurveyAreas: () => runtime.setShowSurveyAreas((current) => !current),
+    onToggleShowSessionEventsOnMap: () => setShowSessionEventsOnMap((current) => !current),
+    onPrefetchVisibleMapArea: runtime.prefetchVisibleMapArea,
+    onStartAddEditTrackpoint: controller.startAddEditTrackpoint,
+    onRemoveSelectedEditTrackpoint: controller.removeSelectedEditTrackpoint,
+    onSaveEditedSession: controller.saveEditedSession,
+    onCancelEditSession: controller.cancelEditSession,
+  })
+
+  const setStatus = useGrazingSessionMapStore((store) => store.setStatus)
+  const setCanvas = useGrazingSessionMapStore((store) => store.setCanvas)
+  const setCanvasHandles = useGrazingSessionMapStore((store) => store.setCanvasHandles)
+  useEffect(() => {
+    setStatus(statusValues)
+  })
+  useEffect(() => {
+    setCanvas(canvasValues)
+  })
+  useEffect(() => {
+    setCanvasHandles(canvasHandles)
+  }, [canvasHandles, setCanvasHandles])
+
   return {
-    liveStatusCardProps: {
-      gpsState: gps.gpsState,
-      gpsLabel: presentation.gpsLabel,
-      gpsDetail: presentation.gpsDetail,
-      gpsFilterDetail: presentation.gpsFilterDetail,
-      herdLabel: presentation.herdLabel,
-      statusLabel: presentation.statusLabel,
-      coordinatesLabel: presentation.coordinatesLabel,
-      updateLabel: presentation.updateLabel,
-      isOpen: gps.isLiveStatusOpen,
-      onToggleOpen: () => gps.setIsLiveStatusOpen((current) => !current),
-    },
-    canvasPanelProps: {
-      containerRef: runtime.containerRef,
-      editingSessionId: edit.editingSessionId,
-      safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
-      currentDistanceM: data.currentMetrics?.distanceM ?? 0,
-      currentDurationS: data.currentMetrics?.durationS ?? 0,
-      safeHerds: data.safeHerds,
-      selectedHerdId: session.selectedHerdId,
-      selectedAnimalCount: session.sessionAnimalCount,
-      sessionNotes: session.sessionNotes,
-      currentSessionStatus: session.currentSessionStatus,
-      isSaving: session.isSaving,
-      isEventSaving: session.isEventSaving,
-      hasHerds: data.safeHerds.length > 0,
-      eventNote: session.eventNote,
-      eventStatus: session.eventStatus,
-      actionError: session.actionError,
-      currentMetrics: data.currentMetrics,
-      safeCurrentSessionEvents: data.safeCurrentSessionEvents,
-      position: gps.position,
-      isBaseLayerMenuOpen: runtime.isBaseLayerMenuOpen,
-      baseLayer: runtime.baseLayer,
-      showSurveyAreas: runtime.showSurveyAreas,
-      showSessionEventsOnMap,
-      prefetchingMapArea: runtime.prefetchingMapArea,
-      prefetchStatus: runtime.prefetchStatus,
-      isAddingEditTrackpoint: edit.isAddingEditTrackpoint,
-      selectedEditTrackpointIndex: edit.selectedEditTrackpointIndex,
-      editTrackpointsLength: edit.editTrackpoints.length,
-      onSelectedHerdIdChange: controller.changeSelectedHerdId,
-      onAdjustAnimalCount: controller.adjustSessionAnimalCount,
-      onSessionNotesChange: session.setSessionNotes,
-      onStartOrResumeSession:
-        session.currentSessionStatus === 'paused'
-          ? controller.resumeSession
-          : controller.startSession,
-      onPauseSession: controller.pauseSession,
-      onResumeSession: controller.resumeSession,
-      onStopSession: controller.stopSession,
-      onEventNoteChange: session.setEventNote,
-      onAddSessionMarkerEvent: controller.addSessionMarkerEvent,
-      onCenterMap: runtime.centerMapOnPosition,
-      onToggleBaseLayerMenu: () => runtime.setIsBaseLayerMenuOpen((current) => !current),
-      onUpdateBaseLayer: runtime.updateBaseLayer,
-      onToggleShowSurveyAreas: () => runtime.setShowSurveyAreas((current) => !current),
-      onToggleShowSessionEventsOnMap: () =>
-        setShowSessionEventsOnMap((current) => !current),
-      onPrefetchVisibleMapArea: runtime.prefetchVisibleMapArea,
-      onResizeMap: runtime.resizeMap,
-      onStartAddEditTrackpoint: controller.startAddEditTrackpoint,
-      onRemoveSelectedEditTrackpoint: controller.removeSelectedEditTrackpoint,
-      onSaveEditedSession: controller.saveEditedSession,
-      onCancelEditSession: controller.cancelEditSession,
-    },
+    // Wired synchronously (map mount ref) / consumed by the screen component (resize +
+    // the mobile-map summary line). The status and canvas panels self-source from the store.
+    containerRef: runtime.containerRef,
+    resizeMap: runtime.resizeMap,
+    safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
+    currentDistanceM: data.currentMetrics?.distanceM ?? 0,
+    currentDurationS: data.currentMetrics?.durationS ?? 0,
     managementPanelProps: {
       safeHerds: data.safeHerds,
       selectedHerdId: session.selectedHerdId,

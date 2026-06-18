@@ -12,7 +12,6 @@ type GrazingSessionGpsState = {
   gpsState: GpsState
   position: PositionData | null
   lastPositionDecision: PositionDecision | null
-  isLiveStatusOpen: boolean
 }
 
 type GrazingSessionSelectionState = {
@@ -53,7 +52,6 @@ const initialGpsState: GrazingSessionGpsState = {
   gpsState: 'idle',
   position: null,
   lastPositionDecision: null,
-  isLiveStatusOpen: false,
 }
 
 const initialSelectionState: GrazingSessionSelectionState = {
@@ -122,7 +120,6 @@ export function useGrazingSessionMapState() {
       setGpsState: setGps('gpsState'),
       setPosition: setGps('position'),
       setLastPositionDecision: setGps('lastPositionDecision'),
-      setIsLiveStatusOpen: setGps('isLiveStatusOpen'),
     }
   }, [dispatchGps])
 

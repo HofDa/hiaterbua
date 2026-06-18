@@ -1,33 +1,22 @@
 'use client'
 
 import { LiveStatusCard, type StatusItem } from '@/components/maps/live-status-card'
-import type { GpsState } from '@/lib/maps/map-core'
+import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 
-type GrazingSessionLiveStatusCardProps = {
-  gpsState: GpsState
-  gpsLabel: string
-  gpsDetail: string
-  gpsFilterDetail: string
-  herdLabel: string
-  statusLabel: string
-  coordinatesLabel: string
-  updateLabel: string
-  isOpen: boolean
-  onToggleOpen: () => void
-}
+export function GrazingSessionLiveStatusCard() {
+  const isOpen = useGrazingSessionMapStore((state) => state.isLiveStatusOpen)
+  const toggle = useGrazingSessionMapStore((state) => state.toggleLiveStatus)
+  const {
+    gpsState,
+    gpsLabel,
+    gpsDetail,
+    gpsFilterDetail,
+    herdLabel,
+    statusLabel,
+    coordinatesLabel,
+    updateLabel,
+  } = useGrazingSessionMapStore((state) => state.status)
 
-export function GrazingSessionLiveStatusCard({
-  gpsState,
-  gpsLabel,
-  gpsDetail,
-  gpsFilterDetail,
-  herdLabel,
-  statusLabel,
-  coordinatesLabel,
-  updateLabel,
-  isOpen,
-  onToggleOpen,
-}: GrazingSessionLiveStatusCardProps) {
   const items: StatusItem[] = [
     { label: 'GPS', value: gpsDetail },
     { label: 'Filter', value: gpsFilterDetail },
@@ -43,7 +32,7 @@ export function GrazingSessionLiveStatusCard({
       gpsState={gpsState}
       gpsLabel={gpsLabel}
       items={items}
-      onToggle={onToggleOpen}
+      onToggle={toggle}
     />
   )
 }
