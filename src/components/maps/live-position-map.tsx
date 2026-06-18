@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils/cn'
 export function LivePositionMap() {
   const [isMobileMapOpen, setIsMobileMapOpen] = useState(false)
   const {
-    statusCardProps,
     canvasPanelProps,
     workflowPanelsProps,
     sidebarPanelProps,
@@ -56,7 +55,7 @@ export function LivePositionMap() {
 
   return (
     <section className="space-y-4">
-      <LivePositionStatusCard {...statusCardProps} />
+      <LivePositionStatusCard />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(360px,420px)] lg:items-start">
         <div>

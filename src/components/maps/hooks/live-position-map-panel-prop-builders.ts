@@ -1,7 +1,6 @@
 import type { Dispatch, Ref, SetStateAction } from 'react'
 import type { LivePositionMapCanvasPanelProps } from '@/components/maps/live-position-map-canvas-panel'
 import type { LivePositionSidebarPanelProps } from '@/components/maps/live-position-sidebar-panel'
-import type { LivePositionStatusCardProps } from '@/components/maps/live-position-status-card'
 import type { LivePositionWorkflowPanelsProps } from '@/components/maps/live-position-workflow-panels'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 import type { LivePositionMapState } from '@/components/maps/hooks/use-live-position-map-state'
@@ -95,22 +94,6 @@ export type UseLivePositionMapPanelPropsOptions = {
   presentation: LivePositionMapPanelPresentation
 }
 
-export function buildStatusCardProps({
-  state,
-  presentation,
-}: Pick<UseLivePositionMapPanelPropsOptions, 'state' | 'presentation'>): LivePositionStatusCardProps {
-  const { gps } = state
-
-  return {
-    isLiveStatusOpen: gps.isLiveStatusOpen,
-    gpsState: gps.gpsState,
-    gpsLabel: presentation.gpsLabel,
-    gpsDetail: presentation.gpsDetail,
-    gpsFilterDetail: presentation.gpsFilterDetail,
-    position: gps.position,
-    onToggle: () => gps.setIsLiveStatusOpen((current) => !current),
-  }
-}
 
 export function buildCanvasPanelProps({
   state,

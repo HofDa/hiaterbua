@@ -17,7 +17,6 @@ type LivePositionGpsState = {
   gpsState: GpsState
   position: PositionData | null
   lastPositionDecision: PositionDecision | null
-  isLiveStatusOpen: boolean
 }
 
 type LivePositionDrawState = {
@@ -75,7 +74,6 @@ const initialGpsState: LivePositionGpsState = {
   gpsState: 'idle',
   position: null,
   lastPositionDecision: null,
-  isLiveStatusOpen: false,
 }
 
 const initialDrawState: LivePositionDrawState = {
@@ -163,7 +161,6 @@ export function useLivePositionMapState() {
       setGpsState: setGps('gpsState'),
       setPosition: setGps('position'),
       setLastPositionDecision: setGps('lastPositionDecision'),
-      setIsLiveStatusOpen: setGps('isLiveStatusOpen'),
     }
   }, [dispatchGps])
 

@@ -1,7 +1,6 @@
 import {
   buildCanvasPanelProps,
   buildSidebarPanelProps,
-  buildStatusCardProps,
   buildWorkflowPanelsProps,
   type UseLivePositionMapPanelPropsOptions,
 } from '@/components/maps/hooks/live-position-map-panel-prop-builders'
@@ -14,7 +13,6 @@ export function useLivePositionMapPanelProps({
   presentation,
 }: UseLivePositionMapPanelPropsOptions) {
   return {
-    statusCardProps: buildStatusCardProps({ state, presentation }),
     canvasPanelProps: buildCanvasPanelProps({ state, data, runtime, actions }),
     workflowPanelsProps: buildWorkflowPanelsProps({ state, data, actions, presentation }),
     sidebarPanelProps: buildSidebarPanelProps({

@@ -1,28 +1,15 @@
 'use client'
 
-import { formatTimestamp, type GpsState } from '@/lib/maps/map-core'
+import { formatTimestamp } from '@/lib/maps/map-core'
 import { LiveStatusCard, type StatusItem } from '@/components/maps/live-status-card'
-import type { PositionData } from '@/components/maps/live-position-map-types'
+import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 
-export type LivePositionStatusCardProps = {
-  isLiveStatusOpen: boolean
-  gpsState: GpsState
-  gpsLabel: string
-  gpsDetail: string
-  gpsFilterDetail: string
-  position: PositionData | null
-  onToggle: () => void
-}
+export function LivePositionStatusCard() {
+  const isOpen = useLivePositionMapStore((state) => state.isLiveStatusOpen)
+  const toggle = useLivePositionMapStore((state) => state.toggleLiveStatus)
+  const { gpsState, gpsLabel, gpsDetail, gpsFilterDetail, position } =
+    useLivePositionMapStore((state) => state.status)
 
-export function LivePositionStatusCard({
-  isLiveStatusOpen,
-  gpsState,
-  gpsLabel,
-  gpsDetail,
-  gpsFilterDetail,
-  position,
-  onToggle,
-}: LivePositionStatusCardProps) {
   const items: StatusItem[] = [
     { label: 'GPS', value: gpsDetail },
     { label: 'Filter', value: gpsFilterDetail },
@@ -40,11 +27,11 @@ export function LivePositionStatusCard({
 
   return (
     <LiveStatusCard
-      isOpen={isLiveStatusOpen}
+      isOpen={isOpen}
       gpsState={gpsState}
       gpsLabel={gpsLabel}
       items={items}
-      onToggle={onToggle}
+      onToggle={toggle}
     />
   )
 }

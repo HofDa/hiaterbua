@@ -7,6 +7,7 @@ import { useLivePositionMapData } from '@/components/maps/hooks/use-live-positio
 import { useLivePositionMapPanelProps } from '@/components/maps/hooks/use-live-position-map-panel-props'
 import { useLivePositionMapPresentation } from '@/components/maps/hooks/use-live-position-map-presentation'
 import { useLivePositionMapState } from '@/components/maps/hooks/use-live-position-map-state'
+import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 import {
   getPositionLngLat,
   useMapKernel,
@@ -355,6 +356,26 @@ export function useLivePositionMapScreen() {
   })
 
   useWakeLock(walk.isWalking)
+
+  // Publish the live-status slice to the store so the status card can subscribe to just
+  // these fields — a GPS tick re-renders the card without rebuilding the rest of the tree.
+  const setLiveStatus = useLivePositionMapStore((store) => store.setStatus)
+  useEffect(() => {
+    setLiveStatus({
+      gpsState: gps.gpsState,
+      gpsLabel: presentation.gpsLabel,
+      gpsDetail: presentation.gpsDetail,
+      gpsFilterDetail: presentation.gpsFilterDetail,
+      position: gps.position,
+    })
+  }, [
+    gps.gpsState,
+    gps.position,
+    presentation.gpsDetail,
+    presentation.gpsFilterDetail,
+    presentation.gpsLabel,
+    setLiveStatus,
+  ])
 
   return useLivePositionMapPanelProps({
     state,
