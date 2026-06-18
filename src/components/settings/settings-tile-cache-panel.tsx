@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
+import { cn } from '@/lib/utils/cn'
 import type { SettingsStorageMode } from '@/components/settings/settings-options'
 
 export type SettingsTileCachePanelProps = {
@@ -36,18 +37,18 @@ export function SettingsTileCachePanel({
   onEnablePersistentStorage,
   onClearTileCache,
 }: SettingsTileCachePanelProps) {
-  const storageBadgeClass = [
+  const storageBadgeClass = cn(
     'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
     hasStoredTiles
       ? 'border-success-border bg-success-surface text-success-ink'
       : 'border-border bg-surface-raised text-ink-soft',
-  ].join(' ')
-  const persistenceBadgeClass = [
+  )
+  const persistenceBadgeClass = cn(
     'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
     persistentStorageGranted
       ? 'border-success-border bg-success-surface text-success-ink'
       : 'border-border bg-surface-raised text-ink-soft',
-  ].join(' ')
+  )
 
   return (
     <Card className="border-border bg-surface-raised p-4">

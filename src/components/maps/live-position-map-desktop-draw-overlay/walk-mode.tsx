@@ -11,6 +11,8 @@ import {
   MobileMapToolbarButton,
   MobileMapToolbarStat,
 } from '@/components/maps/mobile-map-toolbar'
+import { MetaLabel } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type { LivePositionMapDesktopWalkModeProps } from './types'
 
 function LivePositionMapDesktopWalkPointsList({
@@ -46,10 +48,10 @@ function LivePositionMapDesktopWalkPointsList({
         {walkPoints.map((point, index) => (
           <div
             key={`${point.timestamp}-${index}`}
-            className={[
+            className={cn(
               'grid grid-cols-[1fr_auto] gap-3 rounded-2xl px-3 py-3 text-sm',
               selectedWalkPointIndex === index ? 'bg-accent' : 'bg-surface-raised',
-            ].join(' ')}
+            )}
           >
             <button
               type="button"
@@ -175,17 +177,17 @@ export function LivePositionMapDesktopWalkMode({
 
       <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <div className="rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+          <MetaLabel size="micro" tracking="compact">
             Genauigkeit
-          </div>
+          </MetaLabel>
           <div className="mt-1 font-medium text-ink">
             {averageAccuracy !== null ? formatAccuracy(averageAccuracy) : 'noch keine Daten'}
           </div>
         </div>
         <div className="rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+          <MetaLabel size="micro" tracking="compact">
             Letzter Punkt
-          </div>
+          </MetaLabel>
           <div className="mt-1 font-medium text-ink">
             {latestPoint ? formatTimestamp(latestPoint.timestamp) : 'noch keiner'}
           </div>

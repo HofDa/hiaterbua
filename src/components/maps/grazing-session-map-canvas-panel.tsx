@@ -8,23 +8,20 @@ import {
 } from '@/lib/maps/grazing-session-map-helpers'
 import { GrazingSessionMapDesktopManagementOverlay } from '@/components/maps/grazing-session-map-desktop-management-overlay'
 import {
-  CenterIcon,
   ControlsIcon,
-  LayersIcon,
   PauseIcon,
   PlayIcon,
   StopIcon,
   TrackpointsIcon,
 } from '@/components/maps/map-toolbar-icons'
+import { MapMenuToggleButton, MapTopControls } from '@/components/maps/map-top-controls'
+import { MapEditActionOverlay } from '@/components/maps/map-edit-action-overlay'
 import {
   MobileMapToolbar,
   MobileMapToolbarButton,
   MobileMapToolbarStat,
 } from '@/components/maps/mobile-map-toolbar'
-import {
-  MobileMapFloatingCard,
-  MobileMapTopControls,
-} from '@/components/maps/mobile-map-ui'
+import { cn } from '@/lib/utils/cn'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type {
   Herd,
@@ -165,25 +162,19 @@ export function GrazingSessionMapCanvasPanel({
     />
   ) : null
   const mapTopControls = (
-    <MobileMapTopControls>
-      <div className="mb-2 flex justify-start gap-2">
-        <button
-          type="button"
-          aria-label="Auf aktuelle Position zentrieren"
-          onClick={onCenterMap}
-          disabled={!position}
-          className="flex items-center justify-center app-map-icon-button text-ink-strong disabled:opacity-50"
-        >
-          <CenterIcon />
-        </button>
-        <button
-          type="button"
-          aria-label="Kartengrundlage wählen"
-          onClick={onToggleBaseLayerMenu}
-          className="flex items-center justify-center app-map-icon-button text-ink-strong"
-        >
-          <LayersIcon />
-        </button>
+    <MapTopControls
+      positionAvailable={Boolean(position)}
+      isBaseLayerMenuOpen={isBaseLayerMenuOpen}
+      baseLayer={baseLayer}
+      showSurveyAreas={showSurveyAreas}
+      prefetchingMapArea={prefetchingMapArea}
+      prefetchStatus={prefetchStatus}
+      onCenterMap={onCenterMap}
+      onToggleBaseLayerMenu={onToggleBaseLayerMenu}
+      onUpdateBaseLayer={onUpdateBaseLayer}
+      onToggleShowSurveyAreas={onToggleShowSurveyAreas}
+      onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
+      extraControls={
         <button
           type="button"
           aria-label={
@@ -191,85 +182,27 @@ export function GrazingSessionMapCanvasPanel({
           }
           aria-expanded={isDesktopToolbarOpen}
           onClick={() => setIsDesktopToolbarOpen((current) => !current)}
-          className={[
+          className={cn(
             'hidden items-center justify-center app-map-icon-button transition-colors lg:flex',
             isDesktopToolbarOpen ? 'text-ink-strong' : 'text-ink-muted',
-          ].join(' ')}
+          )}
           title={
             isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
           }
         >
           <ControlsIcon />
         </button>
-      </div>
-
-      {isBaseLayerMenuOpen ? (
-        <div className="max-h-[48vh] overflow-y-auto app-map-popover p-1.5">
-          <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
-            Kartengrundlage
-          </div>
-          <button
-            type="button"
-            onClick={() => void onUpdateBaseLayer('south-tyrol-orthophoto-2023')}
-            className={[
-              'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              baseLayer === 'south-tyrol-orthophoto-2023'
-                ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-ink-strong',
-            ].join(' ')}
-          >
-            Orthofoto 2023
-          </button>
-          <button
-            type="button"
-            onClick={() => void onUpdateBaseLayer('south-tyrol-basemap')}
-            className={[
-              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              baseLayer === 'south-tyrol-basemap'
-                ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-ink-strong',
-            ].join(' ')}
-          >
-            BaseMap Südtirol
-          </button>
-          <button
-            type="button"
-            onClick={onToggleShowSurveyAreas}
-            className={[
-              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              showSurveyAreas ? 'bg-accent text-ink' : 'bg-surface-muted text-ink-strong',
-            ].join(' ')}
-          >
-            Flächen {showSurveyAreas ? 'an' : 'aus'}
-          </button>
-          <button
-            type="button"
-            onClick={onToggleShowSessionEventsOnMap}
-            className={[
-              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              showSessionEventsOnMap
-                ? 'bg-accent text-ink'
-                : 'bg-surface-muted text-ink-strong',
-            ].join(' ')}
-          >
-            Ereignisse {showSessionEventsOnMap ? 'an' : 'aus'}
-          </button>
-          <button
-            type="button"
-            onClick={() => void onPrefetchVisibleMapArea()}
-            disabled={prefetchingMapArea}
-            className="mt-1.5 w-full rounded-xl border border-border bg-surface-raised px-2.5 py-2 text-left text-xs font-medium text-ink disabled:opacity-50"
-          >
-            {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
-          </button>
-          {prefetchStatus ? (
-            <div className="mt-1.5 rounded-xl bg-surface-muted px-2.5 py-2 text-[11px] font-medium text-ink">
-              {prefetchStatus}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </MobileMapTopControls>
+      }
+      extraMenuItems={
+        <MapMenuToggleButton
+          active={showSessionEventsOnMap}
+          onClick={onToggleShowSessionEventsOnMap}
+          className="mt-1.5"
+        >
+          Ereignisse {showSessionEventsOnMap ? 'an' : 'aus'}
+        </MapMenuToggleButton>
+      }
+    />
   )
 
   return (
@@ -284,10 +217,10 @@ export function GrazingSessionMapCanvasPanel({
           aria-label={isMobileControlsOpen ? 'Steuerung ausblenden' : 'Steuerung einblenden'}
           aria-expanded={isMobileControlsOpen}
           onClick={() => setIsMobileControlsOpen((current) => !current)}
-          className={[
+          className={cn(
             'absolute left-2 z-30 flex items-center justify-center app-map-icon-button text-ink-strong transition-all lg:hidden',
             isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
-          ].join(' ')}
+          )}
         >
           <ControlsIcon />
         </button>
@@ -343,60 +276,22 @@ export function GrazingSessionMapCanvasPanel({
       <div className="hidden lg:block">{mapTopControls}</div>
       <div className="lg:hidden">{mapTopControls}</div>
       {editingSessionId ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 sm:p-4">
-          <MobileMapFloatingCard>
-            <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:gap-3">
-              <div className="min-w-0">
-                <div className="text-xs font-semibold text-ink sm:text-sm">
-                  Weidegang bearbeiten
-                </div>
-                <div className="text-[11px] text-ink-soft sm:hidden">
-                  {isAddingEditTrackpoint
-                    ? 'Nächster Tap setzt Punkt.'
-                    : selectedEditTrackpointIndex !== null
-                      ? `Punkt ${selectedEditTrackpointIndex + 1} aktiv.`
-                      : 'Punkt antippen oder Aktion wählen.'}
-                </div>
-              </div>
-              <div className="shrink-0 rounded-full border border-border bg-surface-raised px-2 py-1 text-[11px] font-medium text-ink sm:px-3 sm:text-xs">
-                {editTrackpointsLength} Punkte
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={onStartAddEditTrackpoint}
-                className="rounded-2xl border border-border bg-surface-raised px-2 py-2.5 text-xs font-medium text-ink sm:px-3 sm:py-3 sm:text-sm"
-              >
-                Punkt +
-              </button>
-              <button
-                type="button"
-                onClick={onRemoveSelectedEditTrackpoint}
-                disabled={selectedEditTrackpointIndex === null || editTrackpointsLength <= 1}
-                className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink-strong disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
-              >
-                Punkt -
-              </button>
-              <button
-                type="button"
-                onClick={() => void onSaveEditedSession()}
-                disabled={isSaving}
-                className="rounded-2xl border border-border-strong bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
-              >
-                {isSaving ? '...' : 'Speichern'}
-              </button>
-              <button
-                type="button"
-                onClick={onCancelEditSession}
-                className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink-strong sm:px-3 sm:py-3 sm:text-sm"
-              >
-                Schließen
-              </button>
-            </div>
-          </MobileMapFloatingCard>
-        </div>
+        <MapEditActionOverlay
+          title="Weidegang bearbeiten"
+          pointCount={editTrackpointsLength}
+          selectedPointIndex={selectedEditTrackpointIndex}
+          isAddingPoint={isAddingEditTrackpoint}
+          isSaving={isSaving}
+          minPointCount={1}
+          saveLabel="Speichern"
+          addingMessage="Nächster Tap setzt Punkt."
+          selectedPointMessage={(pointNumber) => `Punkt ${pointNumber} aktiv.`}
+          idleMessage="Punkt antippen oder Aktion wählen."
+          onStartAddPoint={onStartAddEditTrackpoint}
+          onRemoveSelectedPoint={onRemoveSelectedEditTrackpoint}
+          onSave={onSaveEditedSession}
+          onCancel={onCancelEditSession}
+        />
       ) : null}
     </div>
   )

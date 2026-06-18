@@ -6,6 +6,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/form'
 import { Alert, ErrorAlert } from '@/components/ui/alert'
+import { MetaLabel } from '@/components/ui/typography'
 import type { GrazingSession } from '@/types/domain'
 
 export function GrazingSessionHistoryEditingSummary({
@@ -60,9 +61,9 @@ export function GrazingSessionHistoryEditingForm({
     return (
       <Card className="mt-4">
         <CardContent>
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+          <MetaLabel>
             Zeitkorrektur
-          </div>
+          </MetaLabel>
           <p className="mt-2 text-sm text-ink-muted">
             Die manuelle Zeitkorrektur ist nur fuer abgeschlossene Weidegaenge verfuegbar.
           </p>
@@ -83,9 +84,9 @@ export function GrazingSessionHistoryEditingForm({
   return (
     <Card className="mt-4">
       <CardContent>
-        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+        <MetaLabel>
           Zeitkorrektur
-        </div>
+        </MetaLabel>
         <p className="mt-2 text-sm text-ink-muted">
           Beginn und Ende des abgeschlossenen Weidegangs koennen hier manuell korrigiert werden.
         </p>

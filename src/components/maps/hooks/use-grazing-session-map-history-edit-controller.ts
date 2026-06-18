@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
 import {
   deleteGrazingSessionRecord,
   saveEditedGrazingSessionRecord,
@@ -9,8 +8,8 @@ import {
   formatDateTimeInputValue,
   formatDateTime,
   parseDateTimeInputValue,
-  type EditableTrackPoint,
 } from '@/lib/maps/grazing-session-map-helpers'
+import type { GrazingSessionMapState } from '@/components/maps/hooks/use-grazing-session-map-state'
 import type {
   GrazingSession,
   TrackPoint,
@@ -21,23 +20,10 @@ type UseGrazingSessionMapHistoryEditControllerOptions = {
   selectedSession: GrazingSession | null
   groupedSessionHistory: Array<{ dayKey: string }>
   safeSelectedTrackpoints: TrackPoint[]
-  selectedSessionId: string | null
-  editingSessionId: string | null
-  editTrackpoints: EditableTrackPoint[]
-  editStartTime: string
-  editEndTime: string
-  selectedEditTrackpointIndex: number | null
-  setSelectedSessionId: Dispatch<SetStateAction<string | null>>
-  setEditingSessionId: Dispatch<SetStateAction<string | null>>
-  setEditTrackpoints: Dispatch<SetStateAction<EditableTrackPoint[]>>
-  setEditStartTime: Dispatch<SetStateAction<string>>
-  setEditEndTime: Dispatch<SetStateAction<string>>
-  setSelectedEditTrackpointIndex: Dispatch<SetStateAction<number | null>>
-  setIsAddingEditTrackpoint: Dispatch<SetStateAction<boolean>>
-  setActionError: Dispatch<SetStateAction<string>>
-  setIsSaving: Dispatch<SetStateAction<boolean>>
-  setExpandedHistoryDays: Dispatch<SetStateAction<string[]>>
-  setExpandedHistorySessionId: Dispatch<SetStateAction<string | null>>
+  selection: GrazingSessionMapState['selection']
+  session: GrazingSessionMapState['session']
+  edit: GrazingSessionMapState['edit']
+  history: GrazingSessionMapState['history']
 }
 
 export function useGrazingSessionMapHistoryEditController({
@@ -45,24 +31,28 @@ export function useGrazingSessionMapHistoryEditController({
   selectedSession,
   groupedSessionHistory,
   safeSelectedTrackpoints,
-  selectedSessionId,
-  editingSessionId,
-  editTrackpoints,
-  editStartTime,
-  editEndTime,
-  selectedEditTrackpointIndex,
-  setSelectedSessionId,
-  setEditingSessionId,
-  setEditTrackpoints,
-  setEditStartTime,
-  setEditEndTime,
-  setSelectedEditTrackpointIndex,
-  setIsAddingEditTrackpoint,
-  setActionError,
-  setIsSaving,
-  setExpandedHistoryDays,
-  setExpandedHistorySessionId,
+  selection,
+  session,
+  edit,
+  history,
 }: UseGrazingSessionMapHistoryEditControllerOptions) {
+  const { selectedSessionId, setSelectedSessionId } = selection
+  const { setActionError, setIsSaving } = session
+  const {
+    editingSessionId,
+    editTrackpoints,
+    editStartTime,
+    editEndTime,
+    selectedEditTrackpointIndex,
+    setEditingSessionId,
+    setEditTrackpoints,
+    setEditStartTime,
+    setEditEndTime,
+    setSelectedEditTrackpointIndex,
+    setIsAddingEditTrackpoint,
+  } = edit
+  const { setExpandedHistoryDays, setExpandedHistorySessionId } = history
+
   useEffect(() => {
     if (groupedSessionHistory.length === 0) {
       setExpandedHistoryDays([])

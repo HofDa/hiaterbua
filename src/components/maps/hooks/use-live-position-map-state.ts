@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useReducer, useRef } from 'react'
 import { type GpsState, type PositionDecision } from '@/lib/maps/map-core'
 import type {
   DraftPoint,
@@ -8,63 +8,237 @@ import type {
   MobilePanel,
   PositionData,
 } from '@/components/maps/live-position-map-types'
+import {
+  createStateSliceSetterFactory,
+  stateSliceReducer,
+} from '@/components/maps/hooks/map-state-slice'
+
+type LivePositionGpsState = {
+  gpsState: GpsState
+  position: PositionData | null
+  lastPositionDecision: PositionDecision | null
+  isLiveStatusOpen: boolean
+}
+
+type LivePositionDrawState = {
+  draftPoints: DraftPoint[]
+  isDrawing: boolean
+  name: string
+  notes: string
+  saveError: string
+  isSaving: boolean
+}
+
+type LivePositionWalkState = {
+  walkPoints: PositionData[]
+  isWalking: boolean
+  walkName: string
+  walkNotes: string
+  walkError: string
+  isWalkSaving: boolean
+  selectedWalkPointIndex: number | null
+  isWalkPointsOpen: boolean
+}
+
+type LivePositionSelectionState = {
+  selectedEnclosureId: string | null
+  showSelectedTrack: boolean
+  isSelectedEnclosureInfoOpen: boolean
+  expandedSavedEnclosureId: string | null
+  mobilePanel: MobilePanel
+  selectedSurveyAreaId: string | null
+  enclosureListFilter: EnclosureListFilter
+}
+
+type LivePositionEditState = {
+  editingEnclosureId: string | null
+  editName: string
+  editNotes: string
+  editError: string
+  isEditing: boolean
+  editGeometryPoints: DraftPoint[]
+  selectedEditPointIndex: number | null
+  isAddingEditPoint: boolean
+}
+
+type LivePositionAssignmentState = {
+  assignmentEditorEnclosureId: string | null
+  assignmentHerdId: string
+  assignmentCount: string
+  assignmentNotes: string
+  assignmentError: string
+  isAssignmentSaving: boolean
+  endingAssignmentId: string | null
+}
+
+const initialGpsState: LivePositionGpsState = {
+  gpsState: 'idle',
+  position: null,
+  lastPositionDecision: null,
+  isLiveStatusOpen: false,
+}
+
+const initialDrawState: LivePositionDrawState = {
+  draftPoints: [],
+  isDrawing: false,
+  name: '',
+  notes: '',
+  saveError: '',
+  isSaving: false,
+}
+
+const initialWalkState: LivePositionWalkState = {
+  walkPoints: [],
+  isWalking: false,
+  walkName: '',
+  walkNotes: '',
+  walkError: '',
+  isWalkSaving: false,
+  selectedWalkPointIndex: null,
+  isWalkPointsOpen: false,
+}
+
+const initialSelectionState: LivePositionSelectionState = {
+  selectedEnclosureId: null,
+  showSelectedTrack: false,
+  isSelectedEnclosureInfoOpen: false,
+  expandedSavedEnclosureId: null,
+  mobilePanel: 'saved',
+  selectedSurveyAreaId: null,
+  enclosureListFilter: 'all',
+}
+
+const initialEditState: LivePositionEditState = {
+  editingEnclosureId: null,
+  editName: '',
+  editNotes: '',
+  editError: '',
+  isEditing: false,
+  editGeometryPoints: [],
+  selectedEditPointIndex: null,
+  isAddingEditPoint: false,
+}
+
+const initialAssignmentState: LivePositionAssignmentState = {
+  assignmentEditorEnclosureId: null,
+  assignmentHerdId: '',
+  assignmentCount: '',
+  assignmentNotes: '',
+  assignmentError: '',
+  isAssignmentSaving: false,
+  endingAssignmentId: null,
+}
 
 export function useLivePositionMapState() {
   const watchIdRef = useRef<number | null>(null)
   const acceptedPositionRef = useRef<PositionData | null>(null)
   const openEnclosureDetailsRef = useRef<(enclosureId: string) => void>(() => {})
 
-  const [gpsState, setGpsState] = useState<GpsState>('idle')
-  const [position, setPosition] = useState<PositionData | null>(null)
-  const [lastPositionDecision, setLastPositionDecision] =
-    useState<PositionDecision | null>(null)
-  const [isLiveStatusOpen, setIsLiveStatusOpen] = useState(false)
-
-  const [draftPoints, setDraftPoints] = useState<DraftPoint[]>([])
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [name, setName] = useState('')
-  const [notes, setNotes] = useState('')
-  const [saveError, setSaveError] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
-
-  const [walkPoints, setWalkPoints] = useState<PositionData[]>([])
-  const [isWalking, setIsWalking] = useState(false)
-  const [walkName, setWalkName] = useState('')
-  const [walkNotes, setWalkNotes] = useState('')
-  const [walkError, setWalkError] = useState('')
-  const [isWalkSaving, setIsWalkSaving] = useState(false)
-  const [selectedWalkPointIndex, setSelectedWalkPointIndex] = useState<number | null>(null)
-  const [isWalkPointsOpen, setIsWalkPointsOpen] = useState(false)
-
-  const [selectedEnclosureId, setSelectedEnclosureId] = useState<string | null>(null)
-  const [showSelectedTrack, setShowSelectedTrack] = useState(false)
-  const [isSelectedEnclosureInfoOpen, setIsSelectedEnclosureInfoOpen] = useState(false)
-  const [expandedSavedEnclosureId, setExpandedSavedEnclosureId] = useState<string | null>(
-    null
+  const [gps, dispatchGps] = useReducer(stateSliceReducer<LivePositionGpsState>, initialGpsState)
+  const [draw, dispatchDraw] = useReducer(
+    stateSliceReducer<LivePositionDrawState>,
+    initialDrawState,
   )
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>('saved')
-  const [selectedSurveyAreaId, setSelectedSurveyAreaId] = useState<string | null>(null)
-  const [enclosureListFilter, setEnclosureListFilter] =
-    useState<EnclosureListFilter>('all')
+  const [walk, dispatchWalk] = useReducer(
+    stateSliceReducer<LivePositionWalkState>,
+    initialWalkState,
+  )
+  const [selection, dispatchSelection] = useReducer(
+    stateSliceReducer<LivePositionSelectionState>,
+    initialSelectionState,
+  )
+  const [edit, dispatchEdit] = useReducer(
+    stateSliceReducer<LivePositionEditState>,
+    initialEditState,
+  )
+  const [assignment, dispatchAssignment] = useReducer(
+    stateSliceReducer<LivePositionAssignmentState>,
+    initialAssignmentState,
+  )
 
-  const [editingEnclosureId, setEditingEnclosureId] = useState<string | null>(null)
-  const [editName, setEditName] = useState('')
-  const [editNotes, setEditNotes] = useState('')
-  const [editError, setEditError] = useState('')
-  const [isEditing, setIsEditing] = useState(false)
-  const [editGeometryPoints, setEditGeometryPoints] = useState<DraftPoint[]>([])
-  const [selectedEditPointIndex, setSelectedEditPointIndex] = useState<number | null>(null)
-  const [isAddingEditPoint, setIsAddingEditPoint] = useState(false)
+  const gpsSetters = useMemo(() => {
+    const setGps = createStateSliceSetterFactory<LivePositionGpsState>(dispatchGps)
 
-  const [assignmentEditorEnclosureId, setAssignmentEditorEnclosureId] = useState<
-    string | null
-  >(null)
-  const [assignmentHerdId, setAssignmentHerdId] = useState('')
-  const [assignmentCount, setAssignmentCount] = useState('')
-  const [assignmentNotes, setAssignmentNotes] = useState('')
-  const [assignmentError, setAssignmentError] = useState('')
-  const [isAssignmentSaving, setIsAssignmentSaving] = useState(false)
-  const [endingAssignmentId, setEndingAssignmentId] = useState<string | null>(null)
+    return {
+      setGpsState: setGps('gpsState'),
+      setPosition: setGps('position'),
+      setLastPositionDecision: setGps('lastPositionDecision'),
+      setIsLiveStatusOpen: setGps('isLiveStatusOpen'),
+    }
+  }, [dispatchGps])
+
+  const drawSetters = useMemo(() => {
+    const setDraw = createStateSliceSetterFactory<LivePositionDrawState>(dispatchDraw)
+
+    return {
+      setDraftPoints: setDraw('draftPoints'),
+      setIsDrawing: setDraw('isDrawing'),
+      setName: setDraw('name'),
+      setNotes: setDraw('notes'),
+      setSaveError: setDraw('saveError'),
+      setIsSaving: setDraw('isSaving'),
+    }
+  }, [dispatchDraw])
+
+  const walkSetters = useMemo(() => {
+    const setWalk = createStateSliceSetterFactory<LivePositionWalkState>(dispatchWalk)
+
+    return {
+      setWalkPoints: setWalk('walkPoints'),
+      setIsWalking: setWalk('isWalking'),
+      setWalkName: setWalk('walkName'),
+      setWalkNotes: setWalk('walkNotes'),
+      setWalkError: setWalk('walkError'),
+      setIsWalkSaving: setWalk('isWalkSaving'),
+      setSelectedWalkPointIndex: setWalk('selectedWalkPointIndex'),
+      setIsWalkPointsOpen: setWalk('isWalkPointsOpen'),
+    }
+  }, [dispatchWalk])
+
+  const selectionSetters = useMemo(() => {
+    const setSelection =
+      createStateSliceSetterFactory<LivePositionSelectionState>(dispatchSelection)
+
+    return {
+      setSelectedEnclosureId: setSelection('selectedEnclosureId'),
+      setShowSelectedTrack: setSelection('showSelectedTrack'),
+      setIsSelectedEnclosureInfoOpen: setSelection('isSelectedEnclosureInfoOpen'),
+      setExpandedSavedEnclosureId: setSelection('expandedSavedEnclosureId'),
+      setMobilePanel: setSelection('mobilePanel'),
+      setSelectedSurveyAreaId: setSelection('selectedSurveyAreaId'),
+      setEnclosureListFilter: setSelection('enclosureListFilter'),
+    }
+  }, [dispatchSelection])
+
+  const editSetters = useMemo(() => {
+    const setEdit = createStateSliceSetterFactory<LivePositionEditState>(dispatchEdit)
+
+    return {
+      setEditingEnclosureId: setEdit('editingEnclosureId'),
+      setEditName: setEdit('editName'),
+      setEditNotes: setEdit('editNotes'),
+      setEditError: setEdit('editError'),
+      setIsEditing: setEdit('isEditing'),
+      setEditGeometryPoints: setEdit('editGeometryPoints'),
+      setSelectedEditPointIndex: setEdit('selectedEditPointIndex'),
+      setIsAddingEditPoint: setEdit('isAddingEditPoint'),
+    }
+  }, [dispatchEdit])
+
+  const assignmentSetters = useMemo(() => {
+    const setAssignment =
+      createStateSliceSetterFactory<LivePositionAssignmentState>(dispatchAssignment)
+
+    return {
+      setAssignmentEditorEnclosureId: setAssignment('assignmentEditorEnclosureId'),
+      setAssignmentHerdId: setAssignment('assignmentHerdId'),
+      setAssignmentCount: setAssignment('assignmentCount'),
+      setAssignmentNotes: setAssignment('assignmentNotes'),
+      setAssignmentError: setAssignment('assignmentError'),
+      setIsAssignmentSaving: setAssignment('isAssignmentSaving'),
+      setEndingAssignmentId: setAssignment('endingAssignmentId'),
+    }
+  }, [dispatchAssignment])
 
   return {
     refs: {
@@ -73,96 +247,28 @@ export function useLivePositionMapState() {
       openEnclosureDetailsRef,
     },
     gps: {
-      gpsState,
-      setGpsState,
-      position,
-      setPosition,
-      lastPositionDecision,
-      setLastPositionDecision,
-      isLiveStatusOpen,
-      setIsLiveStatusOpen,
+      ...gps,
+      ...gpsSetters,
     },
     draw: {
-      draftPoints,
-      setDraftPoints,
-      isDrawing,
-      setIsDrawing,
-      name,
-      setName,
-      notes,
-      setNotes,
-      saveError,
-      setSaveError,
-      isSaving,
-      setIsSaving,
+      ...draw,
+      ...drawSetters,
     },
     walk: {
-      walkPoints,
-      setWalkPoints,
-      isWalking,
-      setIsWalking,
-      walkName,
-      setWalkName,
-      walkNotes,
-      setWalkNotes,
-      walkError,
-      setWalkError,
-      isWalkSaving,
-      setIsWalkSaving,
-      selectedWalkPointIndex,
-      setSelectedWalkPointIndex,
-      isWalkPointsOpen,
-      setIsWalkPointsOpen,
+      ...walk,
+      ...walkSetters,
     },
     selection: {
-      selectedEnclosureId,
-      setSelectedEnclosureId,
-      showSelectedTrack,
-      setShowSelectedTrack,
-      isSelectedEnclosureInfoOpen,
-      setIsSelectedEnclosureInfoOpen,
-      expandedSavedEnclosureId,
-      setExpandedSavedEnclosureId,
-      mobilePanel,
-      setMobilePanel,
-      selectedSurveyAreaId,
-      setSelectedSurveyAreaId,
-      enclosureListFilter,
-      setEnclosureListFilter,
+      ...selection,
+      ...selectionSetters,
     },
     edit: {
-      editingEnclosureId,
-      setEditingEnclosureId,
-      editName,
-      setEditName,
-      editNotes,
-      setEditNotes,
-      editError,
-      setEditError,
-      isEditing,
-      setIsEditing,
-      editGeometryPoints,
-      setEditGeometryPoints,
-      selectedEditPointIndex,
-      setSelectedEditPointIndex,
-      isAddingEditPoint,
-      setIsAddingEditPoint,
+      ...edit,
+      ...editSetters,
     },
     assignment: {
-      assignmentEditorEnclosureId,
-      setAssignmentEditorEnclosureId,
-      assignmentHerdId,
-      setAssignmentHerdId,
-      assignmentCount,
-      setAssignmentCount,
-      assignmentNotes,
-      setAssignmentNotes,
-      assignmentError,
-      setAssignmentError,
-      isAssignmentSaving,
-      setIsAssignmentSaving,
-      endingAssignmentId,
-      setEndingAssignmentId,
+      ...assignment,
+      ...assignmentSetters,
     },
   }
 }

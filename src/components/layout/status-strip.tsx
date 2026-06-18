@@ -14,6 +14,14 @@ import {
   readFallbackSettingsSnapshot,
   subscribeToFallbackSettings,
 } from '@/lib/settings/page-helpers'
+import { cn } from '@/lib/utils/cn'
+
+function chromeBadgeClass(isActive: boolean) {
+  return cn(
+    'rounded-full border px-3 py-1.5 font-semibold',
+    isActive ? 'app-chrome-active' : 'app-chrome-control',
+  )
+}
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -166,51 +174,26 @@ export function StatusStrip() {
   return (
     <div className="border-b border-chrome-border bg-chrome-status text-white app-chrome-status">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm xl:max-w-[88rem]">
-        <span
-          className={[
-            'rounded-full border px-3 py-1.5 font-semibold',
-            isOnline ? 'app-chrome-active' : 'app-chrome-control',
-          ].join(' ')}
-        >
+        <span className={chromeBadgeClass(isOnline)}>
           {isOnline ? 'Online' : 'Offline'}
         </span>
-        <span
-          className={[
-            'rounded-full border px-3 py-1.5 font-semibold',
-            tileCachingEnabled ? 'app-chrome-active' : 'app-chrome-control',
-          ].join(' ')}
-        >
+        <span className={chromeBadgeClass(tileCachingEnabled)}>
           {tileCachingEnabled
             ? 'Tile-Cache aktiv'
             : 'Tile-Cache aus'}
         </span>
-        <span
-          className={[
-            'rounded-full border px-3 py-1.5 font-semibold',
-            hasStoredTiles ? 'app-chrome-active' : 'app-chrome-control',
-          ].join(' ')}
-        >
+        <span className={chromeBadgeClass(hasStoredTiles)}>
           {tileCacheCount === null
             ? 'Tiles werden geprüft'
             : hasStoredTiles
               ? `${tileCacheCount} Tiles auf Gerät`
               : 'Keine Tiles auf Gerät'}
         </span>
-        <span
-          className={[
-            'rounded-full border px-3 py-1.5 font-semibold',
-            hasStoredTiles ? 'app-chrome-active' : 'app-chrome-control',
-          ].join(' ')}
-        >
+        <span className={chromeBadgeClass(hasStoredTiles)}>
           {hasStoredTiles ? 'Offline nutzbar' : 'Offline nicht vorbereitet'}
         </span>
         {persistentStorageGranted !== null ? (
-          <span
-            className={[
-              'rounded-full border px-3 py-1.5 font-semibold',
-              persistentStorageGranted ? 'app-chrome-active' : 'app-chrome-control',
-            ].join(' ')}
-          >
+          <span className={chromeBadgeClass(persistentStorageGranted)}>
             {persistentStorageGranted ? 'Persistenter Speicher aktiv' : 'Speicher nicht zugesichert'}
           </span>
         ) : null}

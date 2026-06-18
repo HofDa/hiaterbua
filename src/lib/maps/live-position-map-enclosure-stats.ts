@@ -69,6 +69,35 @@ export function buildAssignmentHistoryByEnclosureId(assignments: EnclosureAssign
   return map
 }
 
+export function buildAssignmentIndexes(assignments: EnclosureAssignment[]) {
+  const activeAssignmentsByEnclosureId = new Map<string, EnclosureAssignment>()
+  const activeAssignmentsByHerdId = new Map<string, EnclosureAssignment>()
+  const assignmentHistoryByEnclosureId = new Map<string, EnclosureAssignment[]>()
+
+  assignments.forEach((assignment) => {
+    if (!assignment.endTime) {
+      if (!activeAssignmentsByEnclosureId.has(assignment.enclosureId)) {
+        activeAssignmentsByEnclosureId.set(assignment.enclosureId, assignment)
+      }
+
+      if (!activeAssignmentsByHerdId.has(assignment.herdId)) {
+        activeAssignmentsByHerdId.set(assignment.herdId, assignment)
+      }
+    }
+
+    const currentAssignments =
+      assignmentHistoryByEnclosureId.get(assignment.enclosureId) ?? []
+    currentAssignments.push(assignment)
+    assignmentHistoryByEnclosureId.set(assignment.enclosureId, currentAssignments)
+  })
+
+  return {
+    activeAssignmentsByEnclosureId,
+    activeAssignmentsByHerdId,
+    assignmentHistoryByEnclosureId,
+  }
+}
+
 export function getAssignableHerds(
   herds: Herd[],
   activeAssignmentsByHerdId: Map<string, EnclosureAssignment>,

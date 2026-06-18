@@ -1,5 +1,6 @@
 import type { GpsState } from '@/lib/maps/map-core'
 import { cn } from '@/lib/utils/cn'
+import { MetaLabel, metaLabelClassName } from '@/components/ui/typography'
 
 export type StatusItem = {
   label: string
@@ -29,20 +30,20 @@ export function LiveStatusCard({
           type="button"
           onClick={onToggle}
           aria-expanded={isOpen}
-          className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted"
+          className={cn('flex items-center gap-2', metaLabelClassName({ tracking: 'wide' }))}
         >
           <span>Live-Status</span>
           <span className="text-sm text-ink">{isOpen ? '−' : '+'}</span>
         </button>
         <div
-          className={[
+          className={cn(
             'rounded-full px-3 py-1.5 text-xs font-semibold',
             gpsState === 'tracking'
               ? 'bg-accent text-ink'
               : gpsState === 'denied' || gpsState === 'error'
                 ? 'bg-error-surface text-error-ink'
                 : 'bg-surface-muted text-ink',
-          ].join(' ')}
+          )}
         >
           {gpsLabel}
         </div>
@@ -58,9 +59,9 @@ export function LiveStatusCard({
                 item.className,
               )}
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
+              <MetaLabel size="micro" tone="soft">
                 {item.label}
-              </div>
+              </MetaLabel>
               <div className="mt-1 text-sm font-medium text-ink">{item.value}</div>
             </div>
           ))}

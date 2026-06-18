@@ -8,6 +8,8 @@ import {
 } from '@/lib/maps/live-position-map-helpers'
 import { FormField, FormLabel, FormTextarea } from '@/components/ui/form'
 import { ErrorAlert } from '@/components/ui/alert'
+import { MetaLabel } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type {
   Animal,
   Enclosure,
@@ -88,9 +90,9 @@ export function LivePositionEnclosureAssignmentPanel({
   return (
     <>
       <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-ink-muted">
-        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+        <MetaLabel tracking="wide" tone="soft">
           Belegung
-        </div>
+        </MetaLabel>
         {activeAssignment && activeHerd ? (
           <div className="mt-2">
             <div className="font-medium text-ink">{activeHerd.name}</div>
@@ -142,12 +144,12 @@ export function LivePositionEnclosureAssignmentPanel({
                       key={herd.id}
                       type="button"
                       onClick={() => onAssignmentHerdIdChange(herd.id)}
-                      className={[
+                      className={cn(
                         'rounded-[1rem] px-3 py-2 text-left transition',
                         assignmentHerdId === herd.id
                           ? 'border border-border-strong bg-surface-muted text-ink'
                           : 'border border-transparent bg-surface-raised text-ink hover:border-border',
-                      ].join(' ')}
+                      )}
                     >
                       {herd.name}
                     </button>
@@ -239,9 +241,9 @@ export function LivePositionEnclosureAssignmentPanel({
 
       {assignmentHistory.length > 0 ? (
         <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-ink-muted">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+          <MetaLabel tracking="wide" tone="soft">
             Letzte Aufenthalte
-          </div>
+          </MetaLabel>
           <div className="mt-2 space-y-2">
             {assignmentHistory.map((assignment) => {
               const herd = herdsById.get(assignment.herdId)

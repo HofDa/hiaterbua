@@ -10,6 +10,7 @@ import {
   formatDistance,
   formatDuration,
 } from '@/lib/maps/grazing-session-map-helpers'
+import { cn } from '@/lib/utils/cn'
 
 export function GrazingSessionMap() {
   const [isMapExpanded, setIsMapExpanded] = useState(false)
@@ -63,10 +64,7 @@ export function GrazingSessionMap() {
 
           <div
             aria-hidden={!isMapExpanded}
-            className={[
-              isMapExpanded ? 'block' : 'hidden',
-              'lg:block',
-            ].join(' ')}
+            className={cn(isMapExpanded ? 'block' : 'hidden', 'lg:block')}
           >
             <GrazingSessionMapCanvasPanel {...canvasPanelProps} />
           </div>

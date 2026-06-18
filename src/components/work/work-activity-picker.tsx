@@ -2,6 +2,11 @@
 
 import { useState } from 'react'
 import {
+  FlowOptionGrid,
+  FlowSelectableTile,
+  FlowStepHeader,
+} from '@/components/ui/mobile-flow'
+import {
   getDefaultWorkSelectionForSection,
   getWorkPickerSection,
   getWorkSelection,
@@ -21,6 +26,11 @@ type WorkActivityPickerProps = {
   onSelectionChange: (selection: WorkSelection) => void
 }
 
+const workSectionSelectedClass = 'border-border-ink bg-accent text-ink'
+const workSectionIdleClass = 'border-border bg-surface-raised text-ink-soft'
+const workOptionSelectedClass = 'border-border-ink bg-accent text-ink'
+const workOptionIdleClass = 'border-border bg-surface-raised text-ink'
+
 export function WorkActivityPicker({
   sectionId,
   workType,
@@ -37,72 +47,56 @@ export function WorkActivityPicker({
     <div className="space-y-3">
       <div className="space-y-3 sm:hidden">
         {mobileStep === 'section' ? (
-          <div className="grid gap-3">
+          <FlowOptionGrid layout="single">
             {workPickerSections.map((section) => {
               const isActive = section.id === sectionId
 
               return (
-                <button
+                <FlowSelectableTile
                   key={section.id}
-                  type="button"
                   onClick={() => {
                     onSectionChange(section.id)
                     onSelectionChange(getDefaultWorkSelectionForSection(section.id))
                     setMobileStep('option')
                   }}
-                  className={[
-                    'min-h-[4.25rem] rounded-[1.35rem] border-2 px-4 py-3.5 text-left text-base font-semibold app-shadow-action transition-colors',
-                    isActive
-                      ? 'border-border-ink bg-accent text-ink'
-                      : 'border-border bg-surface-raised text-ink-soft',
-                  ].join(' ')}
-                  aria-pressed={isActive}
+                  pressed={isActive}
+                  selectedClassName={workSectionSelectedClass}
+                  idleClassName={workSectionIdleClass}
+                  className="rounded-[1.35rem] text-base leading-normal"
                 >
                   {section.label}
-                </button>
+                </FlowSelectableTile>
               )
             })}
-          </div>
+          </FlowOptionGrid>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-3 app-callout px-3.5 py-3">
-              <button
-                type="button"
-                onClick={() => setMobileStep('section')}
-                className="shrink-0 rounded-full border border-border-strong bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink"
-              >
-                Zurück
-              </button>
-              <div className="min-w-0 text-right">
-                <div className="text-sm font-semibold">{activeSection.label}</div>
-                <div className="mt-0.5 text-xs font-medium text-ink-muted">
-                  {activeSection.description}
-                </div>
-              </div>
-            </div>
+            <FlowStepHeader
+              label={activeSection.label}
+              sublabel={activeSection.description}
+              onBack={() => setMobileStep('section')}
+              labelClassName="leading-normal"
+              sublabelClassName="leading-normal"
+            />
 
-            <div className="grid gap-3">
+            <FlowOptionGrid layout="single">
               {activeSection.options.map((option) => {
                 const isActive = option.id === selectedOptionId
 
                 return (
-                  <button
+                  <FlowSelectableTile
                     key={option.id}
-                    type="button"
                     onClick={() => onSelectionChange(getWorkSelectionForOption(sectionId, option.id))}
-                    className={[
-                      'min-h-[4.5rem] rounded-[1.25rem] border-2 px-4 py-4 text-left text-base font-semibold app-shadow-action transition-colors',
-                      isActive
-                        ? 'border-border-ink bg-accent text-ink'
-                        : 'border-border bg-surface-raised text-ink',
-                    ].join(' ')}
-                    aria-pressed={isActive}
+                    pressed={isActive}
+                    selectedClassName={workOptionSelectedClass}
+                    idleClassName={workOptionIdleClass}
+                    className="min-h-[4.5rem] px-4 py-4 text-base leading-normal"
                   >
                     {option.label}
-                  </button>
+                  </FlowSelectableTile>
                 )
               })}
-            </div>
+            </FlowOptionGrid>
           </>
         )}
       </div>
@@ -113,23 +107,19 @@ export function WorkActivityPicker({
             const isActive = section.id === sectionId
 
             return (
-              <button
+              <FlowSelectableTile
                 key={section.id}
-                type="button"
                 onClick={() => {
                   onSectionChange(section.id)
                   onSelectionChange(getDefaultWorkSelectionForSection(section.id))
                 }}
-                className={[
-                  'min-h-[4.25rem] rounded-[1.35rem] border-2 px-4 py-3.5 text-left text-base font-semibold app-shadow-action transition-colors',
-                  isActive
-                    ? 'border-border-ink bg-accent text-ink'
-                    : 'border-border bg-surface-raised text-ink-soft',
-                ].join(' ')}
-                aria-pressed={isActive}
+                pressed={isActive}
+                selectedClassName={workSectionSelectedClass}
+                idleClassName={workSectionIdleClass}
+                className="rounded-[1.35rem] text-base leading-normal"
               >
                 {section.label}
-              </button>
+              </FlowSelectableTile>
             )
           })}
         </div>
@@ -144,20 +134,16 @@ export function WorkActivityPicker({
             const isActive = option.id === selectedOptionId
 
             return (
-              <button
+              <FlowSelectableTile
                 key={option.id}
-                type="button"
                 onClick={() => onSelectionChange(getWorkSelectionForOption(sectionId, option.id))}
-                className={[
-                  'min-h-[4.5rem] rounded-[1.25rem] border-2 px-4 py-4 text-left text-base font-semibold app-shadow-action transition-colors',
-                  isActive
-                    ? 'border-border-ink bg-accent text-ink'
-                    : 'border-border bg-surface-raised text-ink',
-                ].join(' ')}
-                aria-pressed={isActive}
+                pressed={isActive}
+                selectedClassName={workOptionSelectedClass}
+                idleClassName={workOptionIdleClass}
+                className="min-h-[4.5rem] px-4 py-4 text-base leading-normal"
               >
                 {option.label}
-              </button>
+              </FlowSelectableTile>
             )
           })}
         </div>

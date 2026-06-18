@@ -42,13 +42,6 @@ export function useGrazingSessionMapData({
     []
   )
   const settings = useLiveQuery(() => db.settings.get('app'), [])
-  const activeSession = useLiveQuery(async () => {
-    const sessions = await db.sessions.orderBy('updatedAt').reverse().toArray()
-    return (
-      sessions.find((session) => session.status === 'active' || session.status === 'paused') ??
-      null
-    )
-  }, [])
   const recentSessions = useLiveQuery(
     () => db.sessions.orderBy('updatedAt').reverse().toArray(),
     []
@@ -97,6 +90,13 @@ export function useGrazingSessionMapData({
     [selectedSessionEvents]
   )
   const animalsByHerdId = useMemo(() => buildAnimalsByHerdId(safeAnimals), [safeAnimals])
+  const activeSession = useMemo(
+    () =>
+      safeRecentSessions.find(
+        (session) => session.status === 'active' || session.status === 'paused'
+      ) ?? null,
+    [safeRecentSessions]
+  )
 
   const currentSession = useMemo(
     () =>

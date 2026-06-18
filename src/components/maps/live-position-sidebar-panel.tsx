@@ -8,6 +8,7 @@ import {
 } from '@/lib/maps/live-position-map-helpers'
 import { LivePositionSavedEnclosureCard } from '@/components/maps/live-position-saved-enclosure-card'
 import { LivePositionSurveyAreasPanel } from '@/components/maps/live-position-survey-areas-panel'
+import { cn } from '@/lib/utils/cn'
 import type {
   Animal,
   Enclosure,
@@ -233,12 +234,12 @@ export function LivePositionSidebarPanel({
               key={filterOption.id}
               type="button"
               onClick={() => onEnclosureListFilterChange(filterOption.id)}
-              className={[
+              className={cn(
                 'rounded-2xl px-3 py-3 text-sm font-medium',
                 enclosureListFilter === filterOption.id
                   ? 'border border-border-strong bg-surface-muted text-ink'
                   : 'bg-surface-muted text-ink-strong',
-              ].join(' ')}
+              )}
             >
               {filterOption.label}
             </button>
@@ -264,10 +265,10 @@ export function LivePositionSidebarPanel({
         </div>
 
         <div
-          className={[
+          className={cn(
             'min-w-0 overflow-hidden app-panel p-5',
             mobilePanel === 'saved' ? 'block' : 'hidden',
-          ].join(' ')}
+          )}
         >
           {renderSavedEnclosuresPanel()}
         </div>

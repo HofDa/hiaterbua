@@ -5,6 +5,8 @@ import { formatArea } from '@/lib/maps/map-core'
 import { Card } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
+import { MetaLabel } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type { SurveyArea } from '@/types/domain'
 
 type SurveyAreasPanelProps = {
@@ -30,7 +32,7 @@ export function SurveyAreasPanel({
 
   return (
     <Card
-      className={`mx-auto w-full min-w-0 overflow-hidden px-3 py-3 sm:px-4 sm:py-4 ${className}`.trim()}
+      className={cn('mx-auto w-full min-w-0 overflow-hidden px-3 py-3 sm:px-4 sm:py-4', className)}
     >
       <FormButton
         type="button"
@@ -67,7 +69,7 @@ export function SurveyAreasPanel({
         <span className="text-sm text-ink-soft">{safeSurveyAreas.length}</span>
       </div>
 
-      <div className={[isMobileExpanded ? 'mt-3 block' : 'hidden', 'lg:mt-2 lg:block'].join(' ')}>
+      <div className={cn(isMobileExpanded ? 'mt-3 block' : 'hidden', 'lg:mt-2 lg:block')}>
         <p className="text-sm text-ink-muted break-words">{description}</p>
 
         {safeSurveyAreas.length === 0 ? (
@@ -79,9 +81,9 @@ export function SurveyAreasPanel({
             <div className="w-full min-w-0 space-y-2">
               {selectedSurveyArea ? (
                 <Card className="w-full min-w-0 max-w-full overflow-hidden px-3 py-2 text-sm text-ink">
-                  <div className="text-xs font-semibold uppercase tracking-[0.04em] text-ink-muted">
+                  <MetaLabel tracking="tight">
                     Fokus
-                  </div>
+                  </MetaLabel>
                   <div className="font-medium [overflow-wrap:anywhere]">{selectedSurveyArea.name}</div>
                   <div className="mt-1 text-xs text-ink-muted">
                     {formatArea(selectedSurveyArea.areaM2)}
@@ -95,12 +97,12 @@ export function SurveyAreasPanel({
               {safeSurveyAreas.map((surveyArea) => (
                 <div
                   key={surveyArea.id}
-                  className={[
+                  className={cn(
                     'w-full min-w-0 max-w-full overflow-hidden rounded-xl border px-3 py-2.5',
                     selectedSurveyAreaId === surveyArea.id
                       ? 'border-border-soft bg-accent'
                       : 'border-border bg-surface-raised',
-                  ].join(' ')}
+                  )}
                 >
                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                     <div className="min-w-0 flex-1">

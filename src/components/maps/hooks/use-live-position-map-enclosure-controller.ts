@@ -1,7 +1,6 @@
-import type { Dispatch, SetStateAction } from 'react'
-import type { DraftPoint } from '@/lib/maps/live-position-map-helpers'
 import { useLivePositionMapAssignmentController } from '@/components/maps/hooks/use-live-position-map-assignment-controller'
 import { useLivePositionMapEditController } from '@/components/maps/hooks/use-live-position-map-edit-controller'
+import type { LivePositionMapState } from '@/components/maps/hooks/use-live-position-map-state'
 import type {
   Animal,
   Enclosure,
@@ -17,33 +16,9 @@ type UseLivePositionMapEnclosureControllerOptions = {
   activeAssignmentsByEnclosureId: Map<string, EnclosureAssignment>
   activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   editAreaM2: number
-  selectedEnclosureId: string | null
-  editingEnclosureId: string | null
-  editName: string
-  editNotes: string
-  editGeometryPoints: DraftPoint[]
-  selectedEditPointIndex: number | null
-  assignmentHerdId: string
-  assignmentCount: string
-  assignmentNotes: string
-  setSelectedEnclosureId: Dispatch<SetStateAction<string | null>>
-  setShowSelectedTrack: Dispatch<SetStateAction<boolean>>
-  setIsSelectedEnclosureInfoOpen: Dispatch<SetStateAction<boolean>>
-  setEditingEnclosureId: Dispatch<SetStateAction<string | null>>
-  setEditName: Dispatch<SetStateAction<string>>
-  setEditNotes: Dispatch<SetStateAction<string>>
-  setEditError: Dispatch<SetStateAction<string>>
-  setIsEditing: Dispatch<SetStateAction<boolean>>
-  setEditGeometryPoints: Dispatch<SetStateAction<DraftPoint[]>>
-  setSelectedEditPointIndex: Dispatch<SetStateAction<number | null>>
-  setIsAddingEditPoint: Dispatch<SetStateAction<boolean>>
-  setAssignmentEditorEnclosureId: Dispatch<SetStateAction<string | null>>
-  setAssignmentHerdId: Dispatch<SetStateAction<string>>
-  setAssignmentCount: Dispatch<SetStateAction<string>>
-  setAssignmentNotes: Dispatch<SetStateAction<string>>
-  setAssignmentError: Dispatch<SetStateAction<string>>
-  setIsAssignmentSaving: Dispatch<SetStateAction<boolean>>
-  setEndingAssignmentId: Dispatch<SetStateAction<string | null>>
+  selection: LivePositionMapState['selection']
+  edit: LivePositionMapState['edit']
+  assignment: LivePositionMapState['assignment']
 }
 
 export function useLivePositionMapEnclosureController({
@@ -54,65 +29,41 @@ export function useLivePositionMapEnclosureController({
   activeAssignmentsByEnclosureId,
   activeAssignmentsByHerdId,
   editAreaM2,
-  selectedEnclosureId,
-  editingEnclosureId,
-  editName,
-  editNotes,
-  editGeometryPoints,
-  selectedEditPointIndex,
-  assignmentHerdId,
-  assignmentCount,
-  assignmentNotes,
-  setSelectedEnclosureId,
-  setShowSelectedTrack,
-  setIsSelectedEnclosureInfoOpen,
-  setEditingEnclosureId,
-  setEditName,
-  setEditNotes,
-  setEditError,
-  setIsEditing,
-  setEditGeometryPoints,
-  setSelectedEditPointIndex,
-  setIsAddingEditPoint,
-  setAssignmentEditorEnclosureId,
-  setAssignmentHerdId,
-  setAssignmentCount,
-  setAssignmentNotes,
-  setAssignmentError,
-  setIsAssignmentSaving,
-  setEndingAssignmentId,
+  selection,
+  edit,
+  assignment,
 }: UseLivePositionMapEnclosureControllerOptions) {
   function clearSelectedEnclosure() {
-    setSelectedEnclosureId(null)
-    setShowSelectedTrack(false)
-    setIsSelectedEnclosureInfoOpen(false)
+    selection.setSelectedEnclosureId(null)
+    selection.setShowSelectedTrack(false)
+    selection.setIsSelectedEnclosureInfoOpen(false)
   }
 
   function toggleSelectedTrackForEnclosure(enclosureId: string) {
-    setShowSelectedTrack((current) =>
-      selectedEnclosureId === enclosureId ? !current : true
+    selection.setShowSelectedTrack((current) =>
+      selection.selectedEnclosureId === enclosureId ? !current : true
     )
   }
 
   const editController = useLivePositionMapEditController({
     safeEnclosures,
     editAreaM2,
-    selectedEnclosureId,
-    editingEnclosureId,
-    editName,
-    editNotes,
-    editGeometryPoints,
-    selectedEditPointIndex,
-    setSelectedEnclosureId,
-    setShowSelectedTrack,
-    setEditingEnclosureId,
-    setEditName,
-    setEditNotes,
-    setEditError,
-    setIsEditing,
-    setEditGeometryPoints,
-    setSelectedEditPointIndex,
-    setIsAddingEditPoint,
+    selectedEnclosureId: selection.selectedEnclosureId,
+    editingEnclosureId: edit.editingEnclosureId,
+    editName: edit.editName,
+    editNotes: edit.editNotes,
+    editGeometryPoints: edit.editGeometryPoints,
+    selectedEditPointIndex: edit.selectedEditPointIndex,
+    setSelectedEnclosureId: selection.setSelectedEnclosureId,
+    setShowSelectedTrack: selection.setShowSelectedTrack,
+    setEditingEnclosureId: edit.setEditingEnclosureId,
+    setEditName: edit.setEditName,
+    setEditNotes: edit.setEditNotes,
+    setEditError: edit.setEditError,
+    setIsEditing: edit.setIsEditing,
+    setEditGeometryPoints: edit.setEditGeometryPoints,
+    setSelectedEditPointIndex: edit.setSelectedEditPointIndex,
+    setIsAddingEditPoint: edit.setIsAddingEditPoint,
   })
 
   const assignmentController = useLivePositionMapAssignmentController({
@@ -121,17 +72,17 @@ export function useLivePositionMapEnclosureController({
     animalsByHerdId,
     activeAssignmentsByEnclosureId,
     activeAssignmentsByHerdId,
-    assignmentHerdId,
-    assignmentCount,
-    assignmentNotes,
-    setSelectedEnclosureId,
-    setAssignmentEditorEnclosureId,
-    setAssignmentHerdId,
-    setAssignmentCount,
-    setAssignmentNotes,
-    setAssignmentError,
-    setIsAssignmentSaving,
-    setEndingAssignmentId,
+    assignmentHerdId: assignment.assignmentHerdId,
+    assignmentCount: assignment.assignmentCount,
+    assignmentNotes: assignment.assignmentNotes,
+    setSelectedEnclosureId: selection.setSelectedEnclosureId,
+    setAssignmentEditorEnclosureId: assignment.setAssignmentEditorEnclosureId,
+    setAssignmentHerdId: assignment.setAssignmentHerdId,
+    setAssignmentCount: assignment.setAssignmentCount,
+    setAssignmentNotes: assignment.setAssignmentNotes,
+    setAssignmentError: assignment.setAssignmentError,
+    setIsAssignmentSaving: assignment.setIsAssignmentSaving,
+    setEndingAssignmentId: assignment.setEndingAssignmentId,
   })
 
   return {

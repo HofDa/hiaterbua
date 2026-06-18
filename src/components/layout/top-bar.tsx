@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { metaLabelClassName } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 import { navItems } from './nav-items'
 
@@ -13,7 +14,12 @@ export function TopBar() {
       <div className="mx-auto flex min-h-18 max-w-6xl items-center justify-between gap-4 px-4 py-3 xl:max-w-[88rem]">
         <div className="shrink-0">
           <p className="text-lg font-semibold tracking-[-0.02em] text-white">Pastore 1.0</p>
-          <p className="text-xs uppercase tracking-[0.16em] text-chrome-muted">
+          <p
+            className={metaLabelClassName(
+              { tracking: 'wider', tone: 'inherit', weight: 'normal' },
+              'text-chrome-muted',
+            )}
+          >
             Offlinefähige Felddokumentation
           </p>
         </div>

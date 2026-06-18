@@ -1,5 +1,7 @@
 'use client'
 
+import { MetaLabel } from '@/components/ui/typography'
+
 type WorkReminderBannerProps = {
   activeReminderMessage: string
   onDismiss: () => void
@@ -13,9 +15,9 @@ export function WorkReminderBanner({
     <section className="rounded-3xl border border-border bg-surface-raised p-4 shadow-[0_16px_30px_rgba(40,34,26,0.08)]">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+          <MetaLabel tracking="wide" tone="soft">
             Erinnerung aktiv
-          </div>
+          </MetaLabel>
           <div className="mt-1 text-base font-semibold text-ink">
             {activeReminderMessage}
           </div>

@@ -5,6 +5,8 @@ import {
   formatDuration,
   type GroupedSessionHistory,
 } from '@/lib/maps/grazing-session-map-helpers'
+import { metaLabelClassName } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type { GrazingSession, Herd } from '@/types/domain'
 
 type GrazingSessionHistoryGroupsProps = {
@@ -44,10 +46,10 @@ function GrazingSessionHistorySessionCard({
 }) {
   return (
     <div
-      className={[
+      className={cn(
         'rounded-2xl px-4 py-3',
         isSelected ? 'bg-accent' : 'bg-surface-raised',
-      ].join(' ')}
+      )}
     >
       <button
         type="button"
@@ -154,7 +156,7 @@ export function GrazingSessionHistoryGroups({
               className="flex w-full items-center justify-between gap-3 app-surface-row px-4 py-3 text-left"
             >
               <div>
-                <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                <h3 className={metaLabelClassName({ size: 'sm' })}>
                   {group.label}
                 </h3>
                 <div className="mt-1 text-xs font-medium text-ink-muted">

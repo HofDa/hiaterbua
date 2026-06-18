@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatAccuracy } from '@/lib/maps/map-core'
 import { FormField, FormLabel, FormSelect, FormTextarea, FormButton } from '@/components/ui/form'
+import {
+  FlowCountCard,
+  FlowEmptyState,
+  FlowOptionGrid,
+  FlowPrimaryAction,
+  FlowSecondaryAction,
+  FlowSelectableTile,
+  FlowStepperButton,
+  FlowStepHeader,
+} from '@/components/ui/mobile-flow'
+import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 import {
   formatDateTime,
@@ -33,36 +44,29 @@ export function GrazingSessionManagementSetupFields({
         <label className="mb-1 block text-sm font-medium">Herde</label>
         <div className="grid gap-3 lg:hidden">
           {safeHerds.length === 0 ? (
-            <div className="rounded-[1.35rem] border-2 border-dashed border-border bg-surface-raised px-4 py-4 text-sm text-ink-muted">
-              Noch keine Herde angelegt.
-            </div>
+            <FlowEmptyState>Noch keine Herde angelegt.</FlowEmptyState>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <FlowOptionGrid>
               {safeHerds.map((herd) => {
                 const isSelected = selectedHerdId === herd.id
 
                 return (
-                  <button
+                  <FlowSelectableTile
                     key={herd.id}
-                    type="button"
                     onClick={() => onSelectedHerdIdChange(herd.id)}
                     disabled={currentSessionStatus !== null}
-                    aria-pressed={isSelected}
-                    className={[
-                      'min-h-20 rounded-[1.4rem] border-2 px-4 py-4 text-left text-sm font-semibold leading-tight whitespace-normal shadow-sm transition-colors disabled:opacity-50',
-                      isSelected
-                        ? 'border-border-strong bg-accent text-ink'
-                        : 'border-border bg-surface-raised text-ink-strong',
-                    ].join(' ')}
+                    pressed={isSelected}
+                    idleClassName="border-border bg-surface-raised text-ink-strong"
+                    className="min-h-20 rounded-[1.4rem] py-4 shadow-sm"
                   >
                     <div className="[overflow-wrap:anywhere]">{herd.name}</div>
-                    <div className="mt-2 text-xs font-medium uppercase tracking-[0.08em] text-ink-muted">
+                    <MetaLabel weight="medium" tracking="compact" className="mt-2">
                       {isSelected ? 'Ausgewählt' : 'Zum Start wählen'}
-                    </div>
-                  </button>
+                    </MetaLabel>
+                  </FlowSelectableTile>
                 )
               })}
-            </div>
+            </FlowOptionGrid>
           )}
         </div>
 
@@ -98,46 +102,20 @@ export function GrazingSessionActiveSummary({
   return (
     <div className="grid grid-cols-2 gap-3 lg:hidden">
       <div className="rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-4 shadow-sm">
-        <div className="text-xs font-medium uppercase tracking-[0.08em] text-ink-muted">
+        <MetaLabel weight="medium" tracking="compact">
           Herde
-        </div>
+        </MetaLabel>
         <div className="mt-2 text-sm font-semibold leading-tight text-ink-strong [overflow-wrap:anywhere]">
           {selectedHerd?.name ?? 'Nicht gewählt'}
         </div>
       </div>
       <div className="rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-4 text-center shadow-sm">
-        <div className="text-xs font-medium uppercase tracking-[0.08em] text-ink-muted">
+        <MetaLabel weight="medium" tracking="compact">
           Tiere
-        </div>
+        </MetaLabel>
         <div className="mt-2 text-2xl font-semibold text-ink-strong">
           {selectedAnimalCount ?? 0}
         </div>
-      </div>
-    </div>
-  )
-}
-
-function MobileFlowStepHeader({
-  label,
-  sublabel,
-  onBack,
-}: {
-  label: string
-  sublabel: string
-  onBack: () => void
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 app-callout px-3.5 py-3">
-      <button
-        type="button"
-        onClick={onBack}
-        className="shrink-0 rounded-full border border-border-strong bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink"
-      >
-        Zurück
-      </button>
-      <div className="min-w-0 text-right">
-        <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">{label}</div>
-        <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">{sublabel}</div>
       </div>
     </div>
   )
@@ -210,115 +188,92 @@ export function GrazingSessionMobileStartFlow({
       {mobileStep === 'herd' ? (
         <>
           {safeHerds.length === 0 ? (
-            <div className="rounded-[1.35rem] border-2 border-dashed border-border bg-surface-raised px-4 py-4 text-sm text-ink-muted">
-              Noch keine Herde angelegt.
-            </div>
+            <FlowEmptyState>Noch keine Herde angelegt.</FlowEmptyState>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <FlowOptionGrid>
               {safeHerds.map((herd) => {
                 const isSelected = selectedHerdId === herd.id
 
                 return (
-                  <button
+                  <FlowSelectableTile
                     key={herd.id}
-                    type="button"
                     onClick={() => {
                       setHasStartedFlow(true)
                       onSelectedHerdIdChange(herd.id)
                       setIsDetailsOpen(false)
                       setInternalStep('count')
                     }}
-                    aria-pressed={isSelected}
-                    className={[
-                      'min-h-[4.75rem] rounded-[1.35rem] border-2 px-4 py-4 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors',
-                      isSelected
-                        ? 'border-border-strong bg-accent text-ink'
-                        : 'border-border bg-surface-raised text-ink-strong',
-                    ].join(' ')}
+                    pressed={isSelected}
+                    idleClassName="border-border bg-surface-raised text-ink-strong"
+                    className="min-h-[4.75rem] rounded-[1.35rem] py-4"
                   >
-                    <span className="block [overflow-wrap:anywhere]">{herd.name}</span>
-                  </button>
+                    {herd.name}
+                  </FlowSelectableTile>
                 )
               })}
-            </div>
+            </FlowOptionGrid>
           )}
         </>
       ) : null}
 
       {mobileStep === 'count' ? (
         <>
-          <MobileFlowStepHeader
+          <FlowStepHeader
             label={selectedHerd?.name ?? 'Herde wählen'}
             sublabel="Tiere im Weidegang"
             onBack={() => { setHasStartedFlow(true); setInternalStep('herd') }}
           />
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 rounded-[1.35rem] border-2 border-border bg-surface-raised px-4 py-4 text-center app-shadow-action">
-              <div className="text-xs font-medium uppercase tracking-[0.08em] text-ink-muted">
-                Tiere
-              </div>
-              <div className="mt-2 text-4xl font-semibold text-ink-strong">{animalCount}</div>
-            </div>
+            <FlowCountCard label="Tiere" value={animalCount} />
 
-            <button
-              type="button"
+            <FlowStepperButton
               onClick={() => void onAdjustAnimalCount(-1)}
               disabled={animalCount <= 0}
-              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action disabled:opacity-40"
             >
               −
-            </button>
-            <button
-              type="button"
-              onClick={() => void onAdjustAnimalCount(1)}
-              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action"
-            >
+            </FlowStepperButton>
+            <FlowStepperButton onClick={() => void onAdjustAnimalCount(1)}>
               +
-            </button>
+            </FlowStepperButton>
 
-            <button
-              type="button"
+            <FlowPrimaryAction
               onClick={() => {
                 setHasStartedFlow(true)
                 setInternalStep('confirm')
               }}
-              className="col-span-2 min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong"
+              className="col-span-2"
             >
               Weiter
-            </button>
+            </FlowPrimaryAction>
           </div>
         </>
       ) : null}
 
       {mobileStep === 'confirm' ? (
         <>
-          <MobileFlowStepHeader
+          <FlowStepHeader
             label={selectedHerd?.name ?? 'Herde wählen'}
             sublabel={`${animalCount} Tiere bereit`}
             onBack={() => { setHasStartedFlow(true); setInternalStep('count') }}
           />
 
-          <button
-            type="button"
+          <FlowPrimaryAction
             onClick={() => void onStartSession()}
             disabled={isSaving || !selectedHerdId}
-            className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong disabled:opacity-50"
           >
             {isSaving ? 'Startet ...' : 'Weidegang starten'}
-          </button>
+          </FlowPrimaryAction>
 
-          <button
-            type="button"
+          <FlowSecondaryAction
             onClick={() => {
               setHasStartedFlow(true)
               setIsDetailsOpen((currentValue) => !currentValue)
             }}
-            className="w-full rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink-strong"
             aria-expanded={isDetailsOpen}
           >
             {isDetailsOpen ? 'Details ausblenden' : 'Details'}
-          </button>
+          </FlowSecondaryAction>
 
           {isDetailsOpen ? (
             <div className="space-y-4">
@@ -415,42 +370,49 @@ export function GrazingSessionMobileControls({
     isSaving ||
     (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')
 
-  const mobileControlBtn =
-    'min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-base font-semibold text-ink disabled:opacity-50'
-
   const stopButton = (
-    <button type="button" onClick={() => void onStopSession()} disabled={stopDisabled} className={mobileControlBtn}>
+    <FlowStepperButton
+      onClick={() => void onStopSession()}
+      disabled={stopDisabled}
+      className="text-base disabled:opacity-50"
+    >
       Stop
-    </button>
+    </FlowStepperButton>
   )
 
   return (
     <div className="mt-4 space-y-3 lg:hidden">
       {currentSessionStatus === null ? (
-        <button
-          type="button"
+        <FlowPrimaryAction
           onClick={() => void onStartSession()}
           disabled={isSaving || safeHerdsLength === 0}
-          className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong disabled:opacity-50"
         >
           Weidegang starten
-        </button>
+        </FlowPrimaryAction>
       ) : null}
 
       {currentSessionStatus === 'active' ? (
         <div className="grid grid-cols-2 gap-3">
-          <button type="button" onClick={() => void onPauseSession()} disabled={isSaving} className={mobileControlBtn}>
+          <FlowStepperButton
+            onClick={() => void onPauseSession()}
+            disabled={isSaving}
+            className="text-base disabled:opacity-50"
+          >
             Pause
-          </button>
+          </FlowStepperButton>
           {stopButton}
         </div>
       ) : null}
 
       {currentSessionStatus === 'paused' ? (
         <div className="grid grid-cols-2 gap-3">
-          <button type="button" onClick={() => void onResumeSession()} disabled={isSaving} className={mobileControlBtn}>
+          <FlowStepperButton
+            onClick={() => void onResumeSession()}
+            disabled={isSaving}
+            className="text-base disabled:opacity-50"
+          >
             Fortsetzen
-          </button>
+          </FlowStepperButton>
           {stopButton}
         </div>
       ) : null}
@@ -534,9 +496,9 @@ export function GrazingSessionEventCapturePanel({
       ) : null}
 
       <div className="mt-3 rounded-2xl bg-surface-raised px-4 py-3">
-        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+        <MetaLabel>
           Letzte Ereignisse
-        </div>
+        </MetaLabel>
         {safeCurrentSessionEvents.length === 0 ? (
           <div className="mt-2 text-sm text-ink-muted">Noch keine Ereignisse erfasst.</div>
         ) : (

@@ -3,6 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { ErrorAlert } from '@/components/ui/alert'
+import {
+  FormButton,
+  FormField,
+  FormInput,
+  FormLabel,
+  FormTextarea,
+} from '@/components/ui/form'
+import { MetaLabel, metaLabelClassName } from '@/components/ui/typography'
 import { db } from '@/lib/db/dexie'
 import { deleteHerdCascade } from '@/lib/db/delete-herd'
 import { createId } from '@/lib/utils/ids'
@@ -124,19 +133,19 @@ export default function HerdsPage() {
       <section className="app-panel p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
+            <MetaLabel tracking="wide">
               Herde
-            </p>
+            </MetaLabel>
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">Bestehende Herde öffnen</h1>
           </div>
-          <button
+          <FormButton
             type="button"
             onClick={() => setIsCreateOpen((current) => !current)}
             aria-expanded={isCreateOpen}
             className="rounded-full border-2 border-border bg-surface-raised px-4 py-2 text-sm font-semibold text-ink-strong shadow-sm"
           >
             {isCreateOpen ? 'Neu schließen' : 'Neue Herde'}
-          </button>
+          </FormButton>
         </div>
       </section>
 
@@ -149,60 +158,61 @@ export default function HerdsPage() {
                 Name eingeben, optional Anzahl setzen, speichern.
               </p>
             </div>
-            <div className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink-strong">
+            <div
+              className={metaLabelClassName(
+                { tone: 'strong' },
+                'rounded-full border border-border bg-surface-raised px-3 py-1',
+              )}
+            >
               Verwaltung
             </div>
           </div>
 
           <form className="mt-4 space-y-4" onSubmit={handleCreateHerd}>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-ink-soft">Name</label>
-              <input
-                className="w-full rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3 shadow-sm outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
+            <FormField>
+              <FormLabel className="text-ink-soft">Name</FormLabel>
+              <FormInput
+                className="rounded-[1.25rem] outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="z. B. Alm Nord"
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-ink-soft">
+            <FormField>
+              <FormLabel className="text-ink-soft">
                 Geschätzte Anzahl (optional)
-              </label>
-              <input
-                className="w-full rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3 shadow-sm outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
+              </FormLabel>
+              <FormInput
+                className="rounded-[1.25rem] outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
                 type="number"
                 min="0"
                 value={fallbackCount}
                 onChange={(e) => setFallbackCount(e.target.value)}
                 placeholder="z. B. 35"
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-ink-soft">Notiz</label>
-              <textarea
-                className="w-full rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3 shadow-sm outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
+            <FormField>
+              <FormLabel className="text-ink-soft">Notiz</FormLabel>
+              <FormTextarea
+                className="rounded-[1.25rem] outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Optionale Bemerkungen"
               />
-            </div>
+            </FormField>
 
-            <button
+            <FormButton
               type="submit"
-              disabled={saving}
-              className="w-full rounded-[1.25rem] border border-border-strong bg-surface-muted px-4 py-4 font-medium text-ink-strong app-shadow-action disabled:opacity-50"
+              isLoading={saving}
+              className="w-full rounded-[1.25rem] px-4 py-4 font-medium"
             >
               {saving ? 'Speichert …' : 'Herde speichern'}
-            </button>
+            </FormButton>
 
-            {createError ? (
-              <div className="rounded-[1.25rem] border border-error-border bg-error-surface px-4 py-3 text-sm font-medium text-error-ink">
-                {createError}
-              </div>
-            ) : null}
+            {createError ? <ErrorAlert className="rounded-[1.25rem]">{createError}</ErrorAlert> : null}
           </form>
         </section>
       ) : null}
@@ -217,11 +227,7 @@ export default function HerdsPage() {
           ) : null}
         </div>
 
-        {actionError ? (
-          <div className="rounded-[1.25rem] border border-error-border bg-error-surface px-4 py-3 text-sm font-medium text-error-ink">
-            {actionError}
-          </div>
-        ) : null}
+        {actionError ? <ErrorAlert className="rounded-[1.25rem]">{actionError}</ErrorAlert> : null}
 
         {!herds ? (
           <div className="app-panel-sm p-5">Lade Daten …</div>
@@ -239,33 +245,35 @@ export default function HerdsPage() {
                 <div className="min-w-0">
                   <h3 className="text-xl font-semibold tracking-[-0.02em] text-ink-strong">{herd.name}</h3>
                 </div>
-                <button
+                <FormButton
+                  type="button"
+                  variant="secondary"
                   onClick={() => toggleArchive(herd.id, !herd.isArchived)}
                   className="rounded-full border border-border-soft bg-surface-muted px-3 py-2 text-sm font-semibold text-ink-strong shadow-sm"
                 >
                   {herd.isArchived ? 'Aktivieren' : 'Archivieren'}
-                </button>
+                </FormButton>
               </div>
 
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
                 <div className="app-surface-row px-4 py-3">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                  <MetaLabel>
                     Tiere
-                  </div>
+                  </MetaLabel>
                   <div className="mt-1 text-lg font-semibold text-ink-strong">{herd.displayCount}</div>
                 </div>
                 <div className="app-surface-row px-4 py-3">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                  <MetaLabel>
                     Erfassung
-                  </div>
+                  </MetaLabel>
                   <div className="mt-1 text-sm font-semibold text-ink-strong">
                     {herd.hasIndividualAnimals ? 'Einzeltiere' : 'Schätzwert'}
                   </div>
                 </div>
                 <div className="app-surface-row px-4 py-3">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                  <MetaLabel>
                     Status
-                  </div>
+                  </MetaLabel>
                   <div className="mt-1 text-sm font-semibold text-ink-strong">
                     {herd.isArchived ? 'Archiviert' : 'Aktiv'}
                   </div>
@@ -303,20 +311,21 @@ export default function HerdsPage() {
               <div className="mt-4 rounded-[1.1rem] border border-error-border/70 bg-error-surface/90 px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-error-ink">
+                    <div className={metaLabelClassName({ tone: 'error' })}>
                       Kritische Aktion
                     </div>
                     <div className="mt-1 text-sm font-medium text-error-ink">
                       Herde dauerhaft löschen
                     </div>
                   </div>
-                  <button
+                  <FormButton
                     type="button"
+                    variant="danger"
                     onClick={() => void deleteHerd(herd)}
                     className="rounded-[1.1rem] border border-error-border bg-surface-raised px-4 py-3 text-sm font-semibold text-error-ink shadow-sm"
                   >
                     Löschen
-                  </button>
+                  </FormButton>
                 </div>
               </div>
             </article>

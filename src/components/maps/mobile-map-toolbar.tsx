@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { metaLabelClassName } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 
 type MobileMapToolbarProps = {
   children: ReactNode
@@ -46,11 +48,19 @@ export function MobileMapToolbarButton({
   return (
     <button
       type={type}
-      className={`flex h-11 min-w-[4.4rem] shrink-0 items-center justify-center gap-1.5 rounded-2xl border px-3 text-sm font-semibold transition-colors ${variantClass} ${className}`.trim()}
+      className={cn(
+        'flex h-11 min-w-[4.4rem] shrink-0 items-center justify-center gap-1.5 rounded-2xl border px-3 text-sm font-semibold transition-colors',
+        variantClass,
+        className,
+      )}
       {...props}
     >
       {children}
-      {label ? <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">{label}</span> : null}
+      {label ? (
+        <span className={metaLabelClassName({ size: 'micro', tracking: 'compact', tone: 'inherit' })}>
+          {label}
+        </span>
+      ) : null}
     </button>
   )
 }

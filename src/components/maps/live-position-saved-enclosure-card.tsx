@@ -13,6 +13,7 @@ import {
   LivePositionSavedEnclosureStatsSection,
   LivePositionSavedEnclosureTrackSummarySection,
 } from '@/components/maps/live-position-saved-enclosure-card-sections'
+import { cn } from '@/lib/utils/cn'
 import type {
   Animal,
   Enclosure,
@@ -119,10 +120,10 @@ export function LivePositionSavedEnclosureCard({
 
   return (
     <div
-      className={[
+      className={cn(
         'min-w-0 overflow-hidden rounded-2xl px-4 py-3',
         isSelected ? 'bg-accent' : 'bg-surface-raised',
-      ].join(' ')}
+      )}
     >
       <button
         type="button"

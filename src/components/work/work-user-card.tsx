@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { db } from '@/lib/db/dexie'
+import { getAppSettings, putAppSettings } from '@/lib/db/repositories/settings'
 import {
   ACCESS_SESSION_DURATION_MINUTES,
   authorizeAccess,
@@ -21,6 +21,7 @@ import type { AppSettings } from '@/types/domain'
 import { Card } from '@/components/ui/card'
 import { FormInput, FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
+import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 
 function UserBadgeIcon() {
@@ -33,11 +34,7 @@ function UserBadgeIcon() {
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
-      {children}
-    </div>
-  )
+  return <MetaLabel tracking="wider" tone="soft">{children}</MetaLabel>
 }
 
 function ExpandToggle({
@@ -77,7 +74,7 @@ function InlineAlert({ variant, children }: { variant: 'error' | 'success' | 'wa
   }
 
   return (
-    <Alert className={`mt-3 rounded-[1rem] px-3.5 py-2.5 text-sm sm:mt-4 sm:px-4 sm:py-3 ${styles[variant]}`}>
+    <Alert className={cn('mt-3 rounded-[1rem] px-3.5 py-2.5 text-sm sm:mt-4 sm:px-4 sm:py-3', styles[variant])}>
       {children}
     </Alert>
   )
@@ -120,7 +117,7 @@ export function WorkUserCard() {
       }
 
       try {
-        const storedSettings = await withTimeout(db.settings.get('app'))
+        const storedSettings = await withTimeout(getAppSettings())
 
         if (cancelled) return
 
@@ -130,7 +127,7 @@ export function WorkUserCard() {
 
         if (!storedSettings) {
           try {
-            await withTimeout(db.settings.put(nextSettings))
+            await withTimeout(putAppSettings(nextSettings))
           } catch {
             // Fallback storage stays available through local settings backup.
           }
@@ -174,7 +171,7 @@ export function WorkUserCard() {
     })
 
     try {
-      await withTimeout(db.settings.put(nextSettings))
+      await withTimeout(putAppSettings(nextSettings))
       setStatusMessage('Benutzername gespeichert.')
     } catch {
       setStatusMessage('Benutzername gespeichert.')

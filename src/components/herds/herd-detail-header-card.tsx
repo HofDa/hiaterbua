@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/form'
 import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
 import { StatCard } from '@/components/ui/stat-card'
+import { metaLabelClassName } from '@/components/ui/typography'
 
 type HerdDetailHeaderCardProps = {
   isArchived: boolean
@@ -49,7 +50,7 @@ export function HerdDetailHeaderCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
+            <CardTitle className={metaLabelClassName({ tracking: 'wide' })}>
               Herde
             </CardTitle>
           </div>

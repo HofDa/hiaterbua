@@ -5,8 +5,9 @@ import { LivePositionMapDesktopDrawOverlay } from '@/components/maps/live-positi
 import { LivePositionMapEditOverlay } from '@/components/maps/live-position-map-edit-overlay'
 import { LivePositionMapMobileDrawToolbar } from '@/components/maps/live-position-map-mobile-draw-toolbar'
 import { LivePositionMapMobileWalkToolbar } from '@/components/maps/live-position-map-mobile-walk-toolbar'
-import { LivePositionMapTopControls } from '@/components/maps/live-position-map-top-controls'
+import { MapTopControls } from '@/components/maps/map-top-controls'
 import { ControlsIcon } from '@/components/maps/map-toolbar-icons'
+import { cn } from '@/lib/utils/cn'
 import type {
   MobilePanel,
   PositionData,
@@ -153,10 +154,10 @@ export function LivePositionMapCanvasPanel({
           aria-label={isMobileControlsOpen ? 'Werkzeuge ausblenden' : 'Werkzeuge einblenden'}
           aria-expanded={isMobileControlsOpen}
           onClick={() => setIsMobileControlsOpen((current) => !current)}
-          className={[
+          className={cn(
             'absolute left-2 z-30 flex items-center justify-center app-map-icon-button text-ink-strong transition-all lg:hidden',
             isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
-          ].join(' ')}
+          )}
         >
           <ControlsIcon />
         </button>
@@ -187,11 +188,10 @@ export function LivePositionMapCanvasPanel({
       ) : null}
       <div
         aria-hidden={!isDesktopToolbarOpen}
-        className={[
-          'pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden p-3 lg:block xl:p-4',
+        className={cn(
+          'pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden p-3 transition-opacity duration-200 lg:block xl:p-4',
           isDesktopToolbarOpen ? 'opacity-100' : 'opacity-0',
-          'transition-opacity duration-200',
-        ].join(' ')}
+        )}
       >
         {isDesktopToolbarOpen ? (
           <LivePositionMapDesktopDrawOverlay
@@ -235,7 +235,7 @@ export function LivePositionMapCanvasPanel({
         ) : null}
       </div>
       <div className="hidden lg:block">
-        <LivePositionMapTopControls
+        <MapTopControls
           positionAvailable={Boolean(position)}
           isBaseLayerMenuOpen={isBaseLayerMenuOpen}
           baseLayer={baseLayer}
@@ -255,10 +255,10 @@ export function LivePositionMapCanvasPanel({
               }
               aria-expanded={isDesktopToolbarOpen}
               onClick={() => setIsDesktopToolbarOpen((current) => !current)}
-              className={[
+              className={cn(
                 'hidden items-center justify-center app-map-icon-button transition-colors lg:flex',
                 isDesktopToolbarOpen ? 'text-ink-strong' : 'text-ink-muted',
-              ].join(' ')}
+              )}
               title={
                 isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
               }
@@ -269,7 +269,7 @@ export function LivePositionMapCanvasPanel({
         />
       </div>
       <div className="lg:hidden">
-        <LivePositionMapTopControls
+        <MapTopControls
           positionAvailable={Boolean(position)}
           isBaseLayerMenuOpen={isBaseLayerMenuOpen}
           baseLayer={baseLayer}

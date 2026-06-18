@@ -34,6 +34,7 @@ export {
   buildActiveAssignmentsByEnclosureId,
   buildActiveAssignmentsByHerdId,
   buildAnimalsByHerdId,
+  buildAssignmentIndexes,
   buildAssignmentHistoryByEnclosureId,
   buildEnclosureStatsById,
   buildFilteredEnclosures,

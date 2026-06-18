@@ -6,6 +6,7 @@ import { LivePositionSidebarPanel } from '@/components/maps/live-position-sideba
 import { LivePositionStatusCard } from '@/components/maps/live-position-status-card'
 import { LivePositionWorkflowPanels } from '@/components/maps/live-position-workflow-panels'
 import { useLivePositionMapScreen } from '@/components/maps/hooks/use-live-position-map-screen'
+import { cn } from '@/lib/utils/cn'
 
 export function LivePositionMap() {
   const [isMobileMapOpen, setIsMobileMapOpen] = useState(false)
@@ -82,13 +83,13 @@ export function LivePositionMap() {
 
             <div
               aria-hidden={!isMobileMapOpen}
-              className={[
+              className={cn(
                 'overflow-hidden transition-all duration-200 ease-out',
                 isMobileMapOpen
                   ? 'max-h-[100rem] opacity-100'
                   : 'pointer-events-none max-h-0 opacity-0',
                 'lg:max-h-none lg:overflow-visible lg:opacity-100 lg:pointer-events-auto',
-              ].join(' ')}
+              )}
             >
               <LivePositionMapCanvasPanel {...canvasPanelProps} />
             </div>

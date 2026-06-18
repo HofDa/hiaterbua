@@ -5,6 +5,7 @@ import { formatAccuracy, formatArea, formatTimestamp } from '@/lib/maps/map-core
 import { formatPointTimestamp } from '@/lib/maps/live-position-map-helpers'
 import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
 import { ErrorAlert } from '@/components/ui/alert'
+import { cn } from '@/lib/utils/cn'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 
 type LivePositionWalkWorkspaceProps = {
@@ -184,10 +185,10 @@ export function LivePositionWalkWorkspace({
                 {walkPoints.map((point, index) => (
                   <div
                     key={`${point.timestamp}-${index}`}
-                    className={[
+                    className={cn(
                       'grid grid-cols-[1fr_auto] gap-3 rounded-2xl px-3 py-3 text-sm',
                       selectedWalkPointIndex === index ? 'bg-accent' : 'bg-surface-raised',
-                    ].join(' ')}
+                    )}
                   >
                     <button
                       type="button"

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
 import { StatCard } from '@/components/ui/stat-card'
+import { metaLabelClassName } from '@/components/ui/typography'
 
 type WorkActiveSessionPanelProps = {
   activeSession: WorkSession
@@ -34,7 +35,7 @@ export function WorkActiveSessionPanel({
   return (
     <Card className="mt-4 rounded-[1.5rem] border border-border bg-surface-raised p-4 shadow-sm">
       <CardHeader className="p-0">
-        <CardTitle className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+        <CardTitle className={metaLabelClassName({ tracking: 'wide', tone: 'soft' })}>
           Aktiver Einsatz
         </CardTitle>
         <div className="mt-1 text-xl font-semibold text-ink">{getWorkLabel(activeSession)}</div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { metaLabelClassName } from '@/components/ui/typography'
 import type { Animal, Species } from '@/types/domain'
 
 type AnimalGroup = {
@@ -58,7 +59,7 @@ export function HerdDetailAnimalList({
           grouped.map((group) =>
             group.animals.length > 0 ? (
               <div key={group.value} className="space-y-2">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                <h3 className={metaLabelClassName({ size: 'sm' })}>
                   {group.label} ({group.animals.length})
                 </h3>
 

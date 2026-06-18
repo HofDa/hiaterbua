@@ -20,6 +20,7 @@ import {
 import { MobileMapFloatingCard } from '@/components/maps/mobile-map-ui'
 import { FormSelect, FormInput } from '@/components/ui/form'
 import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
+import { metaLabelClassName } from '@/components/ui/typography'
 import type {
   Herd,
   SessionEvent,
@@ -160,7 +161,10 @@ export function GrazingSessionMapDesktopManagementOverlay({
           <div className="min-w-[11rem] flex-[1_1_12rem]">
             <label
               htmlFor="desktop-grazing-herd"
-              className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted"
+              className={metaLabelClassName(
+                { size: 'micro', tracking: 'compact' },
+                'mb-1 block',
+              )}
             >
               Herde
             </label>
@@ -181,7 +185,12 @@ export function GrazingSessionMapDesktopManagementOverlay({
           </div>
 
           <div className="min-w-[11rem] flex-[0_1_13rem]">
-            <div className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+            <div
+              className={metaLabelClassName(
+                { size: 'micro', tracking: 'compact' },
+                'mb-1 block',
+              )}
+            >
               Tiere im Weidegang
             </div>
             <div className="flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface-raised px-2">
@@ -212,7 +221,10 @@ export function GrazingSessionMapDesktopManagementOverlay({
           <div className="min-w-[13rem] flex-[1.2_1_16rem]">
             <label
               htmlFor="desktop-grazing-session-note"
-              className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted"
+              className={metaLabelClassName(
+                { size: 'micro', tracking: 'compact' },
+                'mb-1 block',
+              )}
             >
               Notiz zum Weidegang
             </label>
@@ -246,7 +258,10 @@ export function GrazingSessionMapDesktopManagementOverlay({
             <div className="min-w-[12rem] flex-[1_1_14rem]">
               <label
                 htmlFor="desktop-grazing-event-note"
-                className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted"
+                className={metaLabelClassName(
+                  { size: 'micro', tracking: 'compact' },
+                  'mb-1 block',
+                )}
               >
                 Ereignisnotiz
               </label>

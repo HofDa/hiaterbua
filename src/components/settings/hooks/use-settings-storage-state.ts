@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { SettingsStorageMode } from '@/components/settings/settings-options'
-import { db } from '@/lib/db/dexie'
+import { getAppSettings, putAppSettings } from '@/lib/db/repositories/settings'
 import { defaultAppSettings } from '@/lib/settings/defaults'
 import {
   normalizeSettingsValue,
@@ -29,7 +29,7 @@ export function useSettingsStorageState() {
       }
 
       try {
-        const storedSettings = await withTimeout(db.settings.get('app'))
+        const storedSettings = await withTimeout(getAppSettings())
 
         if (cancelled) {
           return
@@ -39,7 +39,7 @@ export function useSettingsStorageState() {
 
         if (!storedSettings) {
           try {
-            await withTimeout(db.settings.put(nextSettings))
+            await withTimeout(putAppSettings(nextSettings))
           } catch {
             setSettingsStorageMode('fallback')
             setSettingsStorageWarning(
@@ -85,7 +85,7 @@ export function useSettingsStorageState() {
     let storedInDb = false
 
     try {
-      await withTimeout(db.settings.put(nextSettings))
+      await withTimeout(putAppSettings(nextSettings))
       storedInDb = true
       setSettingsStorageMode('db')
       setSettingsStorageWarning('')

@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { MetaLabel } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 
 type FloatingPanelProps = {
   children: ReactNode
@@ -28,7 +30,7 @@ type OverlaySheetProps = {
 export function MobileMapTopControls({ children, className = '' }: FloatingPanelProps) {
   return (
     <div className="pointer-events-none absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
-      <div className={`pointer-events-auto w-44 max-w-[calc(100vw-2rem)] ${className}`.trim()}>
+      <div className={cn('pointer-events-auto w-44 max-w-[calc(100vw-2rem)]', className)}>
         {children}
       </div>
     </div>
@@ -38,7 +40,10 @@ export function MobileMapTopControls({ children, className = '' }: FloatingPanel
 export function MobileMapFloatingCard({ children, className = '' }: FloatingPanelProps) {
   return (
     <div
-      className={`pointer-events-auto rounded-[1.35rem] border-2 border-border-ink bg-surface p-2 shadow-lg sm:rounded-[1.75rem] sm:p-3 ${className}`.trim()}
+      className={cn(
+        'pointer-events-auto rounded-[1.35rem] border-2 border-border-ink bg-surface p-2 shadow-lg sm:rounded-[1.75rem] sm:p-3',
+        className,
+      )}
     >
       {children}
     </div>
@@ -47,9 +52,7 @@ export function MobileMapFloatingCard({ children, className = '' }: FloatingPane
 
 export function MobileMapSectionCard({ children, className = '' }: SectionCardProps) {
   return (
-    <div
-      className={`app-map-surface p-4 ${className}`.trim()}
-    >
+    <div className={cn('app-map-surface p-4', className)}>
       {children}
     </div>
   )
@@ -73,13 +76,13 @@ export function MobileMapSegmentButton({
   return (
     <button
       type={type}
-      className={[
+      className={cn(
         'rounded-2xl px-3 py-3 text-sm font-medium',
         active
           ? 'border border-border-strong bg-surface-muted text-ink'
           : 'border border-border bg-surface-raised text-ink-strong',
         className,
-      ].join(' ')}
+      )}
       {...props}
     >
       {children}
@@ -98,9 +101,9 @@ export function MobileMapOverlaySheet({ children, onClose, title }: OverlaySheet
       <div className="fixed inset-x-3 bottom-3 z-40 mx-auto max-h-[calc(100vh-1.5rem)] w-[min(28rem,calc(100vw-1.5rem))] overflow-hidden app-floating-panel">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+            <MetaLabel size="micro" tracking="wide">
               Karte
-            </div>
+            </MetaLabel>
             <div className="text-sm font-semibold text-ink-strong">{title}</div>
           </div>
           <button

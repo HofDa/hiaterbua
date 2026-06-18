@@ -5,6 +5,8 @@ import {
   type FilteredEnclosureItem,
   type WalkTrackSummary,
 } from '@/lib/maps/live-position-map-helpers'
+import { MetaLabel } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type { Enclosure } from '@/types/domain'
 
 function SidebarStat({ label, value }: { label: string; value: string }) {
@@ -23,9 +25,9 @@ export function LivePositionSavedEnclosureStatsSection({
 }) {
   return (
     <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-ink-soft">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
+      <MetaLabel tracking="wide">
         Auswertung
-      </div>
+      </MetaLabel>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
         <SidebarStat label="Nutzungen" value={String(stats?.totalAssignments ?? 0)} />
         <SidebarStat
@@ -107,10 +109,10 @@ export function LivePositionSavedEnclosureActionsSection({
 }: LivePositionSavedEnclosureActionsSectionProps) {
   return (
     <div
-      className={[
+      className={cn(
         'mt-3 grid gap-2',
         enclosure.method === 'walk' ? 'grid-cols-2' : 'grid-cols-3',
-      ].join(' ')}
+      )}
     >
       <button
         type="button"

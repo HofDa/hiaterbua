@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
 import { BackupReminder } from '@/components/dashboard/backup-reminder'
+import { metaLabelClassName } from '@/components/ui/typography'
 import { db } from '@/lib/db/dexie'
 import { cn } from '@/lib/utils/cn'
 
@@ -67,7 +68,7 @@ export default function HomePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
+          <CardTitle className={metaLabelClassName({ tracking: 'wider', tone: 'soft' })}>
             Feldstart
           </CardTitle>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-ink-strong">
@@ -108,7 +109,7 @@ export default function HomePage() {
       <Card>
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between py-4">
           <div>
-            <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
+            <CardTitle className={metaLabelClassName({ tracking: 'wider', tone: 'soft' })}>
               Einsatzbereit
             </CardTitle>
             <CardDescription className="mt-1">

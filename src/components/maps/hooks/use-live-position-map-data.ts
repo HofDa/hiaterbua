@@ -4,10 +4,8 @@ import { db } from '@/lib/db/dexie'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
 import {
-  buildActiveAssignmentsByEnclosureId,
-  buildActiveAssignmentsByHerdId,
   buildAnimalsByHerdId,
-  buildAssignmentHistoryByEnclosureId,
+  buildAssignmentIndexes,
   buildDraftFeatureCollection,
   buildEnclosureStatsById,
   buildFilteredEnclosures,
@@ -129,16 +127,12 @@ export function useLivePositionMapData({
 
   const herdsById = useMemo(() => buildHerdsById(safeHerds), [safeHerds])
   const animalsByHerdId = useMemo(() => buildAnimalsByHerdId(safeAnimals), [safeAnimals])
-  const activeAssignmentsByEnclosureId = useMemo(
-    () => buildActiveAssignmentsByEnclosureId(safeAssignments),
-    [safeAssignments]
-  )
-  const activeAssignmentsByHerdId = useMemo(
-    () => buildActiveAssignmentsByHerdId(safeAssignments),
-    [safeAssignments]
-  )
-  const assignmentHistoryByEnclosureId = useMemo(
-    () => buildAssignmentHistoryByEnclosureId(safeAssignments),
+  const {
+    activeAssignmentsByEnclosureId,
+    activeAssignmentsByHerdId,
+    assignmentHistoryByEnclosureId,
+  } = useMemo(
+    () => buildAssignmentIndexes(safeAssignments),
     [safeAssignments]
   )
   const enclosureStatsById = useMemo(

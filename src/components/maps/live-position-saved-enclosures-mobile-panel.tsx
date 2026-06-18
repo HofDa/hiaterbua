@@ -9,6 +9,19 @@ import {
 import { formatArea } from '@/lib/maps/map-core'
 import { FormField, FormLabel, FormTextarea } from '@/components/ui/form'
 import { ErrorAlert } from '@/components/ui/alert'
+import { cn } from '@/lib/utils/cn'
+import {
+  FlowCountCard,
+  FlowEmptyState,
+  FlowOptionGrid,
+  FlowPrimaryAction,
+  FlowSecondaryAction,
+  FlowSelectableTile,
+  FlowStepperButton,
+  FlowStepHeader,
+  FlowSummaryCallout,
+} from '@/components/ui/mobile-flow'
+import { MetaLabel } from '@/components/ui/typography'
 import type { FilteredEnclosureItem } from '@/lib/maps/live-position-map-helpers'
 import type {
   Animal,
@@ -114,139 +127,98 @@ function LivePositionMobileAssignmentFlow({
 
   return (
     <div className="rounded-2xl border border-border bg-surface-raised px-4 py-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3 app-callout px-3.5 py-3">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="shrink-0 rounded-full border border-border-strong bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink"
-        >
-          Zurück
-        </button>
-        <div className="min-w-0 text-right">
-          <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
-            {enclosure.name}
-          </div>
-          <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">
-            {step === 'herd'
-              ? '1. Herde wählen'
-              : step === 'count'
-                ? '2. Tierzahl'
-                : '3. Herde zuweisen'}
-          </div>
-        </div>
-      </div>
+      <FlowStepHeader
+        label={enclosure.name}
+        sublabel={
+          step === 'herd'
+            ? '1. Herde wählen'
+            : step === 'count'
+              ? '2. Tierzahl'
+              : '3. Herde zuweisen'
+        }
+        onBack={handleBack}
+      />
 
       {step === 'herd' ? (
         <div className="mt-3 space-y-3">
           {assignableHerds.length === 0 ? (
-            <div className="rounded-[1.25rem] border-2 border-dashed border-border bg-surface-raised px-4 py-4 text-sm text-ink-muted">
+            <FlowEmptyState className="rounded-[1.25rem]">
               Alle aktiven Herden sind bereits anderen Pferchen zugewiesen.
-            </div>
+            </FlowEmptyState>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <FlowOptionGrid>
               {assignableHerds.map((herd) => {
                 const isSelected = assignmentHerdId === herd.id
 
                 return (
-                  <button
+                  <FlowSelectableTile
                     key={herd.id}
-                    type="button"
                     onClick={() => {
                       onAssignmentHerdIdChange(herd.id)
                       setStep('count')
                     }}
-                    aria-pressed={isSelected}
-                    className={[
-                      'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors',
-                      isSelected
-                        ? 'border-border-strong bg-accent text-ink'
-                        : 'border-border bg-surface-raised text-ink',
-                    ].join(' ')}
+                    pressed={isSelected}
                   >
-                    <span className="block [overflow-wrap:anywhere]">{herd.name}</span>
-                  </button>
+                    {herd.name}
+                  </FlowSelectableTile>
                 )
               })}
-            </div>
+            </FlowOptionGrid>
           )}
         </div>
       ) : null}
 
       {step === 'count' ? (
         <div className="mt-3 space-y-3">
-          <div className="app-callout px-3.5 py-3 text-right">
-            <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
-              {selectedHerd?.name ?? 'Herde wählen'}
-            </div>
-            <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">
-              Tiere im Pferch
-            </div>
-          </div>
+          <FlowSummaryCallout
+            label={selectedHerd?.name ?? 'Herde wählen'}
+            sublabel="Tiere im Pferch"
+          />
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 rounded-[1.35rem] border-2 border-border bg-surface-raised px-4 py-4 text-center app-shadow-action">
-              <div className="text-xs font-medium uppercase tracking-[0.08em] text-ink-muted">
-                Tiere
-              </div>
-              <div className="mt-2 text-4xl font-semibold text-ink-strong">{animalCount}</div>
-            </div>
+            <FlowCountCard label="Tiere" value={animalCount} />
 
-            <button
-              type="button"
+            <FlowStepperButton
               onClick={() => onAssignmentCountChange(String(Math.max(0, animalCount - 1)))}
               disabled={animalCount <= 0}
-              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action disabled:opacity-40"
             >
               -
-            </button>
-            <button
-              type="button"
-              onClick={() => onAssignmentCountChange(String(animalCount + 1))}
-              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action"
-            >
+            </FlowStepperButton>
+            <FlowStepperButton onClick={() => onAssignmentCountChange(String(animalCount + 1))}>
               +
-            </button>
+            </FlowStepperButton>
 
-            <button
-              type="button"
+            <FlowSecondaryAction
               onClick={() => setStep('confirm')}
               disabled={!hasSelectedAssignmentHerd}
-              className="col-span-2 rounded-2xl border border-border-strong bg-surface-muted px-4 py-3 text-sm font-medium text-ink disabled:opacity-50"
+              className="col-span-2 rounded-2xl border-border-strong bg-surface-muted font-medium text-ink disabled:opacity-50"
             >
               Weiter
-            </button>
+            </FlowSecondaryAction>
           </div>
         </div>
       ) : null}
 
       {step === 'confirm' ? (
         <div className="mt-3 space-y-3">
-          <div className="app-callout px-3.5 py-3 text-right">
-            <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
-              {selectedHerd?.name ?? 'Herde wählen'}
-            </div>
-            <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">
-              {animalCount} Tiere bereit
-            </div>
-          </div>
+          <FlowSummaryCallout
+            label={selectedHerd?.name ?? 'Herde wählen'}
+            sublabel={`${animalCount} Tiere bereit`}
+          />
 
-          <button
-            type="button"
+          <FlowPrimaryAction
             onClick={() => onAssignHerdToEnclosure(enclosure)}
             disabled={isAssignmentSaving || !hasSelectedAssignmentHerd}
-            className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong disabled:opacity-50"
           >
             {isAssignmentSaving ? 'Speichert ...' : 'Herde zuweisen'}
-          </button>
+          </FlowPrimaryAction>
 
-          <button
-            type="button"
+          <FlowSecondaryAction
             onClick={() => setIsDetailsOpen((current) => !current)}
             aria-expanded={isDetailsOpen}
-            className="w-full rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink-strong"
           >
             {isDetailsOpen ? 'Details ausblenden' : 'Details'}
-          </button>
+          </FlowSecondaryAction>
 
           {isDetailsOpen ? (
             <FormField>
@@ -283,9 +255,9 @@ function LivePositionMobileActiveAssignmentCard({
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-surface-raised px-4 py-4 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+      <MetaLabel tracking="wide" tone="soft">
         Belegung
-      </div>
+      </MetaLabel>
       <div className="mt-1 text-sm font-semibold text-ink-strong">
         {activeHerd?.name ?? 'Unbekannte Herde'}
       </div>
@@ -385,10 +357,10 @@ export function LivePositionSavedEnclosuresMobilePanel({
               return (
                 <div
                   key={enclosure.id}
-                  className={[
+                  className={cn(
                     'min-w-[45%] flex-1 rounded-[1.1rem] border border-border bg-surface-raised p-3 shadow-sm',
-                    isSelected ? 'border-border-strong bg-accent' : '',
-                  ].join(' ')}
+                    isSelected && 'border-border-strong bg-accent',
+                  )}
                 >
                   <button
                     type="button"

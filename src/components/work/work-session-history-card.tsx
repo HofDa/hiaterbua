@@ -8,6 +8,7 @@ import {
   getWorkStatusLabel,
 } from '@/lib/work/work-session-helpers'
 import { WorkSessionEditForm } from '@/components/work/work-session-edit-form'
+import { cn } from '@/lib/utils/cn'
 import type { WorkPickerSectionId, WorkSelection } from '@/lib/work/work-session-helpers'
 import type { Enclosure, Herd, WorkActivityId, WorkSession, WorkType } from '@/types/domain'
 
@@ -128,10 +129,10 @@ export function WorkSessionHistoryCard({
 
                 <div className="flex flex-col items-end gap-2">
                   <div
-                    className={[
+                    className={cn(
                       'rounded-full px-3 py-1 text-xs font-semibold',
                       statusBadgeClass(session.status),
-                    ].join(' ')}
+                    )}
                   >
                     {getWorkStatusLabel(session.status)}
                   </div>

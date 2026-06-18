@@ -8,6 +8,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/form'
 import { Alert, ErrorAlert } from '@/components/ui/alert'
+import { metaLabelClassName } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type { Enclosure, EnclosureAssignment } from '@/types/domain'
 
 type HerdDetailAssignmentCardProps = {
@@ -124,12 +126,12 @@ export function HerdDetailAssignmentCard({
                     type="button"
                     onClick={() => onSelectedEnclosureIdChange(enclosure.id)}
                     aria-pressed={isSelected}
-                    className={[
+                    className={cn(
                       'rounded-[1rem] px-3 py-2 text-left text-sm font-semibold transition',
                       isSelected
                         ? 'border border-border-strong bg-surface-muted text-ink'
                         : 'border border-transparent bg-surface-raised text-ink hover:border-border',
-                    ].join(' ')}
+                    )}
                   >
                     {enclosure.name}
                   </button>
@@ -176,7 +178,7 @@ export function HerdDetailAssignmentCard({
       )}
 
       <div className="mt-5">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-ink-muted">
+        <h3 className={metaLabelClassName({ size: 'sm' })}>
           Letzte Aufenthalte
         </h3>
         {recentAssignments.length === 0 ? (

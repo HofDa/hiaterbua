@@ -9,6 +9,8 @@ import {
   getWorkStatusLabel,
   workPickerSections,
 } from '@/lib/work/work-session-helpers'
+import { MetaLabel } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type { WorkSession } from '@/types/domain'
 
 type WorkOverviewCardProps = {
@@ -142,9 +144,9 @@ export function WorkOverviewCard({ activeSession, sessions, nowMs }: WorkOvervie
                 >
                   <div className="absolute inset-[22%] flex items-center justify-center rounded-full border border-chart-border-inner bg-surface-raised text-center shadow-sm">
                     <div className="px-2">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                      <MetaLabel size="nano">
                         Gesamt
-                      </div>
+                      </MetaLabel>
                       <div className="mt-1 text-sm font-semibold text-ink">
                         {formatDuration(sectionStats.totalDurationS)}
                       </div>
@@ -166,7 +168,7 @@ export function WorkOverviewCard({ activeSession, sessions, nowMs }: WorkOvervie
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-2">
                           <span
-                            className={`mt-0.5 h-3 w-3 shrink-0 rounded-full ${colors.swatchClass}`}
+                            className={cn('mt-0.5 h-3 w-3 shrink-0 rounded-full', colors.swatchClass)}
                             aria-hidden="true"
                           />
                           <div className="min-w-0">
@@ -182,7 +184,10 @@ export function WorkOverviewCard({ activeSession, sessions, nowMs }: WorkOvervie
                             {sharePercent}%
                           </div>
                           <div
-                            className={`rounded-full px-2.5 py-1 text-xs font-semibold text-ink ${colors.badgeClass}`}
+                            className={cn(
+                              'rounded-full px-2.5 py-1 text-xs font-semibold text-ink',
+                              colors.badgeClass,
+                            )}
                           >
                             {formatDuration(item.durationS)}
                           </div>
@@ -191,7 +196,7 @@ export function WorkOverviewCard({ activeSession, sessions, nowMs }: WorkOvervie
 
                       <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-chart-track">
                         <div
-                          className={`h-full rounded-full ${colors.swatchClass}`}
+                          className={cn('h-full rounded-full', colors.swatchClass)}
                           style={{ width: `${Math.max(sharePercent, 6)}%` }}
                           aria-hidden="true"
                         />

@@ -1,4 +1,4 @@
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
+import type { MutableRefObject } from 'react'
 import {
   addGrazingSessionEventRecord,
   createGrazingSessionRecord,
@@ -17,13 +17,13 @@ import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/
 import { getSessionEventLabel } from '@/lib/maps/grazing-session-map-helpers'
 import { getFreshPosition } from '@/lib/maps/map-core'
 import { getStorageEstimate } from '@/lib/utils/storage-health'
+import type { GrazingSessionMapState } from '@/components/maps/hooks/use-grazing-session-map-state'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type {
   Animal,
   GrazingSession,
   Herd,
   SessionEventType,
-  SessionStatus,
   TrackPoint,
 } from '@/types/domain'
 
@@ -33,21 +33,8 @@ type UseGrazingSessionMapSessionControllerOptions = {
   safeHerds: Herd[]
   animalsByHerdId: Map<string, Animal[]>
   acceptedPositionRef: MutableRefObject<PositionData | null>
-  selectedHerdId: string
-  sessionAnimalCount: number | null
-  sessionNotes: string
-  setSelectedHerdId: Dispatch<SetStateAction<string>>
-  setSessionAnimalCount: Dispatch<SetStateAction<number | null>>
-  setSessionNotes: Dispatch<SetStateAction<string>>
-  setCurrentSessionId: Dispatch<SetStateAction<string | null>>
-  setCurrentSessionStatus: Dispatch<SetStateAction<SessionStatus | null>>
-  setSelectedSessionId: Dispatch<SetStateAction<string | null>>
-  setActionError: Dispatch<SetStateAction<string>>
-  setIsSaving: Dispatch<SetStateAction<boolean>>
-  setIsEventSaving: Dispatch<SetStateAction<boolean>>
-  setEventNote: Dispatch<SetStateAction<string>>
-  setEventStatus: Dispatch<SetStateAction<string>>
-  setLiveDurationTick: Dispatch<SetStateAction<number>>
+  selection: GrazingSessionMapState['selection']
+  session: GrazingSessionMapState['session']
 }
 
 export function useGrazingSessionMapSessionController({
@@ -56,22 +43,27 @@ export function useGrazingSessionMapSessionController({
   safeHerds,
   animalsByHerdId,
   acceptedPositionRef,
-  selectedHerdId,
-  sessionAnimalCount,
-  sessionNotes,
-  setSelectedHerdId,
-  setSessionAnimalCount,
-  setSessionNotes,
-  setCurrentSessionId,
-  setCurrentSessionStatus,
-  setSelectedSessionId,
-  setActionError,
-  setIsSaving,
-  setIsEventSaving,
-  setEventNote,
-  setEventStatus,
-  setLiveDurationTick,
+  selection,
+  session,
 }: UseGrazingSessionMapSessionControllerOptions) {
+  const {
+    selectedHerdId,
+    sessionAnimalCount,
+    sessionNotes,
+    setSelectedHerdId,
+    setSessionAnimalCount,
+    setSessionNotes,
+    setCurrentSessionId,
+    setCurrentSessionStatus,
+    setActionError,
+    setIsSaving,
+    setIsEventSaving,
+    setEventNote,
+    setEventStatus,
+    setLiveDurationTick,
+  } = session
+  const { setSelectedSessionId } = selection
+
   const runtimeRefs = useGrazingSessionMapSessionRuntime({
     activeSession,
     safeCurrentTrackpoints,

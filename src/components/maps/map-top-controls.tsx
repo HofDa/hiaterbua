@@ -1,11 +1,13 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { CenterIcon, LayersIcon } from '@/components/maps/map-toolbar-icons'
 import { MobileMapTopControls } from '@/components/maps/mobile-map-ui'
+import { MetaLabel } from '@/components/ui/typography'
+import { cn } from '@/lib/utils/cn'
 import type { MapBaseLayer } from '@/types/domain'
 
-type LivePositionMapTopControlsProps = {
+type MapTopControlsProps = {
   positionAvailable: boolean
   isBaseLayerMenuOpen: boolean
   baseLayer: MapBaseLayer
@@ -18,9 +20,46 @@ type LivePositionMapTopControlsProps = {
   onToggleShowSurveyAreas: () => void
   onPrefetchVisibleMapArea: () => void | Promise<void>
   extraControls?: ReactNode
+  extraMenuItems?: ReactNode
 }
 
-export function LivePositionMapTopControls({
+const mapMenuButtonBase =
+  'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium'
+
+function getMapMenuButtonClass(isActive: boolean, className?: string) {
+  return cn(
+    mapMenuButtonBase,
+    isActive
+      ? 'border border-border-strong bg-surface-muted text-ink'
+      : 'bg-surface-muted text-ink-strong',
+    className,
+  )
+}
+
+/**
+ * On/off toggle styled to match the items inside the base-layer menu. Exported so
+ * callers can add their own toggles via `extraMenuItems` without re-deriving the styling.
+ */
+export function MapMenuToggleButton({
+  active,
+  className,
+  type = 'button',
+  ...props
+}: ComponentProps<'button'> & { active: boolean }) {
+  return (
+    <button
+      type={type}
+      className={cn(
+        mapMenuButtonBase,
+        active ? 'bg-accent text-ink' : 'bg-surface-muted text-ink-strong',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+export function MapTopControls({
   positionAvailable,
   isBaseLayerMenuOpen,
   baseLayer,
@@ -33,7 +72,8 @@ export function LivePositionMapTopControls({
   onToggleShowSurveyAreas,
   onPrefetchVisibleMapArea,
   extraControls,
-}: LivePositionMapTopControlsProps) {
+  extraMenuItems,
+}: MapTopControlsProps) {
   return (
     <MobileMapTopControls>
       <div className="mb-2 flex justify-start gap-2">
@@ -59,43 +99,36 @@ export function LivePositionMapTopControls({
 
       {isBaseLayerMenuOpen ? (
         <div className="max-h-[48vh] overflow-y-auto app-map-popover p-1.5">
-          <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+          <MetaLabel size="nano" tracking="wide" className="mb-1 px-1.5">
             Kartengrundlage
-          </div>
+          </MetaLabel>
           <button
             type="button"
             onClick={() => void onUpdateBaseLayer('south-tyrol-orthophoto-2023')}
-            className={[
-              'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              baseLayer === 'south-tyrol-orthophoto-2023'
-                ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-ink-strong',
-            ].join(' ')}
+            className={getMapMenuButtonClass(
+              baseLayer === 'south-tyrol-orthophoto-2023',
+            )}
           >
             Orthofoto 2023
           </button>
           <button
             type="button"
             onClick={() => void onUpdateBaseLayer('south-tyrol-basemap')}
-            className={[
-              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              baseLayer === 'south-tyrol-basemap'
-                ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-ink-strong',
-            ].join(' ')}
+            className={getMapMenuButtonClass(
+              baseLayer === 'south-tyrol-basemap',
+              'mt-1.5',
+            )}
           >
             BaseMap Südtirol
           </button>
-          <button
-            type="button"
+          <MapMenuToggleButton
+            active={showSurveyAreas}
             onClick={onToggleShowSurveyAreas}
-            className={[
-              'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              showSurveyAreas ? 'bg-accent text-ink' : 'bg-surface-muted text-ink-strong',
-            ].join(' ')}
+            className="mt-1.5"
           >
             Flächen {showSurveyAreas ? 'an' : 'aus'}
-          </button>
+          </MapMenuToggleButton>
+          {extraMenuItems}
           <button
             type="button"
             onClick={() => void onPrefetchVisibleMapArea()}

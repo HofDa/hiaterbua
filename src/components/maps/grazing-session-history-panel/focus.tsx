@@ -5,6 +5,7 @@ import {
   getSessionEventLabel,
   type SessionMetrics,
 } from '@/lib/maps/grazing-session-map-helpers'
+import { MetaLabel } from '@/components/ui/typography'
 import type { GrazingSession, SessionEvent, TrackPoint } from '@/types/domain'
 
 export function GrazingSessionHistoryFocusSummary({
@@ -45,9 +46,9 @@ export function GrazingSessionHistoryFocusEvents({
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-surface-raised px-4 py-4 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+      <MetaLabel>
         Ereignisse im Fokus-Weidegang
-      </div>
+      </MetaLabel>
       {safeSelectedSessionEvents.length === 0 ? (
         <div className="mt-2 text-sm text-ink-muted">Keine Ereignisse gespeichert.</div>
       ) : (
