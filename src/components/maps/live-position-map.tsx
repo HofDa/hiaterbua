@@ -8,18 +8,21 @@ import { LivePositionWorkflowPanels } from '@/components/maps/live-position-work
 import { useLivePositionMapScreen } from '@/components/maps/hooks/use-live-position-map-screen'
 import type { MobilePanel } from '@/components/maps/live-position-map-types'
 import { cn } from '@/lib/utils/cn'
+import type { Enclosure } from '@/types/domain'
 
 export function LivePositionMap() {
   const [isMobileMapOpen, setIsMobileMapOpen] = useState(false)
   const {
     containerRef,
     resizeMap,
+    filteredEnclosuresCount,
     onMobilePanelChange,
-    sidebarPanelProps,
+    onFocusEnclosure,
+    onStartEditEnclosure,
   } = useLivePositionMapScreen()
 
-  const mobileMapSummary = sidebarPanelProps.filteredEnclosures.length
-    ? `${sidebarPanelProps.filteredEnclosures.length} Pferche in Reichweite`
+  const mobileMapSummary = filteredEnclosuresCount
+    ? `${filteredEnclosuresCount} Pferche in Reichweite`
     : 'Noch keine Pferche sichtbar'
 
   useEffect(() => {
@@ -36,18 +39,14 @@ export function LivePositionMap() {
     }
   }
 
-  function handleFocusEnclosureFromSavedList(
-    enclosure: Parameters<typeof sidebarPanelProps.onFocusEnclosure>[0]
-  ) {
+  function handleFocusEnclosureFromSavedList(enclosure: Enclosure) {
     setIsMobileMapOpen(true)
-    sidebarPanelProps.onFocusEnclosure(enclosure)
+    onFocusEnclosure(enclosure)
   }
 
-  function handleStartEditEnclosureFromSavedList(
-    enclosure: Parameters<typeof sidebarPanelProps.onStartEditEnclosure>[0]
-  ) {
+  function handleStartEditEnclosureFromSavedList(enclosure: Enclosure) {
     setIsMobileMapOpen(true)
-    sidebarPanelProps.onStartEditEnclosure(enclosure)
+    onStartEditEnclosure(enclosure)
   }
 
   return (
@@ -98,7 +97,6 @@ export function LivePositionMap() {
 
         <div>
           <LivePositionSidebarPanel
-            {...sidebarPanelProps}
             onFocusEnclosure={handleFocusEnclosureFromSavedList}
             onStartEditEnclosure={handleStartEditEnclosureFromSavedList}
           />

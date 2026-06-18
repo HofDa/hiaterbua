@@ -4,13 +4,14 @@ import { useGeolocationWatcher } from '@/components/maps/hooks/use-geolocation-w
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
 import { useLivePositionMapController } from '@/components/maps/hooks/use-live-position-map-controller'
 import { useLivePositionMapData } from '@/components/maps/hooks/use-live-position-map-data'
-import { useLivePositionMapPanelProps } from '@/components/maps/hooks/use-live-position-map-panel-props'
 import { useLivePositionMapPresentation } from '@/components/maps/hooks/use-live-position-map-presentation'
 import { useLivePositionMapState } from '@/components/maps/hooks/use-live-position-map-state'
 import {
   useLivePositionMapStore,
   type LivePositionCanvasHandles,
   type LivePositionCanvasSlice,
+  type LivePositionSidebarHandles,
+  type LivePositionSidebarSlice,
   type LivePositionWorkflowHandles,
   type LivePositionWorkflowSlice,
 } from '@/components/maps/hooks/use-live-position-map-store'
@@ -557,52 +558,91 @@ export function useLivePositionMapScreen() {
     setWorkflowHandles(workflowHandles)
   }, [workflowHandles, setWorkflowHandles])
 
-  const panelProps = useLivePositionMapPanelProps({
-    state,
-    data: {
-      safeSurveyAreas: data.safeSurveyAreas,
-      selectedSurveyArea: data.selectedSurveyArea,
-      filteredEnclosures: data.filteredEnclosures,
-      selectedEnclosure: data.selectedEnclosure,
-      selectedTrackSummary: data.selectedTrackSummary,
-      safeHerds: data.safeHerds,
-      herdsById: data.herdsById,
-      animalsByHerdId: data.animalsByHerdId,
-      activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
-      assignmentHistoryByEnclosureId: data.assignmentHistoryByEnclosureId,
-      selectedWalkPoint: data.selectedWalkPoint,
-      draftAreaM2: data.draftAreaM2,
-      walkAreaM2: data.walkAreaM2,
-      editAreaM2: data.editAreaM2,
+  // Same pattern for the sidebar. `onFocusEnclosure` / `onStartEditEnclosure` stay
+  // parent-wired props (they also open the mobile map), so they are not published here.
+  const sidebarValues: LivePositionSidebarSlice = {
+    mobilePanel: selection.mobilePanel,
+    safeSurveyAreas: data.safeSurveyAreas,
+    selectedSurveyArea: data.selectedSurveyArea,
+    selectedSurveyAreaId: selection.selectedSurveyAreaId,
+    filteredEnclosures: data.filteredEnclosures,
+    enclosureListFilter: selection.enclosureListFilter,
+    selectedEnclosure: data.selectedEnclosure,
+    selectedEnclosureId: selection.selectedEnclosureId,
+    expandedSavedEnclosureId: selection.expandedSavedEnclosureId,
+    assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
+    assignmentHerdId: assignment.assignmentHerdId,
+    assignmentCount: assignment.assignmentCount,
+    assignmentNotes: assignment.assignmentNotes,
+    assignmentError: assignment.assignmentError,
+    isAssignmentSaving: assignment.isAssignmentSaving,
+    endingAssignmentId: assignment.endingAssignmentId,
+    showSelectedTrack: selection.showSelectedTrack,
+    selectedTrackSummary: data.selectedTrackSummary,
+    safeHerds: data.safeHerds,
+    herdsById: data.herdsById,
+    animalsByHerdId: data.animalsByHerdId,
+    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
+    assignmentHistoryByEnclosureId: data.assignmentHistoryByEnclosureId,
+    editingEnclosureId: edit.editingEnclosureId,
+    editName: edit.editName,
+    editNotes: edit.editNotes,
+    editError: edit.editError,
+    isEditing: edit.isEditing,
+    editGeometryPointsLength: edit.editGeometryPoints.length,
+    editAreaM2: data.editAreaM2,
+    selectedEditPointIndex: edit.selectedEditPointIndex,
+    isAddingEditPoint: edit.isAddingEditPoint,
+  }
+
+  const sidebarHandles = useStableHandles<LivePositionSidebarHandles>({
+    onFocusSurveyArea: runtime.focusSurveyArea,
+    onEnclosureListFilterChange: selection.setEnclosureListFilter,
+    onExpandedSavedEnclosureChange: (enclosureId) =>
+      selection.setExpandedSavedEnclosureId((current) =>
+        current === enclosureId ? null : enclosureId,
+      ),
+    onToggleShowSelectedTrack: actions.toggleSelectedTrackForEnclosure,
+    onDeleteEnclosure: (enclosure) => {
+      void actions.deleteEnclosure(enclosure)
     },
-    runtime: {
-      containerRef: runtime.containerRef,
-      baseLayer: runtime.baseLayer,
-      isBaseLayerMenuOpen: runtime.isBaseLayerMenuOpen,
-      showSurveyAreas: runtime.showSurveyAreas,
-      prefetchStatus: runtime.prefetchStatus,
-      prefetchingMapArea: runtime.prefetchingMapArea,
-      setIsBaseLayerMenuOpen: runtime.setIsBaseLayerMenuOpen,
-      setShowSurveyAreas: runtime.setShowSurveyAreas,
-      updateBaseLayer: runtime.updateBaseLayer,
-      prefetchVisibleMapArea: runtime.prefetchVisibleMapArea,
-      centerMapOnPosition: runtime.centerMapOnPosition,
-      focusSurveyArea: runtime.focusSurveyArea,
-      resizeMap: runtime.resizeMap,
+    onOpenAssignmentEditor: actions.openAssignmentEditor,
+    onCancelAssignmentEditor: actions.cancelAssignmentEditor,
+    onAssignHerdToEnclosure: (enclosure) => {
+      void actions.assignHerdToEnclosure(enclosure)
     },
-    actions,
-    presentation,
+    onAssignmentHerdIdChange: actions.handleAssignmentHerdIdChange,
+    onAssignmentCountChange: assignment.setAssignmentCount,
+    onAssignmentNotesChange: assignment.setAssignmentNotes,
+    onEndEnclosureAssignment: (assignmentRecord) => {
+      void actions.endEnclosureAssignment(assignmentRecord)
+    },
+    onEditNameChange: edit.setEditName,
+    onEditNotesChange: edit.setEditNotes,
+    onStartAddEditPoint: actions.startAddEditPoint,
+    onRemoveSelectedEditPoint: actions.removeSelectedEditPoint,
+    onSaveEditedEnclosure: actions.saveEditedEnclosure,
+    onCancelEditEnclosure: actions.cancelEditEnclosure,
   })
 
-  // `containerRef` and `resizeMap` stay direct returns: the map mount ref must be wired
-  // synchronously (not via the store, which would be null on first paint), and resizeMap
-  // is called by the screen component on mobile-map open — not by the canvas panel.
+  const setSidebar = useLivePositionMapStore((store) => store.setSidebar)
+  const setSidebarHandles = useLivePositionMapStore((store) => store.setSidebarHandles)
+  useEffect(() => {
+    setSidebar(sidebarValues)
+  })
+  useEffect(() => {
+    setSidebarHandles(sidebarHandles)
+  }, [sidebarHandles, setSidebarHandles])
+
+  // `containerRef` and `resizeMap` are wired synchronously (the map mount ref would be
+  // null on first paint via the store; resizeMap is called by the screen component). The
+  // three handlers below stay parent-wired because the parent layers in mobile-map opening.
   return {
-    ...panelProps,
     containerRef: runtime.containerRef,
     resizeMap: runtime.resizeMap,
-    // The workflow panel reads everything from the store except this — the parent wraps
-    // it to also open the mobile map when switching to the draw tab.
+    filteredEnclosuresCount: data.filteredEnclosures.length,
     onMobilePanelChange: selection.setMobilePanel,
+    onFocusEnclosure: presentation.focusEnclosure,
+    onStartEditEnclosure: actions.startEditEnclosure,
   }
 }
