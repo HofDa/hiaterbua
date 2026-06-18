@@ -48,6 +48,7 @@ export function AnimalFormFields({
           value={earTag}
           onChange={(event) => onEarTagChange(event.target.value)}
           placeholder={earTagPlaceholder}
+          disabled={disabled}
         />
       </FormField>
 
@@ -56,6 +57,7 @@ export function AnimalFormFields({
         <FormSelect
           value={species}
           onChange={(event) => onSpeciesChange(event.target.value as Species)}
+          disabled={disabled}
         >
           {speciesOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -71,6 +73,7 @@ export function AnimalFormFields({
           value={name}
           onChange={(event) => onNameChange(event.target.value)}
           placeholder={namePlaceholder}
+          disabled={disabled}
         />
       </FormField>
 
@@ -81,6 +84,7 @@ export function AnimalFormFields({
           value={notes}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onNotesChange(event.target.value)}
           placeholder={notesPlaceholder}
+          disabled={disabled}
         />
       </FormField>
     </>

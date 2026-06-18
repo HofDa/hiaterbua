@@ -33,15 +33,15 @@ export function HerdDetailAddAnimalCard({
   onSubmit,
 }: HerdDetailAddAnimalCardProps) {
   return (
-    <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+    <section className="app-panel p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold tracking-[-0.02em]">2. Tier hinzufügen</h2>
-          <p className="mt-2 text-sm text-neutral-700">
+          <p className="mt-2 text-sm text-ink-muted">
             Neues Tier wird direkt dieser Herde zugeordnet.
           </p>
         </div>
-        <div className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1.5 text-sm font-semibold text-neutral-950">
+        <div className="rounded-full border border-border bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink-strong">
           Herde: {herdName}
         </div>
       </div>
@@ -60,7 +60,7 @@ export function HerdDetailAddAnimalCard({
         />
 
         {error ? (
-          <div className="rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+          <div className="rounded-[1.1rem] border border-error-border bg-error-surface px-4 py-3 text-sm font-medium text-error-ink">
             {error}
           </div>
         ) : null}
@@ -68,7 +68,7 @@ export function HerdDetailAddAnimalCard({
         <button
           type="submit"
           disabled={saving}
-          className="w-full rounded-[1.1rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-semibold text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
+          className="w-full rounded-[1.1rem] border border-border-strong bg-surface-muted px-4 py-4 font-semibold text-ink-strong app-shadow-action disabled:opacity-50"
         >
           {saving ? 'Speichert …' : 'Tier speichern'}
         </button>

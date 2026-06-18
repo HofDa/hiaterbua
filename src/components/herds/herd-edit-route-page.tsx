@@ -1,13 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db/dexie'
 import { nowIso } from '@/lib/utils/time'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
-import { Alert, StatusAlert, ErrorAlert } from '@/components/ui/alert'
+import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
 import { useAsyncOperation } from '@/hooks/use-async-operation'
 import { useHerdForm } from '@/hooks/use-form-validation'
 import type { Herd } from '@/types/domain'
@@ -21,7 +20,7 @@ export function HerdEditRoutePage({ herdId }: HerdEditRoutePageProps) {
 
   if (!herdId) {
     return (
-      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+      <div className="app-panel p-5">
         Herde nicht angegeben.
       </div>
     )
@@ -29,7 +28,7 @@ export function HerdEditRoutePage({ herdId }: HerdEditRoutePageProps) {
 
   if (herd === undefined) {
     return (
-      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+      <div className="app-panel p-5">
         Lade Daten …
       </div>
     )
@@ -37,7 +36,7 @@ export function HerdEditRoutePage({ herdId }: HerdEditRoutePageProps) {
 
   if (!herd) {
     return (
-      <div className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+      <div className="app-panel p-5">
         Herde nicht gefunden.
       </div>
     )
@@ -47,7 +46,7 @@ export function HerdEditRoutePage({ herdId }: HerdEditRoutePageProps) {
 }
 
 function EditHerdForm({ herd, herdId }: { herd: Herd; herdId: string }) {
-  const { values, errors, setValue, validateAll, reset } = useHerdForm(herd)
+  const { values, errors, setValue, validateAll } = useHerdForm(herd)
   const saveOperation = useAsyncOperation<boolean>()
 
   async function handleSave(event: React.FormEvent) {
@@ -55,7 +54,7 @@ function EditHerdForm({ herd, herdId }: { herd: Herd; herdId: string }) {
     
     if (!validateAll()) return
 
-    const result = await saveOperation.execute(
+    await saveOperation.execute(
       async () => {
         await db.herds.update(herdId, {
           name: values.name.trim(),
@@ -77,7 +76,7 @@ function EditHerdForm({ herd, herdId }: { herd: Herd; herdId: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Herde bearbeiten</CardTitle>
-          <p className="mt-2 text-sm text-neutral-600">{herd.name}</p>
+          <p className="mt-2 text-sm text-ink-muted">{herd.name}</p>
         </CardHeader>
       </Card>
 
@@ -133,7 +132,7 @@ function EditHerdForm({ herd, herdId }: { herd: Herd; herdId: string }) {
 
               <Link
                 href={`/herd?id=${encodeURIComponent(herdId)}`}
-                className="rounded-2xl border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 font-medium text-[#17130f]"
+                className="rounded-2xl border border-border bg-surface-raised px-4 py-3 font-medium text-ink"
               >
                 Zurück
               </Link>

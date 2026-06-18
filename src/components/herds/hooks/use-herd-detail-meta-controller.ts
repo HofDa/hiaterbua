@@ -25,6 +25,7 @@ export function useHerdDetailMetaController({
   const [metaNotes, setMetaNotes] = useState(herd.notes ?? '')
   const [metaSaving, setMetaSaving] = useState(false)
   const [metaSaved, setMetaSaved] = useState(false)
+  const [metaError, setMetaError] = useState('')
 
   const metaDirty =
     metaName.trim() !== safeString(herd.name) ||
@@ -41,8 +42,17 @@ export function useHerdDetailMetaController({
 
     if (!confirmed) return
 
-    await deleteHerdCascade(herd.id)
-    onDeleted()
+    setMetaSaving(true)
+    setMetaError('')
+
+    try {
+      await deleteHerdCascade(herd.id)
+      onDeleted()
+    } catch {
+      setMetaError('Herde konnte nicht gelöscht werden.')
+    } finally {
+      setMetaSaving(false)
+    }
   }
 
   async function saveHerdMeta(event: React.FormEvent) {
@@ -51,16 +61,26 @@ export function useHerdDetailMetaController({
 
     setMetaSaving(true)
     setMetaSaved(false)
+    setMetaError('')
 
-    await db.herds.update(herd.id, {
-      name: metaName.trim(),
-      fallbackCount: metaFallbackCount.trim() ? Number(metaFallbackCount) : null,
-      notes: metaNotes.trim() || undefined,
-      updatedAt: nowIso(),
-    })
+    try {
+      const updatedCount = await db.herds.update(herd.id, {
+        name: metaName.trim(),
+        fallbackCount: metaFallbackCount.trim() ? Number(metaFallbackCount) : null,
+        notes: metaNotes.trim() || undefined,
+        updatedAt: nowIso(),
+      })
 
-    setMetaSaving(false)
-    setMetaSaved(true)
+      if (updatedCount === 0) {
+        throw new Error('Herde wurde nicht gefunden.')
+      }
+
+      setMetaSaved(true)
+    } catch {
+      setMetaError('Herdendaten konnten nicht gespeichert werden.')
+    } finally {
+      setMetaSaving(false)
+    }
   }
 
   return {
@@ -69,6 +89,7 @@ export function useHerdDetailMetaController({
     metaNotes,
     metaSaving,
     metaSaved,
+    metaError,
     metaDirty,
     setMetaName,
     setMetaFallbackCount,

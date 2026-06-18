@@ -53,6 +53,7 @@ export default function HerdsPage() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [actionError, setActionError] = useState('')
 
   async function handleCreateHerd(e: React.FormEvent) {
     e.preventDefault()
@@ -86,10 +87,20 @@ export default function HerdsPage() {
   }
 
   async function toggleArchive(herdId: string, nextState: boolean) {
-    await db.herds.update(herdId, {
-      isArchived: nextState,
-      updatedAt: nowIso(),
-    })
+    setActionError('')
+
+    try {
+      const updatedCount = await db.herds.update(herdId, {
+        isArchived: nextState,
+        updatedAt: nowIso(),
+      })
+
+      if (updatedCount === 0) {
+        throw new Error('Herde wurde nicht gefunden.')
+      }
+    } catch {
+      setActionError('Herde konnte nicht aktualisiert werden.')
+    }
   }
 
   async function deleteHerd(herd: Herd) {
@@ -99,15 +110,21 @@ export default function HerdsPage() {
 
     if (!confirmed) return
 
-    await deleteHerdCascade(herd.id)
+    setActionError('')
+
+    try {
+      await deleteHerdCascade(herd.id)
+    } catch {
+      setActionError('Herde konnte nicht gelöscht werden.')
+    }
   }
 
   return (
     <div className="space-y-5">
-      <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+      <section className="app-panel p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-700">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
               Herde
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">Bestehende Herde öffnen</h1>
@@ -116,7 +133,7 @@ export default function HerdsPage() {
             type="button"
             onClick={() => setIsCreateOpen((current) => !current)}
             aria-expanded={isCreateOpen}
-            className="rounded-full border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-2 text-sm font-semibold text-neutral-950 shadow-sm"
+            className="rounded-full border-2 border-border bg-surface-raised px-4 py-2 text-sm font-semibold text-ink-strong shadow-sm"
           >
             {isCreateOpen ? 'Neu schließen' : 'Neue Herde'}
           </button>
@@ -124,24 +141,24 @@ export default function HerdsPage() {
       </section>
 
       {isCreateOpen ? (
-        <section className="rounded-[1.9rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+        <section className="app-panel p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold tracking-[-0.02em]">Neue Herde anlegen</h2>
-              <p className="mt-1 text-sm font-medium text-neutral-800">
+              <p className="mt-1 text-sm font-medium text-ink-soft">
                 Name eingeben, optional Anzahl setzen, speichern.
               </p>
             </div>
-            <div className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-950">
+            <div className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink-strong">
               Verwaltung
             </div>
           </div>
 
           <form className="mt-4 space-y-4" onSubmit={handleCreateHerd}>
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-800">Name</label>
+              <label className="mb-1 block text-sm font-medium text-ink-soft">Name</label>
               <input
-                className="w-full rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm outline-none transition focus:border-[#5a5347] focus:ring-4 focus:ring-[#5a5347]/10"
+                className="w-full rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3 shadow-sm outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="z. B. Alm Nord"
@@ -149,11 +166,11 @@ export default function HerdsPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-800">
+              <label className="mb-1 block text-sm font-medium text-ink-soft">
                 Geschätzte Anzahl (optional)
               </label>
               <input
-                className="w-full rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm outline-none transition focus:border-[#5a5347] focus:ring-4 focus:ring-[#5a5347]/10"
+                className="w-full rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3 shadow-sm outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
                 type="number"
                 min="0"
                 value={fallbackCount}
@@ -163,9 +180,9 @@ export default function HerdsPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-800">Notiz</label>
+              <label className="mb-1 block text-sm font-medium text-ink-soft">Notiz</label>
               <textarea
-                className="w-full rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm outline-none transition focus:border-[#5a5347] focus:ring-4 focus:ring-[#5a5347]/10"
+                className="w-full rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3 shadow-sm outline-none transition focus:border-border-strong focus:ring-4 focus:ring-border-strong/10"
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -176,13 +193,13 @@ export default function HerdsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-[1.25rem] border border-[#5a5347] bg-[#f1efeb] px-4 py-4 font-medium text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-50"
+              className="w-full rounded-[1.25rem] border border-border-strong bg-surface-muted px-4 py-4 font-medium text-ink-strong app-shadow-action disabled:opacity-50"
             >
               {saving ? 'Speichert …' : 'Herde speichern'}
             </button>
 
             {createError ? (
-              <div className="rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+              <div className="rounded-[1.25rem] border border-error-border bg-error-surface px-4 py-3 text-sm font-medium text-error-ink">
                 {createError}
               </div>
             ) : null}
@@ -194,56 +211,62 @@ export default function HerdsPage() {
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold tracking-[-0.02em]">Herden</h2>
           {herds ? (
-            <div className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1 text-sm font-semibold text-neutral-950">
+            <div className="rounded-full border border-border bg-surface-raised px-3 py-1 text-sm font-semibold text-ink-strong">
               {herds.length}
             </div>
           ) : null}
         </div>
 
+        {actionError ? (
+          <div className="rounded-[1.25rem] border border-error-border bg-error-surface px-4 py-3 text-sm font-medium text-error-ink">
+            {actionError}
+          </div>
+        ) : null}
+
         {!herds ? (
-          <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">Lade Daten …</div>
+          <div className="app-panel-sm p-5">Lade Daten …</div>
         ) : herds.length === 0 ? (
-          <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 text-neutral-800 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
-            <div className="text-base font-semibold text-neutral-950">Noch keine Herde vorhanden</div>
-            <div className="mt-2 text-sm font-medium text-neutral-800">
+          <div className="app-panel-sm p-5 text-ink-soft">
+            <div className="text-base font-semibold text-ink-strong">Noch keine Herde vorhanden</div>
+            <div className="mt-2 text-sm font-medium text-ink-soft">
               Über `Neue Herde` legst du den ersten Bestand an.
             </div>
           </div>
         ) : (
           herds.map((herd) => (
-            <article key={herd.id} className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(40,34,26,0.08)]">
+            <article key={herd.id} className="app-panel-sm p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="text-xl font-semibold tracking-[-0.02em] text-neutral-950">{herd.name}</h3>
+                  <h3 className="text-xl font-semibold tracking-[-0.02em] text-ink-strong">{herd.name}</h3>
                 </div>
                 <button
                   onClick={() => toggleArchive(herd.id, !herd.isArchived)}
-                  className="rounded-full border border-stone-300 bg-stone-100 px-3 py-2 text-sm font-semibold text-neutral-950 shadow-sm"
+                  className="rounded-full border border-border-soft bg-surface-muted px-3 py-2 text-sm font-semibold text-ink-strong shadow-sm"
                 >
                   {herd.isArchived ? 'Aktivieren' : 'Archivieren'}
                 </button>
               </div>
 
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-700">
+                <div className="app-surface-row px-4 py-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
                     Tiere
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-neutral-950">{herd.displayCount}</div>
+                  <div className="mt-1 text-lg font-semibold text-ink-strong">{herd.displayCount}</div>
                 </div>
-                <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-700">
+                <div className="app-surface-row px-4 py-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
                     Erfassung
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-neutral-950">
+                  <div className="mt-1 text-sm font-semibold text-ink-strong">
                     {herd.hasIndividualAnimals ? 'Einzeltiere' : 'Schätzwert'}
                   </div>
                 </div>
-                <div className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-700">
+                <div className="app-surface-row px-4 py-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
                     Status
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-neutral-950">
+                  <div className="mt-1 text-sm font-semibold text-ink-strong">
                     {herd.isArchived ? 'Archiviert' : 'Aktiv'}
                   </div>
                 </div>
@@ -254,7 +277,7 @@ export default function HerdsPage() {
                   {herd.speciesSummary.map((entry) => (
                     <div
                       key={entry}
-                      className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1.5 text-sm font-medium text-neutral-900"
+                      className="rounded-full border border-border bg-surface-raised px-3 py-1.5 text-sm font-medium text-ink"
                     >
                       {entry}
                     </div>
@@ -263,7 +286,7 @@ export default function HerdsPage() {
               ) : null}
 
               {herd.notes ? (
-                <div className="mt-3 rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-medium text-neutral-900">
+                <div className="mt-3 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-medium text-ink">
                   {herd.notes}
                 </div>
               ) : null}
@@ -271,26 +294,26 @@ export default function HerdsPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
                   href={`/herd?id=${encodeURIComponent(herd.id)}`}
-                  className="min-w-[9rem] rounded-[1.1rem] border-2 border-[#5a5347] bg-[#f1efeb] px-5 py-3 text-sm font-semibold text-neutral-950 shadow-[0_12px_24px_rgba(40,34,26,0.08)]"
+                  className="min-w-[9rem] rounded-[1.1rem] border-2 border-border-strong bg-surface-muted px-5 py-3 text-sm font-semibold text-ink-strong app-shadow-action"
                 >
                   Herde öffnen & bearbeiten
                 </Link>
               </div>
 
-              <div className="mt-4 rounded-[1.1rem] border border-red-200/70 bg-red-50/90 px-4 py-3">
+              <div className="mt-4 rounded-[1.1rem] border border-error-border/70 bg-error-surface/90 px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-red-700">
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-error-ink">
                       Kritische Aktion
                     </div>
-                    <div className="mt-1 text-sm font-medium text-red-900">
+                    <div className="mt-1 text-sm font-medium text-error-ink">
                       Herde dauerhaft löschen
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => void deleteHerd(herd)}
-                    className="rounded-[1.1rem] border border-red-300 bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-red-800 shadow-sm"
+                    className="rounded-[1.1rem] border border-error-border bg-surface-raised px-4 py-3 text-sm font-semibold text-error-ink shadow-sm"
                   >
                     Löschen
                   </button>

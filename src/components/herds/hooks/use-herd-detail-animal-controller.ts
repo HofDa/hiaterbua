@@ -10,6 +10,10 @@ type UseHerdDetailAnimalControllerOptions = {
   herdId: string
 }
 
+function getAnimalActionError(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
+
 export function useHerdDetailAnimalController({
   herdId,
 }: UseHerdDetailAnimalControllerOptions) {
@@ -39,45 +43,60 @@ export function useHerdDetailAnimalController({
       return
     }
 
-    const existing = await db.animals
-      .where('earTag')
-      .equalsIgnoreCase(cleanedEarTag)
-      .first()
-
-    if (existing) {
-      setError('Diese Ohrmarke existiert bereits.')
-      return
-    }
-
     setSaving(true)
 
-    const timestamp = nowIso()
-    const animal: Animal = {
-      id: createId('animal'),
-      herdId,
-      earTag: cleanedEarTag,
-      species,
-      name: name.trim() || undefined,
-      notes: notes.trim() || undefined,
-      isArchived: false,
-      createdAt: timestamp,
-      updatedAt: timestamp,
+    try {
+      const existing = await db.animals
+        .where('earTag')
+        .equalsIgnoreCase(cleanedEarTag)
+        .first()
+
+      if (existing) {
+        setError('Diese Ohrmarke existiert bereits.')
+        return
+      }
+
+      const timestamp = nowIso()
+      const animal: Animal = {
+        id: createId('animal'),
+        herdId,
+        earTag: cleanedEarTag,
+        species,
+        name: name.trim() || undefined,
+        notes: notes.trim() || undefined,
+        isArchived: false,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }
+
+      await db.animals.add(animal)
+
+      setEarTag('')
+      setSpecies('sheep')
+      setName('')
+      setNotes('')
+    } catch (currentError) {
+      setError(getAnimalActionError(currentError, 'Tier konnte nicht gespeichert werden.'))
+    } finally {
+      setSaving(false)
     }
-
-    await db.animals.add(animal)
-
-    setEarTag('')
-    setSpecies('sheep')
-    setName('')
-    setNotes('')
-    setSaving(false)
   }
 
   async function setAnimalArchived(animalId: string, isArchived: boolean) {
-    await db.animals.update(animalId, {
-      isArchived,
-      updatedAt: nowIso(),
-    })
+    setError('')
+
+    try {
+      const updatedCount = await db.animals.update(animalId, {
+        isArchived,
+        updatedAt: nowIso(),
+      })
+
+      if (updatedCount === 0) {
+        throw new Error('Tier wurde nicht gefunden.')
+      }
+    } catch (currentError) {
+      setError(getAnimalActionError(currentError, 'Tierstatus konnte nicht gespeichert werden.'))
+    }
   }
 
   async function deleteAnimal(animal: Animal) {
@@ -87,7 +106,13 @@ export function useHerdDetailAnimalController({
 
     if (!confirmed) return
 
-    await db.animals.delete(animal.id)
+    setError('')
+
+    try {
+      await db.animals.delete(animal.id)
+    } catch (currentError) {
+      setError(getAnimalActionError(currentError, 'Tier konnte nicht gelöscht werden.'))
+    }
   }
 
   function startEdit(animal: Animal) {
@@ -119,28 +144,37 @@ export function useHerdDetailAnimalController({
       return
     }
 
-    const existing = await db.animals
-      .where('earTag')
-      .equalsIgnoreCase(cleanedEarTag)
-      .first()
-
-    if (existing && existing.id !== editingAnimalId) {
-      setEditError('Diese Ohrmarke existiert bereits.')
-      return
-    }
-
     setEditSaving(true)
 
-    await db.animals.update(editingAnimalId, {
-      earTag: cleanedEarTag,
-      species: editSpecies,
-      name: editName.trim() || undefined,
-      notes: editNotes.trim() || undefined,
-      updatedAt: nowIso(),
-    })
+    try {
+      const existing = await db.animals
+        .where('earTag')
+        .equalsIgnoreCase(cleanedEarTag)
+        .first()
 
-    setEditSaving(false)
-    cancelEdit()
+      if (existing && existing.id !== editingAnimalId) {
+        setEditError('Diese Ohrmarke existiert bereits.')
+        return
+      }
+
+      const updatedCount = await db.animals.update(editingAnimalId, {
+        earTag: cleanedEarTag,
+        species: editSpecies,
+        name: editName.trim() || undefined,
+        notes: editNotes.trim() || undefined,
+        updatedAt: nowIso(),
+      })
+
+      if (updatedCount === 0) {
+        throw new Error('Tier wurde nicht gefunden.')
+      }
+
+      cancelEdit()
+    } catch (currentError) {
+      setEditError(getAnimalActionError(currentError, 'Tier konnte nicht gespeichert werden.'))
+    } finally {
+      setEditSaving(false)
+    }
   }
 
   return {

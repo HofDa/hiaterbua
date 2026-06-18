@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/form'
-import { StatusAlert } from '@/components/ui/alert'
+import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
 import { StatCard } from '@/components/ui/stat-card'
 
 type HerdDetailHeaderCardProps = {
@@ -16,6 +16,7 @@ type HerdDetailHeaderCardProps = {
   metaDirty: boolean
   metaSaving: boolean
   metaSaved: boolean
+  metaError: string
   onMetaNameChange: (value: string) => void
   onMetaFallbackCountChange: (value: string) => void
   onMetaNotesChange: (value: string) => void
@@ -35,6 +36,7 @@ export function HerdDetailHeaderCard({
   metaDirty,
   metaSaving,
   metaSaved,
+  metaError,
   onMetaNameChange,
   onMetaFallbackCountChange,
   onMetaNotesChange,
@@ -47,7 +49,7 @@ export function HerdDetailHeaderCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-700">
+            <CardTitle className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
               Herde
             </CardTitle>
           </div>
@@ -126,6 +128,10 @@ export function HerdDetailHeaderCard({
             Herdendaten gespeichert.
           </StatusAlert>
         )}
+
+        {metaError ? (
+          <ErrorAlert className="mt-3">{metaError}</ErrorAlert>
+        ) : null}
       </CardContent>
     </Card>
   )

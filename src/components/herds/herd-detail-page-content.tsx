@@ -20,7 +20,6 @@ import type {
 type HerdDetailPageContentProps = {
   herdId: string
   herd: Herd
-  allAnimals: Animal[]
   animals: Animal[]
   enclosures: Enclosure[]
   assignments: EnclosureAssignment[]
@@ -31,7 +30,6 @@ type HerdDetailPageContentProps = {
 export function HerdDetailPageContent({
   herdId,
   herd,
-  allAnimals,
   animals,
   enclosures,
   assignments,
@@ -74,10 +72,6 @@ export function HerdDetailPageContent({
     enclosuresById,
   })
 
-  const editingAnimal = useMemo(
-    () => animals.find((animal) => animal.id === animalController.editingAnimalId) ?? null,
-    [animalController.editingAnimalId, animals]
-  )
   const currentEnclosure = useMemo(
     () => (activeAssignment ? enclosuresById.get(activeAssignment.enclosureId) ?? null : null),
     [activeAssignment, enclosuresById]
@@ -102,7 +96,7 @@ export function HerdDetailPageContent({
   )
 
   return (
-    <div className="space-y-5 rounded-[2rem] bg-[#d8d0bf] p-1 sm:p-2">
+    <div className="space-y-5 rounded-[2rem] bg-page p-1 sm:p-2">
       <HerdDetailHeaderCard
         isArchived={herd.isArchived}
         activeAnimalsCount={activeAnimalsCount}
@@ -114,6 +108,7 @@ export function HerdDetailPageContent({
         metaDirty={metaController.metaDirty}
         metaSaving={metaController.metaSaving}
         metaSaved={metaController.metaSaved}
+        metaError={metaController.metaError}
         onMetaNameChange={metaController.setMetaName}
         onMetaFallbackCountChange={metaController.setMetaFallbackCount}
         onMetaNotesChange={metaController.setMetaNotes}

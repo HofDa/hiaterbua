@@ -6,7 +6,7 @@ import {
   formatDurationFromIso,
 } from '@/lib/herds/herd-detail-helpers'
 import { Card, CardContent } from '@/components/ui/card'
-import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
+import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/form'
 import { Alert, ErrorAlert } from '@/components/ui/alert'
 import type { Enclosure, EnclosureAssignment } from '@/types/domain'
 
@@ -55,14 +55,14 @@ export function HerdDetailAssignmentCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold tracking-[-0.02em]">1. Pferch-Belegung</h2>
-            <p className="mt-2 text-sm text-neutral-700">
+            <p className="mt-2 text-sm text-ink-muted">
               Aktuellen Pferch der Herde sehen und direkte Wechsel erfassen.
             </p>
           </div>
 
           <Link
             href="/enclosures"
-            className="rounded-[1.1rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-3 text-sm font-semibold text-neutral-950 shadow-sm"
+            className="app-surface-row px-4 py-3 text-sm font-semibold text-ink-strong"
           >
             Zu Pferchen
           </Link>
@@ -70,20 +70,20 @@ export function HerdDetailAssignmentCard({
 
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <Card className="px-4 py-3 shadow-sm">
-          <div className="text-neutral-700">Aktiver Pferch</div>
-          <div className="mt-1 font-medium text-neutral-900">
+          <div className="text-ink-muted">Aktiver Pferch</div>
+          <div className="mt-1 font-medium text-ink">
             {currentEnclosureName ?? 'Keiner'}
           </div>
         </Card>
         <Card className="px-4 py-3 shadow-sm">
-          <div className="text-neutral-700">Aktueller Besatz</div>
-          <div className="mt-1 font-medium text-neutral-900">
+          <div className="text-ink-muted">Aktueller Besatz</div>
+          <div className="mt-1 font-medium text-ink">
             {activeAssignment?.count ?? effectiveHerdCount ?? 'unbekannt'}
           </div>
         </Card>
         <Card className="px-4 py-3 shadow-sm">
-          <div className="text-neutral-700">Seit</div>
-          <div className="mt-1 font-medium text-neutral-900">
+          <div className="text-ink-muted">Seit</div>
+          <div className="mt-1 font-medium text-ink">
             {activeAssignment?.startTime
               ? formatDateTime(activeAssignment.startTime)
               : 'Nicht zugewiesen'}
@@ -92,7 +92,7 @@ export function HerdDetailAssignmentCard({
       </div>
 
       {activeAssignment && currentEnclosureName ? (
-        <Card className="mt-4 px-4 py-4 text-sm text-[#17130f]">
+        <Card className="mt-4 px-4 py-4 text-sm text-ink">
           <div className="font-medium">{currentEnclosureName}</div>
           <div className="mt-1">
             Verweildauer {formatDurationFromIso(activeAssignment.startTime)}
@@ -113,8 +113,8 @@ export function HerdDetailAssignmentCard({
       ) : (
         <form className="mt-4 space-y-4" onSubmit={onSubmit}>
           <div>
-            <div className="mb-1 text-sm font-medium text-neutral-700">Pferch wählen</div>
-            <div className="flex flex-wrap gap-2 rounded-[1.35rem] border-2 border-[#ccb98a] bg-[#fffdf6] p-2">
+            <div className="mb-1 text-sm font-medium text-ink-muted">Pferch wählen</div>
+            <div className="flex flex-wrap gap-2 rounded-[1.35rem] border-2 border-border bg-surface-raised p-2">
               {availableEnclosures.map((enclosure) => {
                 const isSelected = enclosure.id === selectedEnclosureId
 
@@ -127,8 +127,8 @@ export function HerdDetailAssignmentCard({
                     className={[
                       'rounded-[1rem] px-3 py-2 text-left text-sm font-semibold transition',
                       isSelected
-                        ? 'border border-[#5a5347] bg-[#f1efeb] text-[#17130f]'
-                        : 'border border-transparent bg-[#fffdf6] text-neutral-900 hover:border-[#ccb98a]',
+                        ? 'border border-border-strong bg-surface-muted text-ink'
+                        : 'border border-transparent bg-surface-raised text-ink hover:border-border',
                     ].join(' ')}
                   >
                     {enclosure.name}
@@ -176,11 +176,11 @@ export function HerdDetailAssignmentCard({
       )}
 
       <div className="mt-5">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-neutral-700">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-ink-muted">
           Letzte Aufenthalte
         </h3>
         {recentAssignments.length === 0 ? (
-          <Alert variant="info" className="mt-2 text-sm text-neutral-700">
+          <Alert variant="info" className="mt-2 text-sm text-ink-muted">
             Noch keine Pferchwechsel für diese Herde vorhanden.
           </Alert>
         ) : (
@@ -190,16 +190,16 @@ export function HerdDetailAssignmentCard({
 
               return (
                 <Card key={assignment.id} className="px-4 py-3 text-sm shadow-sm">
-                  <div className="font-medium text-neutral-900">
+                  <div className="font-medium text-ink">
                     {enclosure?.name ?? 'Unbekannter Pferch'}
                   </div>
-                  <div className="mt-1 text-neutral-700">
+                  <div className="mt-1 text-ink-muted">
                     {formatDateTime(assignment.startTime)}
                     {assignment.endTime
                       ? ` bis ${formatDateTime(assignment.endTime)}`
                       : ' bis jetzt'}
                   </div>
-                  <div className="mt-1 text-neutral-700">
+                  <div className="mt-1 text-ink-muted">
                     Dauer {formatDurationFromIso(assignment.startTime, assignment.endTime)} ·
                     {' '}
                     Besatz {assignment.count ?? effectiveHerdCount ?? 'unbekannt'}

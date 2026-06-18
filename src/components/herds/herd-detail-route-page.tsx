@@ -12,7 +12,6 @@ type HerdDetailRoutePageProps = {
 export function HerdDetailRoutePage({ herdId }: HerdDetailRoutePageProps) {
   const router = useRouter()
   const herd = useLiveQuery(() => (herdId ? db.herds.get(herdId) : undefined), [herdId])
-  const allAnimals = useLiveQuery(() => db.animals.toArray(), [])
   const animals = useLiveQuery(
     () => (herdId ? db.animals.where('herdId').equals(herdId).toArray() : []),
     [herdId]
@@ -28,7 +27,7 @@ export function HerdDetailRoutePage({ herdId }: HerdDetailRoutePageProps) {
 
   if (!herdId) {
     return (
-      <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="app-panel-sm p-5">
         Herde nicht angegeben.
       </div>
     )
@@ -41,7 +40,7 @@ export function HerdDetailRoutePage({ herdId }: HerdDetailRoutePageProps) {
     assignments === undefined
   ) {
     return (
-      <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="app-panel-sm p-5">
         Lade Daten …
       </div>
     )
@@ -49,7 +48,7 @@ export function HerdDetailRoutePage({ herdId }: HerdDetailRoutePageProps) {
 
   if (!herd) {
     return (
-      <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="app-panel-sm p-5">
         Herde nicht gefunden.
       </div>
     )
@@ -59,7 +58,6 @@ export function HerdDetailRoutePage({ herdId }: HerdDetailRoutePageProps) {
     <HerdDetailPageContent
       herdId={herdId}
       herd={herd}
-      allAnimals={allAnimals ?? []}
       animals={animals}
       enclosures={enclosures}
       assignments={assignments}
