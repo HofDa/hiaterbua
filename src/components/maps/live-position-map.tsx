@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils/cn'
 export function LivePositionMap() {
   const [isMobileMapOpen, setIsMobileMapOpen] = useState(false)
   const {
-    canvasPanelProps,
+    containerRef,
+    resizeMap,
     workflowPanelsProps,
     sidebarPanelProps,
   } = useLivePositionMapScreen()
@@ -19,12 +20,11 @@ export function LivePositionMap() {
   const mobileMapSummary = sidebarPanelProps.filteredEnclosures.length
     ? `${sidebarPanelProps.filteredEnclosures.length} Pferche in Reichweite`
     : 'Noch keine Pferche sichtbar'
-  const resizeMap = canvasPanelProps.onResizeMap
 
   useEffect(() => {
     if (!isMobileMapOpen) return
 
-    resizeMap?.()
+    resizeMap()
   }, [isMobileMapOpen, resizeMap])
 
   function handleMobilePanelChange(nextPanel: typeof workflowPanelsProps.mobilePanel) {
@@ -90,7 +90,7 @@ export function LivePositionMap() {
                 'lg:max-h-none lg:overflow-visible lg:opacity-100 lg:pointer-events-auto',
               )}
             >
-              <LivePositionMapCanvasPanel {...canvasPanelProps} />
+              <LivePositionMapCanvasPanel containerRef={containerRef} />
             </div>
 
             <div className="lg:hidden">

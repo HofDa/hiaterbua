@@ -1,141 +1,82 @@
 'use client'
 
-import { useState, type FormEvent, type Ref } from 'react'
+import { useState, type Ref } from 'react'
 import { LivePositionMapDesktopDrawOverlay } from '@/components/maps/live-position-map-desktop-draw-overlay'
 import { LivePositionMapEditOverlay } from '@/components/maps/live-position-map-edit-overlay'
 import { LivePositionMapMobileDrawToolbar } from '@/components/maps/live-position-map-mobile-draw-toolbar'
 import { LivePositionMapMobileWalkToolbar } from '@/components/maps/live-position-map-mobile-walk-toolbar'
 import { MapTopControls } from '@/components/maps/map-top-controls'
 import { ControlsIcon } from '@/components/maps/map-toolbar-icons'
+import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 import { cn } from '@/lib/utils/cn'
-import type {
-  MobilePanel,
-  PositionData,
-} from '@/components/maps/live-position-map-types'
-import type { MapBaseLayer } from '@/types/domain'
 
 export type LivePositionMapCanvasPanelProps = {
   containerRef: Ref<HTMLDivElement>
-  mobilePanel: MobilePanel
-  editingEnclosureId: string | null
-  position: PositionData | null
-  isBaseLayerMenuOpen: boolean
-  baseLayer: MapBaseLayer
-  showSurveyAreas: boolean
-  prefetchingMapArea: boolean
-  prefetchStatus: string
-  isDrawing: boolean
-  isWalking: boolean
-  draftPointsLength: number
-  draftAreaM2: number
-  name: string
-  notes: string
-  saveError: string
-  isSaving: boolean
-  walkPoints: PositionData[]
-  walkPointsLength: number
-  walkAreaM2: number
-  walkName: string
-  walkNotes: string
-  walkError: string
-  isWalkSaving: boolean
-  isWalkPointsOpen: boolean
-  selectedWalkPointIndex: number | null
-  selectedWalkPoint: PositionData | null
-  editGeometryPointsLength: number
-  selectedEditPointIndex: number | null
-  isAddingEditPoint: boolean
-  isEditing: boolean
-  onCenterMap: () => void
-  onToggleBaseLayerMenu: () => void
-  onUpdateBaseLayer: (nextBaseLayer: MapBaseLayer) => void | Promise<void>
-  onToggleShowSurveyAreas: () => void
-  onPrefetchVisibleMapArea: () => void | Promise<void>
-  onResizeMap?: () => void
-  onStartDrawing: () => void
-  onFinishDrawing: () => void
-  onUndoLastPoint: () => void
-  onClearDraft: () => void
-  onNameChange: (value: string) => void
-  onNotesChange: (value: string) => void
-  onSaveEnclosure: (event: FormEvent<HTMLFormElement>) => void
-  onMobilePanelChange: (panel: MobilePanel) => void
-  onToggleWalkPoints: () => void
-  onSelectedWalkPointIndexChange: (index: number | null) => void
-  onStartWalkMode: () => void | Promise<void>
-  onStopWalkMode: () => void
-  onUndoLastWalkPoint: () => void | Promise<void>
-  onRemoveWalkPointAtIndex: (index: number) => void | Promise<void>
-  onDiscardWalkMode: () => void | Promise<void>
-  onWalkNameChange: (value: string) => void
-  onWalkNotesChange: (value: string) => void
-  onSaveWalkEnclosure: (event: FormEvent<HTMLFormElement>) => void
-  onStartAddEditPoint: () => void
-  onRemoveSelectedEditPoint: () => void
-  onPersistEditedEnclosure: () => void | Promise<void>
-  onCancelEditEnclosure: () => void
 }
 
-export function LivePositionMapCanvasPanel({
-  containerRef,
-  mobilePanel,
-  editingEnclosureId,
-  position,
-  isBaseLayerMenuOpen,
-  baseLayer,
-  showSurveyAreas,
-  prefetchingMapArea,
-  prefetchStatus,
-  isDrawing,
-  isWalking,
-  draftPointsLength,
-  draftAreaM2,
-  name,
-  notes,
-  saveError,
-  isSaving,
-  walkPoints,
-  walkPointsLength,
-  walkAreaM2,
-  walkName,
-  walkNotes,
-  walkError,
-  isWalkSaving,
-  isWalkPointsOpen,
-  selectedWalkPointIndex,
-  selectedWalkPoint,
-  editGeometryPointsLength,
-  isAddingEditPoint,
-  isEditing,
-  selectedEditPointIndex,
-  onCenterMap,
-  onToggleBaseLayerMenu,
-  onUpdateBaseLayer,
-  onToggleShowSurveyAreas,
-  onPrefetchVisibleMapArea,
-  onStartDrawing,
-  onFinishDrawing,
-  onUndoLastPoint,
-  onClearDraft,
-  onNameChange,
-  onNotesChange,
-  onSaveEnclosure,
-  onMobilePanelChange,
-  onToggleWalkPoints,
-  onSelectedWalkPointIndexChange,
-  onStartWalkMode,
-  onStopWalkMode,
-  onUndoLastWalkPoint,
-  onRemoveWalkPointAtIndex,
-  onDiscardWalkMode,
-  onWalkNameChange,
-  onWalkNotesChange,
-  onSaveWalkEnclosure,
-  onStartAddEditPoint,
-  onRemoveSelectedEditPoint,
-  onPersistEditedEnclosure,
-  onCancelEditEnclosure,
-}: LivePositionMapCanvasPanelProps) {
+export function LivePositionMapCanvasPanel({ containerRef }: LivePositionMapCanvasPanelProps) {
+  const {
+    mobilePanel,
+    editingEnclosureId,
+    position,
+    isBaseLayerMenuOpen,
+    baseLayer,
+    showSurveyAreas,
+    prefetchingMapArea,
+    prefetchStatus,
+    isDrawing,
+    isWalking,
+    draftPointsLength,
+    draftAreaM2,
+    name,
+    notes,
+    saveError,
+    isSaving,
+    walkPoints,
+    walkPointsLength,
+    walkAreaM2,
+    walkName,
+    walkNotes,
+    walkError,
+    isWalkSaving,
+    isWalkPointsOpen,
+    selectedWalkPointIndex,
+    selectedWalkPoint,
+    editGeometryPointsLength,
+    selectedEditPointIndex,
+    isAddingEditPoint,
+    isEditing,
+  } = useLivePositionMapStore((state) => state.canvas)
+  const {
+    onCenterMap,
+    onToggleBaseLayerMenu,
+    onUpdateBaseLayer,
+    onToggleShowSurveyAreas,
+    onPrefetchVisibleMapArea,
+    onStartDrawing,
+    onFinishDrawing,
+    onUndoLastPoint,
+    onClearDraft,
+    onNameChange,
+    onNotesChange,
+    onSaveEnclosure,
+    onMobilePanelChange,
+    onToggleWalkPoints,
+    onSelectedWalkPointIndexChange,
+    onStartWalkMode,
+    onStopWalkMode,
+    onUndoLastWalkPoint,
+    onRemoveWalkPointAtIndex,
+    onDiscardWalkMode,
+    onWalkNameChange,
+    onWalkNotesChange,
+    onSaveWalkEnclosure,
+    onStartAddEditPoint,
+    onRemoveSelectedEditPoint,
+    onPersistEditedEnclosure,
+    onCancelEditEnclosure,
+  } = useLivePositionMapStore((state) => state.canvasHandles)
+
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false)
   const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(false)
 

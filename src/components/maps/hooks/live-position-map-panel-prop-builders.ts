@@ -1,5 +1,4 @@
 import type { Dispatch, Ref, SetStateAction } from 'react'
-import type { LivePositionMapCanvasPanelProps } from '@/components/maps/live-position-map-canvas-panel'
 import type { LivePositionSidebarPanelProps } from '@/components/maps/live-position-sidebar-panel'
 import type { LivePositionWorkflowPanelsProps } from '@/components/maps/live-position-workflow-panels'
 import type { PositionData } from '@/components/maps/live-position-map-types'
@@ -92,80 +91,6 @@ export type UseLivePositionMapPanelPropsOptions = {
   runtime: LivePositionMapPanelRuntime
   actions: LivePositionMapPanelActions
   presentation: LivePositionMapPanelPresentation
-}
-
-
-export function buildCanvasPanelProps({
-  state,
-  data,
-  runtime,
-  actions,
-}: Pick<UseLivePositionMapPanelPropsOptions, 'state' | 'data' | 'runtime' | 'actions'>): LivePositionMapCanvasPanelProps {
-  const { gps, draw, walk, selection, edit } = state
-
-  return {
-    containerRef: runtime.containerRef,
-    mobilePanel: selection.mobilePanel,
-    editingEnclosureId: edit.editingEnclosureId,
-    position: gps.position,
-    isBaseLayerMenuOpen: runtime.isBaseLayerMenuOpen,
-    baseLayer: runtime.baseLayer,
-    showSurveyAreas: runtime.showSurveyAreas,
-    prefetchingMapArea: runtime.prefetchingMapArea,
-    prefetchStatus: runtime.prefetchStatus,
-    isDrawing: draw.isDrawing,
-    isWalking: walk.isWalking,
-    draftPointsLength: draw.draftPoints.length,
-    draftAreaM2: data.draftAreaM2,
-    name: draw.name,
-    notes: draw.notes,
-    saveError: draw.saveError,
-    isSaving: draw.isSaving,
-    walkPoints: walk.walkPoints,
-    walkPointsLength: walk.walkPoints.length,
-    walkAreaM2: data.walkAreaM2,
-    walkName: walk.walkName,
-    walkNotes: walk.walkNotes,
-    walkError: walk.walkError,
-    isWalkSaving: walk.isWalkSaving,
-    isWalkPointsOpen: walk.isWalkPointsOpen,
-    selectedWalkPointIndex: walk.selectedWalkPointIndex,
-    selectedWalkPoint: data.selectedWalkPoint,
-    editGeometryPointsLength: edit.editGeometryPoints.length,
-    selectedEditPointIndex: edit.selectedEditPointIndex,
-    isAddingEditPoint: edit.isAddingEditPoint,
-    isEditing: edit.isEditing,
-    onCenterMap: runtime.centerMapOnPosition,
-    onToggleBaseLayerMenu: () => runtime.setIsBaseLayerMenuOpen((current) => !current),
-    onUpdateBaseLayer: runtime.updateBaseLayer,
-    onToggleShowSurveyAreas: () => runtime.setShowSurveyAreas((current) => !current),
-    onPrefetchVisibleMapArea: runtime.prefetchVisibleMapArea,
-    onResizeMap: runtime.resizeMap,
-    onStartDrawing: actions.startDrawing,
-    onFinishDrawing: actions.finishDrawing,
-    onUndoLastPoint: actions.undoLastPoint,
-    onClearDraft: actions.clearDraft,
-    onNameChange: draw.setName,
-    onNotesChange: draw.setNotes,
-    onSaveEnclosure: actions.saveEnclosure,
-    onMobilePanelChange: selection.setMobilePanel,
-    onToggleWalkPoints: () => walk.setIsWalkPointsOpen((current) => !current),
-    onSelectedWalkPointIndexChange: walk.setSelectedWalkPointIndex,
-    onStartWalkMode: actions.startWalkMode,
-    onStopWalkMode: actions.stopWalkMode,
-    onUndoLastWalkPoint: actions.undoLastWalkPoint,
-    onRemoveWalkPointAtIndex: actions.removeWalkPointAtIndex,
-    onDiscardWalkMode: actions.discardWalkMode,
-    onWalkNameChange: walk.setWalkName,
-    onWalkNotesChange: walk.setWalkNotes,
-    onSaveWalkEnclosure: actions.saveWalkEnclosure,
-    onStartAddEditPoint: actions.startAddEditPoint,
-    onRemoveSelectedEditPoint: actions.removeSelectedEditPoint,
-    onPersistEditedEnclosure: async () => {
-      await actions.persistEditedEnclosure()
-    },
-    onCancelEditEnclosure: actions.cancelEditEnclosure,
-  }
 }
 
 export function buildWorkflowPanelsProps({

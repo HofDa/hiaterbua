@@ -1,5 +1,4 @@
 import {
-  buildCanvasPanelProps,
   buildSidebarPanelProps,
   buildWorkflowPanelsProps,
   type UseLivePositionMapPanelPropsOptions,
@@ -13,7 +12,6 @@ export function useLivePositionMapPanelProps({
   presentation,
 }: UseLivePositionMapPanelPropsOptions) {
   return {
-    canvasPanelProps: buildCanvasPanelProps({ state, data, runtime, actions }),
     workflowPanelsProps: buildWorkflowPanelsProps({ state, data, actions, presentation }),
     sidebarPanelProps: buildSidebarPanelProps({
       state,
