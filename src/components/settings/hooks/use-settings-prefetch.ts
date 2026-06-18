@@ -80,12 +80,27 @@ export function useSettingsPrefetch(options: {
 
     setPrefetchProgress({ completed: 0, total: urls.length })
 
-    await prefetchTileUrls(urls, (completed, total) =>
+    const result = await prefetchTileUrls(urls, (completed, total) =>
       setPrefetchProgress({ completed, total })
     )
 
     onTileCacheCountChange(await getTileCacheCount())
-    setPrefetchStatus(`${successMessage} (${urls.length} Tiles).`)
+
+    if (result.failed === 0) {
+      setPrefetchStatus(`${successMessage} (${result.succeeded} Tiles).`)
+      return
+    }
+
+    if (result.succeeded > 0) {
+      setPrefetchStatus(
+        `${successMessage} teilweise (${result.succeeded} von ${result.total} Tiles, ${result.failed} fehlgeschlagen).`
+      )
+      return
+    }
+
+    setPrefetchError(
+      `Keine Tiles gesichert (${result.failed} von ${result.total} fehlgeschlagen). Netzverbindung und Speicher prüfen.`
+    )
   }
 
   function applyCurrentPosition() {

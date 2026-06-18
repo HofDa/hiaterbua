@@ -15,7 +15,7 @@
 
       if (data.clearStoredTiles) {
         event.waitUntil(
-          Promise.all([caches.delete(shared.TILE_CACHE_NAME), clearTileStore()]).then(() => {
+          Promise.allSettled([caches.delete(shared.TILE_CACHE_NAME), clearTileStore()]).then(() => {
             scheduleTileCacheUpdatedMessage()
           })
         )
@@ -34,9 +34,17 @@
       return requestType === 'GetMap' && service === 'WMS'
     }
 
+    async function openTileCacheBestEffort() {
+      try {
+        return await caches.open(shared.TILE_CACHE_NAME)
+      } catch {
+        return null
+      }
+    }
+
     async function handleTileRequest(request) {
-      const cache = await caches.open(shared.TILE_CACHE_NAME)
-      const cachedResponse = await cache.match(request)
+      const cache = await openTileCacheBestEffort()
+      const cachedResponse = cache ? await cache.match(request).catch(() => null) : null
 
       if (cachedResponse) {
         if (tileCachingEnabled) {
@@ -45,7 +53,13 @@
         return cachedResponse
       }
 
-      const storedTile = await getStoredTile(request.url)
+      let storedTile = null
+      try {
+        storedTile = await getStoredTile(request.url)
+      } catch {
+        // If IndexedDB is temporarily unavailable, still try the network.
+      }
+
       if (storedTile) {
         if (tileCachingEnabled) {
           void updateTileInBackground(cache, request)
@@ -55,9 +69,7 @@
 
       const networkResponse = await fetch(request)
       if (tileCachingEnabled && (networkResponse.ok || networkResponse.type === 'opaque')) {
-        await cache.put(request, networkResponse.clone())
-        await putStoredTile(request, networkResponse.clone())
-        scheduleTileCacheUpdatedMessage()
+        void persistTileBestEffort(cache, request, networkResponse)
       }
 
       return networkResponse
@@ -67,12 +79,36 @@
       try {
         const networkResponse = await fetch(request)
         if (networkResponse.ok || networkResponse.type === 'opaque') {
-          await cache.put(request, networkResponse.clone())
-          await putStoredTile(request, networkResponse.clone())
-          scheduleTileCacheUpdatedMessage()
+          await persistTileBestEffort(cache, request, networkResponse)
         }
       } catch {
         // Ignore background refresh failures and keep the cached tile.
+      }
+    }
+
+    async function persistTileBestEffort(cache, request, response) {
+      let didPersist = false
+      const cacheResponse = response.clone()
+      const storedResponse = response.clone()
+
+      if (cache) {
+        try {
+          await cache.put(request, cacheResponse)
+          didPersist = true
+        } catch {
+          // Cache writes can fail under storage pressure. Keep serving the tile.
+        }
+      }
+
+      try {
+        await putStoredTile(request, storedResponse)
+        didPersist = true
+      } catch {
+        // IndexedDB is a secondary offline store; failures must not break maps.
+      }
+
+      if (didPersist) {
+        scheduleTileCacheUpdatedMessage()
       }
     }
 

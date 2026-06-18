@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { validateRequired, validateNumber, sanitizeString } from '@/lib/utils/validation'
+import type { Animal, Herd } from '@/types/domain'
 
 export interface ValidationRule {
   required?: boolean
@@ -181,11 +182,12 @@ export function useFormValidation<T extends Record<string, unknown>>(
 }
 
 // Helper hooks for common form patterns
-export function useHerdForm(initialHerd?: any) {
+export function useHerdForm(initialHerd?: Partial<Herd>) {
   const initialValues = {
-    name: initialHerd?.name || '',
-    notes: initialHerd?.notes || '',
-    fallbackCount: initialHerd?.fallbackCount || ''
+    name: initialHerd?.name ?? '',
+    notes: initialHerd?.notes ?? '',
+    fallbackCount:
+      initialHerd?.fallbackCount != null ? String(initialHerd.fallbackCount) : ''
   }
 
   const validationRules: ValidationRules = {
@@ -214,12 +216,12 @@ export function useHerdForm(initialHerd?: any) {
   return useFormValidation(initialValues, validationRules)
 }
 
-export function useAnimalForm(initialAnimal?: any) {
+export function useAnimalForm(initialAnimal?: Partial<Animal>) {
   const initialValues = {
-    earTag: initialAnimal?.earTag || '',
-    name: initialAnimal?.name || '',
-    species: initialAnimal?.species || 'cattle',
-    notes: initialAnimal?.notes || ''
+    earTag: initialAnimal?.earTag ?? '',
+    name: initialAnimal?.name ?? '',
+    species: initialAnimal?.species ?? 'cattle',
+    notes: initialAnimal?.notes ?? ''
   }
 
   const validationRules: ValidationRules = {

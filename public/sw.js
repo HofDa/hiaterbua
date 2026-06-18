@@ -29,7 +29,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const cacheNames = await caches.keys()
-      await Promise.all(
+      await Promise.allSettled(
         cacheNames
           .filter((cacheName) => {
             if (cacheName === tileCache.cacheName) return false

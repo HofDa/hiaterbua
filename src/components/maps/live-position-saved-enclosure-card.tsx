@@ -121,7 +121,7 @@ export function LivePositionSavedEnclosureCard({
     <div
       className={[
         'min-w-0 overflow-hidden rounded-2xl px-4 py-3',
-        isSelected ? 'bg-accent' : 'bg-neutral-50',
+        isSelected ? 'bg-accent' : 'bg-surface-raised',
       ].join(' ')}
     >
       <button
@@ -131,21 +131,21 @@ export function LivePositionSavedEnclosureCard({
         className="flex w-full min-w-0 items-start justify-between gap-3 text-left"
       >
         <div className="min-w-0">
-          <div className="font-medium text-neutral-900">{enclosure.name}</div>
-          <div className="mt-1 text-sm text-neutral-600">
+          <div className="font-medium text-ink">{enclosure.name}</div>
+          <div className="mt-1 text-sm text-ink-muted">
             {formatArea(enclosure.areaM2)} · {enclosure.pointsCount ?? 0} Punkte
           </div>
         </div>
         <div className="shrink-0 text-right">
-          <div className="text-xs text-neutral-500">
+          <div className="text-xs text-ink-soft">
             {new Date(enclosure.updatedAt).toLocaleDateString('de-DE')}
           </div>
-          <div className="mt-1 text-base text-neutral-900">{isExpanded ? '−' : '+'}</div>
+          <div className="mt-1 text-base text-ink">{isExpanded ? '−' : '+'}</div>
         </div>
       </button>
 
       {isExpanded && enclosure.notes ? (
-        <p className="mt-2 text-sm text-neutral-600">{enclosure.notes}</p>
+        <p className="mt-2 text-sm text-ink-muted">{enclosure.notes}</p>
       ) : null}
 
       {isExpanded ? (

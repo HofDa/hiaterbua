@@ -112,25 +112,27 @@ export function useWorkPageSessionActions({
       const sessionId = createId('work_session')
       const parsedReminderIntervalMin = Number.parseInt(reminderIntervalMin, 10) || 0
 
-      await db.workSessions.add({
-        id: sessionId,
-        type: workType,
-        activityId: workActivityId,
-        status: 'active',
-        herdId: selectedHerdId || null,
-        enclosureId: selectedEnclosureId || null,
-        startTime: timestamp,
-        endTime: null,
-        activeSince: timestamp,
-        durationS: 0,
-        reminderIntervalMin: parsedReminderIntervalMin > 0 ? parsedReminderIntervalMin : null,
-        lastReminderAt: parsedReminderIntervalMin > 0 ? timestamp : null,
-        notes: notes.trim() || undefined,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      })
+      await db.transaction('rw', db.workSessions, db.workEvents, async () => {
+        await db.workSessions.add({
+          id: sessionId,
+          type: workType,
+          activityId: workActivityId,
+          status: 'active',
+          herdId: selectedHerdId || null,
+          enclosureId: selectedEnclosureId || null,
+          startTime: timestamp,
+          endTime: null,
+          activeSince: timestamp,
+          durationS: 0,
+          reminderIntervalMin: parsedReminderIntervalMin > 0 ? parsedReminderIntervalMin : null,
+          lastReminderAt: parsedReminderIntervalMin > 0 ? timestamp : null,
+          notes: notes.trim() || undefined,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
 
-      await addWorkEvent(sessionId, 'start', notes)
+        await addWorkEvent(sessionId, 'start', notes)
+      })
 
       if (
         parsedReminderIntervalMin > 0 &&
@@ -166,8 +168,14 @@ export function useWorkPageSessionActions({
       const timestamp = nowIso()
       const nextPatch = getUpdatedSessionStatusPatch(activeSession, nextStatus, timestamp)
 
-      await db.workSessions.update(activeSession.id, nextPatch)
-      await addWorkEvent(activeSession.id, getStatusUpdateEventType(nextStatus))
+      await db.transaction('rw', db.workSessions, db.workEvents, async () => {
+        const updatedCount = await db.workSessions.update(activeSession.id, nextPatch)
+        if (updatedCount === 0) {
+          throw new Error('Arbeitseinsatz wurde nicht gefunden.')
+        }
+
+        await addWorkEvent(activeSession.id, getStatusUpdateEventType(nextStatus))
+      })
 
       setStatusMessage(getStatusUpdateMessage(nextStatus))
 

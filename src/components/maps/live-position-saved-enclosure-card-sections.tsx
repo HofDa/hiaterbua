@@ -10,8 +10,8 @@ import type { Enclosure } from '@/types/domain'
 function SidebarStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[1rem] border border-border bg-surface-raised px-3 py-3">
-      <div className="text-xs font-medium text-neutral-600">{label}</div>
-      <div className="mt-1 text-base font-semibold text-neutral-950">{value}</div>
+      <div className="text-xs font-medium text-ink-muted">{label}</div>
+      <div className="mt-1 text-base font-semibold text-ink-strong">{value}</div>
     </div>
   )
 }
@@ -22,8 +22,8 @@ export function LivePositionSavedEnclosureStatsSection({
   stats: FilteredEnclosureItem['stats'] | null | undefined
 }) {
   return (
-    <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-neutral-800">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-600">
+    <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-ink-soft">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
         Auswertung
       </div>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -36,9 +36,9 @@ export function LivePositionSavedEnclosureStatsSection({
         <SidebarStat label="Ø Besatz" value={String(stats?.averageCount ?? 'unbekannt')} />
       </div>
       {stats?.lastEndTime ? (
-        <div className="mt-2 text-xs text-neutral-700">
+        <div className="mt-2 text-xs text-ink-muted">
           Letzte Nutzung:{' '}
-          <span className="font-medium text-neutral-900">
+          <span className="font-medium text-ink">
             {formatDateTime(stats.lastEndTime)}
           </span>
         </div>
@@ -53,14 +53,14 @@ export function LivePositionSavedEnclosureTrackSummarySection({
   selectedTrackSummary: WalkTrackSummary
 }) {
   return (
-    <div className="mt-3 rounded-2xl bg-surface-raised px-4 py-3 text-sm text-neutral-600">
+    <div className="mt-3 rounded-2xl bg-surface-raised px-4 py-3 text-sm text-ink-muted">
       <div>
         Spurpunkte:{' '}
-        <span className="font-medium text-neutral-900">{selectedTrackSummary.count}</span>
+        <span className="font-medium text-ink">{selectedTrackSummary.count}</span>
       </div>
       <div className="mt-1">
         Mittlere Genauigkeit:{' '}
-        <span className="font-medium text-neutral-900">
+        <span className="font-medium text-ink">
           {selectedTrackSummary.avgAccuracyM !== null
             ? formatAccuracy(selectedTrackSummary.avgAccuracyM)
             : 'unbekannt'}
@@ -68,7 +68,7 @@ export function LivePositionSavedEnclosureTrackSummarySection({
       </div>
       <div className="mt-1">
         Start:{' '}
-        <span className="font-medium text-neutral-900">
+        <span className="font-medium text-ink">
           {selectedTrackSummary.firstTimestamp
             ? new Date(selectedTrackSummary.firstTimestamp).toLocaleString('de-DE')
             : 'unbekannt'}
@@ -76,7 +76,7 @@ export function LivePositionSavedEnclosureTrackSummarySection({
       </div>
       <div className="mt-1">
         Ende:{' '}
-        <span className="font-medium text-neutral-900">
+        <span className="font-medium text-ink">
           {selectedTrackSummary.lastTimestamp
             ? new Date(selectedTrackSummary.lastTimestamp).toLocaleString('de-DE')
             : 'unbekannt'}
@@ -115,14 +115,14 @@ export function LivePositionSavedEnclosureActionsSection({
       <button
         type="button"
         onClick={() => onFocusEnclosure(enclosure)}
-        className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-neutral-900"
+        className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-ink"
       >
         Fokus
       </button>
       <button
         type="button"
         onClick={() => onStartEditEnclosure(enclosure)}
-        className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-neutral-900"
+        className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-ink"
       >
         Bearbeiten
       </button>
@@ -130,7 +130,7 @@ export function LivePositionSavedEnclosureActionsSection({
         <button
           type="button"
           onClick={() => onToggleShowSelectedTrack(enclosure.id)}
-          className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-neutral-900"
+          className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-ink"
         >
           {isSelected && showSelectedTrack ? 'Spur ausblenden' : 'Spur zeigen'}
         </button>
@@ -138,7 +138,7 @@ export function LivePositionSavedEnclosureActionsSection({
       <button
         type="button"
         onClick={() => onDeleteEnclosure(enclosure)}
-        className="rounded-2xl bg-red-50 px-3 py-3 text-sm font-medium text-red-700"
+        className="rounded-2xl bg-error-surface px-3 py-3 text-sm font-medium text-error-ink"
       >
         Löschen
       </button>

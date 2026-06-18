@@ -11,7 +11,7 @@ export default function WorkPage() {
 
   if (workSessions === undefined || herds === undefined || enclosures === undefined) {
     return (
-      <div className="rounded-[1.75rem] border-2 border-[#3a342a] bg-[#fff8ea] p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+      <div className="app-panel-sm p-5">
         Lade Daten ...
       </div>
     )

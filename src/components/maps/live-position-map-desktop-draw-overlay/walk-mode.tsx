@@ -48,7 +48,7 @@ function LivePositionMapDesktopWalkPointsList({
             key={`${point.timestamp}-${index}`}
             className={[
               'grid grid-cols-[1fr_auto] gap-3 rounded-2xl px-3 py-3 text-sm',
-              selectedWalkPointIndex === index ? 'bg-accent' : 'bg-neutral-50',
+              selectedWalkPointIndex === index ? 'bg-accent' : 'bg-surface-raised',
             ].join(' ')}
           >
             <button
@@ -56,15 +56,15 @@ function LivePositionMapDesktopWalkPointsList({
               onClick={() => onSelectedWalkPointIndexChange(index)}
               className="text-left"
             >
-              <div className="font-medium text-neutral-900">Punkt {index + 1}</div>
-              <div className="mt-1 text-xs text-neutral-500">
+              <div className="font-medium text-ink">Punkt {index + 1}</div>
+              <div className="mt-1 text-xs text-ink-soft">
                 {formatPointTimestamp(point.timestamp)} · {formatAccuracy(point.accuracy)}
               </div>
             </button>
             <button
               type="button"
               onClick={() => onRemoveWalkPointAtIndex(index)}
-              className="rounded-2xl border border-border bg-surface-raised px-3 py-2 text-xs font-medium text-neutral-900"
+              className="rounded-2xl border border-border bg-surface-raised px-3 py-2 text-xs font-medium text-ink"
             >
               Entfernen
             </button>
@@ -168,25 +168,25 @@ export function LivePositionMapDesktopWalkMode({
           </MobileMapToolbarButton>
         </MobileMapToolbar>
 
-        <div className="min-w-[10rem] flex-1 px-1 text-xs font-medium text-neutral-700">
+        <div className="min-w-[10rem] flex-1 px-1 text-xs font-medium text-ink-muted">
           {walkHint}
         </div>
       </div>
 
       <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <div className="rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-600">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
             Genauigkeit
           </div>
-          <div className="mt-1 font-medium text-neutral-900">
+          <div className="mt-1 font-medium text-ink">
             {averageAccuracy !== null ? formatAccuracy(averageAccuracy) : 'noch keine Daten'}
           </div>
         </div>
         <div className="rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-600">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
             Letzter Punkt
           </div>
-          <div className="mt-1 font-medium text-neutral-900">
+          <div className="mt-1 font-medium text-ink">
             {latestPoint ? formatTimestamp(latestPoint.timestamp) : 'noch keiner'}
           </div>
         </div>
@@ -195,7 +195,7 @@ export function LivePositionMapDesktopWalkMode({
             type="button"
             onClick={onToggleWalkPoints}
             aria-expanded={isWalkPointsOpen}
-            className="h-full min-h-11 rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-neutral-950"
+            className="h-full min-h-11 rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink-strong"
           >
             {isWalkPointsOpen ? 'Punkte zu' : 'Punkte'}
           </button>
@@ -217,7 +217,7 @@ export function LivePositionMapDesktopWalkMode({
         </label>
         <input
           id="desktop-walk-enclosure-name"
-          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
+          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-ink-strong outline-none placeholder:text-ink-soft focus:border-border-strong"
           value={walkName}
           onChange={(event) => onWalkNameChange(event.target.value)}
           placeholder="Pferchname"
@@ -228,7 +228,7 @@ export function LivePositionMapDesktopWalkMode({
         </label>
         <input
           id="desktop-walk-enclosure-notes"
-          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
+          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-ink-strong outline-none placeholder:text-ink-soft focus:border-border-strong"
           value={walkNotes}
           onChange={(event) => onWalkNotesChange(event.target.value)}
           placeholder="Notiz optional"
@@ -243,7 +243,7 @@ export function LivePositionMapDesktopWalkMode({
         </button>
 
         {walkError ? (
-          <div className="basis-full rounded-2xl bg-red-50 px-4 py-2 text-xs font-medium text-red-700">
+          <div className="basis-full rounded-2xl bg-error-surface px-4 py-2 text-xs font-medium text-error-ink">
             {walkError}
           </div>
         ) : null}

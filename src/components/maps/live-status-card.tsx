@@ -23,16 +23,16 @@ export function LiveStatusCard({
   onToggle,
 }: LiveStatusCardProps) {
   return (
-    <div className="rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+    <div className="app-panel p-5">
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={isOpen}
-          className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-600"
+          className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted"
         >
           <span>Live-Status</span>
-          <span className="text-sm text-neutral-900">{isOpen ? '−' : '+'}</span>
+          <span className="text-sm text-ink">{isOpen ? '−' : '+'}</span>
         </button>
         <div
           className={[
@@ -40,8 +40,8 @@ export function LiveStatusCard({
             gpsState === 'tracking'
               ? 'bg-accent text-ink'
               : gpsState === 'denied' || gpsState === 'error'
-                ? 'bg-red-100 text-red-800'
-                : 'bg-surface-muted text-stone-900',
+                ? 'bg-error-surface text-error-ink'
+                : 'bg-surface-muted text-ink',
           ].join(' ')}
         >
           {gpsLabel}
@@ -54,14 +54,14 @@ export function LiveStatusCard({
             <div
               key={item.label}
               className={cn(
-                'rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 shadow-sm',
+                'app-surface-row px-4 py-3',
                 item.className,
               )}
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
                 {item.label}
               </div>
-              <div className="mt-1 text-sm font-medium text-neutral-900">{item.value}</div>
+              <div className="mt-1 text-sm font-medium text-ink">{item.value}</div>
             </div>
           ))}
         </div>

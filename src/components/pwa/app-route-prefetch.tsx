@@ -20,11 +20,10 @@ export function AppRoutePrefetch() {
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return
-    }
-
     let cancelled = false
+    let hasPrefetched = false
+    let idleId: number | null = null
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null
 
     const runPrefetch = () => {
       if (cancelled) {
@@ -40,20 +39,39 @@ export function AppRoutePrefetch() {
       }
     }
 
-    if (typeof globalThis.requestIdleCallback === 'function') {
-      const idleId = globalThis.requestIdleCallback(runPrefetch, { timeout: 2000 })
-
-      return () => {
-        cancelled = true
-        globalThis.cancelIdleCallback?.(idleId)
+    const schedulePrefetch = () => {
+      if (cancelled || hasPrefetched) {
+        return
       }
+
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return
+      }
+
+      hasPrefetched = true
+
+      if (typeof globalThis.requestIdleCallback === 'function') {
+        idleId = globalThis.requestIdleCallback(runPrefetch, { timeout: 2000 })
+        return
+      }
+
+      timeoutId = globalThis.setTimeout(runPrefetch, 250)
     }
 
-    const timeoutId = globalThis.setTimeout(runPrefetch, 250)
+    window.addEventListener('online', schedulePrefetch)
+    schedulePrefetch()
 
     return () => {
       cancelled = true
-      globalThis.clearTimeout(timeoutId)
+      window.removeEventListener('online', schedulePrefetch)
+
+      if (idleId !== null) {
+        globalThis.cancelIdleCallback?.(idleId)
+      }
+
+      if (timeoutId !== null) {
+        globalThis.clearTimeout(timeoutId)
+      }
     }
   }, [router])
 

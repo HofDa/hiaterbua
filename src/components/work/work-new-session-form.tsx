@@ -32,7 +32,7 @@ function MobileStepHeader({
   onBack: () => void
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-3 text-[#17130f]">
+    <div className="flex items-center justify-between gap-3 app-callout px-3.5 py-3">
       <FormButton
         type="button"
         onClick={onBack}
@@ -43,7 +43,7 @@ function MobileStepHeader({
       </FormButton>
       <div className="min-w-0 text-right">
         <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">{label}</div>
-        <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700 [overflow-wrap:anywhere]">{sublabel}</div>
+        <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted [overflow-wrap:anywhere]">{sublabel}</div>
       </div>
     </div>
   )
@@ -161,7 +161,7 @@ export function WorkNewSessionForm({
                   Keine Zuordnung
                 </ToggleButton>
                 {activeHerds.length === 0 ? (
-                  <Alert variant="info" className="col-span-2 text-sm text-neutral-600">
+                  <Alert variant="info" className="col-span-2 text-sm text-ink-muted">
                     Noch keine aktive Herde angelegt.
                   </Alert>
                 ) : (
@@ -203,7 +203,7 @@ export function WorkNewSessionForm({
                   Keine Zuordnung
                 </ToggleButton>
                 {enclosures.length === 0 ? (
-                  <Alert variant="info" className="col-span-2 text-sm text-neutral-600">
+                  <Alert variant="info" className="col-span-2 text-sm text-ink-muted">
                     Noch keine Pferche angelegt.
                   </Alert>
                 ) : (
@@ -251,7 +251,7 @@ export function WorkNewSessionForm({
   function renderReminderButtons() {
     return (
       <div className="space-y-2">
-        <div className="text-sm font-medium text-[#17130f]">Erinnerung</div>
+        <div className="text-sm font-medium text-ink">Erinnerung</div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {quickReminderOptions.map((option) => {
             const isSelected = reminderIntervalMin === option.value

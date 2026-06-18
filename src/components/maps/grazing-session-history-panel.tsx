@@ -131,7 +131,7 @@ export function GrazingSessionHistoryPanel({
   )
 
   const historyGroups = safeRecentSessions.length === 0 ? (
-    <p className="mt-3 text-sm text-neutral-700">Noch kein Weidegang gespeichert.</p>
+    <p className="mt-3 text-sm text-ink-muted">Noch kein Weidegang gespeichert.</p>
   ) : (
     <GrazingSessionHistoryGroups
       groupedSessionHistory={groupedSessionHistory}
@@ -151,7 +151,7 @@ export function GrazingSessionHistoryPanel({
   return (
     <>
       <div className="space-y-4 lg:hidden">
-        <div className="rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <div className="app-panel p-5">
           <GrazingSessionSurveyAreasPanel
             safeSurveyAreas={safeSurveyAreas}
             selectedSurveyArea={selectedSurveyArea}
@@ -160,19 +160,19 @@ export function GrazingSessionHistoryPanel({
           />
         </div>
 
-        <div className="overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+        <div className="overflow-hidden app-panel p-5">
           <button
             type="button"
             onClick={onToggleHistoryExpanded}
-            className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-left shadow-sm"
+            className="flex w-full items-center justify-between gap-3 app-surface-row px-4 py-3 text-left"
           >
             <div>
-              <h2 className="text-lg font-semibold text-neutral-950">Weidegang-Historie</h2>
-              <div className="mt-1 text-sm font-medium text-neutral-700">
+              <h2 className="text-lg font-semibold text-ink-strong">Weidegang-Historie</h2>
+              <div className="mt-1 text-sm font-medium text-ink-muted">
                 {safeRecentSessions.length} gespeicherte Weidegänge
               </div>
             </div>
-            <span className="text-lg font-semibold text-neutral-900">
+            <span className="text-lg font-semibold text-ink">
               {isHistoryExpanded ? '−' : '+'}
             </span>
           </button>
@@ -187,10 +187,10 @@ export function GrazingSessionHistoryPanel({
         </div>
       </div>
 
-      <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:flex">
+      <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden app-panel p-5 lg:flex">
         <div className="min-w-0 border-b border-border pb-4">
-          <h2 className="text-lg font-semibold text-neutral-950">Weidegang-Historie</h2>
-          <p className="mt-1 text-sm text-neutral-700">{summary}</p>
+          <h2 className="text-lg font-semibold text-ink-strong">Weidegang-Historie</h2>
+          <p className="mt-1 text-sm text-ink-muted">{summary}</p>
         </div>
 
         <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
@@ -203,8 +203,8 @@ export function GrazingSessionHistoryPanel({
           <GrazingSessionHistoryStatsGrid sessionHistoryStats={sessionHistoryStats} />
           {historyFocusDetails}
           <div className="mt-4 flex items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-neutral-950">Gespeicherte Weidegänge</div>
-            <div className="text-xs font-medium text-neutral-600">{safeRecentSessions.length}</div>
+            <div className="text-sm font-semibold text-ink-strong">Gespeicherte Weidegänge</div>
+            <div className="text-xs font-medium text-ink-muted">{safeRecentSessions.length}</div>
           </div>
           <div className="pb-1">{historyGroups}</div>
         </div>

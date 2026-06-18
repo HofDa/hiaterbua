@@ -72,10 +72,10 @@ export function LivePositionWalkWorkspace({
   return (
     <>
       {showStatusText ? (
-        <p className="mt-2 text-sm text-neutral-700">{walkStatusText}</p>
+        <p className="mt-2 text-sm text-ink-muted">{walkStatusText}</p>
       ) : null}
       {showHint ? (
-        <p className="mt-2 text-xs font-medium text-neutral-700">
+        <p className="mt-2 text-xs font-medium text-ink-muted">
           Walk-Punkte können direkt auf der Karte angetippt und bearbeitet werden.
         </p>
       ) : null}
@@ -95,7 +95,7 @@ export function LivePositionWalkWorkspace({
             <button
               type="button"
               onClick={onStopWalkMode}
-              className="min-h-16 rounded-[1.2rem] border border-border-strong bg-surface-muted px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              className="min-h-16 rounded-[1.2rem] border border-border-strong bg-surface-muted px-4 py-4 text-sm font-semibold text-ink-strong disabled:opacity-50"
               disabled={!isWalking}
             >
               Aufnahme stoppen
@@ -103,7 +103,7 @@ export function LivePositionWalkWorkspace({
             <button
               type="button"
               onClick={onUndoLastWalkPoint}
-              className="min-h-16 rounded-[1.2rem] border border-border bg-surface-raised px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              className="min-h-16 rounded-[1.2rem] border border-border bg-surface-raised px-4 py-4 text-sm font-semibold text-ink-strong disabled:opacity-50"
               disabled={walkPoints.length === 0}
             >
               Letzten Punkt löschen
@@ -115,7 +115,7 @@ export function LivePositionWalkWorkspace({
                   onRemoveWalkPointAtIndex(selectedWalkPointIndex)
                 }
               }}
-              className="min-h-16 rounded-[1.2rem] border border-border bg-surface-raised px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              className="min-h-16 rounded-[1.2rem] border border-border bg-surface-raised px-4 py-4 text-sm font-semibold text-ink-strong disabled:opacity-50"
               disabled={selectedWalkPointIndex === null}
             >
               Ausgewählten Punkt löschen
@@ -123,7 +123,7 @@ export function LivePositionWalkWorkspace({
             <button
               type="button"
               onClick={onDiscardWalkMode}
-              className="min-h-16 rounded-[1.2rem] border border-border-strong bg-surface-muted px-4 py-4 text-sm font-semibold text-neutral-950 disabled:opacity-50"
+              className="min-h-16 rounded-[1.2rem] border border-border-strong bg-surface-muted px-4 py-4 text-sm font-semibold text-ink-strong disabled:opacity-50"
               disabled={walkPoints.length === 0 && !isWalking}
             >
               Walk verwerfen
@@ -132,31 +132,31 @@ export function LivePositionWalkWorkspace({
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm text-neutral-800 shadow-sm">
+      <div className="mt-4 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm text-ink-soft shadow-sm">
         Akzeptierte Walk-Punkte:{' '}
-        <span className="font-medium text-neutral-900">{walkPoints.length}</span>
+        <span className="font-medium text-ink">{walkPoints.length}</span>
         <span className="ml-2">
-          · Fläche <span className="font-medium text-neutral-900">{formatArea(walkAreaM2)}</span>
+          · Fläche <span className="font-medium text-ink">{formatArea(walkAreaM2)}</span>
         </span>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-2xl bg-neutral-50 px-4 py-3">
-          <div className="text-neutral-500">Mittlere Genauigkeit</div>
-          <div className="mt-1 font-medium text-neutral-900">
+        <div className="rounded-2xl bg-surface-raised px-4 py-3">
+          <div className="text-ink-soft">Mittlere Genauigkeit</div>
+          <div className="mt-1 font-medium text-ink">
             {averageAccuracy !== null ? formatAccuracy(averageAccuracy) : 'noch keine Daten'}
           </div>
         </div>
-        <div className="rounded-2xl bg-neutral-50 px-4 py-3">
-          <div className="text-neutral-500">Letzter akzeptierter Punkt</div>
-          <div className="mt-1 font-medium text-neutral-900">
+        <div className="rounded-2xl bg-surface-raised px-4 py-3">
+          <div className="text-ink-soft">Letzter akzeptierter Punkt</div>
+          <div className="mt-1 font-medium text-ink">
             {latestPoint ? formatTimestamp(latestPoint.timestamp) : 'noch keiner'}
           </div>
         </div>
       </div>
 
       {walkPoints.length > 0 ? (
-        <div className="mt-4 rounded-2xl bg-neutral-50 px-4 py-3">
+        <div className="mt-4 rounded-2xl bg-surface-raised px-4 py-3">
           <button
             type="button"
             onClick={onToggleWalkPoints}
@@ -164,10 +164,10 @@ export function LivePositionWalkWorkspace({
             className="flex w-full items-start justify-between gap-3 text-left"
           >
             <div>
-              <h3 className="text-sm font-medium text-neutral-900">Aufgenommene Weidegaenge</h3>
-              <p className="mt-1 text-xs text-neutral-500">{walkPoints.length} Punkte gespeichert</p>
+              <h3 className="text-sm font-medium text-ink">Aufgenommene Weidegaenge</h3>
+              <p className="mt-1 text-xs text-ink-soft">{walkPoints.length} Punkte gespeichert</p>
             </div>
-            <span className="text-base text-neutral-900">{isWalkPointsOpen ? '−' : '+'}</span>
+            <span className="text-base text-ink">{isWalkPointsOpen ? '−' : '+'}</span>
           </button>
 
           {isWalkPointsOpen ? (
@@ -194,18 +194,18 @@ export function LivePositionWalkWorkspace({
                       onClick={() => onSelectedWalkPointIndexChange(index)}
                       className="text-left"
                     >
-                      <div className="font-medium text-neutral-900">Punkt {index + 1}</div>
-                      <div className="mt-1 text-neutral-600">
+                      <div className="font-medium text-ink">Punkt {index + 1}</div>
+                      <div className="mt-1 text-ink-muted">
                         {point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}
                       </div>
-                      <div className="mt-1 text-xs text-neutral-500">
+                      <div className="mt-1 text-xs text-ink-soft">
                         {formatPointTimestamp(point.timestamp)} · Genauigkeit {formatAccuracy(point.accuracy)}
                       </div>
                     </button>
                     <button
                       type="button"
                       onClick={() => onRemoveWalkPointAtIndex(index)}
-                      className="rounded-2xl bg-surface-raised px-3 py-2 text-xs font-medium text-neutral-900"
+                      className="rounded-2xl bg-surface-raised px-3 py-2 text-xs font-medium text-ink"
                     >
                       Entfernen
                     </button>

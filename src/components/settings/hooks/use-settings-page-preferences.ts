@@ -35,16 +35,19 @@ export function useSettingsPagePreferences() {
 
     const nextSettings = normalizeSettingsValue(draft)
     const { storedInDb } = await persistSettings(nextSettings)
+    let syncWarning = ''
 
     try {
       await syncAfterSettingsSave(nextSettings.tileCachingEnabled)
+    } catch {
+      syncWarning = ' Tile-Cache konnte nicht vollständig synchronisiert werden.'
     } finally {
       setDraft(nextSettings)
       setSaving(false)
       setStatus(
-        storedInDb
+        `${storedInDb
           ? 'Einstellungen gespeichert.'
-          : 'Einstellungen im iOS-Fallback gespeichert.'
+          : 'Einstellungen im iOS-Fallback gespeichert.'}${syncWarning}`
       )
     }
   }

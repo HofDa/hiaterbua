@@ -4,18 +4,171 @@
 :root {
   --background: #d8d0bf;
   --background-strong: #c9bea8;
+  --background-soft: #e7e0d2;
   --surface: #fff8ea;
   --surface-strong: #fffdf6;
+  --surface-muted: #f1efeb;
+  --surface-warm: #f8f1e2;
+  --surface-hover: #f7f4eb;
+  --surface-disabled: #f3eee4;
+  --surface-disabled-strong: #e1ddd7;
   --surface-border: rgba(58, 52, 42, 0.24);
-  --text-main: #0f0d0b;
+  --border-default: #ccb98a;
+  --border-soft: #d2cbc0;
+  --border-strong: #5a5347;
+  --border-ink: #3a342a;
+  --text-main: #17130f;
+  --text-strong: #0f0d0b;
   --text-soft: #5e5549;
+  --text-muted: #4f473c;
   --brand: #ccb98a;
-  --brand-dark: #5a5347;
+  --brand-dark: #123a2d;
   --accent: #efe4c8;
+  --chrome: #123a2d;
+  --chrome-strong: #174634;
+  --chrome-deep: #0c281f;
+  --chrome-deep-alt: #113126;
+  --chrome-border: #061a14;
+  --chrome-control: #fffdf8;
+  --chrome-control-border: #0a2018;
+  --chrome-control-ink: #111111;
+  --chrome-active: #2f6b4d;
+  --chrome-active-foreground: #ffffff;
+  --chrome-foreground: #f3f8f4;
+  --chrome-muted: #dce9e1;
+  --success-surface: #edf1ec;
+  --success-border: #c5d3c8;
+  --success-ink: #243228;
+  --info-surface: var(--surface-warm);
+  --info-border: var(--border-soft);
+  --info-ink: var(--text-muted);
+  --warning-surface: #fff1e3;
+  --warning-callout: #fff1c7;
+  --warning-border: #d97706;
+  --warning-ink: #b45309;
+  --error-surface: #fef2f2;
+  --error-border: #ef4444;
+  --error-ink: #dc2626;
+  --surface-control-start: #f6f2e9;
+  --surface-control-end: #ece3cf;
+  --map-scrim: rgba(70, 60, 46, 0.18);
+  --surface-glass: rgba(255, 248, 234, 0.97);
+  --work-management: #b7653e;
+  --work-management-soft: #efd0bf;
+  --work-infrastructure: #7d6a49;
+  --work-infrastructure-soft: #e4dbc8;
+  --work-animal-care: #4c7a63;
+  --work-animal-care-soft: #d1e2d8;
+  --work-pasture-care: #8a7f34;
+  --work-pasture-care-soft: #ebe4bd;
+  --chart-border: #d8ccb0;
+  --chart-border-inner: #e1d5ba;
+  --chart-card-border: #e3d8bc;
+  --chart-card-surface: #fcf8ef;
+  --chart-badge-border: #d7ccb3;
+  --chart-track: #ece7dc;
+  --shadow-panel: 0 18px 40px rgba(40, 34, 26, 0.08);
+  --shadow-panel-floating: 0 22px 60px rgba(40, 34, 26, 0.16);
+  --shadow-action: 0 12px 24px rgba(40, 34, 26, 0.08);
+  --shadow-action-strong: 0 16px 32px rgba(40, 34, 26, 0.14);
+  --shadow-chrome-top: 0 16px 38px rgba(8, 23, 17, 0.38);
+  --shadow-chrome-bottom: 0 -16px 36px rgba(8, 23, 17, 0.34);
+  --shadow-chrome-status: 0 12px 28px rgba(8, 23, 17, 0.28);
+  --shadow-chrome-active: 0 12px 28px rgba(9, 28, 20, 0.28);
+  --shadow-chrome-control: 0 8px 18px rgba(9, 28, 20, 0.16);
+  --shadow-surface-row: 0 1px 2px rgba(23, 20, 18, 0.05);
+  --shadow-map-surface: 0 12px 28px rgba(40, 34, 26, 0.1);
+  --shadow-map-toolbar: 0 12px 30px rgba(40, 34, 26, 0.12);
+  --shadow-map-control: 0 10px 15px -3px rgba(23, 20, 18, 0.18),
+    0 4px 6px -4px rgba(23, 20, 18, 0.14);
+  --radius: 0.75rem;
+  --radius-panel: 1.9rem;
+  --radius-panel-sm: 1.75rem;
+  --radius-control: 1.1rem;
+  --radius-callout: 1.2rem;
+  --radius-map-surface: 1.4rem;
   --font-sans:
     "Segoe UI", "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono:
     "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+@theme {
+  --color-page: var(--background);
+  --color-page-strong: var(--background-strong);
+  --color-page-soft: var(--background-soft);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-strong);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-warm: var(--surface-warm);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-disabled: var(--surface-disabled);
+  --color-surface-disabled-strong: var(--surface-disabled-strong);
+  --color-ink: var(--text-main);
+  --color-ink-strong: var(--text-strong);
+  --color-ink-soft: var(--text-soft);
+  --color-ink-muted: var(--text-muted);
+  --color-border: var(--border-default);
+  --color-border-soft: var(--border-soft);
+  --color-border-strong: var(--border-strong);
+  --color-border-ink: var(--border-ink);
+  --color-primary: var(--brand-dark);
+  --color-primary-foreground: var(--surface-strong);
+  --color-secondary: var(--surface-muted);
+  --color-secondary-foreground: var(--text-main);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--text-main);
+  --color-muted: var(--surface-muted);
+  --color-muted-foreground: var(--text-muted);
+  --color-card: var(--surface-strong);
+  --color-card-foreground: var(--text-main);
+  --color-popover: var(--surface-strong);
+  --color-popover-foreground: var(--text-main);
+  --color-input: var(--border-default);
+  --color-ring: var(--border-strong);
+  --color-background: var(--background);
+  --color-foreground: var(--text-main);
+  --color-destructive: var(--error-ink);
+  --color-destructive-foreground: var(--surface-strong);
+  --color-chrome: var(--chrome);
+  --color-chrome-strong: var(--chrome-strong);
+  --color-chrome-deep: var(--chrome-deep);
+  --color-chrome-deep-alt: var(--chrome-deep-alt);
+  --color-chrome-border: var(--chrome-border);
+  --color-chrome-control: var(--chrome-control);
+  --color-chrome-control-border: var(--chrome-control-border);
+  --color-chrome-control-ink: var(--chrome-control-ink);
+  --color-chrome-active: var(--chrome-active);
+  --color-chrome-active-foreground: var(--chrome-active-foreground);
+  --color-chrome-foreground: var(--chrome-foreground);
+  --color-chrome-muted: var(--chrome-muted);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-success-ink: var(--success-ink);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+  --color-info-ink: var(--info-ink);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-callout: var(--warning-callout);
+  --color-warning-border: var(--warning-border);
+  --color-warning-ink: var(--warning-ink);
+  --color-error-surface: var(--error-surface);
+  --color-error-border: var(--error-border);
+  --color-error-ink: var(--error-ink);
+  --color-work-management: var(--work-management);
+  --color-work-management-soft: var(--work-management-soft);
+  --color-work-infrastructure: var(--work-infrastructure);
+  --color-work-infrastructure-soft: var(--work-infrastructure-soft);
+  --color-work-animal-care: var(--work-animal-care);
+  --color-work-animal-care-soft: var(--work-animal-care-soft);
+  --color-work-pasture-care: var(--work-pasture-care);
+  --color-work-pasture-care-soft: var(--work-pasture-care-soft);
+  --color-chart-border: var(--chart-border);
+  --color-chart-border-inner: var(--chart-border-inner);
+  --color-chart-card-border: var(--chart-card-border);
+  --color-chart-card-surface: var(--chart-card-surface);
+  --color-chart-badge-border: var(--chart-badge-border);
+  --color-chart-track: var(--chart-track);
 }
 
 html,
@@ -23,7 +176,12 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background: linear-gradient(180deg, #c9bea8 0%, var(--background) 28%, #e7e0d2 100%);
+  background: linear-gradient(
+    180deg,
+    var(--background-strong) 0%,
+    var(--background) 28%,
+    var(--background-soft) 100%
+  );
   color: var(--text-main);
 }
 
@@ -53,6 +211,133 @@ body::before {
 
 a {
   color: inherit;
+}
+
+.bg-chrome-shell {
+  background-image: linear-gradient(180deg, var(--chrome), var(--chrome-deep));
+}
+
+.bg-chrome-status {
+  background-image: linear-gradient(
+    180deg,
+    var(--chrome-strong),
+    var(--chrome-deep-alt)
+  );
+}
+
+.bg-surface-control-gradient {
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-control-start),
+    var(--surface-control-end)
+  );
+}
+
+.bg-map-scrim {
+  background-color: var(--map-scrim);
+}
+
+.bg-surface-glass {
+  background-color: var(--surface-glass);
+}
+
+.app-panel {
+  border: 2px solid var(--border-ink);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.app-panel-sm {
+  border: 2px solid var(--border-ink);
+  border-radius: var(--radius-panel-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.app-floating-panel {
+  border: 2px solid var(--border-ink);
+  border-radius: var(--radius-panel-sm);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-panel-floating);
+}
+
+.app-shadow-action {
+  box-shadow: var(--shadow-action);
+}
+
+.app-shadow-action-strong {
+  box-shadow: var(--shadow-action-strong);
+}
+
+.app-chrome-top {
+  box-shadow: var(--shadow-chrome-top);
+}
+
+.app-chrome-bottom {
+  box-shadow: var(--shadow-chrome-bottom);
+}
+
+.app-chrome-status {
+  box-shadow: var(--shadow-chrome-status);
+}
+
+.app-chrome-active {
+  border-color: var(--chrome-active-foreground);
+  background: var(--chrome-active);
+  color: var(--chrome-active-foreground);
+  box-shadow: var(--shadow-chrome-active);
+}
+
+.app-chrome-control {
+  border-color: var(--chrome-control-border);
+  background: var(--chrome-control);
+  color: var(--chrome-control-ink);
+  box-shadow: var(--shadow-chrome-control);
+}
+
+.app-surface-row {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-surface-row);
+}
+
+.app-callout {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-callout);
+  background: var(--surface-warm);
+  color: var(--text-main);
+}
+
+.app-map-surface {
+  border: 2px solid var(--border-ink);
+  border-radius: var(--radius-map-surface);
+  background: var(--surface);
+  box-shadow: var(--shadow-map-surface);
+}
+
+.app-map-toolbar {
+  border: 2px solid var(--border-ink);
+  border-radius: 1.35rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-map-toolbar);
+}
+
+.app-map-icon-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-map-control);
+}
+
+.app-map-popover {
+  border: 1px solid var(--border-default);
+  border-radius: 1rem;
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-map-control);
 }
 
 button,
@@ -91,6 +376,6 @@ textarea {
 }
 
 .maplibregl-ctrl button {
-  background: #fffdf6;
-  color: #111111;
+  background: var(--surface-strong);
+  color: var(--chrome-control-ink);
 }

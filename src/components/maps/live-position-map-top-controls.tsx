@@ -42,7 +42,7 @@ export function LivePositionMapTopControls({
           aria-label="Auf aktuelle Position zentrieren"
           onClick={onCenterMap}
           disabled={!positionAvailable}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg disabled:opacity-50"
+          className="flex items-center justify-center app-map-icon-button text-ink-strong disabled:opacity-50"
         >
           <CenterIcon />
         </button>
@@ -50,7 +50,7 @@ export function LivePositionMapTopControls({
           type="button"
           aria-label="Kartengrundlage wählen"
           onClick={onToggleBaseLayerMenu}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg"
+          className="flex items-center justify-center app-map-icon-button text-ink-strong"
         >
           <LayersIcon />
         </button>
@@ -58,8 +58,8 @@ export function LivePositionMapTopControls({
       </div>
 
       {isBaseLayerMenuOpen ? (
-        <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-border bg-surface-raised/96 p-1.5 shadow-lg">
-          <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
+        <div className="max-h-[48vh] overflow-y-auto app-map-popover p-1.5">
+          <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
             Kartengrundlage
           </div>
           <button
@@ -69,7 +69,7 @@ export function LivePositionMapTopControls({
               'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
               baseLayer === 'south-tyrol-orthophoto-2023'
                 ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-neutral-950',
+                : 'bg-surface-muted text-ink-strong',
             ].join(' ')}
           >
             Orthofoto 2023
@@ -81,7 +81,7 @@ export function LivePositionMapTopControls({
               'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
               baseLayer === 'south-tyrol-basemap'
                 ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-neutral-950',
+                : 'bg-surface-muted text-ink-strong',
             ].join(' ')}
           >
             BaseMap Südtirol
@@ -91,7 +91,7 @@ export function LivePositionMapTopControls({
             onClick={onToggleShowSurveyAreas}
             className={[
               'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              showSurveyAreas ? 'bg-accent text-ink' : 'bg-surface-muted text-neutral-950',
+              showSurveyAreas ? 'bg-accent text-ink' : 'bg-surface-muted text-ink-strong',
             ].join(' ')}
           >
             Flächen {showSurveyAreas ? 'an' : 'aus'}
@@ -105,7 +105,7 @@ export function LivePositionMapTopControls({
             {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
           </button>
           {prefetchStatus ? (
-            <div className="mt-1.5 rounded-xl bg-surface-muted px-2.5 py-2 text-[11px] font-medium text-neutral-900">
+            <div className="mt-1.5 rounded-xl bg-surface-muted px-2.5 py-2 text-[11px] font-medium text-ink">
               {prefetchStatus}
             </div>
           ) : null}

@@ -17,8 +17,31 @@ import {
   prepareDbImportFromPreview,
   type ImportPreview,
 } from '@/lib/import-export/export-page-helpers'
+import { recordDataBackup } from '@/lib/settings/backup-reminder'
 import { useAsyncOperation } from '@/hooks/use-async-operation'
 import { useExportPageData } from '@/hooks/use-export-page'
+
+function buildReplaceImportConfirmation(importPreview: ImportPreview) {
+  const counts = importPreview.counts
+  return [
+    'Vorhandene Daten wirklich ersetzen?',
+    '',
+    'Dieser Import schreibt:',
+    `Herden: ${counts.herds}`,
+    `Tiere: ${counts.animals}`,
+    `Pferche: ${counts.enclosures}`,
+    `Untersuchungsflächen: ${counts.surveyAreas}`,
+    `Belegungen: ${counts.enclosureAssignments}`,
+    `Weidegänge: ${counts.grazingSessions}`,
+    `Trackpunkte: ${counts.trackpoints}`,
+    `Ereignisse: ${counts.sessionEvents}`,
+    `Arbeitseinsätze: ${counts.workSessions}`,
+    `Arbeitsereignisse: ${counts.workEvents}`,
+    `Settings: ${counts.settings}`,
+    '',
+    'Diese Aktion kann nicht rückgängig gemacht werden.',
+  ].join('\n')
+}
 
 export default function ExportPage() {
   const pageData = useExportPageData()
@@ -47,6 +70,7 @@ export default function ExportPage() {
     await exportZip.execute(async () => {
       const { blob, filename } = await buildAppExportArchive()
       downloadBlob(blob, filename)
+      await recordDataBackup()
       return { blob, filename }
     }, {
       loadingMessage: 'Erstelle ZIP-Export...',
@@ -85,6 +109,13 @@ export default function ExportPage() {
   async function handleImport() {
     if (!pageData.selectedFile || !pageData.importPreview) {
       importData.setError('Bitte zuerst eine Importdatei wählen.')
+      return
+    }
+
+    if (
+      pageData.replaceExisting &&
+      !window.confirm(buildReplaceImportConfirmation(pageData.importPreview))
+    ) {
       return
     }
 

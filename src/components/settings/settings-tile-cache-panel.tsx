@@ -39,18 +39,18 @@ export function SettingsTileCachePanel({
   const storageBadgeClass = [
     'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
     hasStoredTiles
-      ? 'border-emerald-700 bg-emerald-100 text-emerald-950'
-      : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
+      ? 'border-success-border bg-success-surface text-success-ink'
+      : 'border-border bg-surface-raised text-ink-soft',
   ].join(' ')
   const persistenceBadgeClass = [
     'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
     persistentStorageGranted
-      ? 'border-emerald-700 bg-emerald-100 text-emerald-950'
-      : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
+      ? 'border-success-border bg-success-surface text-success-ink'
+      : 'border-border bg-surface-raised text-ink-soft',
   ].join(' ')
 
   return (
-    <Card className="border-[#ccb98a] bg-[#fffdf6] p-4">
+    <Card className="border-border bg-surface-raised p-4">
       <CardContent className="p-0">
         <button
           type="button"
@@ -59,8 +59,8 @@ export function SettingsTileCachePanel({
           className="flex w-full items-start justify-between gap-3 text-left"
         >
           <div>
-            <div className="text-sm font-medium text-neutral-900">Tile-Cache</div>
-            <div className="mt-1 text-sm font-medium text-neutral-800">
+            <div className="text-sm font-medium text-ink">Tile-Cache</div>
+            <div className="mt-1 text-sm font-medium text-ink-soft">
               {tileCacheSupported
                 ? hasStoredTiles
                   ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
@@ -88,10 +88,10 @@ export function SettingsTileCachePanel({
                     : 'Speicher nicht zugesichert'}
               </span>
             </div>
-            <div className="mt-2 text-xs font-medium text-neutral-700">
+            <div className="mt-2 text-xs font-medium text-ink-muted">
               Speichermodus: {settingsStorageMode === 'db' ? 'App-Datenbank' : 'iOS-Fallback'}
             </div>
-            <div className="mt-1 text-xs font-medium text-neutral-700">
+            <div className="mt-1 text-xs font-medium text-ink-muted">
               Persistenter Speicher:{' '}
               {persistentStorageGranted === null
                 ? 'unbekannt'
@@ -101,14 +101,14 @@ export function SettingsTileCachePanel({
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <div className="rounded-full border border-[#ccb98a] bg-[#fffdf6] px-3 py-1 text-xs font-semibold text-neutral-700">
+            <div className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-semibold text-ink-muted">
               {tileCacheLoading
                 ? 'prüft ...'
                 : tileCacheCount === null
                   ? 'unbekannt'
                   : `${tileCacheCount} Tiles`}
             </div>
-            <div className="mt-1 text-base text-neutral-900">{isOpen ? '−' : '+'}</div>
+            <div className="mt-1 text-base text-ink">{isOpen ? '−' : '+'}</div>
           </div>
         </button>
 

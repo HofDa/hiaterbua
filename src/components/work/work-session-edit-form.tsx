@@ -68,7 +68,7 @@ export function WorkSessionEditForm({
   return (
     <Card className="mt-4 space-y-4">
       <CardContent>
-        <Alert className="rounded-[1rem] border border-[#d2cbc0] bg-[#efe4c8] text-sm text-[#17130f]">
+        <Alert className="rounded-[1rem] border border-border-soft bg-accent text-sm text-ink">
           Status aktuell: <span className="font-semibold">{getWorkStatusLabel(status)}</span>. Ende
           leer lassen fuer laufende oder pausierte Einsaetze. Sobald ein Ende gesetzt ist, wird der
           Einsatz als beendet gespeichert.

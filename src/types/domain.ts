@@ -203,4 +203,7 @@ export interface AppSettings {
   gpsMinDistanceM: number
   tileCachingEnabled: boolean
   theme: 'system' | 'light'
+  // ISO timestamp of the last successful full export; device-local backup
+  // bookkeeping (intentionally not carried across import).
+  lastExportAt?: string
 }

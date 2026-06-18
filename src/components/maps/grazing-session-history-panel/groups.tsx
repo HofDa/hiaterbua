@@ -46,7 +46,7 @@ function GrazingSessionHistorySessionCard({
     <div
       className={[
         'rounded-2xl px-4 py-3',
-        isSelected ? 'bg-accent' : 'bg-neutral-50',
+        isSelected ? 'bg-accent' : 'bg-surface-raised',
       ].join(' ')}
     >
       <button
@@ -56,8 +56,8 @@ function GrazingSessionHistorySessionCard({
         className="flex w-full items-start justify-between gap-3 text-left"
       >
         <div>
-          <div className="font-medium text-neutral-900">{herdName}</div>
-          <div className="mt-1 text-sm text-neutral-600">
+          <div className="font-medium text-ink">{herdName}</div>
+          <div className="mt-1 text-sm text-ink-muted">
             {formatDateTime(session.startTime)} ·{' '}
             {session.status === 'finished'
               ? 'abgeschlossen'
@@ -68,8 +68,8 @@ function GrazingSessionHistorySessionCard({
           </div>
         </div>
         <div className="shrink-0 text-right">
-          <div className="text-xs text-neutral-500">{formatDistance(session.distanceM)}</div>
-          <div className="mt-1 text-base text-neutral-900">{isExpanded ? '−' : '+'}</div>
+          <div className="text-xs text-ink-soft">{formatDistance(session.distanceM)}</div>
+          <div className="mt-1 text-base text-ink">{isExpanded ? '−' : '+'}</div>
         </div>
       </button>
 
@@ -77,34 +77,34 @@ function GrazingSessionHistorySessionCard({
         <>
           <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-2xl bg-surface-raised px-3 py-3">
-              <div className="text-neutral-500">Dauer</div>
-              <div className="mt-1 font-medium text-neutral-900">
+              <div className="text-ink-soft">Dauer</div>
+              <div className="mt-1 font-medium text-ink">
                 {formatDuration(session.durationS)}
               </div>
             </div>
             <div className="rounded-2xl bg-surface-raised px-3 py-3">
-              <div className="text-neutral-500">Genauigkeit</div>
-              <div className="mt-1 font-medium text-neutral-900">
+              <div className="text-ink-soft">Genauigkeit</div>
+              <div className="mt-1 font-medium text-ink">
                 {formatAccuracy(session.avgAccuracyM)}
               </div>
             </div>
           </div>
 
-          {session.notes ? <p className="mt-3 text-sm text-neutral-600">{session.notes}</p> : null}
+          {session.notes ? <p className="mt-3 text-sm text-ink-muted">{session.notes}</p> : null}
 
           <div className="mt-3 grid grid-cols-1 gap-2">
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => onSelectSession(session.id)}
-                className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-neutral-900"
+                className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-ink"
               >
                 Spur anzeigen
               </button>
               <button
                 type="button"
                 onClick={() => onStartEditSession(session.id)}
-                className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-neutral-900"
+                className="rounded-2xl bg-surface-raised px-3 py-3 text-sm font-medium text-ink"
               >
                 Bearbeiten
               </button>
@@ -112,7 +112,7 @@ function GrazingSessionHistorySessionCard({
                 type="button"
                 onClick={() => void onDeleteSession(session)}
                 disabled={isSaving || session.status === 'active' || session.status === 'paused'}
-                className="rounded-2xl bg-red-50 px-3 py-3 text-sm font-medium text-red-700 disabled:opacity-50"
+                className="rounded-2xl bg-error-surface px-3 py-3 text-sm font-medium text-error-ink disabled:opacity-50"
               >
                 Löschen
               </button>
@@ -151,17 +151,17 @@ export function GrazingSessionHistoryGroups({
             <button
               type="button"
               onClick={() => onToggleHistoryDay(group.dayKey)}
-              className="flex w-full items-center justify-between gap-3 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-left shadow-sm"
+              className="flex w-full items-center justify-between gap-3 app-surface-row px-4 py-3 text-left"
             >
               <div>
-                <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-neutral-700">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-ink-muted">
                   {group.label}
                 </h3>
-                <div className="mt-1 text-xs font-medium text-neutral-600">
+                <div className="mt-1 text-xs font-medium text-ink-muted">
                   {group.sessions.length} Weidegänge
                 </div>
               </div>
-              <span className="text-sm font-semibold text-neutral-900">
+              <span className="text-sm font-semibold text-ink">
                 {isDayExpanded ? '−' : '+'}
               </span>
             </button>

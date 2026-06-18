@@ -45,28 +45,28 @@ export function GrazingSessionHistoryFocusEvents({
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-surface-raised px-4 py-4 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
         Ereignisse im Fokus-Weidegang
       </div>
       {safeSelectedSessionEvents.length === 0 ? (
-        <div className="mt-2 text-sm text-neutral-600">Keine Ereignisse gespeichert.</div>
+        <div className="mt-2 text-sm text-ink-muted">Keine Ereignisse gespeichert.</div>
       ) : (
         <div className="mt-3 space-y-2">
           {safeSelectedSessionEvents.slice(0, 8).map((sessionEvent) => (
             <div
               key={sessionEvent.id}
-              className="rounded-[1rem] bg-surface-raised px-3 py-3 text-sm text-neutral-800"
+              className="rounded-[1rem] bg-surface-raised px-3 py-3 text-sm text-ink-soft"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="font-medium text-neutral-950">
+                <div className="font-medium text-ink-strong">
                   {getSessionEventLabel(sessionEvent.type)}
                 </div>
-                <div className="text-xs text-neutral-500">
+                <div className="text-xs text-ink-soft">
                   {formatDateTime(sessionEvent.timestamp)}
                 </div>
               </div>
               {sessionEvent.comment ? (
-                <div className="mt-1 text-neutral-700">{sessionEvent.comment}</div>
+                <div className="mt-1 text-ink-muted">{sessionEvent.comment}</div>
               ) : null}
             </div>
           ))}

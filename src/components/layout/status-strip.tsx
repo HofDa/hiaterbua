@@ -164,24 +164,20 @@ export function StatusStrip() {
   }
 
   return (
-    <div className="border-b border-[#061a14] bg-[linear-gradient(180deg,#174634,#113126)] text-white shadow-[0_12px_28px_rgba(8,23,17,0.28)]">
+    <div className="border-b border-chrome-border bg-chrome-status text-white app-chrome-status">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm xl:max-w-[88rem]">
         <span
           className={[
-            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
-            isOnline
-              ? 'border-white bg-[#2f6b4d] text-white'
-              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+            'rounded-full border px-3 py-1.5 font-semibold',
+            isOnline ? 'app-chrome-active' : 'app-chrome-control',
           ].join(' ')}
         >
           {isOnline ? 'Online' : 'Offline'}
         </span>
         <span
           className={[
-            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
-            tileCachingEnabled
-              ? 'border-white bg-[#2f6b4d] text-white'
-              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+            'rounded-full border px-3 py-1.5 font-semibold',
+            tileCachingEnabled ? 'app-chrome-active' : 'app-chrome-control',
           ].join(' ')}
         >
           {tileCachingEnabled
@@ -190,10 +186,8 @@ export function StatusStrip() {
         </span>
         <span
           className={[
-            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
-            hasStoredTiles
-              ? 'border-white bg-[#2f6b4d] text-white'
-              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+            'rounded-full border px-3 py-1.5 font-semibold',
+            hasStoredTiles ? 'app-chrome-active' : 'app-chrome-control',
           ].join(' ')}
         >
           {tileCacheCount === null
@@ -204,10 +198,8 @@ export function StatusStrip() {
         </span>
         <span
           className={[
-            'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
-            hasStoredTiles
-              ? 'border-white bg-[#2f6b4d] text-white'
-              : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+            'rounded-full border px-3 py-1.5 font-semibold',
+            hasStoredTiles ? 'app-chrome-active' : 'app-chrome-control',
           ].join(' ')}
         >
           {hasStoredTiles ? 'Offline nutzbar' : 'Offline nicht vorbereitet'}
@@ -215,10 +207,8 @@ export function StatusStrip() {
         {persistentStorageGranted !== null ? (
           <span
             className={[
-              'rounded-full border px-3 py-1.5 font-semibold shadow-sm',
-              persistentStorageGranted
-                ? 'border-white bg-[#2f6b4d] text-white'
-                : 'border-[#0a2018] bg-[#fffdf8] text-[#111111]',
+              'rounded-full border px-3 py-1.5 font-semibold',
+              persistentStorageGranted ? 'app-chrome-active' : 'app-chrome-control',
             ].join(' ')}
           >
             {persistentStorageGranted ? 'Persistenter Speicher aktiv' : 'Speicher nicht zugesichert'}
@@ -229,12 +219,12 @@ export function StatusStrip() {
             type="button"
             onClick={() => void handleInstallApp()}
             disabled={isInstalling}
-            className="rounded-full border border-[#0a2018] bg-[#fffdf8] px-3 py-1.5 font-semibold text-[#111111] shadow-sm disabled:opacity-50"
+            className="rounded-full border px-3 py-1.5 font-semibold app-chrome-control disabled:opacity-50"
           >
             {isInstalling ? 'Installiert ...' : 'App installieren'}
           </button>
         ) : null}
-        <span className="w-full text-sm font-semibold text-[#f3f8f4] sm:w-auto sm:flex-1">
+        <span className="w-full text-sm font-semibold text-chrome-foreground sm:w-auto sm:flex-1">
           {guidanceText}
         </span>
       </div>

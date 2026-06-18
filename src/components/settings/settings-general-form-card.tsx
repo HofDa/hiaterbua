@@ -135,7 +135,7 @@ export function SettingsGeneralFormCard({
             </FormSelect>
           </FormField>
 
-          <label className="flex items-center gap-3 rounded-[1.25rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-3">
+          <label className="flex items-center gap-3 rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3">
             <input
               type="checkbox"
               checked={draft.tileCachingEnabled}

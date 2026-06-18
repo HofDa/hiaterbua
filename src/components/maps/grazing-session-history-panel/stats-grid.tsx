@@ -8,8 +8,8 @@ import { Card } from '@/components/ui/card'
 function HistoryStat({ label, value }: { label: string; value: string }) {
   return (
     <Card className="min-w-0 px-4 py-3 shadow-sm">
-      <div className="text-xs leading-tight text-neutral-700">{label}</div>
-      <div className="mt-1 font-medium text-neutral-900">{value}</div>
+      <div className="text-xs leading-tight text-ink-muted">{label}</div>
+      <div className="mt-1 font-medium text-ink">{value}</div>
     </Card>
   )
 }

@@ -8,7 +8,7 @@ import {
 } from '@/components/settings/settings-options'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormSelect, FormButton } from '@/components/ui/form'
-import { Alert, StatusAlert, ErrorAlert, LoadingAlert } from '@/components/ui/alert'
+import { Alert, StatusAlert, ErrorAlert } from '@/components/ui/alert'
 
 type PrefetchProgress = {
   completed: number
@@ -65,12 +65,12 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
         >
           <div>
             <CardTitle className="text-lg">Kartenausschnitt vorladen</CardTitle>
-            <p className="mt-2 text-sm font-medium text-neutral-800">
+            <p className="mt-2 text-sm font-medium text-ink-soft">
               Bestimmten Ausschnitt gezielt in den Tile-Cache laden, statt nur beim normalen
               Kartenaufruf.
             </p>
           </div>
-          <div className="text-base text-neutral-900">{state.isOpen ? '−' : '+'}</div>
+          <div className="text-base text-ink">{state.isOpen ? '−' : '+'}</div>
         </button>
       </CardHeader>
 
@@ -113,7 +113,7 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
 
           {state.parsedPreviewPosition ? (
             <div className="space-y-2">
-              <div className="text-sm font-medium text-neutral-900">Aktuelle Position auf der Karte</div>
+              <div className="text-sm font-medium text-ink">Aktuelle Position auf der Karte</div>
               <PositionPreviewMap
                 latitude={state.parsedPreviewPosition.latitude}
                 longitude={state.parsedPreviewPosition.longitude}
@@ -135,7 +135,7 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
             <div>
               <FormLabel className="mb-1 flex items-center justify-between gap-3">
                 <span>Zoomlevel</span>
-                <span className="rounded-full bg-[#f1efeb] px-2 py-0.5 text-xs text-neutral-700">
+                <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-ink-muted">
                   {state.prefetchZoomLevel}
                 </span>
               </FormLabel>
@@ -143,11 +143,11 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
                 type="range"
                 min={1}
                 max={20}
-                className="w-full accent-[#5a5347]"
+                className="w-full accent-border-strong"
                 value={state.prefetchZoomLevel}
                 onChange={(event) => actions.onPrefetchZoomLevelChange(event.target.value)}
               />
-              <p className="mt-2 text-xs font-medium text-neutral-700">
+              <p className="mt-2 text-xs font-medium text-ink-muted">
                 Verwendet intern ungefähr Zoom {Math.max(1, previewZoom - 1)} bis{' '}
                 {Math.min(20, previewZoom + 1)}.
               </p>
@@ -170,15 +170,15 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
             </FormSelect>
           </FormField>
 
-          <p className="text-xs font-medium text-neutral-700">
+          <p className="text-xs font-medium text-ink-muted">
             Größere Radius-/Zoom-Kombinationen erzeugen sehr viele Tiles. Der Vorlade-Block
             begrenzt das bewusst.
           </p>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <Card className="px-4 py-4 text-sm text-neutral-900">
+            <Card className="px-4 py-4 text-sm text-ink">
               <div className="font-medium">Südtirol Übersicht</div>
-              <div className="mt-1 text-neutral-700">
+              <div className="mt-1 text-ink-muted">
                 Lädt die komplette Landesfläche mit sicheren Übersichts-Zoomstufen 8 bis 12.
               </div>
               <FormButton
@@ -196,9 +196,9 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
               </FormButton>
             </Card>
 
-            <Card className="px-4 py-4 text-sm text-neutral-900">
+            <Card className="px-4 py-4 text-sm text-ink">
               <div className="font-medium">Einsatzgebiet hoch detailliert</div>
-              <div className="mt-1 text-neutral-700">
+              <div className="mt-1 text-ink-muted">
                 Nutzt den aktuellen Standort im Formular und lädt einen Radius von 2 km in Zoom
                 13 bis 17.
               </div>
@@ -217,13 +217,13 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
           </div>
 
           {state.prefetchProgress && (
-            <Alert variant="info" className="text-sm font-medium text-neutral-900">
+            <Alert variant="info" className="text-sm font-medium text-ink">
               Fortschritt:{' '}
-              <span className="font-medium text-neutral-900">
+              <span className="font-medium text-ink">
                 {state.prefetchProgress.completed}
               </span>
               {' / '}
-              <span className="font-medium text-neutral-900">{state.prefetchProgress.total}</span>{' '}
+              <span className="font-medium text-ink">{state.prefetchProgress.total}</span>{' '}
               Tiles
             </Alert>
           )}

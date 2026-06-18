@@ -12,7 +12,8 @@
     "start:local-pwa": "next start --hostname 127.0.0.1 --port 43031",
     "launch:local-pwa": "bash ./scripts/launch-local-pwa.sh",
     "install:desktop-launcher": "bash ./scripts/install-local-desktop-entry.sh",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -32,6 +33,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.65.0",
+    "react-hot-toast": "^2.6.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.12",
@@ -47,6 +49,7 @@
     "eslint-config-next": "^16.1.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.1.14",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
   }
 }

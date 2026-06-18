@@ -172,7 +172,7 @@ export function GrazingSessionMapCanvasPanel({
           aria-label="Auf aktuelle Position zentrieren"
           onClick={onCenterMap}
           disabled={!position}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg disabled:opacity-50"
+          className="flex items-center justify-center app-map-icon-button text-ink-strong disabled:opacity-50"
         >
           <CenterIcon />
         </button>
@@ -180,7 +180,7 @@ export function GrazingSessionMapCanvasPanel({
           type="button"
           aria-label="Kartengrundlage wählen"
           onClick={onToggleBaseLayerMenu}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg"
+          className="flex items-center justify-center app-map-icon-button text-ink-strong"
         >
           <LayersIcon />
         </button>
@@ -192,8 +192,8 @@ export function GrazingSessionMapCanvasPanel({
           aria-expanded={isDesktopToolbarOpen}
           onClick={() => setIsDesktopToolbarOpen((current) => !current)}
           className={[
-            'hidden h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised shadow-lg transition-colors lg:flex',
-            isDesktopToolbarOpen ? 'text-neutral-950' : 'text-neutral-600',
+            'hidden items-center justify-center app-map-icon-button transition-colors lg:flex',
+            isDesktopToolbarOpen ? 'text-ink-strong' : 'text-ink-muted',
           ].join(' ')}
           title={
             isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
@@ -204,8 +204,8 @@ export function GrazingSessionMapCanvasPanel({
       </div>
 
       {isBaseLayerMenuOpen ? (
-        <div className="max-h-[48vh] overflow-y-auto rounded-[1rem] border border-border bg-surface-raised/96 p-1.5 shadow-lg">
-          <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-700">
+        <div className="max-h-[48vh] overflow-y-auto app-map-popover p-1.5">
+          <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
             Kartengrundlage
           </div>
           <button
@@ -215,7 +215,7 @@ export function GrazingSessionMapCanvasPanel({
               'w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
               baseLayer === 'south-tyrol-orthophoto-2023'
                 ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-neutral-950',
+                : 'bg-surface-muted text-ink-strong',
             ].join(' ')}
           >
             Orthofoto 2023
@@ -227,7 +227,7 @@ export function GrazingSessionMapCanvasPanel({
               'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
               baseLayer === 'south-tyrol-basemap'
                 ? 'border border-border-strong bg-surface-muted text-ink'
-                : 'bg-surface-muted text-neutral-950',
+                : 'bg-surface-muted text-ink-strong',
             ].join(' ')}
           >
             BaseMap Südtirol
@@ -237,7 +237,7 @@ export function GrazingSessionMapCanvasPanel({
             onClick={onToggleShowSurveyAreas}
             className={[
               'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
-              showSurveyAreas ? 'bg-accent text-ink' : 'bg-surface-muted text-neutral-950',
+              showSurveyAreas ? 'bg-accent text-ink' : 'bg-surface-muted text-ink-strong',
             ].join(' ')}
           >
             Flächen {showSurveyAreas ? 'an' : 'aus'}
@@ -249,7 +249,7 @@ export function GrazingSessionMapCanvasPanel({
               'mt-1.5 w-full rounded-xl px-2.5 py-2 text-left text-xs font-medium',
               showSessionEventsOnMap
                 ? 'bg-accent text-ink'
-                : 'bg-surface-muted text-neutral-950',
+                : 'bg-surface-muted text-ink-strong',
             ].join(' ')}
           >
             Ereignisse {showSessionEventsOnMap ? 'an' : 'aus'}
@@ -263,7 +263,7 @@ export function GrazingSessionMapCanvasPanel({
             {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
           </button>
           {prefetchStatus ? (
-            <div className="mt-1.5 rounded-xl bg-surface-muted px-2.5 py-2 text-[11px] font-medium text-neutral-900">
+            <div className="mt-1.5 rounded-xl bg-surface-muted px-2.5 py-2 text-[11px] font-medium text-ink">
               {prefetchStatus}
             </div>
           ) : null}
@@ -273,7 +273,7 @@ export function GrazingSessionMapCanvasPanel({
   )
 
   return (
-    <div className="relative overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:sticky lg:top-4">
+    <div className="relative overflow-hidden app-panel lg:sticky lg:top-4">
       <div
         ref={containerRef}
         className="h-[420px] w-full bg-surface-raised sm:h-[520px] lg:h-[calc(100vh-8rem)]"
@@ -285,7 +285,7 @@ export function GrazingSessionMapCanvasPanel({
           aria-expanded={isMobileControlsOpen}
           onClick={() => setIsMobileControlsOpen((current) => !current)}
           className={[
-            'absolute left-2 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg transition-all lg:hidden',
+            'absolute left-2 z-30 flex items-center justify-center app-map-icon-button text-ink-strong transition-all lg:hidden',
             isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
           ].join(' ')}
         >
@@ -347,10 +347,10 @@ export function GrazingSessionMapCanvasPanel({
           <MobileMapFloatingCard>
             <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-neutral-900 sm:text-sm">
+                <div className="text-xs font-semibold text-ink sm:text-sm">
                   Weidegang bearbeiten
                 </div>
-                <div className="text-[11px] text-neutral-800 sm:hidden">
+                <div className="text-[11px] text-ink-soft sm:hidden">
                   {isAddingEditTrackpoint
                     ? 'Nächster Tap setzt Punkt.'
                     : selectedEditTrackpointIndex !== null
@@ -375,7 +375,7 @@ export function GrazingSessionMapCanvasPanel({
                 type="button"
                 onClick={onRemoveSelectedEditTrackpoint}
                 disabled={selectedEditTrackpointIndex === null || editTrackpointsLength <= 1}
-                className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+                className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink-strong disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
               >
                 Punkt -
               </button>
@@ -390,7 +390,7 @@ export function GrazingSessionMapCanvasPanel({
               <button
                 type="button"
                 onClick={onCancelEditSession}
-                className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
+                className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink-strong sm:px-3 sm:py-3 sm:text-sm"
               >
                 Schließen
               </button>

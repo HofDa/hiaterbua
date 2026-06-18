@@ -178,7 +178,7 @@ export function LivePositionWorkflowPanels({
       <div className={mobilePanel === 'draw' ? 'lg:hidden' : 'hidden'}>
         <MobileMapSectionCard>
           <h2 className="text-lg font-semibold">Pferch zeichnen</h2>
-          <p className="mt-2 text-sm text-neutral-700">
+          <p className="mt-2 text-sm text-ink-muted">
             Die Zeichenwerkzeuge liegen direkt auf der Karte. Name und Notiz werden hier ergänzt.
           </p>
           <LivePositionDrawWorkspace

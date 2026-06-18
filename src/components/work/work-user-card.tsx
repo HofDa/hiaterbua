@@ -34,7 +34,7 @@ function UserBadgeIcon() {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5e5549]">
+    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
       {children}
     </div>
   )
@@ -51,7 +51,7 @@ function ExpandToggle({
     <button
       type="button"
       onClick={onToggle}
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5a5347] bg-[#f1efeb] text-base font-semibold text-[#17130f] sm:h-10 sm:w-10 sm:text-lg"
+      className="flex h-9 w-9 items-center justify-center rounded-full border border-border-strong bg-surface-muted text-base font-semibold text-ink sm:h-10 sm:w-10 sm:text-lg"
       aria-expanded={isExpanded}
       aria-label={isExpanded ? 'Benutzerkarte einklappen' : 'Benutzerkarte aufklappen'}
     >
@@ -62,7 +62,7 @@ function ExpandToggle({
 
 function ReadonlyField({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn('min-h-[3rem] rounded-[1rem] border-2 border-[#ccb98a] bg-[#fffdf6] px-3.5 py-2.5 text-sm font-medium text-[#17130f] shadow-sm sm:min-h-[3.5rem] sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base', className)}>
+    <div className={cn('min-h-[3rem] rounded-[1rem] border-2 border-border bg-surface-raised px-3.5 py-2.5 text-sm font-medium text-ink shadow-sm sm:min-h-[3.5rem] sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base', className)}>
       {children}
     </div>
   )
@@ -70,10 +70,10 @@ function ReadonlyField({ className, children }: { className?: string; children: 
 
 function InlineAlert({ variant, children }: { variant: 'error' | 'success' | 'warning' | 'info'; children: React.ReactNode }) {
   const styles = {
-    error: 'border-red-200 bg-red-50 text-red-800 font-medium',
-    success: 'border-[#c5d3c8] bg-[#edf1ec] text-[#243228] font-semibold',
-    warning: 'border-amber-300 bg-amber-50 text-amber-900 font-medium',
-    info: 'border-[#d2cbc0] bg-[#f8f1e2] text-[#17130f]',
+    error: 'border-error-border bg-error-surface text-error-ink font-medium',
+    success: 'border-success-border bg-success-surface text-success-ink font-semibold',
+    warning: 'border-warning-border bg-warning-surface text-warning-ink font-medium',
+    info: 'border-border-soft bg-surface-warm text-ink',
   }
 
   return (
@@ -154,7 +154,7 @@ export function WorkUserCard() {
     return () => {
       cancelled = true
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   async function saveUserName() {
     const trimmedUserName = draftUserName.trim()
@@ -239,7 +239,7 @@ export function WorkUserCard() {
           <button
             type="button"
             onClick={() => setIsExpanded(true)}
-            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#5a5347] bg-[#f1efeb] text-[#17130f] shadow-[0_12px_24px_rgba(40,34,26,0.14)]"
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-border-strong bg-surface-muted text-ink app-shadow-action-strong"
             aria-label={`Benutzer ${trimmedUserName} öffnen`}
           >
             <UserBadgeIcon />
@@ -250,7 +250,7 @@ export function WorkUserCard() {
           <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="min-w-0">
               <SectionHeading>Benutzer</SectionHeading>
-              <p className="mt-1.5 truncate text-sm font-semibold text-[#17130f] sm:mt-2 sm:text-base">
+              <p className="mt-1.5 truncate text-sm font-semibold text-ink sm:mt-2 sm:text-base">
                 {trimmedUserName}
               </p>
             </div>
@@ -269,7 +269,7 @@ export function WorkUserCard() {
       <div className="flex items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
           <SectionHeading>Benutzer</SectionHeading>
-          <p className="mt-1.5 max-w-[min(58vw,15rem)] truncate text-sm font-semibold text-[#17130f] sm:mt-2 sm:max-w-none sm:text-base">
+          <p className="mt-1.5 max-w-[min(58vw,15rem)] truncate text-sm font-semibold text-ink sm:mt-2 sm:max-w-none sm:text-base">
             {isMissingUserName ? 'Noch kein Name gesetzt' : trimmedUserName}
           </p>
         </div>

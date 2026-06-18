@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
+import { BackupReminder } from '@/components/dashboard/backup-reminder'
 import { db } from '@/lib/db/dexie'
 import { cn } from '@/lib/utils/cn'
 
@@ -11,8 +12,8 @@ function DashboardStat({ label, value }: { label: string; value: number | string
   return (
     <Card variant="dashboard">
       <CardContent className="p-5">
-        <div className="text-sm font-semibold text-neutral-800">{label}</div>
-        <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-950">{value}</div>
+        <div className="text-sm font-semibold text-ink-soft">{label}</div>
+        <div className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-ink-strong">{value}</div>
       </CardContent>
     </Card>
   )
@@ -62,12 +63,14 @@ export default function HomePage() {
 
   return (
     <div className="space-y-5">
+      <BackupReminder />
+
       <Card>
         <CardHeader>
-          <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-800">
+          <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
             Feldstart
           </CardTitle>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-neutral-950">
+          <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-ink-strong">
             Häufigste Aktionen im Außeneinsatz
           </h2>
         </CardHeader>
@@ -77,12 +80,12 @@ export default function HomePage() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-[1.5rem] border border-[#ccb98a] bg-[#fffdf6] px-4 py-4 shadow-[0_18px_36px_rgba(40,34,26,0.08)]"
+                className="rounded-[1.5rem] border border-border bg-surface-raised px-4 py-4 shadow-[0_18px_36px_rgba(40,34,26,0.08)]"
               >
-                <div className="text-lg font-semibold tracking-[-0.02em] text-[#17130f]">
+                <div className="text-lg font-semibold tracking-[-0.02em] text-ink">
                   {link.title}
                 </div>
-                <div className="mt-2 text-sm font-medium text-[#4f473c]">
+                <div className="mt-2 text-sm font-medium text-ink-muted">
                   {link.description}
                 </div>
               </Link>
@@ -105,7 +108,7 @@ export default function HomePage() {
       <Card>
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between py-4">
           <div>
-            <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-800">
+            <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
               Einsatzbereit
             </CardTitle>
             <CardDescription className="mt-1">

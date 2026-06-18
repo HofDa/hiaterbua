@@ -8,6 +8,7 @@ import {
   southTyrolOrthoTiles,
 } from '@/lib/maps/base-map-style'
 import { emptyFeatureCollection } from '@/lib/maps/map-core'
+import { mapStyleColors } from '@/lib/maps/map-style-tokens'
 
 type MapLibreModule = typeof import('maplibre-gl')
 
@@ -36,7 +37,7 @@ export function createRasterMap(maplibre: MapLibreModule, container: HTMLElement
 
 export function createDefaultMarker(maplibre: MapLibreModule) {
   return new maplibre.Marker({
-    color: '#111827',
+    color: mapStyleColors.marker,
   })
 }
 
@@ -65,7 +66,7 @@ export function addSurveyAreaLayers(map: MapLibreMap) {
     type: 'fill',
     source: 'survey-areas',
     paint: {
-      'fill-color': '#7c3aed',
+      'fill-color': mapStyleColors.surveyAreaFill,
       'fill-opacity': 0.1,
     },
   })
@@ -75,7 +76,7 @@ export function addSurveyAreaLayers(map: MapLibreMap) {
     type: 'line',
     source: 'survey-areas',
     paint: {
-      'line-color': '#6d28d9',
+      'line-color': mapStyleColors.surveyAreaLine,
       'line-width': 2,
       'line-dasharray': [2, 2],
     },

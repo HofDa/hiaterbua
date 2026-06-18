@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <Card className="m-4">
           <CardHeader>
-            <CardTitle className="text-red-800">Ein Fehler ist aufgetreten</CardTitle>
+            <CardTitle className="text-error-ink">Ein Fehler ist aufgetreten</CardTitle>
           </CardHeader>
           <CardContent>
             <ErrorAlert className="mb-4">
@@ -72,7 +72,7 @@ export class ErrorBoundary extends Component<Props, State> {
             
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-2 text-sm font-semibold text-[#17130f]"
+              className="mt-4 rounded-2xl border-2 border-border bg-surface-raised px-4 py-2 text-sm font-semibold text-ink"
             >
               Seite neu laden
             </button>

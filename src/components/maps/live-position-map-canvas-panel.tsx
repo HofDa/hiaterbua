@@ -142,7 +142,7 @@ export function LivePositionMapCanvasPanel({
     !editingEnclosureId && (mobilePanel === 'draw' || mobilePanel === 'walk')
 
   return (
-    <div className="relative overflow-hidden rounded-[1.9rem] border-2 border-border-ink bg-surface shadow-[0_18px_40px_rgba(23,20,18,0.08)]">
+    <div className="relative overflow-hidden app-panel">
       <div
         ref={containerRef}
         className="h-[420px] w-full bg-surface-raised sm:h-[520px] lg:h-[calc(100vh-8rem)]"
@@ -154,7 +154,7 @@ export function LivePositionMapCanvasPanel({
           aria-expanded={isMobileControlsOpen}
           onClick={() => setIsMobileControlsOpen((current) => !current)}
           className={[
-            'absolute left-2 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-neutral-950 shadow-lg transition-all lg:hidden',
+            'absolute left-2 z-30 flex items-center justify-center app-map-icon-button text-ink-strong transition-all lg:hidden',
             isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
           ].join(' ')}
         >
@@ -256,8 +256,8 @@ export function LivePositionMapCanvasPanel({
               aria-expanded={isDesktopToolbarOpen}
               onClick={() => setIsDesktopToolbarOpen((current) => !current)}
               className={[
-                'hidden h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised shadow-lg transition-colors lg:flex',
-                isDesktopToolbarOpen ? 'text-neutral-950' : 'text-neutral-600',
+                'hidden items-center justify-center app-map-icon-button transition-colors lg:flex',
+                isDesktopToolbarOpen ? 'text-ink-strong' : 'text-ink-muted',
               ].join(' ')}
               title={
                 isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'

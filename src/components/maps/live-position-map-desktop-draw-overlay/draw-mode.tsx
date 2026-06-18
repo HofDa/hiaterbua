@@ -77,7 +77,7 @@ export function LivePositionMapDesktopDrawMode({
           </MobileMapToolbarButton>
         </MobileMapToolbar>
 
-        <div className="min-w-[10rem] flex-1 px-1 text-xs font-medium text-neutral-700">
+        <div className="min-w-[10rem] flex-1 px-1 text-xs font-medium text-ink-muted">
           {drawHint}
         </div>
       </div>
@@ -88,7 +88,7 @@ export function LivePositionMapDesktopDrawMode({
         </label>
         <input
           id="desktop-draw-enclosure-name"
-          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
+          className="h-11 min-w-[11rem] flex-[1_1_12rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-ink-strong outline-none placeholder:text-ink-soft focus:border-border-strong"
           value={name}
           onChange={(event) => onNameChange(event.target.value)}
           placeholder="Pferchname"
@@ -99,7 +99,7 @@ export function LivePositionMapDesktopDrawMode({
         </label>
         <input
           id="desktop-draw-enclosure-notes"
-          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-neutral-950 outline-none placeholder:text-neutral-500 focus:border-border-strong"
+          className="h-11 min-w-[13rem] flex-[1.2_1_15rem] rounded-2xl border border-border bg-surface-raised px-4 text-sm text-ink-strong outline-none placeholder:text-ink-soft focus:border-border-strong"
           value={notes}
           onChange={(event) => onNotesChange(event.target.value)}
           placeholder="Notiz optional"
@@ -114,7 +114,7 @@ export function LivePositionMapDesktopDrawMode({
         </button>
 
         {saveError ? (
-          <div className="basis-full rounded-2xl bg-red-50 px-4 py-2 text-xs font-medium text-red-700">
+          <div className="basis-full rounded-2xl bg-error-surface px-4 py-2 text-xs font-medium text-error-ink">
             {saveError}
           </div>
         ) : null}

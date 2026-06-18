@@ -8,7 +8,9 @@ import { TopBar } from '@/components/layout/top-bar'
 import { AppAccessGate } from '@/components/pwa/app-access-gate'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
+import { ConnectivityBanner } from '@/components/ui/connectivity-banner'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -42,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <body className={cn('min-h-screen bg-background font-sans antialiased', GeistSans.variable)}>
-        <div className="min-h-screen text-neutral-950">
+        <div className="min-h-screen text-ink-strong">
           <ServiceWorkerSync />
           <AppRoutePrefetch />
           <AppAccessGate />
@@ -52,6 +54,8 @@ export default function RootLayout({
             <PageContainer>{children}</PageContainer>
           </ErrorBoundary>
           <BottomNav />
+          <ConnectivityBanner />
+          <Toaster />
         </div>
       </body>
     </html>

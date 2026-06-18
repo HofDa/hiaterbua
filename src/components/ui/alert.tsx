@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { CheckCircle, Info, XCircle } from 'lucide-react'
-import type { ComponentProps } from 'react'
+import { AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react'
+import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 
 const alertVariants = cva(
@@ -10,9 +10,13 @@ const alertVariants = cva(
       variant: {
         default: 'bg-background text-foreground',
         destructive:
-          'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
-        success: 'border-green-500/50 text-green-500 dark:border-green-500 [&>svg]:text-green-500',
-        info: 'border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-500',
+          'border-error-border bg-error-surface text-error-ink [&>svg]:text-error-ink',
+        success:
+          'border-success-border bg-success-surface text-success-ink [&>svg]:text-success-ink',
+        info:
+          'border-info-border bg-info-surface text-info-ink [&>svg]:text-info-ink',
+        warning:
+          'border-warning-border bg-warning-surface text-warning-ink [&>svg]:text-warning-ink',
       },
     },
     defaultVariants: {
@@ -35,11 +39,31 @@ export function Alert({ className, variant, children, ...props }: AlertProps) {
   )
 }
 
-export function StatusAlert({ className, children, ...props }: ComponentProps<'div'>) {
+type StatusAlertProps = ComponentProps<'div'> & {
+  variant?: 'success' | 'warning' | 'info'
+  icon?: ReactNode
+}
+
+const statusTitles: Record<'success' | 'warning' | 'info', string> = {
+  success: 'Erfolg',
+  warning: 'Warnung',
+  info: 'Info',
+}
+
+export function StatusAlert({
+  className,
+  children,
+  variant = 'success',
+  icon,
+  ...props
+}: StatusAlertProps) {
+  const DefaultIcon =
+    variant === 'warning' ? AlertCircle : variant === 'info' ? Info : CheckCircle
+
   return (
-    <Alert variant="success" className={className} {...props}>
-      <CheckCircle className="h-4 w-4" />
-      <AlertTitle>Success</AlertTitle>
+    <Alert variant={variant} className={className} {...props}>
+      {icon ?? <DefaultIcon className="h-4 w-4" />}
+      <AlertTitle>{statusTitles[variant]}</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
   )
@@ -49,7 +73,7 @@ export function ErrorAlert({ className, children, ...props }: ComponentProps<'di
   return (
     <Alert variant="destructive" className={className} {...props}>
       <XCircle className="h-4 w-4" />
-      <AlertTitle>Error</AlertTitle>
+      <AlertTitle>Fehler</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
   )
@@ -59,7 +83,7 @@ export function LoadingAlert({ className, children, ...props }: ComponentProps<'
   return (
     <Alert variant="default" className={className} {...props}>
       <Info className="h-4 w-4" />
-      <AlertTitle>Loading</AlertTitle>
+      <AlertTitle>Wird geladen</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
   )

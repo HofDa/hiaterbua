@@ -28,17 +28,17 @@ export function LivePositionMapEditOverlay({
       <MobileMapFloatingCard>
         <div className="flex items-center justify-between gap-2 px-1 pb-2 sm:gap-3">
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-neutral-900 sm:text-sm">
+            <div className="text-xs font-semibold text-ink sm:text-sm">
               Pferch bearbeiten
             </div>
-            <div className="text-[11px] text-neutral-800 sm:hidden">
+            <div className="text-[11px] text-ink-soft sm:hidden">
               {isAddingEditPoint
                 ? 'Neuer Punkt: nächster Tap auf Karte.'
                 : selectedEditPointIndex !== null
                   ? `Punkt ${selectedEditPointIndex + 1} aktiv.`
                   : 'Punkt antippen oder Aktion wählen.'}
             </div>
-            <div className="mt-1 hidden text-xs text-neutral-800 sm:block">
+            <div className="mt-1 hidden text-xs text-ink-soft sm:block">
               {isAddingEditPoint
                 ? 'Nächster Kartenklick setzt einen neuen Punkt.'
                 : selectedEditPointIndex !== null
@@ -63,7 +63,7 @@ export function LivePositionMapEditOverlay({
             type="button"
             onClick={onRemoveSelectedEditPoint}
             disabled={selectedEditPointIndex === null || editGeometryPointsLength <= 3}
-            className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-neutral-950 disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
+            className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink-strong disabled:opacity-50 sm:px-3 sm:py-3 sm:text-sm"
           >
             Punkt -
           </button>
@@ -78,7 +78,7 @@ export function LivePositionMapEditOverlay({
           <button
             type="button"
             onClick={onCancelEditEnclosure}
-            className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-neutral-950 sm:px-3 sm:py-3 sm:text-sm"
+            className="rounded-2xl bg-surface-muted px-2 py-2.5 text-xs font-semibold text-ink-strong sm:px-3 sm:py-3 sm:text-sm"
           >
             Schließen
           </button>

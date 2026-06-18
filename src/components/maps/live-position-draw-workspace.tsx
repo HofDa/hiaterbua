@@ -53,7 +53,7 @@ export function LivePositionDrawWorkspace({
   return (
     <>
       {showStatusText ? (
-        <p className="mt-2 text-sm text-neutral-700">{drawStatusText}</p>
+        <p className="mt-2 text-sm text-ink-muted">{drawStatusText}</p>
       ) : null}
 
       {showControls ? (
@@ -98,9 +98,9 @@ export function LivePositionDrawWorkspace({
       ) : null}
 
       <Alert variant="info" className="mt-4 text-sm">
-        Punkte gesetzt: <span className="font-medium text-neutral-900">{draftPointsCount}</span>
+        Punkte gesetzt: <span className="font-medium text-ink">{draftPointsCount}</span>
         <span className="ml-2">
-          · Fläche <span className="font-medium text-neutral-900">{formatArea(draftAreaM2)}</span>
+          · Fläche <span className="font-medium text-ink">{formatArea(draftAreaM2)}</span>
         </span>
       </Alert>
 

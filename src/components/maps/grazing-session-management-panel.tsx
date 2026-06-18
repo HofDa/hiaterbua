@@ -110,7 +110,7 @@ export function GrazingSessionManagementPanel({
       ) : null}
 
       {actionError ? (
-        <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-4 rounded-2xl bg-error-surface px-4 py-3 text-sm text-error-ink">
           {actionError}
         </div>
       ) : null}
@@ -127,7 +127,7 @@ export function GrazingSessionManagementPanel({
   return (
     <div
       data-grazing-session-management-card="true"
-      className="rounded-[1.9rem] border-2 border-border-ink bg-surface p-5 shadow-[0_18px_40px_rgba(23,20,18,0.08)] lg:hidden"
+      className="app-panel p-5 lg:hidden"
     >
       <h2 className="text-lg font-semibold">Weidegang verwalten</h2>
       <div className="mt-4">{panelContent}</div>

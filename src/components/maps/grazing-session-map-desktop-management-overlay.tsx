@@ -96,8 +96,8 @@ export function GrazingSessionMapDesktopManagementOverlay({
       <MobileMapFloatingCard className="bg-surface-glass p-3 backdrop-blur-[3px] xl:p-4">
         <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3 xl:gap-3">
           <div className="min-w-[11rem] flex-1">
-            <div className="text-lg font-semibold text-neutral-950">Weidegang verwalten</div>
-            <div className="mt-1 text-xs font-medium text-neutral-700">{summary}</div>
+            <div className="text-lg font-semibold text-ink-strong">Weidegang verwalten</div>
+            <div className="mt-1 text-xs font-medium text-ink-muted">{summary}</div>
           </div>
 
           <MobileMapToolbar>
@@ -160,7 +160,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
           <div className="min-w-[11rem] flex-[1_1_12rem]">
             <label
               htmlFor="desktop-grazing-herd"
-              className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-700"
+              className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted"
             >
               Herde
             </label>
@@ -181,7 +181,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
           </div>
 
           <div className="min-w-[11rem] flex-[0_1_13rem]">
-            <div className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-700">
+            <div className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
               Tiere im Weidegang
             </div>
             <div className="flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface-raised px-2">
@@ -195,7 +195,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
                 −
               </button>
               <div className="min-w-0 flex-1 text-center">
-                <div className="text-sm font-semibold text-neutral-950">{animalCount}</div>
+                <div className="text-sm font-semibold text-ink-strong">{animalCount}</div>
               </div>
               <button
                 type="button"
@@ -212,7 +212,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
           <div className="min-w-[13rem] flex-[1.2_1_16rem]">
             <label
               htmlFor="desktop-grazing-session-note"
-              className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-700"
+              className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted"
             >
               Notiz zum Weidegang
             </label>
@@ -246,7 +246,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
             <div className="min-w-[12rem] flex-[1_1_14rem]">
               <label
                 htmlFor="desktop-grazing-event-note"
-                className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-700"
+                className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted"
               >
                 Ereignisnotiz
               </label>

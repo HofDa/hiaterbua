@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import type { LngLatLike, Map as MapLibreMap, Marker, StyleSpecification } from 'maplibre-gl'
+import { mapStyleColors } from '@/lib/maps/map-style-tokens'
 
 const previewCenter: LngLatLike = [11.35, 46.5]
 const previewBaseLayerId = 'settings-preview-basemap'
@@ -61,7 +62,7 @@ export function PositionPreviewMap({
 
       mapRef.current = map
       markerRef.current = new maplibre.Marker({
-        color: '#111827',
+        color: mapStyleColors.marker,
       })
     }
 
@@ -91,7 +92,7 @@ export function PositionPreviewMap({
   }, [latitude, longitude])
 
   return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-[#ccb98a] bg-[rgba(255,253,246,0.88)] shadow-sm">
+    <div className="overflow-hidden rounded-[1.5rem] border border-border bg-surface-raised/88 shadow-sm">
       <div
         ref={containerRef}
         className="h-64 w-full"

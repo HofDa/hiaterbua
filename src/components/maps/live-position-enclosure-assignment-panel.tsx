@@ -87,37 +87,37 @@ export function LivePositionEnclosureAssignmentPanel({
 
   return (
     <>
-      <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-neutral-700">
-        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
+      <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-ink-muted">
+        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
           Belegung
         </div>
         {activeAssignment && activeHerd ? (
           <div className="mt-2">
-            <div className="font-medium text-neutral-900">{activeHerd.name}</div>
+            <div className="font-medium text-ink">{activeHerd.name}</div>
             <div className="mt-1">
               Seit{' '}
-              <span className="font-medium text-neutral-900">
+              <span className="font-medium text-ink">
                 {formatDateTime(activeAssignment.startTime)}
               </span>
             </div>
             <div className="mt-1">
               Verweildauer{' '}
-              <span className="font-medium text-neutral-900">
+              <span className="font-medium text-ink">
                 {formatDurationFromIso(activeAssignment.startTime)}
               </span>
             </div>
             <div className="mt-1">
               Besatz{' '}
-              <span className="font-medium text-neutral-900">
+              <span className="font-medium text-ink">
                 {effectiveCurrentCount ?? 'unbekannt'}
               </span>
             </div>
             {activeAssignment.notes ? (
-              <div className="mt-1 text-neutral-600">{activeAssignment.notes}</div>
+              <div className="mt-1 text-ink-muted">{activeAssignment.notes}</div>
             ) : null}
           </div>
         ) : (
-          <div className="mt-2 text-neutral-600">Aktuell keiner Herde zugewiesen.</div>
+          <div className="mt-2 text-ink-muted">Aktuell keiner Herde zugewiesen.</div>
         )}
       </div>
 
@@ -132,10 +132,10 @@ export function LivePositionEnclosureAssignmentPanel({
         </button>
       ) : assignmentEditorEnclosureId === enclosure.id ? (
         <div className="min-w-0 overflow-hidden rounded-2xl bg-surface-raised px-4 py-4">
-          <div className="text-sm font-medium text-neutral-900">Herde zuweisen</div>
+          <div className="text-sm font-medium text-ink">Herde zuweisen</div>
           <div className="mt-3 min-w-0 space-y-3">
             <div className="min-w-0">
-              <div className="mb-1 text-sm font-medium text-neutral-700">Herde</div>
+              <div className="mb-1 text-sm font-medium text-ink-muted">Herde</div>
               <div className="grid grid-cols-2 gap-2 rounded-[1.35rem] border-2 border-border bg-surface-raised p-2 text-sm">
                 {assignableHerds.map((herd) => (
                     <button
@@ -146,7 +146,7 @@ export function LivePositionEnclosureAssignmentPanel({
                         'rounded-[1rem] px-3 py-2 text-left transition',
                         assignmentHerdId === herd.id
                           ? 'border border-border-strong bg-surface-muted text-ink'
-                          : 'border border-transparent bg-surface-raised text-neutral-900 hover:border-border',
+                          : 'border border-transparent bg-surface-raised text-ink hover:border-border',
                       ].join(' ')}
                     >
                       {herd.name}
@@ -154,7 +154,7 @@ export function LivePositionEnclosureAssignmentPanel({
                   ))}
               </div>
               {!hasAssignableHerds ? (
-                <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface-warm px-3 py-3 text-sm text-neutral-700">
+                <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface-warm px-3 py-3 text-sm text-ink-muted">
                   Alle aktiven Herden sind bereits anderen Pferchen zugewiesen.
                 </div>
               ) : null}
@@ -219,7 +219,7 @@ export function LivePositionEnclosureAssignmentPanel({
               <button
                 type="button"
                 onClick={onCancelAssignmentEditor}
-                className="rounded-2xl bg-surface-raised px-4 py-3 text-sm font-medium text-neutral-900"
+                className="rounded-2xl bg-surface-raised px-4 py-3 text-sm font-medium text-ink"
               >
                 Abbrechen
               </button>
@@ -238,8 +238,8 @@ export function LivePositionEnclosureAssignmentPanel({
       )}
 
       {assignmentHistory.length > 0 ? (
-        <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-neutral-700">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
+        <div className="rounded-2xl bg-surface-raised px-4 py-3 text-sm text-ink-muted">
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
             Letzte Aufenthalte
           </div>
           <div className="mt-2 space-y-2">
@@ -250,15 +250,15 @@ export function LivePositionEnclosureAssignmentPanel({
                 getEffectiveHerdCount(herd, animalsByHerdId.get(assignment.herdId) ?? [])
 
               return (
-                <div key={assignment.id} className="rounded-2xl bg-neutral-50 px-3 py-3">
-                  <div className="font-medium text-neutral-900">
+                <div key={assignment.id} className="rounded-2xl bg-surface-raised px-3 py-3">
+                  <div className="font-medium text-ink">
                     {herd?.name ?? 'Unbekannte Herde'}
                   </div>
-                  <div className="mt-1 text-xs text-neutral-600">
+                  <div className="mt-1 text-xs text-ink-muted">
                     {formatDateTime(assignment.startTime)}
                     {assignment.endTime ? ` bis ${formatDateTime(assignment.endTime)}` : ' bis jetzt'}
                   </div>
-                  <div className="mt-1 text-xs text-neutral-600">
+                  <div className="mt-1 text-xs text-ink-muted">
                     Dauer {formatDurationFromIso(assignment.startTime, assignment.endTime)} · Besatz{' '}
                     {count ?? 'unbekannt'}
                   </div>

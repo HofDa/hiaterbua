@@ -51,10 +51,10 @@ export function WorkActivityPicker({
                     setMobileStep('option')
                   }}
                   className={[
-                    'min-h-[4.25rem] rounded-[1.35rem] border-2 px-4 py-3.5 text-left text-base font-semibold shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
+                    'min-h-[4.25rem] rounded-[1.35rem] border-2 px-4 py-3.5 text-left text-base font-semibold app-shadow-action transition-colors',
                     isActive
-                      ? 'border-[#3a342a] bg-[#efe4c8] text-[#17130f]'
-                      : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
+                      ? 'border-border-ink bg-accent text-ink'
+                      : 'border-border bg-surface-raised text-ink-soft',
                   ].join(' ')}
                   aria-pressed={isActive}
                 >
@@ -65,17 +65,17 @@ export function WorkActivityPicker({
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-[#d2cbc0] bg-[#f8f1e2] px-3.5 py-3 text-[#17130f]">
+            <div className="flex items-center justify-between gap-3 app-callout px-3.5 py-3">
               <button
                 type="button"
                 onClick={() => setMobileStep('section')}
-                className="shrink-0 rounded-full border border-[#5a5347] bg-[#fffdf6] px-3 py-1.5 text-sm font-semibold text-[#17130f]"
+                className="shrink-0 rounded-full border border-border-strong bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink"
               >
                 Zurück
               </button>
               <div className="min-w-0 text-right">
                 <div className="text-sm font-semibold">{activeSection.label}</div>
-                <div className="mt-0.5 text-xs font-medium text-neutral-700">
+                <div className="mt-0.5 text-xs font-medium text-ink-muted">
                   {activeSection.description}
                 </div>
               </div>
@@ -91,10 +91,10 @@ export function WorkActivityPicker({
                     type="button"
                     onClick={() => onSelectionChange(getWorkSelectionForOption(sectionId, option.id))}
                     className={[
-                      'min-h-[4.5rem] rounded-[1.25rem] border-2 px-4 py-4 text-left text-base font-semibold shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
+                      'min-h-[4.5rem] rounded-[1.25rem] border-2 px-4 py-4 text-left text-base font-semibold app-shadow-action transition-colors',
                       isActive
-                        ? 'border-[#3a342a] bg-[#efe4c8] text-[#17130f]'
-                        : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
+                        ? 'border-border-ink bg-accent text-ink'
+                        : 'border-border bg-surface-raised text-ink',
                     ].join(' ')}
                     aria-pressed={isActive}
                   >
@@ -121,10 +121,10 @@ export function WorkActivityPicker({
                   onSelectionChange(getDefaultWorkSelectionForSection(section.id))
                 }}
                 className={[
-                  'min-h-[4.25rem] rounded-[1.35rem] border-2 px-4 py-3.5 text-left text-base font-semibold shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
+                  'min-h-[4.25rem] rounded-[1.35rem] border-2 px-4 py-3.5 text-left text-base font-semibold app-shadow-action transition-colors',
                   isActive
-                    ? 'border-[#3a342a] bg-[#efe4c8] text-[#17130f]'
-                    : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-800',
+                    ? 'border-border-ink bg-accent text-ink'
+                    : 'border-border bg-surface-raised text-ink-soft',
                 ].join(' ')}
                 aria-pressed={isActive}
               >
@@ -134,9 +134,9 @@ export function WorkActivityPicker({
           })}
         </div>
 
-        <div className="rounded-[1.1rem] border border-[#d2cbc0] bg-[#f8f1e2] px-4 py-3 text-sm text-[#17130f]">
+        <div className="rounded-[1.1rem] border border-border-soft bg-surface-warm px-4 py-3 text-sm text-ink">
           <div className="font-semibold">{activeSection.label}</div>
-          <div className="mt-1 text-xs font-medium text-neutral-700">{activeSection.description}</div>
+          <div className="mt-1 text-xs font-medium text-ink-muted">{activeSection.description}</div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -149,10 +149,10 @@ export function WorkActivityPicker({
                 type="button"
                 onClick={() => onSelectionChange(getWorkSelectionForOption(sectionId, option.id))}
                 className={[
-                  'min-h-[4.5rem] rounded-[1.25rem] border-2 px-4 py-4 text-left text-base font-semibold shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
+                  'min-h-[4.5rem] rounded-[1.25rem] border-2 px-4 py-4 text-left text-base font-semibold app-shadow-action transition-colors',
                   isActive
-                    ? 'border-[#3a342a] bg-[#efe4c8] text-[#17130f]'
-                    : 'border-[#ccb98a] bg-[#fffdf6] text-neutral-900',
+                    ? 'border-border-ink bg-accent text-ink'
+                    : 'border-border bg-surface-raised text-ink',
                 ].join(' ')}
                 aria-pressed={isActive}
               >

@@ -5,6 +5,7 @@ import {
   addSurveyAreaLayers,
   bindPointerCursor,
 } from '@/lib/maps/maplibre-runtime'
+import { mapStyleColors } from '@/lib/maps/map-style-tokens'
 
 type GrazingSessionMapSetupHandlers = {
   onMapClick: (event: MapMouseEvent) => void
@@ -15,6 +16,8 @@ export function registerGrazingSessionMapSetup(
   map: MapLibreMap,
   handlers: GrazingSessionMapSetupHandlers
 ) {
+  const eventColors = mapStyleColors.sessionEvent
+
   addOrthophotoLayer(map)
   addSurveyAreaLayers(map)
 
@@ -29,25 +32,25 @@ export function registerGrazingSessionMapSetup(
         'match',
         ['get', 'type'],
         'water',
-        '#0369a1',
+        eventColors.water,
         'rest',
-        '#b45309',
+        eventColors.rest,
         'disturbance',
-        '#be123c',
+        eventColors.disturbance,
         'note',
-        '#111827',
+        eventColors.note,
         'move',
-        '#047857',
+        eventColors.move,
         'pause',
-        '#7c2d12',
+        eventColors.pause,
         'resume',
-        '#166534',
+        eventColors.resume,
         'stop',
-        '#4b5563',
-        '#2563eb',
+        eventColors.stop,
+        eventColors.fallback,
       ],
       'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff',
+      'circle-stroke-color': mapStyleColors.white,
     },
   })
 
@@ -57,7 +60,7 @@ export function registerGrazingSessionMapSetup(
     type: 'line',
     source: 'current-session-track',
     paint: {
-      'line-color': '#2563eb',
+      'line-color': mapStyleColors.currentSessionTrack,
       'line-width': 4,
     },
     filter: ['==', '$type', 'LineString'],
@@ -69,9 +72,9 @@ export function registerGrazingSessionMapSetup(
     source: 'current-session-track',
     paint: {
       'circle-radius': 4,
-      'circle-color': '#2563eb',
+      'circle-color': mapStyleColors.currentSessionTrack,
       'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff',
+      'circle-stroke-color': mapStyleColors.white,
     },
     filter: ['==', '$type', 'Point'],
   })
@@ -82,7 +85,7 @@ export function registerGrazingSessionMapSetup(
     type: 'line',
     source: 'selected-session-track',
     paint: {
-      'line-color': '#0f766e',
+      'line-color': mapStyleColors.selectedSessionTrack,
       'line-width': 4,
     },
     filter: ['==', '$type', 'LineString'],
@@ -94,9 +97,9 @@ export function registerGrazingSessionMapSetup(
     source: 'selected-session-track',
     paint: {
       'circle-radius': 7,
-      'circle-color': '#0f766e',
+      'circle-color': mapStyleColors.selectedSessionTrack,
       'circle-stroke-width': 3,
-      'circle-stroke-color': '#ffffff',
+      'circle-stroke-color': mapStyleColors.white,
     },
     filter: ['==', '$type', 'Point'],
   })
@@ -107,7 +110,7 @@ export function registerGrazingSessionMapSetup(
     source: 'selected-session-track',
     paint: {
       'circle-radius': 18,
-      'circle-color': '#ffffff',
+      'circle-color': mapStyleColors.white,
       'circle-opacity': 0.01,
     },
     filter: ['==', '$type', 'Point'],

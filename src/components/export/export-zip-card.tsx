@@ -15,15 +15,15 @@ export function ExportZipCard({ isExporting, onExportZip }: ExportZipCardProps) 
         <CardTitle>ZIP-Export</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mt-2 text-sm font-medium text-neutral-800">
+        <p className="mt-2 text-sm font-medium text-ink-soft">
           Enthält Pferche, Untersuchungsflächen, geführte Weidegänge, Trackpunkte, GPX-Dateien,
           `herds/herds.json` für vollständige Herden-Pakete und `app-data.json` für den vollständigen
           App-Import.
         </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <Card className="rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
-            <div className="font-medium text-neutral-900">Für QGIS</div>
+          <Card className="rounded-2xl border-2 border-border bg-surface-raised px-4 py-4 text-sm text-ink">
+            <div className="font-medium text-ink">Für QGIS</div>
             <div className="mt-2">`enclosures.geojson`</div>
             <div>`survey_areas.geojson`</div>
             <div>`grazing_sessions.geojson`</div>
@@ -31,8 +31,8 @@ export function ExportZipCard({ isExporting, onExportZip }: ExportZipCardProps) 
             <div>`session_events.geojson`</div>
             <div>`enclosure_walk_trackpoints.geojson`</div>
           </Card>
-          <Card className="rounded-2xl border-2 border-[#ccb98a] bg-[#fffdf6] px-4 py-4 text-sm text-neutral-900">
-            <div className="font-medium text-neutral-900">Weitere Dateien</div>
+          <Card className="rounded-2xl border-2 border-border bg-surface-raised px-4 py-4 text-sm text-ink">
+            <div className="font-medium text-ink">Weitere Dateien</div>
             <div className="mt-2">`grazing_sessions.gpx`</div>
             <div>`enclosure_walks.gpx`</div>
             <div>`herds/herds.json`</div>
@@ -50,7 +50,7 @@ export function ExportZipCard({ isExporting, onExportZip }: ExportZipCardProps) 
           {isExporting ? 'Erstellt Export ...' : 'ZIP-Export herunterladen'}
         </FormButton>
 
-        <p className="mt-3 text-xs font-medium text-neutral-700">
+        <p className="mt-3 text-xs font-medium text-ink-muted">
           GeoPackage ist bewusst noch nicht enthalten, weil im Projekt aktuell keine Schreibbibliothek
           dafür integriert ist.
         </p>

@@ -17,8 +17,17 @@
     const precacheUrls = Array.from(new Set([shared.OFFLINE_URL, ...(manifest.urls ?? [])]))
     const precacheUrlSet = new Set(precacheUrls)
 
+    async function openCacheBestEffort() {
+      try {
+        return await caches.open(appCacheName)
+      } catch {
+        return null
+      }
+    }
+
     async function precacheAppShell() {
-      const cache = await caches.open(appCacheName)
+      const cache = await openCacheBestEffort()
+      if (!cache) return
 
       await Promise.allSettled(
         precacheUrls.map(async (url) => {
@@ -36,16 +45,37 @@
       )
     }
 
+    async function putCacheBestEffort(cache, key, response) {
+      if (!cache) return
+
+      try {
+        await cache.put(key, response.clone())
+      } catch {
+        // Cache writes are opportunistic. Under storage pressure the network
+        // response should still be returned to the page.
+      }
+    }
+
+    async function matchCacheBestEffort(cache, key) {
+      if (!cache) return null
+
+      try {
+        return await cache.match(key)
+      } catch {
+        return null
+      }
+    }
+
     async function handleNavigationRequest(request) {
       const requestUrl = new URL(request.url)
-      const cache = await caches.open(appCacheName)
+      const cache = await openCacheBestEffort()
       const cacheKey = getNavigationCacheKey(requestUrl)
 
       try {
         const networkResponse = await fetch(request)
 
         if (cacheKey && networkResponse.ok) {
-          await cache.put(cacheKey, networkResponse.clone())
+          await putCacheBestEffort(cache, cacheKey, networkResponse)
         }
 
         return networkResponse
@@ -56,13 +86,16 @@
         }
 
         if (cacheKey) {
-          const cachedResponse = await cache.match(cacheKey)
+          const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
           if (cachedResponse) {
             return cachedResponse
           }
         }
 
-        const offlineResponse = await cache.match(shared.createCacheKey(shared.OFFLINE_URL))
+        const offlineResponse = await matchCacheBestEffort(
+          cache,
+          shared.createCacheKey(shared.OFFLINE_URL)
+        )
         if (offlineResponse) {
           return offlineResponse
         }
@@ -79,20 +112,20 @@
 
     async function handleAppDataRequest(request) {
       const requestUrl = new URL(request.url)
-      const cache = await caches.open(appCacheName)
+      const cache = await openCacheBestEffort()
       const cacheKey = getAppDataCacheKey(request, requestUrl)
 
       try {
         const networkResponse = await fetch(request)
 
         if (cacheKey && networkResponse.ok) {
-          await cache.put(cacheKey, networkResponse.clone())
+          await putCacheBestEffort(cache, cacheKey, networkResponse)
         }
 
         return networkResponse
       } catch {
         if (cacheKey) {
-          const cachedResponse = await cache.match(cacheKey)
+          const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
           if (cachedResponse) {
             return cachedResponse
           }
@@ -106,8 +139,8 @@
     }
 
     async function handleAppAssetRequest(request) {
-      const cache = await caches.open(appCacheName)
-      const cachedResponse = await cache.match(request)
+      const cache = await openCacheBestEffort()
+      const cachedResponse = await matchCacheBestEffort(cache, request)
 
       if (cachedResponse) {
         void refreshAppAsset(cache, request)
@@ -117,7 +150,7 @@
       const networkResponse = await fetch(request)
 
       if (networkResponse.ok) {
-        await cache.put(request, networkResponse.clone())
+        await putCacheBestEffort(cache, request, networkResponse)
       }
 
       return networkResponse
@@ -127,7 +160,7 @@
       try {
         const networkResponse = await fetch(request)
         if (networkResponse.ok) {
-          await cache.put(request, networkResponse.clone())
+          await putCacheBestEffort(cache, request, networkResponse)
         }
       } catch {
         // Keep the cached asset when the refresh fails.

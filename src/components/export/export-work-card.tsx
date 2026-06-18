@@ -26,13 +26,13 @@ export function ExportWorkCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="text-lg">Alle Arbeitseinsätze exportieren</CardTitle>
-            <p className="mt-2 text-sm font-medium text-neutral-800">
+            <p className="mt-2 text-sm font-medium text-ink-soft">
               Exportiert alle Arbeitseinsätze und Arbeitsereignisse als eigene JSON-Datei inklusive
               referenzierter Herden und Pferche.
             </p>
           </div>
           {!isLoading ? (
-            <div className="rounded-full border border-[#ccb98a] bg-[#efe4c8] px-3 py-1 text-xs font-semibold text-neutral-950">
+            <div className="rounded-full border border-border bg-accent px-3 py-1 text-xs font-semibold text-ink-strong">
               {(workSessionCount ?? 0)} Einsätze
             </div>
           ) : null}
@@ -49,14 +49,14 @@ export function ExportWorkCard({
           <>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <Card className="px-4 py-3">
-                <div className="font-medium text-neutral-700">Arbeitseinsätze</div>
-                <div className="mt-1 text-lg font-semibold text-neutral-950">
+                <div className="font-medium text-ink-muted">Arbeitseinsätze</div>
+                <div className="mt-1 text-lg font-semibold text-ink-strong">
                   {workSessionCount}
                 </div>
               </Card>
               <Card className="px-4 py-3">
-                <div className="font-medium text-neutral-700">Arbeitsereignisse</div>
-                <div className="mt-1 text-lg font-semibold text-neutral-950">{workEventCount}</div>
+                <div className="font-medium text-ink-muted">Arbeitsereignisse</div>
+                <div className="mt-1 text-lg font-semibold text-ink-strong">{workEventCount}</div>
               </Card>
             </div>
 

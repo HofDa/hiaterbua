@@ -114,7 +114,7 @@ function LivePositionMobileAssignmentFlow({
 
   return (
     <div className="rounded-2xl border border-border bg-surface-raised px-4 py-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-border-soft bg-surface-warm px-3.5 py-3 text-ink">
+      <div className="flex items-center justify-between gap-3 app-callout px-3.5 py-3">
         <button
           type="button"
           onClick={handleBack}
@@ -126,7 +126,7 @@ function LivePositionMobileAssignmentFlow({
           <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
             {enclosure.name}
           </div>
-          <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700">
+          <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">
             {step === 'herd'
               ? '1. Herde wählen'
               : step === 'count'
@@ -139,7 +139,7 @@ function LivePositionMobileAssignmentFlow({
       {step === 'herd' ? (
         <div className="mt-3 space-y-3">
           {assignableHerds.length === 0 ? (
-            <div className="rounded-[1.25rem] border-2 border-dashed border-border bg-surface-raised px-4 py-4 text-sm text-neutral-600">
+            <div className="rounded-[1.25rem] border-2 border-dashed border-border bg-surface-raised px-4 py-4 text-sm text-ink-muted">
               Alle aktiven Herden sind bereits anderen Pferchen zugewiesen.
             </div>
           ) : (
@@ -157,10 +157,10 @@ function LivePositionMobileAssignmentFlow({
                     }}
                     aria-pressed={isSelected}
                     className={[
-                      'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal shadow-[0_12px_24px_rgba(40,34,26,0.08)] transition-colors',
+                      'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors',
                       isSelected
                         ? 'border-border-strong bg-accent text-ink'
-                        : 'border-border bg-surface-raised text-neutral-900',
+                        : 'border-border bg-surface-raised text-ink',
                     ].join(' ')}
                   >
                     <span className="block [overflow-wrap:anywhere]">{herd.name}</span>
@@ -174,35 +174,35 @@ function LivePositionMobileAssignmentFlow({
 
       {step === 'count' ? (
         <div className="mt-3 space-y-3">
-          <div className="rounded-[1.2rem] border border-border-soft bg-surface-warm px-3.5 py-3 text-right text-ink">
+          <div className="app-callout px-3.5 py-3 text-right">
             <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
               {selectedHerd?.name ?? 'Herde wählen'}
             </div>
-            <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700">
+            <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">
               Tiere im Pferch
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 rounded-[1.35rem] border-2 border-border bg-surface-raised px-4 py-4 text-center shadow-[0_12px_24px_rgba(40,34,26,0.08)]">
-              <div className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-600">
+            <div className="col-span-2 rounded-[1.35rem] border-2 border-border bg-surface-raised px-4 py-4 text-center app-shadow-action">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-ink-muted">
                 Tiere
               </div>
-              <div className="mt-2 text-4xl font-semibold text-neutral-950">{animalCount}</div>
+              <div className="mt-2 text-4xl font-semibold text-ink-strong">{animalCount}</div>
             </div>
 
             <button
               type="button"
               onClick={() => onAssignmentCountChange(String(Math.max(0, animalCount - 1)))}
               disabled={animalCount <= 0}
-              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink shadow-[0_12px_24px_rgba(40,34,26,0.08)] disabled:opacity-40"
+              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action disabled:opacity-40"
             >
               -
             </button>
             <button
               type="button"
               onClick={() => onAssignmentCountChange(String(animalCount + 1))}
-              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink shadow-[0_12px_24px_rgba(40,34,26,0.08)]"
+              className="min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action"
             >
               +
             </button>
@@ -221,11 +221,11 @@ function LivePositionMobileAssignmentFlow({
 
       {step === 'confirm' ? (
         <div className="mt-3 space-y-3">
-          <div className="rounded-[1.2rem] border border-border-soft bg-surface-warm px-3.5 py-3 text-right text-ink">
+          <div className="app-callout px-3.5 py-3 text-right">
             <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
               {selectedHerd?.name ?? 'Herde wählen'}
             </div>
-            <div className="mt-0.5 text-xs font-medium leading-tight text-neutral-700">
+            <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">
               {animalCount} Tiere bereit
             </div>
           </div>
@@ -234,7 +234,7 @@ function LivePositionMobileAssignmentFlow({
             type="button"
             onClick={() => onAssignHerdToEnclosure(enclosure)}
             disabled={isAssignmentSaving || !hasSelectedAssignmentHerd}
-            className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink shadow-[0_16px_32px_rgba(40,34,26,0.14)] disabled:opacity-50"
+            className="w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong disabled:opacity-50"
           >
             {isAssignmentSaving ? 'Speichert ...' : 'Herde zuweisen'}
           </button>
@@ -243,7 +243,7 @@ function LivePositionMobileAssignmentFlow({
             type="button"
             onClick={() => setIsDetailsOpen((current) => !current)}
             aria-expanded={isDetailsOpen}
-            className="w-full rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-neutral-950"
+            className="w-full rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink-strong"
           >
             {isDetailsOpen ? 'Details ausblenden' : 'Details'}
           </button>
@@ -283,20 +283,20 @@ function LivePositionMobileActiveAssignmentCard({
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-surface-raised px-4 py-4 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
         Belegung
       </div>
-      <div className="mt-1 text-sm font-semibold text-neutral-950">
+      <div className="mt-1 text-sm font-semibold text-ink-strong">
         {activeHerd?.name ?? 'Unbekannte Herde'}
       </div>
-      <div className="mt-2 text-sm text-neutral-700">
+      <div className="mt-2 text-sm text-ink-muted">
         Seit {formatDateTime(activeAssignment.startTime)}
       </div>
-      <div className="mt-1 text-sm text-neutral-700">
+      <div className="mt-1 text-sm text-ink-muted">
         Besatz {effectiveCount ?? 'unbekannt'}
       </div>
       {activeAssignment.notes ? (
-        <div className="mt-1 text-sm text-neutral-700">{activeAssignment.notes}</div>
+        <div className="mt-1 text-sm text-ink-muted">{activeAssignment.notes}</div>
       ) : null}
       <button
         type="button"
@@ -350,7 +350,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
     <div className="rounded-[1.4rem] border-2 border-border-ink bg-surface p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Gespeicherte Pferche</h2>
-        <span className="text-sm text-neutral-500">{filteredEnclosures.length}</span>
+        <span className="text-sm text-ink-soft">{filteredEnclosures.length}</span>
       </div>
 
       {isAssignmentFlowOpen && detailItem ? (
@@ -401,10 +401,10 @@ export function LivePositionSavedEnclosuresMobilePanel({
                       }
                       onSelectedEnclosureChange(enclosure.id)
                     }}
-                    className="flex w-full items-center justify-between text-left text-sm font-semibold text-neutral-900"
+                    className="flex w-full items-center justify-between text-left text-sm font-semibold text-ink"
                   >
                     <span className="truncate">{enclosure.name}</span>
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-ink-soft">
                       {isActive ? 'aktiv' : 'frei'}
                     </span>
                   </button>
@@ -439,7 +439,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
       )}
 
       {filteredEnclosures.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-600">
+        <p className="mt-3 text-sm text-ink-muted">
           Für diesen Filter gibt es aktuell keine Pferche.
         </p>
       ) : null}
@@ -488,7 +488,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
         <button
           type="button"
           onClick={onToggleShowSelectedTrack}
-          className="mt-4 w-full rounded-2xl bg-surface-raised px-4 py-3 text-sm font-medium text-neutral-900"
+          className="mt-4 w-full rounded-2xl bg-surface-raised px-4 py-3 text-sm font-medium text-ink"
         >
           {showSelectedTrack ? 'Spur ausblenden' : 'Spur anzeigen'}
         </button>

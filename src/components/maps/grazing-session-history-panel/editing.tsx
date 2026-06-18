@@ -60,10 +60,10 @@ export function GrazingSessionHistoryEditingForm({
     return (
       <Card className="mt-4">
         <CardContent>
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
             Zeitkorrektur
           </div>
-          <p className="mt-2 text-sm text-neutral-700">
+          <p className="mt-2 text-sm text-ink-muted">
             Die manuelle Zeitkorrektur ist nur fuer abgeschlossene Weidegaenge verfuegbar.
           </p>
           <div className="mt-3">
@@ -83,10 +83,10 @@ export function GrazingSessionHistoryEditingForm({
   return (
     <Card className="mt-4">
       <CardContent>
-        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
+        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
           Zeitkorrektur
         </div>
-        <p className="mt-2 text-sm text-neutral-700">
+        <p className="mt-2 text-sm text-ink-muted">
           Beginn und Ende des abgeschlossenen Weidegangs koennen hier manuell korrigiert werden.
         </p>
 

@@ -88,12 +88,11 @@ export function ServiceWorkerSync() {
   }, [tileCachingEnabled])
 
   useEffect(() => {
-    if (tileCachingEnabled !== true) {
-      return
-    }
-
+    // Persisted storage protects the user's primary field data (sessions,
+    // trackpoints, herds) from eviction under storage pressure — not just
+    // cached tiles — so request it unconditionally on startup.
     void requestPersistentStorage()
-  }, [tileCachingEnabled])
+  }, [])
 
   return null
 }

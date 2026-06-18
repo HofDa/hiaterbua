@@ -5,6 +5,7 @@ import {
   addSurveyAreaLayers,
   bindPointerCursor,
 } from '@/lib/maps/maplibre-runtime'
+import { mapStyleColors } from '@/lib/maps/map-style-tokens'
 
 type LivePositionMapSetupHandlers = {
   onMapClick: (event: MapMouseEvent) => void
@@ -27,7 +28,7 @@ export function registerLivePositionMapSetup(
     type: 'fill',
     source: 'saved-enclosures',
     paint: {
-      'fill-color': '#15803d',
+      'fill-color': mapStyleColors.savedEnclosureFill,
       'fill-opacity': 0.18,
     },
   })
@@ -37,7 +38,7 @@ export function registerLivePositionMapSetup(
     type: 'line',
     source: 'saved-enclosures',
     paint: {
-      'line-color': '#166534',
+      'line-color': mapStyleColors.savedEnclosureLine,
       'line-width': 2,
     },
   })
@@ -48,7 +49,7 @@ export function registerLivePositionMapSetup(
     type: 'fill',
     source: 'selected-enclosure',
     paint: {
-      'fill-color': '#f59e0b',
+      'fill-color': mapStyleColors.selectedEnclosureFill,
       'fill-opacity': 0.2,
     },
   })
@@ -58,7 +59,7 @@ export function registerLivePositionMapSetup(
     type: 'line',
     source: 'selected-enclosure',
     paint: {
-      'line-color': '#d97706',
+      'line-color': mapStyleColors.selectedEnclosureLine,
       'line-width': 4,
     },
   })
@@ -69,7 +70,7 @@ export function registerLivePositionMapSetup(
     type: 'fill',
     source: 'draft-enclosure',
     paint: {
-      'fill-color': '#2563eb',
+      'fill-color': mapStyleColors.draftEnclosureFill,
       'fill-opacity': 0.16,
     },
     filter: ['==', '$type', 'Polygon'],
@@ -80,7 +81,7 @@ export function registerLivePositionMapSetup(
     type: 'line',
     source: 'draft-enclosure',
     paint: {
-      'line-color': '#1d4ed8',
+      'line-color': mapStyleColors.draftEnclosureLine,
       'line-width': 3,
     },
     filter: ['==', '$type', 'LineString'],
@@ -92,9 +93,9 @@ export function registerLivePositionMapSetup(
     source: 'draft-enclosure',
     paint: {
       'circle-radius': 5,
-      'circle-color': '#1d4ed8',
+      'circle-color': mapStyleColors.draftEnclosureLine,
       'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff',
+      'circle-stroke-color': mapStyleColors.white,
     },
     filter: ['==', '$type', 'Point'],
   })
@@ -105,7 +106,7 @@ export function registerLivePositionMapSetup(
     type: 'fill',
     source: 'edit-enclosure',
     paint: {
-      'fill-color': '#0891b2',
+      'fill-color': mapStyleColors.editEnclosureFill,
       'fill-opacity': 0.14,
     },
     filter: ['==', '$type', 'Polygon'],
@@ -116,7 +117,7 @@ export function registerLivePositionMapSetup(
     type: 'line',
     source: 'edit-enclosure',
     paint: {
-      'line-color': '#0f766e',
+      'line-color': mapStyleColors.editEnclosureLine,
       'line-width': 3,
     },
     filter: ['==', '$type', 'LineString'],
@@ -128,9 +129,9 @@ export function registerLivePositionMapSetup(
     source: 'edit-enclosure',
     paint: {
       'circle-radius': 8,
-      'circle-color': '#0f766e',
+      'circle-color': mapStyleColors.editEnclosureLine,
       'circle-stroke-width': 3,
-      'circle-stroke-color': '#ffffff',
+      'circle-stroke-color': mapStyleColors.white,
     },
     filter: ['==', '$type', 'Point'],
   })
@@ -141,7 +142,7 @@ export function registerLivePositionMapSetup(
     source: 'edit-enclosure',
     paint: {
       'circle-radius': 18,
-      'circle-color': '#ffffff',
+      'circle-color': mapStyleColors.white,
       'circle-opacity': 0.01,
     },
     filter: ['==', '$type', 'Point'],
@@ -153,7 +154,7 @@ export function registerLivePositionMapSetup(
     type: 'fill',
     source: 'walk-track',
     paint: {
-      'fill-color': '#ea580c',
+      'fill-color': mapStyleColors.walkTrackFill,
       'fill-opacity': 0.14,
     },
     filter: ['==', '$type', 'Polygon'],
@@ -164,7 +165,7 @@ export function registerLivePositionMapSetup(
     type: 'line',
     source: 'walk-track',
     paint: {
-      'line-color': '#f97316',
+      'line-color': mapStyleColors.walkTrackLine,
       'line-width': 3,
     },
     filter: ['==', '$type', 'LineString'],
@@ -176,9 +177,9 @@ export function registerLivePositionMapSetup(
     source: 'walk-track',
     paint: {
       'circle-radius': 4,
-      'circle-color': '#f97316',
+      'circle-color': mapStyleColors.walkTrackLine,
       'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff',
+      'circle-stroke-color': mapStyleColors.white,
     },
     filter: ['==', '$type', 'Point'],
   })
@@ -190,9 +191,9 @@ export function registerLivePositionMapSetup(
     source: 'selected-walk-point',
     paint: {
       'circle-radius': 8,
-      'circle-color': '#111827',
+      'circle-color': mapStyleColors.selectedWalkPoint,
       'circle-stroke-width': 3,
-      'circle-stroke-color': '#fbbf24',
+      'circle-stroke-color': mapStyleColors.selectedWalkPointStroke,
     },
     filter: ['==', '$type', 'Point'],
   })
@@ -203,7 +204,7 @@ export function registerLivePositionMapSetup(
     type: 'line',
     source: 'selected-walk-track',
     paint: {
-      'line-color': '#7c3aed',
+      'line-color': mapStyleColors.selectedWalkTrack,
       'line-width': 4,
     },
     filter: ['==', '$type', 'LineString'],
@@ -215,9 +216,9 @@ export function registerLivePositionMapSetup(
     source: 'selected-walk-track',
     paint: {
       'circle-radius': 4,
-      'circle-color': '#7c3aed',
+      'circle-color': mapStyleColors.selectedWalkTrack,
       'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff',
+      'circle-stroke-color': mapStyleColors.white,
     },
     filter: ['==', '$type', 'Point'],
   })

@@ -2,23 +2,21 @@ import { cn } from '@/lib/utils/cn'
 import type { ComponentProps } from 'react'
 
 type CardProps = ComponentProps<'div'> & {
-  variant?: 'default' | 'compact' | 'dashboard'
+  variant?: 'default' | 'compact' | 'dashboard' | 'panel' | 'surface'
 }
 
 export function Card({ className, variant = 'default', ...props }: CardProps) {
   const variantClasses = {
-    default: 'p-5',
-    compact: 'p-4',
-    dashboard: 'p-5',
+    default: 'rounded-lg border bg-card p-5 text-card-foreground shadow-sm',
+    compact: 'rounded-lg border bg-card p-4 text-card-foreground shadow-sm',
+    dashboard: 'app-panel p-5 text-card-foreground',
+    panel: 'app-panel p-5 text-card-foreground',
+    surface: 'rounded-[1.1rem] border border-border bg-surface-raised p-4 text-card-foreground shadow-sm',
   }
-  
+
   return (
     <div
-      className={cn(
-        'rounded-lg border bg-card text-card-foreground shadow-sm',
-        variantClasses[variant],
-        className,
-      )}
+      className={cn(variantClasses[variant], className)}
       {...props}
     />
   )

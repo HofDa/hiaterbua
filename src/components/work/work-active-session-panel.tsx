@@ -32,12 +32,12 @@ export function WorkActiveSessionPanel({
   onUpdateStatus,
 }: WorkActiveSessionPanelProps) {
   return (
-    <Card className="mt-4 rounded-[1.5rem] border border-[#ccb98a] bg-[#fffdf6] p-4 shadow-sm">
+    <Card className="mt-4 rounded-[1.5rem] border border-border bg-surface-raised p-4 shadow-sm">
       <CardHeader className="p-0">
-        <CardTitle className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5e5549]">
+        <CardTitle className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
           Aktiver Einsatz
         </CardTitle>
-        <div className="mt-1 text-xl font-semibold text-[#17130f]">{getWorkLabel(activeSession)}</div>
+        <div className="mt-1 text-xl font-semibold text-ink">{getWorkLabel(activeSession)}</div>
       </CardHeader>
 
       <CardContent className="p-0 pt-4">
@@ -54,16 +54,16 @@ export function WorkActiveSessionPanel({
         </div>
 
         {activeSession.reminderIntervalMin && (
-          <Alert className="mt-3 rounded-[1.1rem] border border-[#d2cbc0] bg-[#efe4c8] px-4 py-3 text-sm text-[#17130f] shadow-sm">
+          <Alert className="mt-3 rounded-[1.1rem] border border-border-soft bg-accent px-4 py-3 text-sm text-ink shadow-sm">
             Erinnerung alle{' '}
-            <span className="font-medium text-neutral-900">
+            <span className="font-medium text-ink">
               {activeSession.reminderIntervalMin} min
             </span>
             {nextReminderMs ? (
               <span>
                 {' '}
                 · nächste in{' '}
-                <span className="font-medium text-neutral-900">
+                <span className="font-medium text-ink">
                   {formatDuration(Math.max(0, Math.round((nextReminderMs - nowMs) / 1000)))}
                 </span>
               </span>
@@ -71,7 +71,7 @@ export function WorkActiveSessionPanel({
           </Alert>
         )}
 
-        <div className="mt-3 text-sm text-neutral-700">
+        <div className="mt-3 text-sm text-ink-muted">
           {activeSession.herdId && (
             <div>Herde: {herdsById.get(activeSession.herdId)?.name ?? 'Unbekannt'}</div>
           )}
@@ -87,7 +87,7 @@ export function WorkActiveSessionPanel({
               type="button"
               onClick={() => void onUpdateStatus('paused')}
               disabled={isSaving}
-              className="min-h-[4.5rem] rounded-[1.3rem] border-2 text-lg shadow-[0_16px_32px_rgba(40,34,26,0.14)]"
+              className="min-h-[4.5rem] rounded-[1.3rem] border-2 text-lg app-shadow-action-strong"
             >
               Pause setzen
             </FormButton>
@@ -96,7 +96,7 @@ export function WorkActiveSessionPanel({
               type="button"
               onClick={() => void onUpdateStatus('active')}
               disabled={isSaving}
-              className="min-h-[4.5rem] rounded-[1.3rem] border-2 text-lg shadow-[0_16px_32px_rgba(40,34,26,0.14)]"
+              className="min-h-[4.5rem] rounded-[1.3rem] border-2 text-lg app-shadow-action-strong"
             >
               Fortsetzen
             </FormButton>
