@@ -1,5 +1,8 @@
 import type { StateCreator } from 'zustand'
-import { shallow } from 'zustand/shallow'
+import {
+  identityGuardedSetter,
+  shallowGuardedSetter,
+} from '@/components/maps/hooks/store-slice-helpers'
 import type {
   GroupedSessionHistory,
   SessionHistoryStats,
@@ -114,8 +117,6 @@ export const createHistorySlice: StateCreator<GrazingSessionMapStore, [], [], Hi
 ) => ({
   history: initialHistorySlice,
   historyHandles: initialHistoryHandles,
-  setHistory: (history) =>
-    set((state) => (shallow(state.history, history) ? state : { history })),
-  setHistoryHandles: (handles) =>
-    set((state) => (state.historyHandles === handles ? state : { historyHandles: handles })),
+  setHistory: shallowGuardedSetter(set, 'history'),
+  setHistoryHandles: identityGuardedSetter(set, 'historyHandles'),
 })

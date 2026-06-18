@@ -1,5 +1,8 @@
 import type { StateCreator } from 'zustand'
-import { shallow } from 'zustand/shallow'
+import {
+  identityGuardedSetter,
+  shallowGuardedSetter,
+} from '@/components/maps/hooks/store-slice-helpers'
 import type { FormEvent } from 'react'
 import type { FilteredEnclosureItem } from '@/lib/maps/live-position-map-helpers'
 import type {
@@ -164,8 +167,6 @@ export const createWorkflowSlice: StateCreator<LivePositionMapStore, [], [], Wor
 ) => ({
   workflow: initialWorkflowSlice,
   workflowHandles: initialWorkflowHandles,
-  setWorkflow: (workflow) =>
-    set((state) => (shallow(state.workflow, workflow) ? state : { workflow })),
-  setWorkflowHandles: (handles) =>
-    set((state) => (state.workflowHandles === handles ? state : { workflowHandles: handles })),
+  setWorkflow: shallowGuardedSetter(set, 'workflow'),
+  setWorkflowHandles: identityGuardedSetter(set, 'workflowHandles'),
 })

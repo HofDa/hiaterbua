@@ -1,5 +1,8 @@
 import type { StateCreator } from 'zustand'
-import { shallow } from 'zustand/shallow'
+import {
+  identityGuardedSetter,
+  shallowGuardedSetter,
+} from '@/components/maps/hooks/store-slice-helpers'
 import type { FormEvent } from 'react'
 import type {
   EnclosureListFilter,
@@ -149,8 +152,6 @@ export const createSidebarSlice: StateCreator<LivePositionMapStore, [], [], Side
 ) => ({
   sidebar: initialSidebarSlice,
   sidebarHandles: initialSidebarHandles,
-  setSidebar: (sidebar) =>
-    set((state) => (shallow(state.sidebar, sidebar) ? state : { sidebar })),
-  setSidebarHandles: (handles) =>
-    set((state) => (state.sidebarHandles === handles ? state : { sidebarHandles: handles })),
+  setSidebar: shallowGuardedSetter(set, 'sidebar'),
+  setSidebarHandles: identityGuardedSetter(set, 'sidebarHandles'),
 })

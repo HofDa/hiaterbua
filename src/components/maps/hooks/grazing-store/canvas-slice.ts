@@ -1,5 +1,8 @@
 import type { StateCreator } from 'zustand'
-import { shallow } from 'zustand/shallow'
+import {
+  identityGuardedSetter,
+  shallowGuardedSetter,
+} from '@/components/maps/hooks/store-slice-helpers'
 import type { SessionMetrics } from '@/lib/maps/grazing-session-map-helpers'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type {
@@ -131,8 +134,6 @@ export const createCanvasSlice: StateCreator<GrazingSessionMapStore, [], [], Can
 ) => ({
   canvas: initialCanvasSlice,
   canvasHandles: initialCanvasHandles,
-  setCanvas: (canvas) => set((state) => (shallow(state.canvas, canvas) ? state : { canvas })),
-  // The handles are referentially stable, so this effectively runs once.
-  setCanvasHandles: (handles) =>
-    set((state) => (state.canvasHandles === handles ? state : { canvasHandles: handles })),
+  setCanvas: shallowGuardedSetter(set, 'canvas'),
+  setCanvasHandles: identityGuardedSetter(set, 'canvasHandles'),
 })

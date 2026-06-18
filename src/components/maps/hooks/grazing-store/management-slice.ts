@@ -1,5 +1,8 @@
 import type { StateCreator } from 'zustand'
-import { shallow } from 'zustand/shallow'
+import {
+  identityGuardedSetter,
+  shallowGuardedSetter,
+} from '@/components/maps/hooks/store-slice-helpers'
 import type { SessionMetrics } from '@/lib/maps/grazing-session-map-helpers'
 import type {
   Herd,
@@ -84,10 +87,6 @@ export const createManagementSlice: StateCreator<
 > = (set) => ({
   management: initialManagementSlice,
   managementHandles: initialManagementHandles,
-  setManagement: (management) =>
-    set((state) => (shallow(state.management, management) ? state : { management })),
-  setManagementHandles: (handles) =>
-    set((state) =>
-      state.managementHandles === handles ? state : { managementHandles: handles },
-    ),
+  setManagement: shallowGuardedSetter(set, 'management'),
+  setManagementHandles: identityGuardedSetter(set, 'managementHandles'),
 })

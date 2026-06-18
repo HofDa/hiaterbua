@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import { shallow } from 'zustand/shallow'
+import { shallowGuardedSetter } from '@/components/maps/hooks/store-slice-helpers'
 import type { GpsState } from '@/lib/maps/map-core'
 import type { GrazingSessionMapStore } from './types'
 
@@ -38,7 +38,5 @@ export const createStatusSlice: StateCreator<GrazingSessionMapStore, [], [], Sta
   isLiveStatusOpen: false,
   status: initialStatusSlice,
   toggleLiveStatus: () => set((state) => ({ isLiveStatusOpen: !state.isLiveStatusOpen })),
-  // Preserve the existing reference when nothing changed, so selector subscribers skip
-  // re-rendering on unrelated screen updates.
-  setStatus: (status) => set((state) => (shallow(state.status, status) ? state : { status })),
+  setStatus: shallowGuardedSetter(set, 'status'),
 })
