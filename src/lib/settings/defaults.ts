@@ -3,7 +3,6 @@ import type { AppSettings } from '@/types/domain'
 export const defaultAppSettings: AppSettings = {
   id: 'app',
   userName: '',
-  accessPasswordHash: '',
   language: 'de',
   mapBaseLayer: 'south-tyrol-orthophoto-2023',
   gpsAccuracyThresholdM: 25,

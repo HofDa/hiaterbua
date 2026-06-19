@@ -27,10 +27,7 @@ export function normalizeSettingsValue(
     id: 'app',
     userName:
       typeof settings?.userName === 'string' ? settings.userName.trim() : defaultAppSettings.userName,
-    accessPasswordHash:
-      typeof settings?.accessPasswordHash === 'string'
-        ? settings.accessPasswordHash.trim()
-        : defaultAppSettings.accessPasswordHash,
+    language: 'de',
     mapBaseLayer: normalizeMapBaseLayer(settings?.mapBaseLayer),
     gpsAccuracyThresholdM: Math.max(
       1,

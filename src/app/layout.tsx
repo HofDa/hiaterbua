@@ -5,7 +5,6 @@ import { BottomNav } from '@/components/layout/bottom-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
-import { AppAccessGate } from '@/components/pwa/app-access-gate'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
 import { ConnectivityBanner } from '@/components/ui/connectivity-banner'
@@ -47,7 +46,6 @@ export default function RootLayout({
         <div className="min-h-screen text-ink-strong">
           <ServiceWorkerSync />
           <AppRoutePrefetch />
-          <AppAccessGate />
           <TopBar />
           <StatusStrip />
           <ErrorBoundary>

@@ -10,8 +10,6 @@ export const settingsRecordSchema = z
   .object({
     id: z.string().optional(),
     userName: optionalTrimmedString,
-    accessPasswordHash: optionalTrimmedString,
-    language: z.enum(['de', 'it']).optional(),
     mapBaseLayer: z.string().optional(),
     gpsAccuracyThresholdM: optionalNumber,
     gpsMinTimeS: optionalNumber,
@@ -22,8 +20,7 @@ export const settingsRecordSchema = z
   .transform((value): AppSettings => ({
     id: 'app',
     userName: value.userName ?? defaultAppSettings.userName,
-    accessPasswordHash: value.accessPasswordHash ?? defaultAppSettings.accessPasswordHash,
-    language: value.language ?? defaultAppSettings.language,
+    language: 'de',
     mapBaseLayer: normalizeMapBaseLayer(value.mapBaseLayer),
     gpsAccuracyThresholdM: Math.max(
       1,

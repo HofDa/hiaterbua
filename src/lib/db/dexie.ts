@@ -65,20 +65,6 @@ export class HirtenAppDB extends Dexie {
       settings: 'id',
     })
 
-    this.version(4).stores({
-      herds: 'id, name, isArchived, updatedAt',
-      animals: 'id, herdId, earTag, species, isArchived, updatedAt',
-      enclosures: 'id, name, method, herdId, createdAt, updatedAt',
-      surveyAreas: 'id, name, createdAt, updatedAt',
-      enclosureAssignments: 'id, enclosureId, herdId, startTime, endTime, updatedAt',
-      sessions: 'id, herdId, status, startTime, endTime, updatedAt',
-      trackpoints: 'id, sessionId, enclosureWalkId, seq, timestamp, accepted',
-      events: 'id, sessionId, timestamp, type',
-      workSessions: 'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt',
-      workEvents: 'id, workSessionId, timestamp, type',
-      settings: 'id',
-    })
-
     this.version(5).stores({
       herds: 'id, name, isArchived, updatedAt',
       animals: 'id, herdId, earTag, species, isArchived, updatedAt',
@@ -94,36 +80,10 @@ export class HirtenAppDB extends Dexie {
       settings: 'id',
     })
 
-    this.version(6).stores({
-      herds: 'id, name, isArchived, updatedAt',
-      animals: 'id, herdId, earTag, species, isArchived, updatedAt',
-      enclosures:
-        'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt',
-      surveyAreas: 'id, name, createdAt, updatedAt',
-      enclosureAssignments: 'id, enclosureId, herdId, startTime, endTime, updatedAt',
-      sessions: 'id, herdId, status, startTime, endTime, updatedAt',
-      trackpoints: 'id, sessionId, enclosureWalkId, seq, timestamp, accepted',
-      events: 'id, sessionId, timestamp, type',
-      workSessions: 'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt',
-      workEvents: 'id, workSessionId, timestamp, type',
-      settings: 'id',
-    })
-
-    this.version(7).stores({
-      herds: 'id, name, isArchived, updatedAt',
-      animals: 'id, herdId, earTag, species, isArchived, updatedAt',
-      enclosures:
-        'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt',
-      surveyAreas: 'id, name, createdAt, updatedAt',
-      enclosureAssignments: 'id, enclosureId, herdId, startTime, endTime, updatedAt',
-      sessions: 'id, herdId, status, startTime, endTime, updatedAt',
-      trackpoints: 'id, sessionId, enclosureWalkId, seq, timestamp, accepted',
-      events: 'id, sessionId, timestamp, type',
-      workSessions: 'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt',
-      workEvents: 'id, workSessionId, timestamp, type',
-      settings: 'id',
-    })
-
+    // Versions 4, 6 and 7 were no-op schema bumps (identical to 3 and 5) and
+    // have been removed. The gaps in the numbering are intentional: the version
+    // number is part of the stored-DB contract, so existing installs that were
+    // created at those versions still upgrade cleanly to 8.
     this.version(8)
       .stores({
         herds: 'id, name, isArchived, updatedAt',

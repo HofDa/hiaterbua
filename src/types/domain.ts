@@ -195,8 +195,7 @@ export interface SessionEvent {
 export interface AppSettings {
   id: 'app'
   userName: string
-  accessPasswordHash: string
-  language: 'de' | 'it'
+  language: 'de'
   mapBaseLayer: MapBaseLayer
   gpsAccuracyThresholdM: number
   gpsMinTimeS: number

@@ -1,15 +1,7 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 import { getAppSettings, putAppSettings } from '@/lib/db/repositories/settings'
-import {
-  ACCESS_SESSION_DURATION_MINUTES,
-  authorizeAccess,
-  clearAccessAuthorization,
-  isAccessAuthorized,
-  isAllowedAccessPassword,
-  subscribeToAccessState,
-} from '@/lib/security/app-access'
 import { defaultAppSettings } from '@/lib/settings/defaults'
 import {
   normalizeSettingsValue,
@@ -83,20 +75,12 @@ function InlineAlert({ variant, children }: { variant: 'error' | 'success' | 'wa
 export function WorkUserCard() {
   const [settings, setSettings] = useState<AppSettings>(defaultAppSettings)
   const [draftUserName, setDraftUserName] = useState(defaultAppSettings.userName)
-  const [draftAccessPassword, setDraftAccessPassword] = useState('')
   const [isReady, setIsReady] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isExpanded, setIsExpanded] = useState(true)
   const [isEditing, setIsEditing] = useState(true)
   const [statusMessage, setStatusMessage] = useState('')
   const [validationMessage, setValidationMessage] = useState('')
-  const [accessMessage, setAccessMessage] = useState('')
-  const [accessValidationMessage, setAccessValidationMessage] = useState('')
-  const isAccessApproved = useSyncExternalStore(
-    subscribeToAccessState,
-    isAccessAuthorized,
-    () => false
-  )
 
   function applySettings(nextSettings: AppSettings) {
     const isEmpty = nextSettings.userName.trim().length === 0
@@ -192,30 +176,6 @@ export function WorkUserCard() {
     setIsEditing(true)
   }
 
-  function unlockAccess() {
-    if (draftAccessPassword.trim().length === 0) {
-      setAccessValidationMessage('Bitte Passwort eingeben.')
-      return
-    }
-
-    if (!isAllowedAccessPassword(draftAccessPassword)) {
-      setAccessValidationMessage('Passwort stimmt nicht.')
-      return
-    }
-
-    authorizeAccess()
-    setDraftAccessPassword('')
-    setAccessValidationMessage('')
-    setAccessMessage('Cache-Schutz aktiv.')
-  }
-
-  function resetAccess() {
-    clearAccessAuthorization()
-    setDraftAccessPassword('')
-    setAccessValidationMessage('')
-    setAccessMessage('Cache-Schutz entfernt.')
-  }
-
   function cancelEditing() {
     if (settings.userName.trim().length === 0) return
 
@@ -278,7 +238,7 @@ export function WorkUserCard() {
 
       {isExpanded ? (
         <>
-          <div className="mt-3 grid gap-3 md:mt-4 md:grid-cols-2 md:gap-4">
+          <div className="mt-3 md:mt-4">
             <div>
               <label className="mb-1 block text-sm font-medium">Benutzername</label>
 
@@ -326,45 +286,10 @@ export function WorkUserCard() {
                 </div>
               )}
             </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Passwort</label>
-
-              {isAccessApproved ? (
-                <div className="space-y-2.5 sm:space-y-3">
-                  <ReadonlyField>Cache-Schutz aktiv</ReadonlyField>
-                  <FormButton type="button" onClick={resetAccess} variant="secondary">
-                    Zurücksetzen
-                  </FormButton>
-                </div>
-              ) : (
-                <div className="space-y-2.5 sm:space-y-3">
-                  <FormInput
-                    type="password"
-                    value={draftAccessPassword}
-                    onChange={(event) => {
-                      setDraftAccessPassword(event.target.value)
-                      setAccessValidationMessage('')
-                      setAccessMessage('')
-                    }}
-                    placeholder="Passwort eingeben"
-                    autoComplete="off"
-                  />
-                  <FormButton type="button" onClick={unlockAccess}>
-                    Freigeben
-                  </FormButton>
-                  <InlineAlert variant="info">
-                    Ohne Passwort wird der Cache nach {ACCESS_SESSION_DURATION_MINUTES} Minuten gelöscht.
-                  </InlineAlert>
-                </div>
-              )}
-            </div>
           </div>
 
           {validationMessage ? <InlineAlert variant="error">{validationMessage}</InlineAlert> : null}
           {statusMessage ? <InlineAlert variant="success">{statusMessage}</InlineAlert> : null}
-          {accessValidationMessage ? <InlineAlert variant="error">{accessValidationMessage}</InlineAlert> : null}
-          {accessMessage ? <InlineAlert variant="success">{accessMessage}</InlineAlert> : null}
           {isMissingUserName ? (
             <InlineAlert variant="warning">
               Für saubere Exportdateien den Benutzernamen einmal setzen.

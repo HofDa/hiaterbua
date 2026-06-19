@@ -26,6 +26,9 @@
 *.pem
 pwa.zip
 
+# generated repo dump (repomix)
+repomix-output.xml
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -38,22 +38,6 @@ export function SettingsGeneralFormCard({
       <CardContent>
         <form className="space-y-4" onSubmit={onSubmit}>
           <FormField>
-            <FormLabel>Sprache</FormLabel>
-            <FormSelect
-              value={draft.language}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  language: event.target.value as 'de' | 'it',
-                }))
-              }
-            >
-              <option value="de">Deutsch</option>
-              <option value="it">Italiano</option>
-            </FormSelect>
-          </FormField>
-
-          <FormField>
             <FormLabel>Kartengrundlage</FormLabel>
             <FormSelect
               value={draft.mapBaseLayer}
