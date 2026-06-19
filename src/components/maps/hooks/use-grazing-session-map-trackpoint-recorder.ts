@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { appendSessionTrackpoint } from '@/lib/maps/grazing-session-actions'
+import { appendSessionTrackpoint } from '@/lib/db/repositories/sessions'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
 import { isQuotaExceededError } from '@/lib/utils/storage-health'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'

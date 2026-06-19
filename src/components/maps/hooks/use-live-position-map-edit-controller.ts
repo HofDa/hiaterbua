@@ -3,7 +3,7 @@ import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   deleteEnclosureRecord,
   updateEditedEnclosureRecord,
-} from '@/lib/maps/live-position-actions'
+} from '@/lib/db/repositories/enclosures'
 import {
   getDraftPolygon,
   type DraftPoint,

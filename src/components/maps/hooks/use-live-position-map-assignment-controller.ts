@@ -3,8 +3,8 @@ import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   assignHerdToEnclosureRecord,
   endEnclosureAssignmentRecord,
-  getDefaultAssignmentValues,
-} from '@/lib/maps/live-position-actions'
+} from '@/lib/db/repositories/enclosures'
+import { getDefaultAssignmentValues } from '@/lib/maps/live-position-actions'
 import {
   getAssignableHerds,
   getEffectiveHerdCount,

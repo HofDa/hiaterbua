@@ -1,6 +1,6 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
 import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
-import { saveDrawnEnclosureRecord } from '@/lib/maps/live-position-actions'
+import { saveDrawnEnclosureRecord } from '@/lib/db/repositories/enclosures'
 import {
   getDraftPolygon,
   type DraftPoint,

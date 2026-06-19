@@ -1,6 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '@/lib/db/dexie'
+import {
+  listSessionEvents,
+  listSessionTrackpoints,
+  listSessionsByRecent,
+} from '@/lib/db/repositories/sessions'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { buildAnimalsByHerdId } from '@/lib/maps/live-position-map-helpers'
 import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
@@ -43,29 +48,29 @@ export function useGrazingSessionMapData({
   )
   const settings = useLiveQuery(() => db.settings.get('app'), [])
   const recentSessions = useLiveQuery(
-    () => db.sessions.orderBy('updatedAt').reverse().toArray(),
+    () => listSessionsByRecent(),
     []
   )
 
   const currentTrackpoints = useLiveQuery(async () => {
     if (!currentSessionId) return []
-    return db.trackpoints.where('sessionId').equals(currentSessionId).sortBy('seq')
+    return listSessionTrackpoints(currentSessionId)
   }, [currentSessionId])
 
   const selectedTrackpoints = useLiveQuery(async () => {
     if (!selectedSessionId) return []
-    return db.trackpoints.where('sessionId').equals(selectedSessionId).sortBy('seq')
+    return listSessionTrackpoints(selectedSessionId)
   }, [selectedSessionId])
 
   const currentSessionEvents = useLiveQuery(async () => {
     if (!currentSessionId) return []
-    const events = await db.events.where('sessionId').equals(currentSessionId).sortBy('timestamp')
+    const events = await listSessionEvents(currentSessionId)
     return events.reverse()
   }, [currentSessionId])
 
   const selectedSessionEvents = useLiveQuery(async () => {
     if (!selectedSessionId) return []
-    const events = await db.events.where('sessionId').equals(selectedSessionId).sortBy('timestamp')
+    const events = await listSessionEvents(selectedSessionId)
     return events.reverse()
   }, [selectedSessionId])
 

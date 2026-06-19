@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import {
   assignHerdToEnclosureRecord,
   endEnclosureAssignmentRecord,
-} from '@/lib/maps/live-position-actions'
+} from '@/lib/db/repositories/enclosures'
 import type { Enclosure, EnclosureAssignment } from '@/types/domain'
 
 type UseHerdDetailAssignmentControllerOptions = {

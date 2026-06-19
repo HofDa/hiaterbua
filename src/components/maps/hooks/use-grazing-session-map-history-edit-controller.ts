@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import {
   deleteGrazingSessionRecord,
   saveEditedGrazingSessionRecord,
-} from '@/lib/maps/grazing-session-actions'
+} from '@/lib/db/repositories/sessions'
 import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   formatDateTimeInputValue,

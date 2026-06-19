@@ -5,8 +5,8 @@ import {
   appendWalkTrackpoint,
   discardWalkTrack,
   removeWalkTrackpointAtIndex,
-  saveWalkEnclosureRecord,
 } from '@/lib/maps/live-position-actions'
+import { saveWalkEnclosureRecord } from '@/lib/db/repositories/enclosures'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
 import { getFreshPosition } from '@/lib/maps/map-core'
 import { isQuotaExceededError } from '@/lib/utils/storage-health'

@@ -7,7 +7,12 @@ import {
 } from '@/lib/maps/grazing-session-map-helpers'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
-import type { GrazingSession, SessionEventType, TrackPoint } from '@/types/domain'
+import type {
+  GrazingSession,
+  SessionEvent,
+  SessionEventType,
+  TrackPoint,
+} from '@/types/domain'
 
 type PositionData = {
   latitude: number
@@ -17,6 +22,39 @@ type PositionData = {
   heading: number | null
   timestamp: number
 }
+
+// ---------------------------------------------------------------------------
+// Reads
+// ---------------------------------------------------------------------------
+
+/** Every grazing session — for counts, backup and export. */
+export function listAllSessions(): Promise<GrazingSession[]> {
+  return db.sessions.toArray()
+}
+
+/** Grazing sessions, most recently updated first. */
+export function listSessionsByRecent(): Promise<GrazingSession[]> {
+  return db.sessions.orderBy('updatedAt').reverse().toArray()
+}
+
+/** A session's trackpoints in recorded order. */
+export function listSessionTrackpoints(sessionId: string): Promise<TrackPoint[]> {
+  return db.trackpoints.where('sessionId').equals(sessionId).sortBy('seq')
+}
+
+/** A session's events in chronological (oldest-first) order. */
+export function listSessionEvents(sessionId: string): Promise<SessionEvent[]> {
+  return db.events.where('sessionId').equals(sessionId).sortBy('timestamp')
+}
+
+/** Every session event — for backup and export. */
+export function listAllSessionEvents(): Promise<SessionEvent[]> {
+  return db.events.toArray()
+}
+
+// ---------------------------------------------------------------------------
+// Writes
+// ---------------------------------------------------------------------------
 
 export async function appendSessionTrackpoint(params: {
   sessionId: string

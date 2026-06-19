@@ -7,6 +7,8 @@ import { buttonVariants } from '@/components/ui/button'
 import { BackupReminder } from '@/components/dashboard/backup-reminder'
 import { metaLabelClassName } from '@/components/ui/typography'
 import { db } from '@/lib/db/dexie'
+import { listActiveEnclosures } from '@/lib/db/repositories/enclosures'
+import { listAllSessions } from '@/lib/db/repositories/sessions'
 import { cn } from '@/lib/utils/cn'
 
 function DashboardStat({ label, value }: { label: string; value: number | string }) {
@@ -42,8 +44,8 @@ export default function HomePage() {
   const dashboardData = useLiveQuery(async () => {
     const [herds, enclosures, sessions, assignments, workSessions] = await Promise.all([
       db.herds.toArray(),
-      db.enclosures.toArray(),
-      db.sessions.toArray(),
+      listActiveEnclosures(),
+      listAllSessions(),
       db.enclosureAssignments.toArray(),
       db.workSessions.toArray(),
     ])

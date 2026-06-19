@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '@/lib/db/dexie'
+import { listActiveEnclosuresByRecent } from '@/lib/db/repositories/enclosures'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
 import {
@@ -49,7 +50,7 @@ export function useLivePositionMapData({
   editGeometryPoints,
 }: UseLivePositionMapDataArgs) {
   const enclosures = useLiveQuery(
-    () => db.enclosures.orderBy('updatedAt').reverse().toArray(),
+    () => listActiveEnclosuresByRecent(),
     []
   )
   const surveyAreas = useLiveQuery(

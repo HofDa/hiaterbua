@@ -6,7 +6,7 @@ import {
   resumeGrazingSessionRecord,
   stopGrazingSessionRecord,
   updateGrazingSessionAnimalCountRecord,
-} from '@/lib/maps/grazing-session-actions'
+} from '@/lib/db/repositories/sessions'
 import {
   clearRuntimeSessionState,
   getDefaultAnimalCount,

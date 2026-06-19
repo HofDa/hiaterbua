@@ -1,5 +1,7 @@
 import JSZip from 'jszip'
 import { db } from '@/lib/db/dexie'
+import { listAllEnclosures } from '@/lib/db/repositories/enclosures'
+import { listAllSessionEvents, listAllSessions } from '@/lib/db/repositories/sessions'
 import {
   buildFeatureCollection,
 } from '@/lib/import-export/file-formats'
@@ -21,12 +23,12 @@ export async function buildAppExportArchive() {
   ] = await Promise.all([
     db.herds.toArray(),
     db.animals.toArray(),
-    db.enclosures.toArray(),
+    listAllEnclosures(),
     db.surveyAreas.toArray(),
     db.enclosureAssignments.toArray(),
-    db.sessions.toArray(),
+    listAllSessions(),
     db.trackpoints.toArray(),
-    db.events.toArray(),
+    listAllSessionEvents(),
     db.workSessions.toArray(),
     db.workEvents.toArray(),
     db.settings.toArray(),
