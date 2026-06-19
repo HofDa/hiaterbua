@@ -1,8 +1,10 @@
 import type { FormEvent } from 'react'
-import { db } from '@/lib/db/dexie'
-import { addWorkEvent, getWorkLabel } from '@/lib/work/work-session-helpers'
-import { createId } from '@/lib/utils/ids'
-import { nowIso } from '@/lib/utils/time'
+import {
+  createWorkSessionRecord,
+  deleteWorkSessionRecord,
+  updateWorkSessionStatusRecord,
+} from '@/lib/db/repositories/work-sessions'
+import { getWorkLabel } from '@/lib/work/work-session-helpers'
 import type { WorkActivityId, WorkSession, WorkStatus, WorkType } from '@/types/domain'
 
 type UseWorkPageSessionActionsOptions = {
@@ -21,53 +23,6 @@ type UseWorkPageSessionActionsOptions = {
   setStatusMessage: (value: string) => void
   setError: (value: string) => void
   setIsSaving: (value: boolean) => void
-}
-
-function getUpdatedSessionStatusPatch(
-  activeSession: WorkSession,
-  nextStatus: WorkStatus,
-  timestamp: string
-) {
-  const currentTimeMs = new Date(timestamp).getTime()
-  const activeSinceMs = activeSession.activeSince
-    ? new Date(activeSession.activeSince).getTime()
-    : null
-
-  let nextDurationS = activeSession.durationS
-
-  if (
-    activeSession.status === 'active' &&
-    activeSinceMs !== null &&
-    Number.isFinite(activeSinceMs)
-  ) {
-    nextDurationS += Math.max(0, Math.round((currentTimeMs - activeSinceMs) / 1000))
-  }
-
-  const nextPatch: Partial<WorkSession> = {
-    status: nextStatus,
-    durationS: nextDurationS,
-    updatedAt: timestamp,
-  }
-
-  if (nextStatus === 'paused') {
-    nextPatch.activeSince = null
-  }
-
-  if (nextStatus === 'active') {
-    nextPatch.activeSince = timestamp
-    nextPatch.lastReminderAt = activeSession.reminderIntervalMin ? timestamp : null
-  }
-
-  if (nextStatus === 'finished') {
-    nextPatch.activeSince = null
-    nextPatch.endTime = timestamp
-  }
-
-  return nextPatch
-}
-
-function getStatusUpdateEventType(nextStatus: WorkStatus) {
-  return nextStatus === 'paused' ? 'pause' : nextStatus === 'active' ? 'resume' : 'stop'
 }
 
 function getStatusUpdateMessage(nextStatus: WorkStatus) {
@@ -108,30 +63,15 @@ export function useWorkPageSessionActions({
     setStatusMessage('')
 
     try {
-      const timestamp = nowIso()
-      const sessionId = createId('work_session')
       const parsedReminderIntervalMin = Number.parseInt(reminderIntervalMin, 10) || 0
 
-      await db.transaction('rw', db.workSessions, db.workEvents, async () => {
-        await db.workSessions.add({
-          id: sessionId,
-          type: workType,
-          activityId: workActivityId,
-          status: 'active',
-          herdId: selectedHerdId || null,
-          enclosureId: selectedEnclosureId || null,
-          startTime: timestamp,
-          endTime: null,
-          activeSince: timestamp,
-          durationS: 0,
-          reminderIntervalMin: parsedReminderIntervalMin > 0 ? parsedReminderIntervalMin : null,
-          lastReminderAt: parsedReminderIntervalMin > 0 ? timestamp : null,
-          notes: notes.trim() || undefined,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-        })
-
-        await addWorkEvent(sessionId, 'start', notes)
+      await createWorkSessionRecord({
+        type: workType,
+        activityId: workActivityId,
+        herdId: selectedHerdId || null,
+        enclosureId: selectedEnclosureId || null,
+        reminderIntervalMin: parsedReminderIntervalMin,
+        notes,
       })
 
       if (
@@ -165,17 +105,7 @@ export function useWorkPageSessionActions({
     setStatusMessage('')
 
     try {
-      const timestamp = nowIso()
-      const nextPatch = getUpdatedSessionStatusPatch(activeSession, nextStatus, timestamp)
-
-      await db.transaction('rw', db.workSessions, db.workEvents, async () => {
-        const updatedCount = await db.workSessions.update(activeSession.id, nextPatch)
-        if (updatedCount === 0) {
-          throw new Error('Arbeitseinsatz wurde nicht gefunden.')
-        }
-
-        await addWorkEvent(activeSession.id, getStatusUpdateEventType(nextStatus))
-      })
+      await updateWorkSessionStatusRecord(activeSession, nextStatus)
 
       setStatusMessage(getStatusUpdateMessage(nextStatus))
 
@@ -207,10 +137,7 @@ export function useWorkPageSessionActions({
     setStatusMessage('')
 
     try {
-      await db.transaction('rw', db.workSessions, db.workEvents, async () => {
-        await db.workEvents.where('workSessionId').equals(session.id).delete()
-        await db.workSessions.delete(session.id)
-      })
+      await deleteWorkSessionRecord(session.id)
 
       if (editingSessionId === session.id) {
         cancelEditingSession()

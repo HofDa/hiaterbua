@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db/dexie'
+import { listHerdsByName } from '@/lib/db/repositories/herds'
+import { countWorkEvents, countWorkSessions } from '@/lib/db/repositories/work-sessions'
 import type { ImportPreview } from '@/lib/import-export/export-page-helpers'
 
 export function useExportPageData() {
@@ -18,9 +19,9 @@ export function useExportPageData() {
 
   const dashboardData = useLiveQuery(async () => {
     const [herdList, nextWorkSessionCount, nextWorkEventCount] = await Promise.all([
-      db.herds.orderBy('name').toArray(),
-      db.workSessions.count(),
-      db.workEvents.count(),
+      listHerdsByName(),
+      countWorkSessions(),
+      countWorkEvents(),
     ])
 
     return {
@@ -56,9 +57,9 @@ export function useExportPageData() {
 
     async function refreshData() {
       await Promise.all([
-        db.herds.orderBy('name').toArray(),
-        db.workSessions.count(),
-        db.workEvents.count(),
+        listHerdsByName(),
+        countWorkSessions(),
+        countWorkEvents(),
       ])
 
       if (!cancelled) {

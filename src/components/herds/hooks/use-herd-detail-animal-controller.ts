@@ -1,9 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { db } from '@/lib/db/dexie'
-import { createId } from '@/lib/utils/ids'
-import { nowIso } from '@/lib/utils/time'
+import {
+  createAnimalRecord,
+  deleteAnimalRecord,
+  findAnimalByEarTag,
+  updateAnimalRecord,
+} from '@/lib/db/repositories/animals'
 import type { Animal, Species } from '@/types/domain'
 
 type UseHerdDetailAnimalControllerOptions = {
@@ -46,30 +49,20 @@ export function useHerdDetailAnimalController({
     setSaving(true)
 
     try {
-      const existing = await db.animals
-        .where('earTag')
-        .equalsIgnoreCase(cleanedEarTag)
-        .first()
+      const existing = await findAnimalByEarTag(cleanedEarTag)
 
       if (existing) {
         setError('Diese Ohrmarke existiert bereits.')
         return
       }
 
-      const timestamp = nowIso()
-      const animal: Animal = {
-        id: createId('animal'),
+      await createAnimalRecord({
         herdId,
         earTag: cleanedEarTag,
         species,
-        name: name.trim() || undefined,
-        notes: notes.trim() || undefined,
-        isArchived: false,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      }
-
-      await db.animals.add(animal)
+        name,
+        notes,
+      })
 
       setEarTag('')
       setSpecies('sheep')
@@ -86,9 +79,8 @@ export function useHerdDetailAnimalController({
     setError('')
 
     try {
-      const updatedCount = await db.animals.update(animalId, {
+      const updatedCount = await updateAnimalRecord(animalId, {
         isArchived,
-        updatedAt: nowIso(),
       })
 
       if (updatedCount === 0) {
@@ -109,7 +101,7 @@ export function useHerdDetailAnimalController({
     setError('')
 
     try {
-      await db.animals.delete(animal.id)
+      await deleteAnimalRecord(animal.id)
     } catch (currentError) {
       setError(getAnimalActionError(currentError, 'Tier konnte nicht gelöscht werden.'))
     }
@@ -147,22 +139,18 @@ export function useHerdDetailAnimalController({
     setEditSaving(true)
 
     try {
-      const existing = await db.animals
-        .where('earTag')
-        .equalsIgnoreCase(cleanedEarTag)
-        .first()
+      const existing = await findAnimalByEarTag(cleanedEarTag)
 
       if (existing && existing.id !== editingAnimalId) {
         setEditError('Diese Ohrmarke existiert bereits.')
         return
       }
 
-      const updatedCount = await db.animals.update(editingAnimalId, {
+      const updatedCount = await updateAnimalRecord(editingAnimalId, {
         earTag: cleanedEarTag,
         species: editSpecies,
         name: editName.trim() || undefined,
         notes: editNotes.trim() || undefined,
-        updatedAt: nowIso(),
       })
 
       if (updatedCount === 0) {

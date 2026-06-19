@@ -1,7 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '@/lib/db/dexie'
+import { listAllAnimals } from '@/lib/db/repositories/animals'
 import { listActiveEnclosuresByRecent } from '@/lib/db/repositories/enclosures'
+import { listHerdsByName } from '@/lib/db/repositories/herds'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
 import {
@@ -58,8 +60,8 @@ export function useLivePositionMapData({
     []
   )
   const settings = useLiveQuery(() => db.settings.get('app'), [])
-  const herds = useLiveQuery(() => db.herds.orderBy('name').toArray(), [])
-  const animals = useLiveQuery(() => db.animals.toArray(), [])
+  const herds = useLiveQuery(() => listHerdsByName(), [])
+  const animals = useLiveQuery(() => listAllAnimals(), [])
   const assignments = useLiveQuery(
     () => db.enclosureAssignments.orderBy('updatedAt').reverse().toArray(),
     []

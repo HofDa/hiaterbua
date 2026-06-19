@@ -22,13 +22,11 @@ export function createRasterMap(maplibre: MapLibreModule, container: HTMLElement
   })
 
   map.addControl(new maplibre.NavigationControl(), 'top-right')
+  // Always render the attribution in compact mode so it collapses to the
+  // standard "ⓘ" toggle and can be opened/closed on every screen size, instead
+  // of staying permanently expanded on desktop.
   map.addControl(
-    new maplibre.AttributionControl({
-      compact:
-        typeof window !== 'undefined'
-          ? window.matchMedia('(max-width: 768px)').matches
-          : false,
-    }),
+    new maplibre.AttributionControl({ compact: true }),
     'bottom-right'
   )
 

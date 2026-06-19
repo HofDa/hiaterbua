@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db/dexie'
-import { nowIso } from '@/lib/utils/time'
+import { getHerd, updateHerdRecord } from '@/lib/db/repositories/herds'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/components/ui/form'
 import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
@@ -16,7 +15,7 @@ type HerdEditRoutePageProps = {
 }
 
 export function HerdEditRoutePage({ herdId }: HerdEditRoutePageProps) {
-  const herd = useLiveQuery(() => (herdId ? db.herds.get(herdId) : undefined), [herdId])
+  const herd = useLiveQuery(() => (herdId ? getHerd(herdId) : undefined), [herdId])
 
   if (!herdId) {
     return (
@@ -56,11 +55,10 @@ function EditHerdForm({ herd, herdId }: { herd: Herd; herdId: string }) {
 
     await saveOperation.execute(
       async () => {
-        await db.herds.update(herdId, {
+        await updateHerdRecord(herdId, {
           name: values.name.trim(),
           fallbackCount: values.fallbackCount.trim() ? Number(values.fallbackCount) : null,
           notes: values.notes.trim() || undefined,
-          updatedAt: nowIso(),
         })
         return true
       },

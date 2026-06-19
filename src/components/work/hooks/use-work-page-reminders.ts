@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import { db } from '@/lib/db/dexie'
+import { markWorkSessionReminded } from '@/lib/db/repositories/work-sessions'
 import {
-  addWorkEvent,
   getNextReminderMs,
   getWorkLabel,
 } from '@/lib/work/work-session-helpers'
@@ -45,12 +44,7 @@ export function useWorkPageReminders({
     const reminderTimestamp = nowIso()
     const message = `${getWorkLabel(activeSession)}: Erinnerung nach ${activeSession.reminderIntervalMin} min.`
 
-    void db.workSessions.update(activeSession.id, {
-      lastReminderAt: reminderTimestamp,
-      updatedAt: reminderTimestamp,
-    })
-
-    void addWorkEvent(activeSession.id, 'note', message)
+    void markWorkSessionReminded(activeSession.id, reminderTimestamp, message)
 
     queueMicrotask(() => {
       setActiveReminderMessage(message)

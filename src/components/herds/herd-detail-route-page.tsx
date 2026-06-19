@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { HerdDetailPageContent } from '@/components/herds/herd-detail-page-content'
 import { db } from '@/lib/db/dexie'
+import { listAnimalsByHerd } from '@/lib/db/repositories/animals'
 import { listActiveEnclosuresByName } from '@/lib/db/repositories/enclosures'
+import { getHerd } from '@/lib/db/repositories/herds'
 
 type HerdDetailRoutePageProps = {
   herdId: string | null
@@ -12,9 +14,9 @@ type HerdDetailRoutePageProps = {
 
 export function HerdDetailRoutePage({ herdId }: HerdDetailRoutePageProps) {
   const router = useRouter()
-  const herd = useLiveQuery(() => (herdId ? db.herds.get(herdId) : undefined), [herdId])
+  const herd = useLiveQuery(() => (herdId ? getHerd(herdId) : undefined), [herdId])
   const animals = useLiveQuery(
-    () => (herdId ? db.animals.where('herdId').equals(herdId).toArray() : []),
+    () => (herdId ? listAnimalsByHerd(herdId) : []),
     [herdId]
   )
   const enclosures = useLiveQuery(() => listActiveEnclosuresByName(), [])

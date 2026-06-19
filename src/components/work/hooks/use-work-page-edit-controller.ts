@@ -1,7 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
-import { db } from '@/lib/db/dexie'
+import { saveEditedWorkSessionRecord } from '@/lib/db/repositories/work-sessions'
 import {
-  addWorkEvent,
   defaultWorkPickerSectionId,
   defaultWorkSelection,
   formatDateTimeInputValue,
@@ -158,28 +157,20 @@ export function useWorkPageEditController({
         ? getDurationSecondsBetween(parsedStartTime, parsedEndTime)
         : existingSession.durationS
 
-      await db.transaction('rw', db.workSessions, db.workEvents, async () => {
-        const updatedCount = await db.workSessions.update(sessionId, {
-          type: editWorkType,
-          activityId: editWorkActivityId,
-          status: nextStatus,
-          herdId: editSelectedHerdId || null,
-          enclosureId: editSelectedEnclosureId || null,
-          startTime: parsedStartTime,
-          endTime: parsedEndTime,
-          activeSince: nextActiveSince,
-          durationS: nextDurationS,
-          reminderIntervalMin: reminderValue > 0 ? reminderValue : null,
-          lastReminderAt: nextLastReminderAt,
-          notes: editNotes.trim() || undefined,
-          updatedAt: timestamp,
-        })
-
-        if (updatedCount === 0) {
-          throw new Error('Arbeitseinsatz konnte nicht aktualisiert werden.')
-        }
-
-        await addWorkEvent(sessionId, 'note', 'Arbeitseinsatz bearbeitet')
+      await saveEditedWorkSessionRecord(sessionId, {
+        type: editWorkType,
+        activityId: editWorkActivityId,
+        status: nextStatus,
+        herdId: editSelectedHerdId || null,
+        enclosureId: editSelectedEnclosureId || null,
+        startTime: parsedStartTime,
+        endTime: parsedEndTime,
+        activeSince: nextActiveSince,
+        durationS: nextDurationS,
+        reminderIntervalMin: reminderValue > 0 ? reminderValue : null,
+        lastReminderAt: nextLastReminderAt,
+        notes: editNotes.trim() || undefined,
+        updatedAt: timestamp,
       })
 
       cancelEditingSession()

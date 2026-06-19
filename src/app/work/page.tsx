@@ -2,12 +2,13 @@
 
 import { useLiveQuery } from 'dexie-react-hooks'
 import { WorkPageContent } from '@/components/work/work-page-content'
-import { db } from '@/lib/db/dexie'
 import { listActiveEnclosuresByName } from '@/lib/db/repositories/enclosures'
+import { listHerdsByName } from '@/lib/db/repositories/herds'
+import { listWorkSessionsByRecent } from '@/lib/db/repositories/work-sessions'
 
 export default function WorkPage() {
-  const workSessions = useLiveQuery(() => db.workSessions.orderBy('updatedAt').reverse().toArray(), [])
-  const herds = useLiveQuery(() => db.herds.orderBy('name').toArray(), [])
+  const workSessions = useLiveQuery(() => listWorkSessionsByRecent(), [])
+  const herds = useLiveQuery(() => listHerdsByName(), [])
   const enclosures = useLiveQuery(() => listActiveEnclosuresByName(), [])
 
   if (workSessions === undefined || herds === undefined || enclosures === undefined) {

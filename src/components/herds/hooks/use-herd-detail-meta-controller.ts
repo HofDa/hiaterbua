@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { deleteHerdCascade } from '@/lib/db/delete-herd'
+import { updateHerdRecord } from '@/lib/db/repositories/herds'
 import { safeString } from '@/lib/herds/herd-detail-helpers'
-import { nowIso } from '@/lib/utils/time'
-import { db } from '@/lib/db/dexie'
 import type { Herd } from '@/types/domain'
 
 type UseHerdDetailMetaControllerOptions = {
@@ -64,11 +63,10 @@ export function useHerdDetailMetaController({
     setMetaError('')
 
     try {
-      const updatedCount = await db.herds.update(herd.id, {
+      const updatedCount = await updateHerdRecord(herd.id, {
         name: metaName.trim(),
         fallbackCount: metaFallbackCount.trim() ? Number(metaFallbackCount) : null,
         notes: metaNotes.trim() || undefined,
-        updatedAt: nowIso(),
       })
 
       if (updatedCount === 0) {

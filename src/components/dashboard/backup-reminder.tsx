@@ -4,7 +4,9 @@ import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db/dexie'
 import { listAllEnclosures } from '@/lib/db/repositories/enclosures'
+import { listAllHerds } from '@/lib/db/repositories/herds'
 import { listAllSessions } from '@/lib/db/repositories/sessions'
+import { listAllWorkSessions } from '@/lib/db/repositories/work-sessions'
 import { StatusAlert } from '@/components/ui/alert'
 import { daysSince, shouldRemindBackup } from '@/lib/settings/backup-reminder'
 
@@ -12,10 +14,10 @@ export function BackupReminder() {
   const info = useLiveQuery(async () => {
     const [settings, herds, enclosures, sessions, workSessions, assignments] = await Promise.all([
       db.settings.get('app'),
-      db.herds.toArray(),
+      listAllHerds(),
       listAllEnclosures(),
       listAllSessions(),
-      db.workSessions.toArray(),
+      listAllWorkSessions(),
       db.enclosureAssignments.toArray(),
     ])
 

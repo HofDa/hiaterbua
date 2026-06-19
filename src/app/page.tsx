@@ -8,7 +8,9 @@ import { BackupReminder } from '@/components/dashboard/backup-reminder'
 import { metaLabelClassName } from '@/components/ui/typography'
 import { db } from '@/lib/db/dexie'
 import { listActiveEnclosures } from '@/lib/db/repositories/enclosures'
+import { listAllHerds } from '@/lib/db/repositories/herds'
 import { listAllSessions } from '@/lib/db/repositories/sessions'
+import { listAllWorkSessions } from '@/lib/db/repositories/work-sessions'
 import { cn } from '@/lib/utils/cn'
 
 function DashboardStat({ label, value }: { label: string; value: number | string }) {
@@ -43,11 +45,11 @@ const utilityLinks = [
 export default function HomePage() {
   const dashboardData = useLiveQuery(async () => {
     const [herds, enclosures, sessions, assignments, workSessions] = await Promise.all([
-      db.herds.toArray(),
+      listAllHerds(),
       listActiveEnclosures(),
       listAllSessions(),
       db.enclosureAssignments.toArray(),
-      db.workSessions.toArray(),
+      listAllWorkSessions(),
     ])
 
     return {

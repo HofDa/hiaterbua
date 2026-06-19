@@ -214,10 +214,12 @@ a {
 }
 
 .bg-chrome-shell {
+  background-color: var(--chrome);
   background-image: linear-gradient(180deg, var(--chrome), var(--chrome-deep));
 }
 
 .bg-chrome-status {
+  background-color: var(--chrome-strong);
   background-image: linear-gradient(
     180deg,
     var(--chrome-strong),

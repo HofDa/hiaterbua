@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '@/lib/db/dexie'
+import { listAllAnimals } from '@/lib/db/repositories/animals'
+import { listHerdsByName } from '@/lib/db/repositories/herds'
 import {
   listSessionEvents,
   listSessionTrackpoints,
@@ -40,8 +42,8 @@ export function useGrazingSessionMapData({
   editEndTime,
   liveDurationTick,
 }: UseGrazingSessionMapDataArgs) {
-  const herds = useLiveQuery(() => db.herds.orderBy('name').toArray(), [])
-  const animals = useLiveQuery(() => db.animals.toArray(), [])
+  const herds = useLiveQuery(() => listHerdsByName(), [])
+  const animals = useLiveQuery(() => listAllAnimals(), [])
   const surveyAreas = useLiveQuery(
     () => db.surveyAreas.orderBy('id').toArray(),
     []

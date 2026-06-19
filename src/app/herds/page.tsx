@@ -12,10 +12,13 @@ import {
   FormTextarea,
 } from '@/components/ui/form'
 import { MetaLabel, metaLabelClassName } from '@/components/ui/typography'
-import { db } from '@/lib/db/dexie'
 import { deleteHerdCascade } from '@/lib/db/delete-herd'
-import { createId } from '@/lib/utils/ids'
-import { nowIso } from '@/lib/utils/time'
+import { listAllAnimals } from '@/lib/db/repositories/animals'
+import {
+  createHerdRecord,
+  listHerdsByRecent,
+  updateHerdRecord,
+} from '@/lib/db/repositories/herds'
 import type { Herd, Species } from '@/types/domain'
 
 const speciesLabels: Record<Species, string> = {
@@ -29,8 +32,8 @@ const speciesLabels: Record<Species, string> = {
 export default function HerdsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const herds = useLiveQuery(async () => {
-    const herdList = await db.herds.orderBy('updatedAt').reverse().toArray()
-    const allAnimals = await db.animals.toArray()
+    const herdList = await listHerdsByRecent()
+    const allAnimals = await listAllAnimals()
 
     return herdList.map((herd) => {
       const activeAnimals = allAnimals.filter(
@@ -70,20 +73,13 @@ export default function HerdsPage() {
 
     setSaving(true)
     setCreateError('')
-    const timestamp = nowIso()
-
-    const herd: Herd = {
-      id: createId('herd'),
-      name: name.trim(),
-      fallbackCount: fallbackCount.trim() ? Number(fallbackCount) : null,
-      notes: notes.trim() || undefined,
-      isArchived: false,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }
 
     try {
-      await db.herds.add(herd)
+      await createHerdRecord({
+        name,
+        fallbackCount: fallbackCount.trim() ? Number(fallbackCount) : null,
+        notes,
+      })
 
       setName('')
       setFallbackCount('')
@@ -99,9 +95,8 @@ export default function HerdsPage() {
     setActionError('')
 
     try {
-      const updatedCount = await db.herds.update(herdId, {
+      const updatedCount = await updateHerdRecord(herdId, {
         isArchived: nextState,
-        updatedAt: nowIso(),
       })
 
       if (updatedCount === 0) {
