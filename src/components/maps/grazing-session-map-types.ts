@@ -1,10 +1,5 @@
 'use client'
 
-export type PositionData = {
-  latitude: number
-  longitude: number
-  accuracy: number
-  speed: number | null
-  heading: number | null
-  timestamp: number
-}
+import type { GpsTrackPosition } from '@/lib/maps/position-types'
+
+export type PositionData = GpsTrackPosition

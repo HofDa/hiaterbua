@@ -16,10 +16,11 @@ import {
 } from '@/lib/settings/page-helpers'
 import { cn } from '@/lib/utils/cn'
 
-function chromeBadgeClass(isActive: boolean) {
+function chromeBadgeClass(isActive: boolean, className?: string) {
   return cn(
-    'rounded-full border px-3 py-1.5 font-semibold',
+    'whitespace-nowrap rounded-full border px-3 py-1.5 font-semibold',
     isActive ? 'app-chrome-active' : 'app-chrome-control',
+    className,
   )
 }
 
@@ -173,7 +174,39 @@ export function StatusStrip() {
 
   return (
     <div className="border-b border-chrome-border bg-chrome-status text-white app-chrome-status">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm xl:max-w-[88rem]">
+      <div
+        aria-label="App-Status"
+        className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-3 py-2 text-xs [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+      >
+        <span className={chromeBadgeClass(isOnline)}>
+          {isOnline ? 'Online' : 'Offline'}
+        </span>
+        <span className={chromeBadgeClass(hasStoredTiles)}>
+          {tileCacheCount === null
+            ? 'Karten prüfen'
+            : hasStoredTiles
+              ? 'Offline bereit'
+              : 'Keine Offline-Karten'}
+        </span>
+        <span className={chromeBadgeClass(tileCachingEnabled)}>
+          {tileCachingEnabled ? 'Cache an' : 'Cache aus'}
+        </span>
+        {persistentStorageGranted ? (
+          <span className={chromeBadgeClass(true)}>Speicher fix</span>
+        ) : null}
+        {installPromptEvent ? (
+          <button
+            type="button"
+            onClick={() => void handleInstallApp()}
+            disabled={isInstalling}
+            className="shrink-0 rounded-full border px-3 py-1.5 font-semibold app-chrome-control disabled:opacity-50"
+          >
+            {isInstalling ? 'Installiert ...' : 'Installieren'}
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mx-auto hidden max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm md:flex xl:max-w-[88rem]">
         <span className={chromeBadgeClass(isOnline)}>
           {isOnline ? 'Online' : 'Offline'}
         </span>

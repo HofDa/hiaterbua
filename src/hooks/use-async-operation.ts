@@ -1,5 +1,11 @@
 import { useState } from 'react'
 
+/**
+ * Runs an async operation while owning its loading/error/status state, for
+ * components that bind those directly to JSX. When the busy/error state lives
+ * outside the caller (e.g. published to a store via setters), use
+ * `runSavingAction` instead.
+ */
 export function useAsyncOperation<T = void>() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')

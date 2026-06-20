@@ -4,7 +4,10 @@ import {
   shallowGuardedSetter,
 } from '@/components/maps/hooks/store-slice-helpers'
 import type { FormEvent } from 'react'
-import type { FilteredEnclosureItem } from '@/lib/maps/live-position-map-helpers'
+import type {
+  EnclosureListFilter,
+  FilteredEnclosureItem,
+} from '@/lib/maps/live-position-map-helpers'
 import type {
   MobilePanel,
   PositionData,
@@ -38,6 +41,7 @@ export type LivePositionWorkflowSlice = {
   selectedWalkPointIndex: number | null
   selectedWalkPoint: PositionData | null
   filteredEnclosures: FilteredEnclosureItem[]
+  enclosureListFilter: EnclosureListFilter
   selectedEnclosure: Enclosure | null
   selectedEnclosureId: string | null
   assignmentEditorEnclosureId: string | null
@@ -74,9 +78,11 @@ export type LivePositionWorkflowHandles = {
   onWalkNameChange: (value: string) => void
   onWalkNotesChange: (value: string) => void
   onSaveWalkEnclosure: (event: FormEvent<HTMLFormElement>) => void
+  onEnclosureListFilterChange: (filter: EnclosureListFilter) => void
   onSelectedEnclosureChange: (nextId: string) => void
   onToggleSelectedEnclosureInfo: () => void
   onToggleShowSelectedTrack: () => void
+  onDeleteEnclosure: (enclosure: Enclosure) => void
   onOpenAssignmentEditor: (enclosure: Enclosure) => void
   onCancelAssignmentEditor: () => void
   onAssignHerdToEnclosure: (enclosure: Enclosure) => void
@@ -108,6 +114,7 @@ const initialWorkflowSlice: LivePositionWorkflowSlice = {
   selectedWalkPointIndex: null,
   selectedWalkPoint: null,
   filteredEnclosures: [],
+  enclosureListFilter: 'all',
   selectedEnclosure: null,
   selectedEnclosureId: null,
   assignmentEditorEnclosureId: null,
@@ -143,9 +150,11 @@ const initialWorkflowHandles: LivePositionWorkflowHandles = {
   onWalkNameChange: noop,
   onWalkNotesChange: noop,
   onSaveWalkEnclosure: noop,
+  onEnclosureListFilterChange: noop,
   onSelectedEnclosureChange: noop,
   onToggleSelectedEnclosureInfo: noop,
   onToggleShowSelectedTrack: noop,
+  onDeleteEnclosure: noop,
   onOpenAssignmentEditor: noop,
   onCancelAssignmentEditor: noop,
   onAssignHerdToEnclosure: noop,

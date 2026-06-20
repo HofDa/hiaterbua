@@ -19,7 +19,6 @@ export function GrazingSessionSurveyAreasPanel({
 }: GrazingSessionSurveyAreasPanelProps) {
   return (
     <SurveyAreasPanel
-      className="mt-4"
       description="Importierte Flächen können für die Orientierung auf der Karte ein- oder ausgeblendet und direkt fokussiert werden."
       safeSurveyAreas={safeSurveyAreas}
       selectedSurveyArea={selectedSurveyArea}

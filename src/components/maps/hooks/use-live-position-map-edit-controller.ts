@@ -1,4 +1,5 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   deleteEnclosureRecord,
@@ -51,6 +52,7 @@ export function useLivePositionMapEditController({
   setSelectedEditPointIndex,
   setIsAddingEditPoint,
 }: UseLivePositionMapEditControllerOptions) {
+  const confirm = useConfirm()
   function resetEditState() {
     setEditingEnclosureId(null)
     setEditName('')
@@ -158,9 +160,12 @@ export function useLivePositionMapEditController({
   }
 
   async function deleteEnclosure(enclosure: Enclosure) {
-    const confirmed = window.confirm(
-      `Pferch "${enclosure.name}" wirklich lokal löschen?`
-    )
+    const confirmed = await confirm({
+      title: `Pferch "${enclosure.name}" löschen?`,
+      description: 'Der Pferch wird lokal auf diesem Gerät gelöscht.',
+      confirmLabel: 'Löschen',
+      destructive: true,
+    })
 
     if (!confirmed) return
 

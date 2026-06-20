@@ -10,13 +10,16 @@ import {
 } from '@/components/maps/mobile-map-ui'
 import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 import type { MobilePanel } from '@/components/maps/live-position-map-types'
+import type { Enclosure } from '@/types/domain'
 
 export type LivePositionWorkflowPanelsProps = {
   onMobilePanelChange: (panel: MobilePanel) => void
+  onStartEditEnclosure: (enclosure: Enclosure) => void
 }
 
 export function LivePositionWorkflowPanels({
   onMobilePanelChange,
+  onStartEditEnclosure,
 }: LivePositionWorkflowPanelsProps) {
   const {
     mobilePanel,
@@ -38,6 +41,7 @@ export function LivePositionWorkflowPanels({
     selectedWalkPointIndex,
     selectedWalkPoint,
     filteredEnclosures,
+    enclosureListFilter,
     selectedEnclosure,
     selectedEnclosureId,
     assignmentEditorEnclosureId,
@@ -72,9 +76,11 @@ export function LivePositionWorkflowPanels({
     onWalkNameChange,
     onWalkNotesChange,
     onSaveWalkEnclosure,
+    onEnclosureListFilterChange,
     onSelectedEnclosureChange,
     onToggleSelectedEnclosureInfo,
     onToggleShowSelectedTrack,
+    onDeleteEnclosure,
     onOpenAssignmentEditor,
     onCancelAssignmentEditor,
     onAssignHerdToEnclosure,
@@ -85,7 +91,7 @@ export function LivePositionWorkflowPanels({
   } = useLivePositionMapStore((state) => state.workflowHandles)
 
   return (
-    <>
+    <div className="space-y-3">
       <MobileMapSegmentedControl>
         <MobileMapSegmentButton
           onClick={() => onMobilePanelChange('saved')}
@@ -97,7 +103,7 @@ export function LivePositionWorkflowPanels({
           onClick={() => onMobilePanelChange('walk')}
           active={mobilePanel === 'walk'}
         >
-          Walk
+          Ablaufen
         </MobileMapSegmentButton>
         <MobileMapSegmentButton
           onClick={() => onMobilePanelChange('draw')}
@@ -170,6 +176,7 @@ export function LivePositionWorkflowPanels({
       <div className={mobilePanel === 'saved' ? 'lg:hidden' : 'hidden'}>
         <LivePositionSavedEnclosuresMobilePanel
           filteredEnclosures={filteredEnclosures}
+          enclosureListFilter={enclosureListFilter}
           selectedEnclosure={selectedEnclosure}
           selectedEnclosureId={selectedEnclosureId}
           assignmentEditorEnclosureId={assignmentEditorEnclosureId}
@@ -185,9 +192,12 @@ export function LivePositionWorkflowPanels({
           activeAssignmentsByHerdId={activeAssignmentsByHerdId}
           isSelectedEnclosureInfoOpen={isSelectedEnclosureInfoOpen}
           showSelectedTrack={showSelectedTrack}
+          onEnclosureListFilterChange={onEnclosureListFilterChange}
           onSelectedEnclosureChange={onSelectedEnclosureChange}
           onToggleSelectedEnclosureInfo={onToggleSelectedEnclosureInfo}
           onToggleShowSelectedTrack={onToggleShowSelectedTrack}
+          onStartEditEnclosure={onStartEditEnclosure}
+          onDeleteEnclosure={onDeleteEnclosure}
           onOpenAssignmentEditor={onOpenAssignmentEditor}
           onCancelAssignmentEditor={onCancelAssignmentEditor}
           onAssignHerdToEnclosure={onAssignHerdToEnclosure}
@@ -197,6 +207,6 @@ export function LivePositionWorkflowPanels({
           onEndEnclosureAssignment={onEndEnclosureAssignment}
         />
       </div>
-    </>
+    </div>
   )
 }

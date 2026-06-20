@@ -13,6 +13,7 @@ import {
   LivePositionSavedEnclosureStatsSection,
   LivePositionSavedEnclosureTrackSummarySection,
 } from '@/components/maps/live-position-saved-enclosure-card-sections'
+import { CollapseChevron } from '@/components/ui/collapse-chevron'
 import { cn } from '@/lib/utils/cn'
 import type {
   Animal,
@@ -141,7 +142,7 @@ export function LivePositionSavedEnclosureCard({
           <div className="text-xs text-ink-soft">
             {new Date(enclosure.updatedAt).toLocaleDateString('de-DE')}
           </div>
-          <div className="mt-1 text-base text-ink">{isExpanded ? '−' : '+'}</div>
+          <CollapseChevron open={isExpanded} className="mt-1 ml-auto" />
         </div>
       </button>
 

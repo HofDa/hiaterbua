@@ -28,6 +28,15 @@ type UseGeolocationWatcherOptions<T extends BaseTrackedPosition> = {
 const WATCH_RESTART_DELAY_MS = 2_000
 const WATCH_STALL_TIMEOUT_MS = 30_000
 
+/** Fired (via {@link requestGpsRetry}) when the user asks to re-attempt location access. */
+export const GPS_RETRY_EVENT = 'pastore:gps-retry'
+
+/** Ask the active geolocation watcher to re-arm — e.g. from a "Standort aktivieren" button. */
+export function requestGpsRetry() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event(GPS_RETRY_EVENT))
+}
+
 export function useGeolocationWatcher<T extends BaseTrackedPosition>({
   acceptedPositionRef,
   buildPositionRef,
@@ -143,8 +152,24 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
 
     startWatch()
 
+    const handleGpsRetry = () => {
+      if (stopped) return
+      // Manual re-attempt from the UI: drop any dead/scheduled watch and re-arm.
+      // Re-prompts when the permission is still grantable, or resumes tracking
+      // once the user has enabled location in their device/browser settings.
+      if (restartTimer !== null) {
+        clearTimeout(restartTimer)
+        restartTimer = null
+      }
+      clearActiveWatch()
+      startWatch()
+    }
+
+    window.addEventListener(GPS_RETRY_EVENT, handleGpsRetry)
+
     return () => {
       stopped = true
+      window.removeEventListener(GPS_RETRY_EVENT, handleGpsRetry)
       clearStallTimer()
       if (restartTimer !== null) {
         clearTimeout(restartTimer)

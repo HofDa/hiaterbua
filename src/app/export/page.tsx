@@ -6,6 +6,7 @@ import { ExportPageHeader } from '@/components/export/export-page-header'
 import { ExportWorkCard } from '@/components/export/export-work-card'
 import { ExportZipCard } from '@/components/export/export-zip-card'
 import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { downloadBlob } from '@/lib/import-export/file-formats'
 import {
   buildAppExportArchive,
@@ -44,6 +45,7 @@ function buildReplaceImportConfirmation(importPreview: ImportPreview) {
 }
 
 export default function ExportPage() {
+  const confirm = useConfirm()
   const pageData = useExportPageData()
   const exportZip = useAsyncOperation<{ blob: Blob; filename: string }>()
   const exportHerd = useAsyncOperation<{ blob: Blob; filename: string; herdName: string }>()
@@ -112,11 +114,19 @@ export default function ExportPage() {
       return
     }
 
-    if (
-      pageData.replaceExisting &&
-      !window.confirm(buildReplaceImportConfirmation(pageData.importPreview))
-    ) {
-      return
+    if (pageData.replaceExisting) {
+      const confirmed = await confirm({
+        title: 'Import bestätigen',
+        description: (
+          <span className="whitespace-pre-line">
+            {buildReplaceImportConfirmation(pageData.importPreview)}
+          </span>
+        ),
+        confirmLabel: 'Ersetzen',
+        destructive: true,
+      })
+
+      if (!confirmed) return
     }
 
     await importData.execute(async () => {

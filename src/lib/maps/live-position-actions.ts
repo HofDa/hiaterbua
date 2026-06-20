@@ -1,13 +1,9 @@
 import { db } from '@/lib/db/dexie'
 import { createId } from '@/lib/utils/ids'
+import type { GpsPosition } from '@/lib/maps/position-types'
 import type { Animal, Herd, TrackPoint } from '@/types/domain'
 
-type PositionData = {
-  latitude: number
-  longitude: number
-  accuracy: number
-  timestamp: number
-}
+type PositionData = GpsPosition
 
 export async function appendWalkTrackpoint(params: {
   enclosureWalkId: string

@@ -154,6 +154,7 @@ export function useLivePositionMapPublish({
     selectedWalkPointIndex: walk.selectedWalkPointIndex,
     selectedWalkPoint: data.selectedWalkPoint,
     filteredEnclosures: data.filteredEnclosures,
+    enclosureListFilter: selection.enclosureListFilter,
     selectedEnclosure: data.selectedEnclosure,
     selectedEnclosureId: selection.selectedEnclosureId,
     assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
@@ -171,6 +172,10 @@ export function useLivePositionMapPublish({
     showSelectedTrack: selection.showSelectedTrack,
   }
   const workflowHandles = useStableHandles<LivePositionWorkflowHandles>({
+    onEnclosureListFilterChange: selection.setEnclosureListFilter,
+    onDeleteEnclosure: (enclosure) => {
+      void actions.deleteEnclosure(enclosure)
+    },
     onStartDrawing: actions.startDrawing,
     onFinishDrawing: actions.finishDrawing,
     onUndoLastPoint: actions.undoLastPoint,

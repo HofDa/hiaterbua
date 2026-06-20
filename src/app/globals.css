@@ -81,6 +81,7 @@
   --shadow-map-toolbar: 0 12px 30px rgba(40, 34, 26, 0.12);
   --shadow-map-control: 0 10px 15px -3px rgba(23, 20, 18, 0.18),
     0 4px 6px -4px rgba(23, 20, 18, 0.14);
+  --app-bottom-nav-height: 0rem;
   --radius: 0.75rem;
   --radius-panel: 1.9rem;
   --radius-panel-sm: 1.75rem;
@@ -185,12 +186,18 @@ body {
   color: var(--text-main);
 }
 
+html {
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   position: relative;
+  min-height: 100dvh;
   font-family: var(--font-sans);
 }
 
@@ -349,6 +356,22 @@ textarea {
   font: inherit;
 }
 
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+html {
+  /* Theme native controls (date/number pickers, scrollbars) to the light app. */
+  color-scheme: light;
+  /* Keep focused inputs clear of the sticky top bar when scrolled into view. */
+  scroll-padding-top: calc(4.5rem + env(safe-area-inset-top));
+}
+
 code,
 pre,
 kbd,
@@ -380,4 +403,18 @@ textarea {
 .maplibregl-ctrl button {
   background: var(--surface-strong);
   color: var(--chrome-control-ink);
+}
+
+@media (max-width: 767px) {
+  :root {
+    --app-bottom-nav-height: 4.95rem;
+  }
+
+  body {
+    overscroll-behavior-y: contain;
+  }
+
+  body::before {
+    opacity: 0.2;
+  }
 }

@@ -61,7 +61,8 @@ export function MobileMapSectionCard({ children, className = '' }: SectionCardPr
 export function MobileMapSegmentedControl({ children }: SegmentedControlProps) {
   return (
     <div className="app-map-surface p-2 lg:hidden">
-      <div className="grid grid-cols-3 gap-2">{children}</div>
+      {/* auto-cols-fr keeps every tab equal width regardless of how many there are */}
+      <div className="grid auto-cols-fr grid-flow-col gap-2">{children}</div>
     </div>
   )
 }
@@ -77,7 +78,7 @@ export function MobileMapSegmentButton({
     <button
       type={type}
       className={cn(
-        'rounded-2xl px-3 py-3 text-sm font-medium',
+        'rounded-2xl px-3 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         active
           ? 'border border-border-strong bg-surface-muted text-ink'
           : 'border border-border bg-surface-raised text-ink-strong',

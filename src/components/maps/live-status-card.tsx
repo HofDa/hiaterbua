@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import type { GpsState } from '@/lib/maps/map-core'
 import { cn } from '@/lib/utils/cn'
 import { MetaLabel, metaLabelClassName } from '@/components/ui/typography'
@@ -14,6 +15,7 @@ type LiveStatusCardProps = {
   gpsLabel: string
   items: StatusItem[]
   onToggle: () => void
+  onRequestGps?: () => void
 }
 
 export function LiveStatusCard({
@@ -22,7 +24,10 @@ export function LiveStatusCard({
   gpsLabel,
   items,
   onToggle,
+  onRequestGps,
 }: LiveStatusCardProps) {
+  const showGpsAction =
+    onRequestGps !== undefined && (gpsState === 'denied' || gpsState === 'error')
   return (
     <div className="app-panel p-5">
       <div className="flex items-center justify-between gap-3">
@@ -33,7 +38,10 @@ export function LiveStatusCard({
           className={cn('flex items-center gap-2', metaLabelClassName({ tracking: 'wide' }))}
         >
           <span>Live-Status</span>
-          <span className="text-sm text-ink">{isOpen ? '−' : '+'}</span>
+          <ChevronDown
+            aria-hidden="true"
+            className={cn('h-4 w-4 text-ink transition-transform', isOpen && 'rotate-180')}
+          />
         </button>
         <div
           className={cn(
@@ -48,6 +56,23 @@ export function LiveStatusCard({
           {gpsLabel}
         </div>
       </div>
+
+      {showGpsAction ? (
+        <div className="mt-3 flex flex-col gap-2 rounded-[1rem] border border-error-border bg-error-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-error-ink">
+            {gpsState === 'denied'
+              ? 'Standortzugriff ist blockiert. Im Gerät oder Browser erlauben.'
+              : 'Standort konnte nicht ermittelt werden.'}
+          </p>
+          <button
+            type="button"
+            onClick={onRequestGps}
+            className="shrink-0 rounded-full border border-error-border bg-surface-raised px-4 py-2 text-sm font-semibold text-error-ink active:scale-[0.98]"
+          >
+            Standort aktivieren
+          </button>
+        </div>
+      ) : null}
 
       {isOpen ? (
         <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -12,9 +12,14 @@ import { cn } from '@/lib/utils/cn'
 
 export type LivePositionMapCanvasPanelProps = {
   containerRef: Ref<HTMLDivElement>
+  /** When true, drop the panel chrome so an outer wrapper can own it (cohesive Karte card). */
+  embedded?: boolean
 }
 
-export function LivePositionMapCanvasPanel({ containerRef }: LivePositionMapCanvasPanelProps) {
+export function LivePositionMapCanvasPanel({
+  containerRef,
+  embedded = false,
+}: LivePositionMapCanvasPanelProps) {
   const {
     mobilePanel,
     editingEnclosureId,
@@ -84,7 +89,7 @@ export function LivePositionMapCanvasPanel({ containerRef }: LivePositionMapCanv
     !editingEnclosureId && (mobilePanel === 'draw' || mobilePanel === 'walk')
 
   return (
-    <div className="relative overflow-hidden app-panel">
+    <div className={cn('relative overflow-hidden', !embedded && 'app-panel')}>
       <div
         ref={containerRef}
         className="h-[420px] w-full bg-surface-raised sm:h-[520px] lg:h-[calc(100vh-8rem)]"

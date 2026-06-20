@@ -28,7 +28,7 @@ export function LivePositionMapDesktopDrawMode({
   const drawHint = isDrawing
     ? 'Jeder Klick setzt einen Punkt.'
     : isWalking
-      ? 'GPS-Walk läuft. Erst beenden, dann zeichnen.'
+      ? 'Der Pferch wird per GPS abgelaufen. Erst beenden, dann zeichnen.'
       : 'Pferch direkt auf der Karte setzen.'
 
   return (

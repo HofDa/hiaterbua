@@ -11,6 +11,12 @@ type RunSavingActionOptions<TSavingState, TResult> = {
   action: () => Promise<TResult> | TResult
 }
 
+/**
+ * Wraps an async action in busy/error handling that writes through
+ * caller-provided setters — for controllers whose saving/error state lives in an
+ * external store rather than the component. For component-local state that binds
+ * straight to JSX, use the `useAsyncOperation` hook instead.
+ */
 export async function runSavingAction<TSavingState, TResult = void>({
   setSaving,
   savingValue,

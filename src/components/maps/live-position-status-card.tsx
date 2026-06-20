@@ -2,6 +2,7 @@
 
 import { formatTimestamp } from '@/lib/maps/map-core'
 import { LiveStatusCard, type StatusItem } from '@/components/maps/live-status-card'
+import { requestGpsRetry } from '@/components/maps/hooks/use-geolocation-watcher'
 import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 
 export function LivePositionStatusCard() {
@@ -32,6 +33,7 @@ export function LivePositionStatusCard() {
       gpsLabel={gpsLabel}
       items={items}
       onToggle={toggle}
+      onRequestGps={requestGpsRetry}
     />
   )
 }

@@ -1,3 +1,4 @@
+import type { GpsTrackPosition } from '@/lib/maps/position-types'
 import type {
   GrazingSession,
   SessionEvent,
@@ -5,13 +6,7 @@ import type {
   TrackPoint,
 } from '@/types/domain'
 
-export type PositionData = {
-  latitude: number
-  longitude: number
-  speed: number | null
-  heading: number | null
-  timestamp: number
-}
+export type PositionData = GpsTrackPosition
 
 export type EditableTrackPoint = {
   lat: number

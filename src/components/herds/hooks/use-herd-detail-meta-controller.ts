@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { assertUpdated } from '@/lib/db/assert-updated'
 import { deleteHerdCascade } from '@/lib/db/delete-herd'
 import { updateHerdRecord } from '@/lib/db/repositories/herds'
 import { safeString } from '@/lib/herds/herd-detail-helpers'
@@ -15,6 +17,7 @@ export function useHerdDetailMetaController({
   herd,
   onDeleted,
 }: UseHerdDetailMetaControllerOptions) {
+  const confirm = useConfirm()
   const [metaName, setMetaName] = useState(herd.name)
   const [metaFallbackCount, setMetaFallbackCount] = useState(
     herd.fallbackCount === null || herd.fallbackCount === undefined
@@ -35,9 +38,13 @@ export function useHerdDetailMetaController({
     metaNotes.trim() !== safeString(herd.notes)
 
   async function deleteHerd() {
-    const confirmed = window.confirm(
-      `Herde "${herd.name}" wirklich löschen? Tiere, Weidegänge, Arbeitseinsätze und Belegungen dieser Herde werden ebenfalls entfernt.`
-    )
+    const confirmed = await confirm({
+      title: `Herde "${herd.name}" löschen?`,
+      description:
+        'Tiere, Weidegänge, Arbeitseinsätze und Belegungen dieser Herde werden ebenfalls entfernt.',
+      confirmLabel: 'Löschen',
+      destructive: true,
+    })
 
     if (!confirmed) return
 
@@ -69,9 +76,7 @@ export function useHerdDetailMetaController({
         notes: metaNotes.trim() || undefined,
       })
 
-      if (updatedCount === 0) {
-        throw new Error('Herde wurde nicht gefunden.')
-      }
+      assertUpdated(updatedCount, 'Herde wurde nicht gefunden.')
 
       setMetaSaved(true)
     } catch {

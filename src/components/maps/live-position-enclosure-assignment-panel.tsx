@@ -228,15 +228,18 @@ export function LivePositionEnclosureAssignmentPanel({
             </div>
           </div>
         </div>
-      ) : (
+      ) : hasAssignableHerds ? (
         <button
           type="button"
           onClick={() => onOpenAssignmentEditor(enclosure)}
-          disabled={!hasAssignableHerds}
-          className="w-full rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm font-medium text-ink disabled:opacity-50"
+          className="w-full rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm font-medium text-ink"
         >
-          {hasAssignableHerds ? 'Herde zuweisen' : 'Keine Herde frei'}
+          Herde zuweisen
         </button>
+      ) : (
+        <p className="w-full rounded-2xl bg-surface-raised px-4 py-3 text-center text-sm font-medium text-ink-muted">
+          Keine freie Herde
+        </p>
       )}
 
       {assignmentHistory.length > 0 ? (

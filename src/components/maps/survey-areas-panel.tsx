@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { formatArea } from '@/lib/maps/map-core'
-import { Card } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
+import { CollapseChevron } from '@/components/ui/collapse-chevron'
 import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 import type { SurveyArea } from '@/types/domain'
@@ -31,9 +31,9 @@ export function SurveyAreasPanel({
   const [isMobileExpanded, setIsMobileExpanded] = useState(Boolean(selectedSurveyAreaId))
 
   return (
-    <Card
-      className={cn('mx-auto w-full min-w-0 overflow-hidden px-3 py-3 sm:px-4 sm:py-4', className)}
-    >
+    // No card chrome here: this panel is always rendered inside an `app-panel`,
+    // so wrapping it in another Card just produces a redundant card-in-card.
+    <div className={cn('w-full min-w-0 overflow-hidden', className)}>
       <FormButton
         type="button"
         onClick={() => setIsMobileExpanded((current) => !current)}
@@ -58,9 +58,7 @@ export function SurveyAreasPanel({
           <span className="rounded-full border border-border bg-surface-raised px-2 py-1 text-[11px] font-semibold text-ink">
             {safeSurveyAreas.length}
           </span>
-          <span className="text-lg font-semibold text-ink">
-            {isMobileExpanded ? '−' : '+'}
-          </span>
+          <CollapseChevron open={isMobileExpanded} />
         </div>
       </FormButton>
 
@@ -80,7 +78,7 @@ export function SurveyAreasPanel({
           <div className="mt-3 w-full min-w-0 overflow-visible lg:max-h-64 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             <div className="w-full min-w-0 space-y-2">
               {selectedSurveyArea ? (
-                <Card className="w-full min-w-0 max-w-full overflow-hidden px-3 py-2 text-sm text-ink">
+                <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border-soft bg-accent px-3 py-2 text-sm text-ink">
                   <MetaLabel tracking="tight">
                     Fokus
                   </MetaLabel>
@@ -91,7 +89,7 @@ export function SurveyAreasPanel({
                   <div className="mt-1 text-xs text-ink-muted break-all font-mono">
                     ID: {selectedSurveyArea.id}
                   </div>
-                </Card>
+                </div>
               ) : null}
 
               {safeSurveyAreas.map((surveyArea) => (
@@ -137,6 +135,6 @@ export function SurveyAreasPanel({
           </div>
         )}
       </div>
-    </Card>
+    </div>
   )
 }

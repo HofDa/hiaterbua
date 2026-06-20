@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { assertUpdated } from '@/lib/db/assert-updated'
 import {
   createAnimalRecord,
   deleteAnimalRecord,
@@ -20,6 +22,7 @@ function getAnimalActionError(error: unknown, fallback: string) {
 export function useHerdDetailAnimalController({
   herdId,
 }: UseHerdDetailAnimalControllerOptions) {
+  const confirm = useConfirm()
   const [earTag, setEarTag] = useState('')
   const [species, setSpecies] = useState<Species>('sheep')
   const [name, setName] = useState('')
@@ -83,18 +86,19 @@ export function useHerdDetailAnimalController({
         isArchived,
       })
 
-      if (updatedCount === 0) {
-        throw new Error('Tier wurde nicht gefunden.')
-      }
+      assertUpdated(updatedCount, 'Tier wurde nicht gefunden.')
     } catch (currentError) {
       setError(getAnimalActionError(currentError, 'Tierstatus konnte nicht gespeichert werden.'))
     }
   }
 
   async function deleteAnimal(animal: Animal) {
-    const confirmed = window.confirm(
-      `Tier "${animal.earTag}" wirklich aus der Herde löschen?`
-    )
+    const confirmed = await confirm({
+      title: `Tier "${animal.earTag}" löschen?`,
+      description: 'Das Tier wird aus der Herde entfernt.',
+      confirmLabel: 'Löschen',
+      destructive: true,
+    })
 
     if (!confirmed) return
 
@@ -153,9 +157,7 @@ export function useHerdDetailAnimalController({
         notes: editNotes.trim() || undefined,
       })
 
-      if (updatedCount === 0) {
-        throw new Error('Tier wurde nicht gefunden.')
-      }
+      assertUpdated(updatedCount, 'Tier wurde nicht gefunden.')
 
       cancelEdit()
     } catch (currentError) {

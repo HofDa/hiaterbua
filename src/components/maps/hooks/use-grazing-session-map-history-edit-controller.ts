@@ -3,6 +3,7 @@ import {
   deleteGrazingSessionRecord,
   saveEditedGrazingSessionRecord,
 } from '@/lib/db/repositories/sessions'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   formatDateTimeInputValue,
@@ -36,6 +37,7 @@ export function useGrazingSessionMapHistoryEditController({
   edit,
   history,
 }: UseGrazingSessionMapHistoryEditControllerOptions) {
+  const confirm = useConfirm()
   const { selectedSessionId, setSelectedSessionId } = selection
   const { setActionError, setIsSaving } = session
   const {
@@ -219,9 +221,12 @@ export function useGrazingSessionMapHistoryEditController({
       return
     }
 
-    const confirmed = window.confirm(
-      `Weidegang vom ${formatDateTime(session.startTime)} wirklich löschen?`
-    )
+    const confirmed = await confirm({
+      title: 'Weidegang löschen?',
+      description: `Weidegang vom ${formatDateTime(session.startTime)} wirklich löschen?`,
+      confirmLabel: 'Löschen',
+      destructive: true,
+    })
 
     if (!confirmed) return
 

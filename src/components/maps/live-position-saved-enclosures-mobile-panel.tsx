@@ -22,7 +22,11 @@ import {
   FlowSummaryCallout,
 } from '@/components/ui/mobile-flow'
 import { MetaLabel } from '@/components/ui/typography'
-import type { FilteredEnclosureItem } from '@/lib/maps/live-position-map-helpers'
+import { CollapseChevron } from '@/components/ui/collapse-chevron'
+import type {
+  EnclosureListFilter,
+  FilteredEnclosureItem,
+} from '@/lib/maps/live-position-map-helpers'
 import type {
   Animal,
   Enclosure,
@@ -30,8 +34,19 @@ import type {
   Herd,
 } from '@/types/domain'
 
+const enclosureFilterOptions: { id: EnclosureListFilter; label: string }[] = [
+  { id: 'all', label: 'Alle' },
+  { id: 'active', label: 'Aktiv belegt' },
+  { id: 'unused', label: 'Ohne Nutzung' },
+  { id: 'most-used', label: 'Meist genutzt' },
+]
+
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
+
 type LivePositionSavedEnclosuresMobilePanelProps = {
   filteredEnclosures: FilteredEnclosureItem[]
+  enclosureListFilter: EnclosureListFilter
   selectedEnclosure: Enclosure | null
   selectedEnclosureId: string | null
   assignmentEditorEnclosureId: string | null
@@ -47,9 +62,12 @@ type LivePositionSavedEnclosuresMobilePanelProps = {
   activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
   isSelectedEnclosureInfoOpen: boolean
   showSelectedTrack: boolean
+  onEnclosureListFilterChange: (filter: EnclosureListFilter) => void
   onSelectedEnclosureChange: (nextId: string) => void
   onToggleSelectedEnclosureInfo: () => void
   onToggleShowSelectedTrack: () => void
+  onStartEditEnclosure: (enclosure: Enclosure) => void
+  onDeleteEnclosure: (enclosure: Enclosure) => void
   onOpenAssignmentEditor: (enclosure: Enclosure) => void
   onCancelAssignmentEditor: () => void
   onAssignHerdToEnclosure: (enclosure: Enclosure) => void
@@ -274,7 +292,10 @@ function LivePositionMobileActiveAssignmentCard({
         type="button"
         onClick={() => onEndEnclosureAssignment(activeAssignment)}
         disabled={endingAssignmentId === activeAssignment.id}
-        className="mt-3 w-full rounded-2xl border border-warning-border bg-warning-surface px-4 py-3 text-sm font-semibold text-warning-ink disabled:opacity-50"
+        className={cn(
+          'mt-3 w-full rounded-2xl border border-warning-border bg-warning-surface px-4 py-3 text-sm font-semibold text-warning-ink disabled:opacity-50',
+          focusRing,
+        )}
       >
         {endingAssignmentId === activeAssignment.id ? 'Weist aus ...' : 'Herde ausweisen'}
       </button>
@@ -284,6 +305,7 @@ function LivePositionMobileActiveAssignmentCard({
 
 export function LivePositionSavedEnclosuresMobilePanel({
   filteredEnclosures,
+  enclosureListFilter,
   selectedEnclosure,
   selectedEnclosureId,
   assignmentEditorEnclosureId,
@@ -299,9 +321,12 @@ export function LivePositionSavedEnclosuresMobilePanel({
   activeAssignmentsByHerdId,
   isSelectedEnclosureInfoOpen,
   showSelectedTrack,
+  onEnclosureListFilterChange,
   onSelectedEnclosureChange,
   onToggleSelectedEnclosureInfo,
   onToggleShowSelectedTrack,
+  onStartEditEnclosure,
+  onDeleteEnclosure,
   onOpenAssignmentEditor,
   onCancelAssignmentEditor,
   onAssignHerdToEnclosure,
@@ -325,6 +350,27 @@ export function LivePositionSavedEnclosuresMobilePanel({
         <span className="text-sm text-ink-soft">{filteredEnclosures.length}</span>
       </div>
 
+      {!isAssignmentFlowOpen ? (
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {enclosureFilterOptions.map((filterOption) => (
+            <button
+              key={filterOption.id}
+              type="button"
+              onClick={() => onEnclosureListFilterChange(filterOption.id)}
+              className={cn(
+                'rounded-2xl px-3 py-2.5 text-sm font-medium',
+                focusRing,
+                enclosureListFilter === filterOption.id
+                  ? 'border border-border-strong bg-surface-muted text-ink'
+                  : 'border border-border bg-surface-raised text-ink-soft',
+              )}
+            >
+              {filterOption.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {isAssignmentFlowOpen && detailItem ? (
         <div className="mt-4">
           <LivePositionMobileAssignmentFlow
@@ -347,7 +393,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
         </div>
       ) : (
         <div className="mt-4 max-h-[48vh] overflow-y-auto pr-1 overscroll-contain">
-          <div className="flex flex-wrap gap-3">
+          <div className="space-y-2">
             {filteredEnclosures.map(({ enclosure, activeAssignment }) => {
               const isActive = Boolean(activeAssignment)
               const isSelected = selectedEnclosureId === enclosure.id
@@ -358,7 +404,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
                 <div
                   key={enclosure.id}
                   className={cn(
-                    'min-w-[45%] flex-1 rounded-[1.1rem] border border-border bg-surface-raised p-3 shadow-sm',
+                    'flex items-center gap-3 rounded-[1.1rem] border border-border bg-surface-raised px-3.5 py-2.5',
                     isSelected && 'border-border-strong bg-accent',
                   )}
                 >
@@ -373,36 +419,53 @@ export function LivePositionSavedEnclosuresMobilePanel({
                       }
                       onSelectedEnclosureChange(enclosure.id)
                     }}
-                    className="flex w-full items-center justify-between text-left text-sm font-semibold text-ink"
+                    className={cn(
+                      'flex min-w-0 flex-1 items-center gap-2 rounded-lg py-1 text-left',
+                      focusRing,
+                    )}
                   >
-                    <span className="truncate">{enclosure.name}</span>
-                    <span className="text-xs text-ink-soft">
+                    <span className="truncate text-sm font-semibold text-ink">{enclosure.name}</span>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                        isActive
+                          ? 'border border-success-border bg-success-surface text-success-ink'
+                          : 'border border-border text-ink-soft',
+                      )}
+                    >
                       {isActive ? 'aktiv' : 'frei'}
                     </span>
                   </button>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {isActive ? (
-                      <button
-                        type="button"
-                        onClick={() => activeAssignment && onEndEnclosureAssignment(activeAssignment)}
-                        className="flex-1 rounded-2xl border border-warning-border bg-warning-surface px-3 py-2 text-xs font-semibold text-warning-ink"
-                      >
-                        Herde ausweisen
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onSelectedEnclosureChange(enclosure.id)
-                          onOpenAssignmentEditor(enclosure)
-                        }}
-                        disabled={!hasAssignableHerds}
-                        className="flex-1 rounded-2xl border border-border-strong bg-surface-muted px-3 py-2 text-xs font-semibold text-ink disabled:opacity-50"
-                      >
-                        {hasAssignableHerds ? 'Herde zuweisen' : 'Keine Herde frei'}
-                      </button>
-                    )}
-                  </div>
+                  {isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => activeAssignment && onEndEnclosureAssignment(activeAssignment)}
+                      className={cn(
+                        'inline-flex shrink-0 items-center justify-center rounded-full border border-warning-border bg-warning-surface px-3.5 py-2 text-xs font-semibold text-warning-ink',
+                        focusRing,
+                      )}
+                    >
+                      Ausweisen
+                    </button>
+                  ) : hasAssignableHerds ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectedEnclosureChange(enclosure.id)
+                        onOpenAssignmentEditor(enclosure)
+                      }}
+                      className={cn(
+                        'inline-flex shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface-muted px-3.5 py-2 text-xs font-semibold text-ink',
+                        focusRing,
+                      )}
+                    >
+                      Zuweisen
+                    </button>
+                  ) : (
+                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-ink-muted">
+                      Keine freie Herde
+                    </span>
+                  )}
                 </div>
               )
             })}
@@ -423,14 +486,15 @@ export function LivePositionSavedEnclosuresMobilePanel({
               type="button"
               onClick={onToggleSelectedEnclosureInfo}
               aria-expanded={isSelectedEnclosureInfoOpen}
-              className="flex w-full items-center justify-between gap-3 text-left"
+              className={cn(
+                'flex w-full items-center justify-between gap-3 rounded-lg text-left',
+                focusRing,
+              )}
             >
               <span className="min-w-0 break-words">
                 Fokus: <span className="font-medium">{detailEnclosure.name}</span>
               </span>
-              <span className="shrink-0 text-base text-ink">
-                {isSelectedEnclosureInfoOpen ? '−' : '+'}
-              </span>
+              <CollapseChevron open={isSelectedEnclosureInfoOpen} />
             </button>
             {isSelectedEnclosureInfoOpen ? (
               <>
@@ -440,6 +504,28 @@ export function LivePositionSavedEnclosuresMobilePanel({
                 {detailEnclosure.notes ? (
                   <div className="mt-1 text-ink-muted">{detailEnclosure.notes}</div>
                 ) : null}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onStartEditEnclosure(detailEnclosure)}
+                    className={cn(
+                      'inline-flex items-center justify-center rounded-full border border-border-strong bg-surface-raised px-3 py-2.5 text-xs font-semibold text-ink',
+                      focusRing,
+                    )}
+                  >
+                    Bearbeiten
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteEnclosure(detailEnclosure)}
+                    className={cn(
+                      'inline-flex items-center justify-center rounded-full border border-error-border bg-error-surface px-3 py-2.5 text-xs font-semibold text-error-ink',
+                      focusRing,
+                    )}
+                  >
+                    Löschen
+                  </button>
+                </div>
               </>
             ) : null}
           </div>
@@ -460,7 +546,10 @@ export function LivePositionSavedEnclosuresMobilePanel({
         <button
           type="button"
           onClick={onToggleShowSelectedTrack}
-          className="mt-4 w-full rounded-2xl bg-surface-raised px-4 py-3 text-sm font-medium text-ink"
+          className={cn(
+            'mt-4 w-full rounded-2xl bg-surface-raised px-4 py-3 text-sm font-medium text-ink',
+            focusRing,
+          )}
         >
           {showSelectedTrack ? 'Spur ausblenden' : 'Spur anzeigen'}
         </button>

@@ -42,8 +42,8 @@ function MobileStepHeader({
         Zurück
       </FormButton>
       <div className="min-w-0 text-right">
-        <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">{label}</div>
-        <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted [overflow-wrap:anywhere]">{sublabel}</div>
+        <div className="text-sm font-semibold leading-tight hyphens-auto break-words">{label}</div>
+        <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted hyphens-auto break-words">{sublabel}</div>
       </div>
     </div>
   )

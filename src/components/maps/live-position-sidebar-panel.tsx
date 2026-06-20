@@ -24,7 +24,6 @@ export function LivePositionSidebarPanel({
   onStartEditEnclosure,
 }: LivePositionSidebarPanelProps) {
   const {
-    mobilePanel,
     safeSurveyAreas,
     selectedSurveyArea,
     selectedSurveyAreaId,
@@ -198,7 +197,9 @@ export function LivePositionSidebarPanel({
 
   return (
     <>
-      <div className="min-w-0 space-y-4 lg:hidden">
+      {/* Mobile only needs the survey-areas reference here; the saved-Pferche list
+          is owned by the workflow panel's "Pferche" tab (single source of truth). */}
+      <div className="min-w-0 lg:hidden">
         <div className="min-w-0 overflow-hidden app-panel p-5">
           <LivePositionSurveyAreasPanel
             safeSurveyAreas={safeSurveyAreas}
@@ -206,15 +207,6 @@ export function LivePositionSidebarPanel({
             selectedSurveyAreaId={selectedSurveyAreaId}
             onFocusSurveyArea={onFocusSurveyArea}
           />
-        </div>
-
-        <div
-          className={cn(
-            'min-w-0 overflow-hidden app-panel p-5',
-            mobilePanel === 'saved' ? 'block' : 'hidden',
-          )}
-        >
-          {renderSavedEnclosuresPanel()}
         </div>
       </div>
 

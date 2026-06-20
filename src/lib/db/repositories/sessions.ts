@@ -1,3 +1,4 @@
+import { assertUpdated } from '@/lib/db/assert-updated'
 import { db } from '@/lib/db/dexie'
 import {
   buildSessionMetrics,
@@ -7,6 +8,7 @@ import {
 } from '@/lib/maps/grazing-session-map-helpers'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
+import type { GpsTrackPosition } from '@/lib/maps/position-types'
 import type {
   GrazingSession,
   SessionEvent,
@@ -14,14 +16,7 @@ import type {
   TrackPoint,
 } from '@/types/domain'
 
-type PositionData = {
-  latitude: number
-  longitude: number
-  accuracy: number
-  speed: number | null
-  heading: number | null
-  timestamp: number
-}
+type PositionData = GpsTrackPosition
 
 // ---------------------------------------------------------------------------
 // Reads
@@ -99,9 +94,7 @@ export async function appendSessionTrackpoint(params: {
       updatedAt: nowIso(),
     })
 
-    if (updatedCount === 0) {
-      throw new Error('Weidegang wurde nicht gefunden.')
-    }
+    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
   })
 
   return {
@@ -178,9 +171,7 @@ export async function pauseGrazingSessionRecord(params: {
       updatedAt: nowIso(),
     })
 
-    if (updatedCount === 0) {
-      throw new Error('Weidegang wurde nicht gefunden.')
-    }
+    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
 
     await logSessionEvent(sessionId, 'pause', position)
   })
@@ -198,9 +189,7 @@ export async function resumeGrazingSessionRecord(params: {
       updatedAt: nowIso(),
     })
 
-    if (updatedCount === 0) {
-      throw new Error('Weidegang wurde nicht gefunden.')
-    }
+    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
 
     await logSessionEvent(sessionId, 'resume', position)
   })
@@ -228,9 +217,7 @@ export async function stopGrazingSessionRecord(params: {
       updatedAt: endTime,
     })
 
-    if (updatedCount === 0) {
-      throw new Error('Weidegang wurde nicht gefunden.')
-    }
+    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
 
     await logSessionEvent(sessionId, 'stop', position)
   })

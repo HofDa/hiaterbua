@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ErrorAlert } from '@/components/ui/alert'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import {
   FormButton,
   FormField,
@@ -12,6 +13,7 @@ import {
   FormTextarea,
 } from '@/components/ui/form'
 import { MetaLabel, metaLabelClassName } from '@/components/ui/typography'
+import { assertUpdated } from '@/lib/db/assert-updated'
 import { deleteHerdCascade } from '@/lib/db/delete-herd'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
 import {
@@ -30,6 +32,7 @@ const speciesLabels: Record<Species, string> = {
 }
 
 export default function HerdsPage() {
+  const confirm = useConfirm()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const herds = useLiveQuery(async () => {
     const herdList = await listHerdsByRecent()
@@ -99,18 +102,20 @@ export default function HerdsPage() {
         isArchived: nextState,
       })
 
-      if (updatedCount === 0) {
-        throw new Error('Herde wurde nicht gefunden.')
-      }
+      assertUpdated(updatedCount, 'Herde wurde nicht gefunden.')
     } catch {
       setActionError('Herde konnte nicht aktualisiert werden.')
     }
   }
 
   async function deleteHerd(herd: Herd) {
-    const confirmed = window.confirm(
-      `Herde "${herd.name}" wirklich löschen? Tiere, Weidegänge, Arbeitseinsätze und Belegungen dieser Herde werden ebenfalls entfernt.`
-    )
+    const confirmed = await confirm({
+      title: `Herde "${herd.name}" löschen?`,
+      description:
+        'Tiere, Weidegänge, Arbeitseinsätze und Belegungen dieser Herde werden ebenfalls entfernt.',
+      confirmLabel: 'Löschen',
+      destructive: true,
+    })
 
     if (!confirmed) return
 

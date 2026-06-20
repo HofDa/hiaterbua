@@ -47,7 +47,7 @@ export function LivePositionDrawWorkspace({
   const drawStatusText = isDrawing
     ? 'Jeder Klick auf die Karte setzt einen neuen Punkt.'
     : isWalking
-      ? 'Der GPS-Walk läuft noch. Erst beenden, dann zeichnen.'
+      ? 'Der Pferch wird noch per GPS abgelaufen. Erst beenden, dann zeichnen.'
       : 'Zeichnen starten und die Ecken direkt auf der Karte setzen.'
 
   return (

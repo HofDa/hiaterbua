@@ -1,3 +1,4 @@
+import { assertUpdated } from '@/lib/db/assert-updated'
 import { db } from '@/lib/db/dexie'
 import {
   getWorkSessionStatusEventType,
@@ -98,9 +99,7 @@ export async function updateWorkSessionStatusRecord(
 
   await db.transaction('rw', db.workSessions, db.workEvents, async () => {
     const updatedCount = await db.workSessions.update(activeSession.id, patch)
-    if (updatedCount === 0) {
-      throw new Error('Arbeitseinsatz wurde nicht gefunden.')
-    }
+    assertUpdated(updatedCount, 'Arbeitseinsatz wurde nicht gefunden.')
 
     await addWorkEvent(activeSession.id, eventType)
   })
@@ -113,9 +112,7 @@ export async function saveEditedWorkSessionRecord(
 ): Promise<void> {
   await db.transaction('rw', db.workSessions, db.workEvents, async () => {
     const updatedCount = await db.workSessions.update(sessionId, patch)
-    if (updatedCount === 0) {
-      throw new Error('Arbeitseinsatz konnte nicht aktualisiert werden.')
-    }
+    assertUpdated(updatedCount, 'Arbeitseinsatz konnte nicht aktualisiert werden.')
 
     await addWorkEvent(sessionId, 'note', 'Arbeitseinsatz bearbeitet')
   })

@@ -7,6 +7,7 @@ import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
+import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
 import { ConnectivityBanner } from '@/components/ui/connectivity-banner'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { Toaster } from '@/components/ui/toaster'
@@ -33,6 +34,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#123a2d',
+  // Extend under the device safe areas (notch / home indicator) so the chrome
+  // can fill them — required for env(safe-area-inset-*) to be non-zero.
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -46,14 +50,16 @@ export default function RootLayout({
         <div className="min-h-screen text-ink-strong">
           <ServiceWorkerSync />
           <AppRoutePrefetch />
-          <TopBar />
-          <StatusStrip />
-          <ErrorBoundary>
-            <PageContainer>{children}</PageContainer>
-          </ErrorBoundary>
-          <BottomNav />
-          <ConnectivityBanner />
-          <Toaster />
+          <ConfirmDialogProvider>
+            <TopBar />
+            <StatusStrip />
+            <ErrorBoundary>
+              <PageContainer>{children}</PageContainer>
+            </ErrorBoundary>
+            <BottomNav />
+            <ConnectivityBanner />
+            <Toaster />
+          </ConfirmDialogProvider>
         </div>
       </body>
     </html>

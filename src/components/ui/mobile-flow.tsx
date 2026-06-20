@@ -32,7 +32,7 @@ export function FlowStepHeader({
         type="button"
         onClick={onBack}
         className={cn(
-          'shrink-0 rounded-full border border-border-strong bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink',
+          'shrink-0 rounded-full border border-border-strong bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
           buttonClassName,
         )}
       >
@@ -41,7 +41,7 @@ export function FlowStepHeader({
       <div className="min-w-0 text-right">
         <div
           className={cn(
-            'text-sm font-semibold leading-tight [overflow-wrap:anywhere]',
+            'text-sm font-semibold leading-tight hyphens-auto break-words',
             labelClassName,
           )}
         >
@@ -85,7 +85,7 @@ type FlowSelectableTileProps = ComponentProps<'button'> & {
 
 function renderSelectableTileContent(children: ReactNode) {
   if (typeof children === 'string' || typeof children === 'number') {
-    return <span className="block [overflow-wrap:anywhere]">{children}</span>
+    return <span className="block hyphens-auto break-words">{children}</span>
   }
 
   return children
@@ -106,7 +106,7 @@ export function FlowSelectableTile({
       type={type}
       aria-pressed={pressed}
       className={cn(
-        'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors disabled:opacity-50',
+        'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50',
         pressed ? selectedClassName : idleClassName,
         className,
       )}
@@ -141,7 +141,7 @@ export function FlowSummaryCallout({
 }: FlowSummaryCalloutProps) {
   return (
     <div className={cn('app-callout px-3.5 py-3 text-right', className)} {...props}>
-      <div className="text-sm font-semibold leading-tight [overflow-wrap:anywhere]">
+      <div className="text-sm font-semibold leading-tight hyphens-auto break-words">
         {label}
       </div>
       <div className="mt-0.5 text-xs font-medium leading-tight text-ink-muted">
@@ -191,7 +191,7 @@ export function FlowStepperButton({
     <button
       type={type}
       className={cn(
-        'min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action disabled:opacity-40',
+        'min-h-[4.75rem] rounded-[1.3rem] border-2 border-border-strong bg-surface-muted px-4 py-4 text-3xl font-semibold text-ink app-shadow-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-40',
         className,
       )}
       {...props}
@@ -208,7 +208,7 @@ export function FlowPrimaryAction({
     <button
       type={type}
       className={cn(
-        'w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong disabled:opacity-50',
+        'w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50',
         className,
       )}
       {...props}
@@ -225,7 +225,7 @@ export function FlowSecondaryAction({
     <button
       type={type}
       className={cn(
-        'w-full rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink-strong',
+        'w-full rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         className,
       )}
       {...props}

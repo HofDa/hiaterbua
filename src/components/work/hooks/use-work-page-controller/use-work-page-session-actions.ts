@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import {
   createWorkSessionRecord,
   deleteWorkSessionRecord,
@@ -50,6 +51,8 @@ export function useWorkPageSessionActions({
   setError,
   setIsSaving,
 }: UseWorkPageSessionActionsOptions) {
+  const confirm = useConfirm()
+
   async function startWorkSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -128,7 +131,12 @@ export function useWorkPageSessionActions({
   }
 
   async function deleteWorkSession(session: WorkSession) {
-    const confirmed = window.confirm(`Arbeitseinsatz "${getWorkLabel(session)}" wirklich löschen?`)
+    const confirmed = await confirm({
+      title: 'Arbeitseinsatz löschen?',
+      description: `"${getWorkLabel(session)}" wirklich löschen?`,
+      confirmLabel: 'Löschen',
+      destructive: true,
+    })
 
     if (!confirmed) return
 

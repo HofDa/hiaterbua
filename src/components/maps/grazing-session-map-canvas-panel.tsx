@@ -22,10 +22,13 @@ import { cn } from '@/lib/utils/cn'
 
 export type GrazingSessionMapCanvasPanelProps = {
   containerRef: Ref<HTMLDivElement>
+  /** When true, drop the panel chrome so an outer wrapper can own it (cohesive Karte card). */
+  embedded?: boolean
 }
 
 export function GrazingSessionMapCanvasPanel({
   containerRef,
+  embedded = false,
 }: GrazingSessionMapCanvasPanelProps) {
   const {
     editingSessionId,
@@ -152,7 +155,12 @@ export function GrazingSessionMapCanvasPanel({
   )
 
   return (
-    <div className="relative overflow-hidden app-panel lg:sticky lg:top-4">
+    <div
+      className={cn(
+        'relative overflow-hidden',
+        !embedded && 'app-panel lg:sticky lg:top-4',
+      )}
+    >
       <div
         ref={containerRef}
         className="h-[420px] w-full bg-surface-raised sm:h-[520px] lg:h-[calc(100vh-8rem)]"

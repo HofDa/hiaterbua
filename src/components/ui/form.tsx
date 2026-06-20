@@ -6,8 +6,11 @@ import { Loader2 } from 'lucide-react'
 // Form-aware primitive wrappers
 // ---------------------------------------------------------------------------
 
+// `text-base` (16px) on every breakpoint is intentional: iOS Safari auto-zooms
+// when a focused input's font-size is below 16px, which causes a jarring jump on
+// mobile. Keeping inputs at 16px avoids it.
 const formInputBase =
-  'w-full rounded-[1rem] border-2 border-border bg-surface-raised px-3.5 py-2.5 text-sm shadow-sm sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-base'
+  'w-full rounded-[1rem] border-2 border-border bg-surface-raised px-3.5 py-2.5 text-base shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 sm:rounded-[1.1rem] sm:px-4 sm:py-3'
 
 type FormInputProps = ComponentProps<'input'> & {
   error?: boolean
@@ -88,7 +91,7 @@ export function FormButton({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center rounded-[1.1rem] border px-4 py-3 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-50',
+        'inline-flex items-center justify-center rounded-[1.1rem] border px-4 py-3 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50',
         formButtonVariants[variant],
         className,
       )}
@@ -123,7 +126,7 @@ export function ToggleButton({ className, pressed, children, ...props }: ToggleB
       )}
       {...props}
     >
-      <span className="block [overflow-wrap:anywhere]">{children}</span>
+      <span className="block hyphens-auto break-words">{children}</span>
     </button>
   )
 }

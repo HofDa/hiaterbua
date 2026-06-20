@@ -1,6 +1,7 @@
 'use client'
 
 import { LiveStatusCard, type StatusItem } from '@/components/maps/live-status-card'
+import { requestGpsRetry } from '@/components/maps/hooks/use-geolocation-watcher'
 import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 
 export function GrazingSessionLiveStatusCard() {
@@ -33,6 +34,7 @@ export function GrazingSessionLiveStatusCard() {
       gpsLabel={gpsLabel}
       items={items}
       onToggle={toggle}
+      onRequestGps={requestGpsRetry}
     />
   )
 }

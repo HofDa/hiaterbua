@@ -9,6 +9,7 @@ import {
   GrazingSessionHistoryStatsGrid,
 } from '@/components/maps/grazing-session-history-panel-sections'
 import { GrazingSessionSurveyAreasPanel } from '@/components/maps/grazing-session-survey-areas-panel'
+import { CollapseChevron } from '@/components/ui/collapse-chevron'
 import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 
 export function GrazingSessionHistoryPanel() {
@@ -128,9 +129,7 @@ export function GrazingSessionHistoryPanel() {
                 {safeRecentSessions.length} gespeicherte Weidegänge
               </div>
             </div>
-            <span className="text-lg font-semibold text-ink">
-              {isHistoryExpanded ? '−' : '+'}
-            </span>
+            <CollapseChevron open={isHistoryExpanded} />
           </button>
 
           {isHistoryExpanded ? (
