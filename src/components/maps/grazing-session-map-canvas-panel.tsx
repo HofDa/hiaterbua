@@ -168,7 +168,7 @@ export function GrazingSessionMapCanvasPanel({
       {hasMobileToolbar ? (
         <button
           type="button"
-          aria-label={isMobileControlsOpen ? 'Steuerung ausblenden' : 'Steuerung einblenden'}
+          aria-label={isMobileControlsOpen ? 'Weidegang ausblenden' : 'Weidegang einblenden'}
           aria-expanded={isMobileControlsOpen}
           onClick={() => setIsMobileControlsOpen((current) => !current)}
           className={cn(

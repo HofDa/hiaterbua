@@ -4,6 +4,8 @@ import {
   Briefcase,
   ChevronRight,
   Download,
+  DownloadCloud,
+  Loader2,
   Map,
   MapPin,
   Settings,
@@ -15,12 +17,15 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
 import { BackupReminder } from '@/components/dashboard/backup-reminder'
+import { useSecureAreaPrefetch } from '@/components/dashboard/use-secure-area-prefetch'
 import { metaLabelClassName } from '@/components/ui/typography'
 import { db } from '@/lib/db/dexie'
 import { listActiveEnclosures } from '@/lib/db/repositories/enclosures'
 import { listAllHerds } from '@/lib/db/repositories/herds'
 import { listAllSessions } from '@/lib/db/repositories/sessions'
 import { listAllWorkSessions } from '@/lib/db/repositories/work-sessions'
+import { defaultAppSettings } from '@/lib/settings/defaults'
+import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { cn } from '@/lib/utils/cn'
 
 function DashboardStat({ label, value }: { label: string; value: number | string }) {
@@ -105,6 +110,12 @@ export default function HomePage() {
     }
   }, [])
 
+  const settings = useLiveQuery(() => db.settings.get('app'), [])
+  const secureArea = useSecureAreaPrefetch({
+    baseLayer: settings?.mapBaseLayer ?? defaultAppSettings.mapBaseLayer,
+    tileCachingEnabled: settings?.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
+  })
+
   return (
     <div className="space-y-5">
       <BackupReminder />
@@ -165,21 +176,66 @@ export default function HomePage() {
       </section>
 
       <Card>
-        <CardContent className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <CardTitle className={metaLabelClassName({ tracking: 'wider', tone: 'soft' })}>
-              Einsatzbereit
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Vor Ort nur kurz prüfen: App installiert, Kartenbereich offline gesichert, GPS empfangbar.
-            </CardDescription>
+        <CardContent className="flex flex-col gap-3 py-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <CardTitle className={metaLabelClassName({ tracking: 'wider', tone: 'soft' })}>
+                Einsatzbereit
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Vor dem Aufstieg den Kartenbereich sichern, solange noch Netz da ist.
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light')
+                  secureArea.secureCurrentArea()
+                }}
+                disabled={secureArea.isBusy}
+                className={cn(
+                  buttonVariants({ variant: 'default' }),
+                  'min-h-11 gap-2 rounded-full disabled:opacity-60',
+                )}
+              >
+                {secureArea.isBusy ? (
+                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                ) : (
+                  <DownloadCloud aria-hidden="true" className="h-4 w-4" />
+                )}
+                {secureArea.status === 'locating'
+                  ? 'Standort …'
+                  : secureArea.status === 'prefetching'
+                    ? 'Sichert …'
+                    : 'Kartenbereich sichern'}
+              </button>
+              <Link
+                href="/settings"
+                className={cn(buttonVariants({ variant: 'secondary' }), 'min-h-11 rounded-full')}
+              >
+                Offline & GPS prüfen
+              </Link>
+            </div>
           </div>
-          <Link
-            href="/settings"
-            className={cn(buttonVariants({ variant: 'secondary' }), 'rounded-full')}
-          >
-            Offline & GPS prüfen
-          </Link>
+
+          {(secureArea.message || secureArea.progress) && (
+            <p
+              aria-live="polite"
+              className={cn(
+                'text-sm font-medium',
+                secureArea.status === 'error'
+                  ? 'text-error-ink'
+                  : secureArea.status === 'done'
+                    ? 'text-success-ink'
+                    : 'text-ink-muted',
+              )}
+            >
+              {secureArea.progress
+                ? `Sichert ${secureArea.progress.completed} / ${secureArea.progress.total} Tiles …`
+                : secureArea.message}
+            </p>
+          )}
         </CardContent>
       </Card>
 

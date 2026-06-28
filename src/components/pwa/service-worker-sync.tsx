@@ -88,7 +88,7 @@ function ServiceWorkerUpdatePrompt({
   }
 
   return (
-    <div className="pointer-events-none fixed inset-x-3 bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom)+0.75rem)] z-50 mx-auto max-w-xl md:bottom-4">
+    <div className="pointer-events-none fixed inset-x-3 bottom-[calc(var(--app-bottom-nav-height)+var(--app-recording-bar-height)+env(safe-area-inset-bottom)+0.75rem)] z-50 mx-auto max-w-xl md:bottom-[calc(var(--app-recording-bar-height)+1rem)]">
       <section
         aria-labelledby="pwa-update-title"
         className="pointer-events-auto rounded-[1.1rem] border-2 border-border-ink bg-surface p-4 text-ink-strong shadow-[0_18px_42px_rgba(40,34,26,0.18)]"

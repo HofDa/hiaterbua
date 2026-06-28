@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react'
+import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import {
   createWorkSessionRecord,
@@ -89,6 +90,7 @@ export function useWorkPageSessionActions({
       resetStartedSessionForm()
       setActiveReminderMessage('')
       setStatusMessage('Arbeitseinsatz gestartet.')
+      triggerHaptic('success')
     } catch (currentError) {
       setError(
         currentError instanceof Error
@@ -111,6 +113,7 @@ export function useWorkPageSessionActions({
       await updateWorkSessionStatusRecord(activeSession, nextStatus)
 
       setStatusMessage(getStatusUpdateMessage(nextStatus))
+      triggerHaptic(nextStatus === 'finished' ? 'success' : 'medium')
 
       if (nextStatus !== 'active') {
         setActiveReminderMessage('')

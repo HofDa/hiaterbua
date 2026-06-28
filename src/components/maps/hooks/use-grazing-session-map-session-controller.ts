@@ -16,6 +16,7 @@ import { useGrazingSessionMapSessionRuntime } from '@/components/maps/hooks/use-
 import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/use-grazing-session-map-trackpoint-recorder'
 import { getSessionEventLabel } from '@/lib/maps/grazing-session-map-helpers'
 import { getFreshPosition } from '@/lib/maps/map-core'
+import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { getStorageEstimate } from '@/lib/utils/storage-health'
 import type { GrazingSessionMapState } from '@/components/maps/hooks/use-grazing-session-map-state'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
@@ -148,6 +149,10 @@ export function useGrazingSessionMapSessionController({
         setSessionAnimalCount(animalCount)
         setSelectedSessionId(null)
 
+        // Glance-free confirmation that recording started — the user often has
+        // the phone pocketed and gloves on at this moment.
+        triggerHaptic('success')
+
         if (currentPosition) {
           await appendSessionPoint(currentPosition)
         }
@@ -180,6 +185,7 @@ export function useGrazingSessionMapSessionController({
 
         runtimeRefs.currentSessionStatusRef.current = 'paused'
         setCurrentSessionStatus('paused')
+        triggerHaptic('medium')
       },
     })
   }
@@ -203,6 +209,7 @@ export function useGrazingSessionMapSessionController({
 
         runtimeRefs.currentSessionStatusRef.current = 'active'
         setCurrentSessionStatus('active')
+        triggerHaptic('medium')
 
         if (currentPosition) {
           await appendSessionPoint(currentPosition)
@@ -243,6 +250,7 @@ export function useGrazingSessionMapSessionController({
           setEventStatus,
           setSessionNotes,
         })
+        triggerHaptic('success')
       },
     })
   }

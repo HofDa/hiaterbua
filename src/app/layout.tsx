@@ -5,6 +5,7 @@ import { BottomNav } from '@/components/layout/bottom-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
+import { RecordingStatusBar } from '@/components/layout/recording-status-bar'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
@@ -14,13 +15,13 @@ import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Pastore 1.0',
+  title: 'Pastore 1.01',
   description: 'Offlinefähige Feld- und Alm-Dokumentation für Herden, Pferche und Weidegänge',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Pastore 1.0',
+    title: 'Pastore 1.01',
   },
   icons: {
     icon: [
@@ -57,6 +58,7 @@ export default function RootLayout({
               <PageContainer>{children}</PageContainer>
             </ErrorBoundary>
             <BottomNav />
+            <RecordingStatusBar />
             <ConnectivityBanner />
             <Toaster />
           </ConfirmDialogProvider>

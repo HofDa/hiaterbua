@@ -85,7 +85,7 @@ const initialSidebarSlice: LivePositionSidebarSlice = {
   selectedSurveyArea: null,
   selectedSurveyAreaId: null,
   filteredEnclosures: [],
-  enclosureListFilter: 'all',
+  enclosureListFilter: 'active',
   selectedEnclosure: null,
   selectedEnclosureId: null,
   expandedSavedEnclosureId: null,

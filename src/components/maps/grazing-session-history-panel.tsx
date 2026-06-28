@@ -124,7 +124,7 @@ export function GrazingSessionHistoryPanel() {
             className="flex w-full items-center justify-between gap-3 app-surface-row px-4 py-3 text-left"
           >
             <div>
-              <h2 className="text-lg font-semibold text-ink-strong">Weidegang-Historie</h2>
+              <h2 className="text-lg font-semibold text-ink-strong">Verlauf</h2>
               <div className="mt-1 text-sm font-medium text-ink-muted">
                 {safeRecentSessions.length} gespeicherte Weidegänge
               </div>
@@ -144,7 +144,7 @@ export function GrazingSessionHistoryPanel() {
 
       <section className="hidden h-[calc(100vh-8rem)] flex-col overflow-hidden app-panel p-5 lg:flex">
         <div className="min-w-0 border-b border-border pb-4">
-          <h2 className="text-lg font-semibold text-ink-strong">Weidegang-Historie</h2>
+          <h2 className="text-lg font-semibold text-ink-strong">Verlauf</h2>
           <p className="mt-1 text-sm text-ink-muted">{summary}</p>
         </div>
 

@@ -148,6 +148,29 @@ export function buildPrefetchUrlsForRadius(
   )
 }
 
+// Defaults for the one-tap "secure the area I'm standing in" home action: a
+// ~2 km radius at walking detail. Deliberately lighter than the settings
+// high-detail preset (no zoom 17) so a single layer stays well under
+// MAX_PREFETCH_TILES and the action finishes quickly in the field.
+export const SECURE_AREA_RADIUS_KM = 2
+export const SECURE_AREA_MIN_ZOOM = 13
+export const SECURE_AREA_MAX_ZOOM = 16
+
+export function buildSecureAreaPrefetchUrls(
+  layers: MapBaseLayer[],
+  lat: number,
+  lon: number
+) {
+  return buildPrefetchUrlsForRadius(
+    layers,
+    lat,
+    lon,
+    SECURE_AREA_RADIUS_KM,
+    SECURE_AREA_MIN_ZOOM,
+    SECURE_AREA_MAX_ZOOM
+  )
+}
+
 export async function getTileCacheCount() {
   if (typeof window === 'undefined') {
     return null

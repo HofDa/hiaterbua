@@ -65,7 +65,7 @@ export async function buildAppExportArchive() {
   zip.file(
     'README.txt',
     [
-      'Pastore 1.0 Export',
+      'Pastore 1.01 Export',
       '',
       'spatial/enclosures.geojson: Pferche als Polygone',
       'spatial/survey_areas.geojson: Untersuchungsflächen als Polygone',
@@ -112,6 +112,6 @@ export async function buildAppExportArchive() {
 
   return {
     blob: await zip.generateAsync({ type: 'blob' }),
-    filename: `pastore-1.0-export-${new Date().toISOString().slice(0, 10)}.zip`,
+    filename: `pastore-1.01-export-${new Date().toISOString().slice(0, 10)}.zip`,
   }
 }

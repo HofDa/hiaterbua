@@ -85,7 +85,7 @@ export async function buildSingleHerdExportArchive(herdId: string) {
         JSON.stringify(
           {
             exportedAt: new Date().toISOString(),
-            app: 'Pastore 1.0',
+            app: 'Pastore 1.01',
             settings: [settings ?? defaultAppSettings],
             herd: bundle,
           },

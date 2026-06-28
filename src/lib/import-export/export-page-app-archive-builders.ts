@@ -204,7 +204,7 @@ export function buildAppExportArtifacts({
 
   const appData = {
     exportedAt: new Date().toISOString(),
-    app: 'Pastore 1.0',
+    app: 'Pastore 1.01',
     herds,
     animals,
     enclosures,
@@ -235,7 +235,7 @@ export function buildAppExportArtifacts({
   }
 
   const grazingGpx = buildGpxTrack(
-    'Pastore 1.0 Weidegänge',
+    'Pastore 1.01 Weidegänge',
     sessions.map((session) => ({
       name: `Weidegang ${session.id}`,
       points: (trackpointsBySessionId.get(session.id) ?? [])
@@ -250,7 +250,7 @@ export function buildAppExportArtifacts({
   )
 
   const enclosureWalkGpx = buildGpxTrack(
-    'Pastore 1.0 Pferch-Walks',
+    'Pastore 1.01 Pferch-Walks',
     enclosures
       .filter((enclosure) => enclosure.method === 'walk')
       .map((enclosure) => ({

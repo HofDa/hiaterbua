@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils/cn'
 type GrazingMobileSection = 'manage' | 'history'
 
 export function GrazingSessionMap() {
-  // In the field the shepherd mostly starts/tracks the session (the "Steuerung"
+  // In the field the shepherd mostly starts/tracks the session (the "Weidegang"
   // tab) and reviews it on the map later — so keep the map collapsed by default
   // and let the controls lead. It stays one tap away via the "Karte" header.
   const [isMapExpanded, setIsMapExpanded] = useState(false)
@@ -106,13 +106,13 @@ export function GrazingSessionMap() {
                 onClick={() => setMobileSection('manage')}
                 active={mobileSection === 'manage'}
               >
-                Steuerung
+                Weidegang
               </MobileMapSegmentButton>
               <MobileMapSegmentButton
                 onClick={() => setMobileSection('history')}
                 active={mobileSection === 'history'}
               >
-                Historie
+                Verlauf
               </MobileMapSegmentButton>
             </MobileMapSegmentedControl>
 

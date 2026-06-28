@@ -10,6 +10,8 @@ import type { AppSettings, MapBaseLayer } from '@/types/domain'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormField, FormLabel, FormSelect, FormInput, FormButton } from '@/components/ui/form'
 import { StatusAlert } from '@/components/ui/alert'
+import { gpsPresets, getGpsTuning, matchGpsPreset } from '@/lib/settings/gps-presets'
+import { cn } from '@/lib/utils/cn'
 
 type SettingsGeneralFormCardProps = {
   draft: AppSettings
@@ -30,6 +32,9 @@ export function SettingsGeneralFormCard({
   onResetSettings,
   tileCachePanel,
 }: SettingsGeneralFormCardProps) {
+  const activePreset = matchGpsPreset(draft)
+  const activePresetDescription = gpsPresets.find((preset) => preset.id === activePreset)?.description
+
   return (
     <Card>
       <CardHeader>
@@ -54,6 +59,37 @@ export function SettingsGeneralFormCard({
                 </option>
               ))}
             </FormSelect>
+          </FormField>
+
+          <FormField>
+            <FormLabel>GPS-Profil</FormLabel>
+            <div className="flex flex-wrap gap-2">
+              {gpsPresets.map((preset) => {
+                const active = activePreset === preset.id
+
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() =>
+                      setDraft((current) => ({ ...current, ...getGpsTuning(preset) }))
+                    }
+                    className={cn(
+                      'min-h-11 rounded-full border-2 px-4 py-2 text-sm font-semibold transition-colors',
+                      active
+                        ? 'border-border-ink bg-primary text-primary-foreground'
+                        : 'border-border bg-surface-raised text-ink hover:bg-surface-hover',
+                    )}
+                  >
+                    {preset.label}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="mt-1 text-xs font-medium text-ink-muted">
+              {activePresetDescription ?? 'Eigene Werte – unten anpassbar.'}
+            </p>
           </FormField>
 
           <div className="grid gap-4 sm:grid-cols-3">

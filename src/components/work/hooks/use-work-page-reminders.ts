@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { markWorkSessionReminded } from '@/lib/db/repositories/work-sessions'
 import {
   getNextReminderMs,
@@ -51,13 +52,11 @@ export function useWorkPageReminders({
       setStatusMessage('Erinnerung ausgelöst.')
     })
 
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate([180, 120, 180])
-    }
+    triggerHaptic('reminder')
 
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (window.Notification.permission === 'granted') {
-        void new window.Notification('Pastore 1.0 Erinnerung', {
+        void new window.Notification('Pastore 1.01 Erinnerung', {
           body: message,
         })
       }

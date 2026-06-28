@@ -103,7 +103,7 @@ const initialSelectionState: LivePositionSelectionState = {
   expandedSavedEnclosureId: null,
   mobilePanel: 'saved',
   selectedSurveyAreaId: null,
-  enclosureListFilter: 'all',
+  enclosureListFilter: 'active',
 }
 
 const initialEditState: LivePositionEditState = {

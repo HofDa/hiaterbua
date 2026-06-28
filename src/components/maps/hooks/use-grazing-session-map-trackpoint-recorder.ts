@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { appendSessionTrackpoint } from '@/lib/db/repositories/sessions'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
+import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { isQuotaExceededError } from '@/lib/utils/storage-health'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type { GrazingSessionRuntimeRefs } from '@/components/maps/hooks/grazing-session-map-session-controller-helpers'
@@ -42,6 +43,9 @@ export function useGrazingSessionMapTrackpointRecorder({
     // persistent failure isn't re-announced on every GPS fix.
     if (message === lastReportedErrorRef.current) return
     lastReportedErrorRef.current = message
+    // A newly-failing write deserves a distinct buzz: recording may be silently
+    // dropping points and the user is likely not watching the screen.
+    if (message) triggerHaptic('error')
     onRecordingErrorChange?.(message)
   }
 

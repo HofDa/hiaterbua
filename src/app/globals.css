@@ -82,6 +82,9 @@
   --shadow-map-control: 0 10px 15px -3px rgba(23, 20, 18, 0.18),
     0 4px 6px -4px rgba(23, 20, 18, 0.14);
   --app-bottom-nav-height: 0rem;
+  /* Height of the fixed "recording in progress" bar; set to a real value by
+     RecordingStatusBar only while a session is active, 0 otherwise. */
+  --app-recording-bar-height: 0rem;
   --radius: 0.75rem;
   --radius-panel: 1.9rem;
   --radius-panel-sm: 1.75rem;

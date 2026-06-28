@@ -53,7 +53,7 @@ export async function buildWorkSessionsExportArchive() {
         JSON.stringify(
           {
             exportedAt: exportTimestamp,
-            app: 'Pastore 1.0',
+            app: 'Pastore 1.01',
             exportType: 'work-sessions',
             summary: {
               workSessions: workSessions.length,

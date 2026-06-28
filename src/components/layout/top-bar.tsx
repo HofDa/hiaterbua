@@ -20,7 +20,7 @@ export function TopBar() {
     <header className="sticky top-0 z-40 border-b border-chrome-border bg-chrome-shell pt-[env(safe-area-inset-top)] text-white app-chrome-top">
       <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-3 py-2.5 md:min-h-18 md:gap-4 md:px-4 md:py-3 xl:max-w-[88rem]">
         <div className="min-w-0 shrink">
-          <p className="truncate text-base font-semibold text-white md:text-lg">Pastore 1.0</p>
+          <p className="truncate text-base font-semibold text-white md:text-lg">Pastore 1.01</p>
           <p
             className={metaLabelClassName(
               { tracking: 'wider', tone: 'inherit', weight: 'normal' },

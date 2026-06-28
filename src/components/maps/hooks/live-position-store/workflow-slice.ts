@@ -114,7 +114,7 @@ const initialWorkflowSlice: LivePositionWorkflowSlice = {
   selectedWalkPointIndex: null,
   selectedWalkPoint: null,
   filteredEnclosures: [],
-  enclosureListFilter: 'all',
+  enclosureListFilter: 'active',
   selectedEnclosure: null,
   selectedEnclosureId: null,
   assignmentEditorEnclosureId: null,

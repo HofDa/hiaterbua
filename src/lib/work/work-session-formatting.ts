@@ -61,7 +61,10 @@ export function formatDuration(totalSeconds: number) {
     .join(':')
 }
 
-export function getLiveDurationS(session: WorkSession, nowMs: number) {
+export function getLiveDurationS(
+  session: Pick<WorkSession, 'durationS' | 'activeSince'>,
+  nowMs: number,
+) {
   if (!session.activeSince) return session.durationS
 
   const activeSinceMs = new Date(session.activeSince).getTime()

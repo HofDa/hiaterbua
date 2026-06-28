@@ -7,7 +7,8 @@ export function Toaster() {
     <HotToaster
       position="bottom-center"
       containerStyle={{
-        bottom: 'calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom) + 1rem)',
+        bottom:
+          'calc(var(--app-bottom-nav-height) + var(--app-recording-bar-height) + env(safe-area-inset-bottom) + 1rem)',
       }}
       toastOptions={{ duration: 3000 }}
     />
