@@ -20,7 +20,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       await appShell.precacheAppShell()
-      await self.skipWaiting()
     })()
   )
 })
@@ -45,6 +44,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('message', (event) => {
   const data = event.data
   if (!data || typeof data !== 'object') return
+
+  if (data.type === 'SKIP_WAITING') {
+    event.waitUntil(self.skipWaiting())
+    return
+  }
 
   tileCache.handleMessage(data, event)
 })

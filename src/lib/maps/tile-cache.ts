@@ -7,6 +7,12 @@ export const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
 export const TILE_DB_NAME = 'hirtenapp-tile-db'
 export const MAX_PREFETCH_TILES = 1200
 export const PREFETCH_CONCURRENCY = 8
+// Hard ceiling on how many tiles persist in IndexedDB. A single prefetch is
+// capped at MAX_PREFETCH_TILES, but repeated prefetches across different field
+// areas would otherwise grow the cache without bound — and persistent storage
+// makes the browser unlikely to evict it for us. ~5000 256px tiles is roughly
+// 150-250 MB depending on the layer; oldest tiles are trimmed past this.
+export const MAX_CACHED_TILES = 5000
 export const TILE_CACHE_CHANGED_EVENT = 'hirtenapp:tile-cache-changed'
 
 export type PrefetchTileResult = {
@@ -175,6 +181,49 @@ export async function clearTileCacheStorage() {
   }
 }
 
+/**
+ * Evicts the oldest tiles (by `updatedAt`) once the cache exceeds `limit`,
+ * keeping IndexedDB and the Cache API in sync. Best-effort: failures are logged
+ * and swallowed so a trim never breaks the prefetch that triggered it. Returns
+ * the number of tiles removed.
+ */
+export async function trimTileCacheToLimit(limit = MAX_CACHED_TILES): Promise<number> {
+  if (typeof window === 'undefined') {
+    return 0
+  }
+
+  try {
+    const total = await tileDb.mapTiles.count()
+    const overflow = total - limit
+    if (overflow <= 0) {
+      return 0
+    }
+
+    const staleTiles = await tileDb.mapTiles.orderBy('updatedAt').limit(overflow).toArray()
+    if (staleTiles.length === 0) {
+      return 0
+    }
+
+    const staleUrls = staleTiles.map((tile) => tile.url)
+    await tileDb.mapTiles.bulkDelete(staleUrls)
+
+    if ('caches' in window) {
+      const cache = await window.caches.open(TILE_CACHE_NAME).catch((error) => {
+        logError('trimTileCacheToLimit.openCache', error)
+        return null
+      })
+      if (cache) {
+        await Promise.all(staleUrls.map((url) => cache.delete(url)))
+      }
+    }
+
+    return staleUrls.length
+  } catch (error) {
+    logError('trimTileCacheToLimit', error)
+    return 0
+  }
+}
+
 export async function getPersistentStorageStatus() {
   if (typeof navigator === 'undefined' || !navigator.storage?.persisted) {
     return null
@@ -294,6 +343,9 @@ export async function prefetchTileUrls(
       )
     }
   } finally {
+    // Enforce the cache ceiling before announcing the change so listeners read
+    // the trimmed count.
+    await trimTileCacheToLimit()
     dispatchTileCacheChanged()
   }
 

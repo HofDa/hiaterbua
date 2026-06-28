@@ -23,6 +23,11 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
 
   useEffect(() => {
     let cancelled = false
+    // The post-load resize sequence schedules a frame and two timers; track them
+    // so teardown can cancel any that are still pending. Otherwise unmounting
+    // within ~800ms of `load` fires `resize()` on an already-removed map.
+    let loadResizeFrame = 0
+    const loadResizeTimers: ReturnType<typeof setTimeout>[] = []
 
     async function setupMap() {
       if (!containerElement || mapRef.current) return
@@ -37,10 +42,10 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
         registerLayers(map)
         setMapReady(true)
 
-        requestAnimationFrame(() => {
+        loadResizeFrame = requestAnimationFrame(() => {
           map.resize()
-          window.setTimeout(() => map.resize(), 250)
-          window.setTimeout(() => map.resize(), 800)
+          loadResizeTimers.push(setTimeout(() => map.resize(), 250))
+          loadResizeTimers.push(setTimeout(() => map.resize(), 800))
         })
       })
 
@@ -52,6 +57,8 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
 
     return () => {
       cancelled = true
+      cancelAnimationFrame(loadResizeFrame)
+      loadResizeTimers.forEach((timer) => clearTimeout(timer))
       markerRef.current?.remove()
       markerRef.current = null
       mapRef.current?.remove()

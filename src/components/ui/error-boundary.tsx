@@ -1,6 +1,7 @@
 'use client'
 
 import { Component, ErrorInfo, ReactNode } from 'react'
+import { logError } from '@/lib/utils/log'
 import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { ErrorAlert } from './alert'
 
@@ -28,12 +29,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo })
-    
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo)
-    }
-    
+
+    // Route through the central observability seam so render-time crashes leave
+    // a trace in production, not just in dev. The component stack stays visible
+    // in the dev-only details panel below.
+    logError('ErrorBoundary', error)
+
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo)
   }

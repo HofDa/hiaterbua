@@ -9,4 +9,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  test: {
+    // The Dexie repositories run against an in-memory IndexedDB (fake-indexeddb)
+    // installed by the setup file. Pure-logic tests ignore it harmlessly.
+    setupFiles: ['./vitest.setup.ts'],
+  },
 })
