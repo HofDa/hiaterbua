@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
+import { APP_TITLE } from '@/lib/app-metadata'
 import { markWorkSessionReminded } from '@/lib/db/repositories/work-sessions'
 import {
   getNextReminderMs,
@@ -56,7 +57,7 @@ export function useWorkPageReminders({
 
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (window.Notification.permission === 'granted') {
-        void new window.Notification('Pastore 1.01 Erinnerung', {
+        void new window.Notification(`${APP_TITLE} Erinnerung`, {
           body: message,
         })
       }

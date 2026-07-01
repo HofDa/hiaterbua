@@ -2,9 +2,15 @@
   const swScope = self.__PASTORE_SW__ || (self.__PASTORE_SW__ = {})
   const shared = swScope.shared
 
+  // Runtime caching during normal map browsing would otherwise grow the tile
+  // store without bound. Trim at most once a minute so the scan never piles onto
+  // every tile write.
+  const EVICTION_THROTTLE_MS = 60_000
+
   function createTileCacheController() {
     let tileCachingEnabled = false
     let tileCacheUpdateTimeout = null
+    let lastEvictionMs = 0
 
     function handleMessage(data, event) {
       if (data.type !== 'SET_TILE_CACHING') {
@@ -109,7 +115,110 @@
 
       if (didPersist) {
         scheduleTileCacheUpdatedMessage()
+        maybeEvictOldTiles()
       }
+    }
+
+    function maybeEvictOldTiles() {
+      const now = Date.now()
+      if (now - lastEvictionMs < EVICTION_THROTTLE_MS) return
+      lastEvictionMs = now
+
+      // Fire-and-forget: eviction must never block or break tile serving.
+      void evictOldTilesBestEffort(shared.MAX_CACHED_TILES)
+    }
+
+    async function evictOldTilesBestEffort(cap) {
+      let deletedStoredUrls = []
+      let retainedStoredUrls = new Set()
+
+      try {
+        const storedTrim = await deleteOldestStoredTiles(cap)
+        deletedStoredUrls = storedTrim.deletedUrls
+        retainedStoredUrls = storedTrim.retainedUrls
+      } catch {
+        // If IndexedDB is unavailable, still trim the Cache API below.
+      }
+
+      try {
+        const cache = await openTileCacheBestEffort()
+        if (!cache) {
+          if (deletedStoredUrls.length > 0) {
+            scheduleTileCacheUpdatedMessage()
+          }
+          return
+        }
+
+        if (deletedStoredUrls.length > 0) {
+          await Promise.allSettled(deletedStoredUrls.map((url) => cache.delete(url)))
+        }
+
+        const deletedCacheOnlyCount = await deleteCacheOnlyTilesPastLimit(
+          cache,
+          retainedStoredUrls,
+          cap
+        )
+
+        if (deletedStoredUrls.length > 0 || deletedCacheOnlyCount > 0) {
+          scheduleTileCacheUpdatedMessage()
+        }
+      } catch {
+        // Best-effort: a failed trim just leaves the cache as-is until next time.
+      }
+    }
+
+    async function deleteOldestStoredTiles(cap) {
+      const database = await openTileDb()
+
+      return new Promise((resolve, reject) => {
+        const deletedUrls = []
+        const retainedUrls = new Set()
+        const transaction = database.transaction(shared.MAP_TILE_STORE, 'readwrite')
+        const store = transaction.objectStore(shared.MAP_TILE_STORE)
+
+        transaction.oncomplete = () => {
+          database.close()
+          resolve({ deletedUrls, retainedUrls })
+        }
+        transaction.onabort = () => {
+          database.close()
+          reject(transaction.error)
+        }
+
+        const countRequest = store.count()
+        countRequest.onsuccess = () => {
+          const overflow = Math.max(0, countRequest.result - cap)
+
+          // Oldest-first: the updatedAt index iterates ascending by default.
+          const cursorRequest = store.index(shared.TILE_DB_UPDATED_AT_INDEX).openCursor()
+          cursorRequest.onsuccess = () => {
+            const cursor = cursorRequest.result
+            if (!cursor) return
+
+            if (deletedUrls.length < overflow) {
+              deletedUrls.push(cursor.value.url)
+              cursor.delete()
+            } else {
+              retainedUrls.add(cursor.value.url)
+            }
+            cursor.continue()
+          }
+        }
+      })
+    }
+
+    async function deleteCacheOnlyTilesPastLimit(cache, retainedStoredUrls, cap) {
+      const cachedRequests = await cache.keys()
+      const cacheOnlyRequests = cachedRequests.filter(
+        (request) => !retainedStoredUrls.has(request.url)
+      )
+      const unionCount = retainedStoredUrls.size + cacheOnlyRequests.length
+      const overflow = unionCount - cap
+      if (overflow <= 0) return 0
+
+      const requestsToDelete = cacheOnlyRequests.slice(0, overflow)
+      await Promise.allSettled(requestsToDelete.map((request) => cache.delete(request)))
+      return requestsToDelete.length
     }
 
     function scheduleTileCacheUpdatedMessage() {

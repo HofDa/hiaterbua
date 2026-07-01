@@ -6,6 +6,7 @@ import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
 import { RecordingStatusBar } from '@/components/layout/recording-status-bar'
+import { APP_TITLE } from '@/lib/app-metadata'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
@@ -15,13 +16,13 @@ import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Pastore 1.01',
+  title: APP_TITLE,
   description: 'Offlinefähige Feld- und Alm-Dokumentation für Herden, Pferche und Weidegänge',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Pastore 1.01',
+    title: APP_TITLE,
   },
   icons: {
     icon: [

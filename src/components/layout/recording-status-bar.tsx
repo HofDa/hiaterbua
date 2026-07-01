@@ -10,7 +10,7 @@ import { getWorkLabel } from '@/lib/work/work-session-helpers'
 import { getLiveDurationS } from '@/lib/work/work-session-formatting'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { cn } from '@/lib/utils/cn'
-import type { GrazingSession, WorkSession } from '@/types/domain'
+import type { GrazingSession } from '@/types/domain'
 
 // Fixed height of the bar. Published to `--app-recording-bar-height` so page
 // content and bottom-fixed banners reserve matching space; kept in one place so
@@ -69,7 +69,7 @@ export function RecordingStatusBar() {
       }
     }
 
-    const work = pickCurrent(workSessions as Array<WorkSession & { status: GrazingSession['status'] }>)
+    const work = pickCurrent(workSessions)
     if (work) {
       return {
         kind: 'work',

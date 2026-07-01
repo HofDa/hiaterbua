@@ -12,6 +12,8 @@ export const PREFETCH_CONCURRENCY = 8
 // areas would otherwise grow the cache without bound — and persistent storage
 // makes the browser unlikely to evict it for us. ~5000 256px tiles is roughly
 // 150-250 MB depending on the layer; oldest tiles are trimmed past this.
+// The service worker enforces the same ceiling on its runtime cache — keep this
+// in sync with MAX_CACHED_TILES in public/sw/shared.js.
 export const MAX_CACHED_TILES = 5000
 export const TILE_CACHE_CHANGED_EVENT = 'hirtenapp:tile-cache-changed'
 

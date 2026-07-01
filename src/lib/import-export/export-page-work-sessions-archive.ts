@@ -1,5 +1,6 @@
 import { db } from '@/lib/db/dexie'
 import { defaultAppSettings } from '@/lib/settings/defaults'
+import { APP_TITLE } from '@/lib/app-metadata'
 import type { Enclosure, Herd } from '@/types/domain'
 
 export async function buildWorkSessionsExportArchive() {
@@ -53,7 +54,7 @@ export async function buildWorkSessionsExportArchive() {
         JSON.stringify(
           {
             exportedAt: exportTimestamp,
-            app: 'Pastore 1.01',
+            app: APP_TITLE,
             exportType: 'work-sessions',
             summary: {
               workSessions: workSessions.length,

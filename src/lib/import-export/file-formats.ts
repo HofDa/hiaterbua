@@ -1,5 +1,6 @@
 import { area as turfArea } from '@turf/turf'
 import type * as GeoJSON from 'geojson'
+import { APP_TITLE } from '@/lib/app-metadata'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type {
@@ -232,7 +233,7 @@ export function buildGpxTrack(
     .join('')
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Pastore 1.01" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="${APP_TITLE}" xmlns="http://www.topografix.com/GPX/1/1">
 <metadata><name>${escapeXml(name)}</name></metadata>
 ${tracksXml}
 </gpx>`

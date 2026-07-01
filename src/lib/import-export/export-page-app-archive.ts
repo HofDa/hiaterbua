@@ -9,6 +9,7 @@ import {
   buildFeatureCollection,
 } from '@/lib/import-export/file-formats'
 import { buildAppExportArtifacts } from '@/lib/import-export/export-page-app-archive-builders'
+import { APP_TITLE, APP_VERSION } from '@/lib/app-metadata'
 
 export async function buildAppExportArchive() {
   const [
@@ -65,7 +66,7 @@ export async function buildAppExportArchive() {
   zip.file(
     'README.txt',
     [
-      'Pastore 1.01 Export',
+      `${APP_TITLE} Export`,
       '',
       'spatial/enclosures.geojson: Pferche als Polygone',
       'spatial/survey_areas.geojson: Untersuchungsflächen als Polygone',
@@ -112,6 +113,6 @@ export async function buildAppExportArchive() {
 
   return {
     blob: await zip.generateAsync({ type: 'blob' }),
-    filename: `pastore-1.01-export-${new Date().toISOString().slice(0, 10)}.zip`,
+    filename: `pastore-${APP_VERSION}-export-${new Date().toISOString().slice(0, 10)}.zip`,
   }
 }

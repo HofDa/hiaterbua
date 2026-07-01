@@ -4,6 +4,7 @@ import {
   buildHerdExportBundles,
   hasGeometry,
 } from '@/lib/import-export/file-formats'
+import { APP_TITLE } from '@/lib/app-metadata'
 import type {
   Animal,
   Enclosure,
@@ -204,7 +205,7 @@ export function buildAppExportArtifacts({
 
   const appData = {
     exportedAt: new Date().toISOString(),
-    app: 'Pastore 1.01',
+    app: APP_TITLE,
     herds,
     animals,
     enclosures,
@@ -235,7 +236,7 @@ export function buildAppExportArtifacts({
   }
 
   const grazingGpx = buildGpxTrack(
-    'Pastore 1.01 Weidegänge',
+    `${APP_TITLE} Weidegänge`,
     sessions.map((session) => ({
       name: `Weidegang ${session.id}`,
       points: (trackpointsBySessionId.get(session.id) ?? [])
@@ -250,7 +251,7 @@ export function buildAppExportArtifacts({
   )
 
   const enclosureWalkGpx = buildGpxTrack(
-    'Pastore 1.01 Pferch-Walks',
+    `${APP_TITLE} Pferch-Walks`,
     enclosures
       .filter((enclosure) => enclosure.method === 'walk')
       .map((enclosure) => ({

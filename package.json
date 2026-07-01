@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:local-pwa": "next dev --hostname 127.0.0.1 --port 43031",
-    "build": "next build --webpack && npm run pwa:precache",
+    "metadata:sync": "node ./scripts/sync-app-metadata.mjs",
+    "build": "npm run metadata:sync && next build --webpack && npm run pwa:precache",
     "build:local-pwa": "npm run build",
     "pwa:precache": "node ./scripts/generate-pwa-precache-manifest.mjs",
     "start": "next start",

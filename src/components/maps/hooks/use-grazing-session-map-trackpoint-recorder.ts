@@ -12,8 +12,16 @@ type UseGrazingSessionMapTrackpointRecorderOptions = {
   onRecordingErrorChange?: (message: string) => void
 }
 
-function buildRecordingErrorMessage(error: unknown, pendingCount: number) {
-  if (isQuotaExceededError(error)) {
+// A stable category for the failure, independent of the (changing) pending
+// count — so dedupe keys on the kind, not on the count-bearing display string.
+type RecordingErrorKind = 'quota' | 'write' | null
+
+function getRecordingErrorKind(error: unknown): RecordingErrorKind {
+  return isQuotaExceededError(error) ? 'quota' : 'write'
+}
+
+function buildRecordingErrorMessage(kind: RecordingErrorKind, pendingCount: number) {
+  if (kind === 'quota') {
     return 'Speicher voll – Trackpunkte können nicht gespeichert werden. Bitte Speicher freigeben (z. B. Tile-Cache leeren).'
   }
 
@@ -35,18 +43,20 @@ export function useGrazingSessionMapTrackpointRecorder({
 
   const pendingPositionsRef = useRef<PositionData[]>([])
   const isFlushingRef = useRef(false)
-  const lastReportedErrorRef = useRef('')
+  const lastErrorKindRef = useRef<RecordingErrorKind>(null)
 
-  function reportRecordingError(message: string) {
-    // Only push a change when the recording health actually transitions, so a
-    // healthy stream of points never clobbers unrelated action errors, and a
-    // persistent failure isn't re-announced on every GPS fix.
-    if (message === lastReportedErrorRef.current) return
-    lastReportedErrorRef.current = message
-    // A newly-failing write deserves a distinct buzz: recording may be silently
-    // dropping points and the user is likely not watching the screen.
-    if (message) triggerHaptic('error')
-    onRecordingErrorChange?.(message)
+  function reportRecordingError(kind: RecordingErrorKind, message: string) {
+    const kindChanged = kind !== lastErrorKindRef.current
+    lastErrorKindRef.current = kind
+
+    // Buzz only when the failure first appears (or changes category) — not on
+    // every retry — so a persistent error doesn't spam a haptic on each GPS fix.
+    // The user is likely not watching the screen when recording silently fails.
+    if (kind && kindChanged) triggerHaptic('error')
+
+    // Keep the displayed message current (its pending count grows) while the
+    // failure persists, but stay quiet once recording is healthy again.
+    if (kind || kindChanged) onRecordingErrorChange?.(message)
   }
 
   async function persistPendingPositions() {
@@ -83,12 +93,14 @@ export function useGrazingSessionMapTrackpointRecorder({
             currentLastTimestampRef.current = result.lastTimestamp
           }
 
-          reportRecordingError('')
+          reportRecordingError(null, '')
         } catch (error) {
           // Keep the point queued and retry on the next accepted position so a
           // transient write failure doesn't punch a hole in the recorded track.
+          const kind = getRecordingErrorKind(error)
           reportRecordingError(
-            buildRecordingErrorMessage(error, pendingPositionsRef.current.length)
+            kind,
+            buildRecordingErrorMessage(kind, pendingPositionsRef.current.length)
           )
           break
         }

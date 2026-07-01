@@ -1,5 +1,6 @@
 import { db } from '@/lib/db/dexie'
 import { defaultAppSettings } from '@/lib/settings/defaults'
+import { APP_TITLE } from '@/lib/app-metadata'
 import {
   buildHerdExportBundles,
   sanitizeFilenamePart,
@@ -85,7 +86,7 @@ export async function buildSingleHerdExportArchive(herdId: string) {
         JSON.stringify(
           {
             exportedAt: new Date().toISOString(),
-            app: 'Pastore 1.01',
+            app: APP_TITLE,
             settings: [settings ?? defaultAppSettings],
             herd: bundle,
           },
