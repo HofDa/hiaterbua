@@ -8,7 +8,7 @@
   const EVICTION_THROTTLE_MS = 60_000
 
   function createTileCacheController() {
-    let tileCachingEnabled = false
+    let tileCachingEnabled = null
     let tileCacheUpdateTimeout = null
     let lastEvictionMs = 0
 
@@ -17,14 +17,22 @@
         return false
       }
 
-      tileCachingEnabled = Boolean(data.enabled)
+      const nextTileCachingEnabled = Boolean(data.enabled)
+      tileCachingEnabled = nextTileCachingEnabled
+      const writePreference = setStoredTileCachingEnabled(nextTileCachingEnabled)
 
       if (data.clearStoredTiles) {
         event.waitUntil(
-          Promise.allSettled([caches.delete(shared.TILE_CACHE_NAME), clearTileStore()]).then(() => {
+          Promise.allSettled([
+            writePreference,
+            caches.delete(shared.TILE_CACHE_NAME),
+            clearTileStore(),
+          ]).then(() => {
             scheduleTileCacheUpdatedMessage()
           })
         )
+      } else {
+        event.waitUntil(writePreference)
       }
 
       return true
@@ -51,9 +59,10 @@
     async function handleTileRequest(request) {
       const cache = await openTileCacheBestEffort()
       const cachedResponse = cache ? await cache.match(request).catch(() => null) : null
+      const shouldPersistTiles = await getTileCachingEnabled()
 
       if (cachedResponse) {
-        if (tileCachingEnabled) {
+        if (shouldPersistTiles) {
           void updateTileInBackground(cache, request)
         }
         return cachedResponse
@@ -67,18 +76,32 @@
       }
 
       if (storedTile) {
-        if (tileCachingEnabled) {
+        if (shouldPersistTiles) {
           void updateTileInBackground(cache, request)
         }
         return responseFromStoredTile(storedTile)
       }
 
       const networkResponse = await fetch(request)
-      if (tileCachingEnabled && (networkResponse.ok || networkResponse.type === 'opaque')) {
+      if (shouldPersistTiles && (networkResponse.ok || networkResponse.type === 'opaque')) {
         void persistTileBestEffort(cache, request, networkResponse)
       }
 
       return networkResponse
+    }
+
+    async function getTileCachingEnabled() {
+      if (tileCachingEnabled !== null) {
+        return tileCachingEnabled
+      }
+
+      try {
+        tileCachingEnabled = await getStoredTileCachingEnabled()
+      } catch {
+        return false
+      }
+
+      return tileCachingEnabled
     }
 
     async function updateTileInBackground(cache, request) {
@@ -99,6 +122,8 @@
 
       if (cache) {
         try {
+          // Cache API keeps opaque cross-origin image responses available;
+          // IndexedDB below is the countable/trimmable store for CORS tiles.
           await cache.put(request, cacheResponse)
           didPersist = true
         } catch {
@@ -279,7 +304,6 @@
         tileStore.createIndex(shared.TILE_DB_UPDATED_AT_INDEX, shared.TILE_DB_UPDATED_AT_INDEX, {
           unique: false,
         })
-        return
       }
 
       const tileStore = transaction?.objectStore(shared.MAP_TILE_STORE) ?? null
@@ -288,10 +312,18 @@
           unique: false,
         })
       }
+
+      if (!database.objectStoreNames.contains(shared.TILE_CACHE_SETTINGS_STORE)) {
+        database.createObjectStore(shared.TILE_CACHE_SETTINGS_STORE, { keyPath: 'key' })
+      }
     }
 
     function hasRequiredTileStoreSchema(database) {
       if (!database.objectStoreNames.contains(shared.MAP_TILE_STORE)) {
+        return false
+      }
+
+      if (!database.objectStoreNames.contains(shared.TILE_CACHE_SETTINGS_STORE)) {
         return false
       }
 
@@ -313,6 +345,40 @@
         const request = store.get(url)
 
         request.onsuccess = () => resolve(request.result ?? null)
+        request.onerror = () => reject(request.error)
+        transaction.oncomplete = () => database.close()
+        transaction.onabort = () => database.close()
+      })
+    }
+
+    async function getStoredTileCachingEnabled() {
+      const database = await openTileDb()
+
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(shared.TILE_CACHE_SETTINGS_STORE, 'readonly')
+        const store = transaction.objectStore(shared.TILE_CACHE_SETTINGS_STORE)
+        const request = store.get(shared.TILE_CACHING_ENABLED_KEY)
+
+        request.onsuccess = () => resolve(Boolean(request.result?.enabled))
+        request.onerror = () => reject(request.error)
+        transaction.oncomplete = () => database.close()
+        transaction.onabort = () => database.close()
+      })
+    }
+
+    async function setStoredTileCachingEnabled(enabled) {
+      const database = await openTileDb()
+
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(shared.TILE_CACHE_SETTINGS_STORE, 'readwrite')
+        const store = transaction.objectStore(shared.TILE_CACHE_SETTINGS_STORE)
+        const request = store.put({
+          key: shared.TILE_CACHING_ENABLED_KEY,
+          enabled,
+          updatedAt: new Date().toISOString(),
+        })
+
+        request.onsuccess = () => resolve(true)
         request.onerror = () => reject(request.error)
         transaction.oncomplete = () => database.close()
         transaction.onabort = () => database.close()

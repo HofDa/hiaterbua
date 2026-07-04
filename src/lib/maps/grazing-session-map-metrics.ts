@@ -9,6 +9,64 @@ import type {
   TrackPoint,
 } from '@/lib/maps/grazing-session-map-helper-types'
 
+export const MAX_MOVING_SEGMENT_GAP_S = 60
+
+export function getDurationSeconds(startTime: string, endTime: string) {
+  return Math.max(
+    0,
+    Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000)
+  )
+}
+
+export function getTrackpointTimeDiffS(previous: TrackPoint, current: TrackPoint) {
+  return Math.max(
+    0,
+    Math.round(
+      (new Date(current.timestamp).getTime() - new Date(previous.timestamp).getTime()) / 1000
+    )
+  )
+}
+
+export function getTrackpointDistanceM(previous: TrackPoint, current: TrackPoint) {
+  return haversineDistanceM(
+    { latitude: previous.lat, longitude: previous.lon },
+    { latitude: current.lat, longitude: current.lon }
+  )
+}
+
+export function isContinuousTrackSegment(previous: TrackPoint, current: TrackPoint) {
+  const timeDiffS = getTrackpointTimeDiffS(previous, current)
+  return timeDiffS <= MAX_MOVING_SEGMENT_GAP_S
+}
+
+export function buildTrackpointMetricDelta(previous: TrackPoint | null, current: TrackPoint) {
+  if (!previous || !isContinuousTrackSegment(previous, current)) {
+    return {
+      distanceM: 0,
+      movingTimeS: 0,
+    }
+  }
+
+  return {
+    distanceM: getTrackpointDistanceM(previous, current),
+    movingTimeS: getTrackpointTimeDiffS(previous, current),
+  }
+}
+
+export function buildSessionMetricsFromRecord(
+  session: GrazingSession,
+  effectiveEndTime = session.endTime ?? nowIso()
+): SessionMetrics {
+  return {
+    durationS: getDurationSeconds(session.startTime, effectiveEndTime),
+    movingTimeS: session.movingTimeS,
+    distanceM: session.distanceM,
+    avgSpeedMps:
+      session.movingTimeS > 0 ? session.distanceM / session.movingTimeS : null,
+    avgAccuracyM: session.avgAccuracyM ?? null,
+  }
+}
+
 export function buildSessionMetrics(
   trackpoints: TrackPoint[],
   startTime: string,
@@ -16,10 +74,7 @@ export function buildSessionMetrics(
 ): SessionMetrics {
   const sorted = [...trackpoints].sort((left, right) => left.seq - right.seq)
   const sessionEnd = endTime ?? nowIso()
-  const durationS = Math.max(
-    0,
-    Math.round((new Date(sessionEnd).getTime() - new Date(startTime).getTime()) / 1000)
-  )
+  const durationS = getDurationSeconds(startTime, sessionEnd)
 
   if (sorted.length === 0) {
     return {
@@ -37,19 +92,10 @@ export function buildSessionMetrics(
   for (let index = 1; index < sorted.length; index += 1) {
     const previous = sorted[index - 1]
     const current = sorted[index]
-    const segmentDistance = haversineDistanceM(
-      { latitude: previous.lat, longitude: previous.lon },
-      { latitude: current.lat, longitude: current.lon }
-    )
-    const timeDiffS = Math.max(
-      0,
-      Math.round(
-        (new Date(current.timestamp).getTime() - new Date(previous.timestamp).getTime()) / 1000
-      )
-    )
+    const delta = buildTrackpointMetricDelta(previous, current)
 
-    distanceM += segmentDistance
-    movingTimeS += timeDiffS
+    distanceM += delta.distanceM
+    movingTimeS += delta.movingTimeS
   }
 
   const accuracies = sorted

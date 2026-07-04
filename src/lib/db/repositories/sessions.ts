@@ -2,6 +2,8 @@ import { assertUpdated } from '@/lib/db/assert-updated'
 import { db } from '@/lib/db/dexie'
 import {
   buildSessionMetrics,
+  buildTrackpointMetricDelta,
+  getDurationSeconds,
   buildTrackpointsFromEditableTrackpoints,
   logSessionEvent,
   type EditableTrackPoint,
@@ -56,11 +58,19 @@ export async function appendSessionTrackpoint(params: {
   lastTimestamp: number | null
   nextSeq: number
   nextPosition: PositionData
-  currentTrackpoints: TrackPoint[]
+  previousTrackPoint: TrackPoint | null
+  trackpointCount: number
   startTime: string
 }) {
-  const { sessionId, lastTimestamp, nextSeq, nextPosition, currentTrackpoints, startTime } =
-    params
+  const {
+    sessionId,
+    lastTimestamp,
+    nextSeq,
+    nextPosition,
+    previousTrackPoint,
+    trackpointCount,
+    startTime,
+  } = params
 
   if (lastTimestamp === nextPosition.timestamp) {
     return null
@@ -80,18 +90,29 @@ export async function appendSessionTrackpoint(params: {
     accepted: true,
   }
 
-  const nextTrackpoints = [...currentTrackpoints, trackPoint]
-  const metrics = buildSessionMetrics(nextTrackpoints, startTime)
+  const metricDelta = buildTrackpointMetricDelta(previousTrackPoint, trackPoint)
+  const updatedAt = nowIso()
 
   await db.transaction('rw', db.trackpoints, db.sessions, async () => {
+    const session = await db.sessions.get(sessionId)
+    assertUpdated(session ? 1 : 0, 'Weidegang wurde nicht gefunden.')
+
+    const distanceM = (session?.distanceM ?? 0) + metricDelta.distanceM
+    const movingTimeS = (session?.movingTimeS ?? 0) + metricDelta.movingTimeS
+    const avgAccuracyM = appendAverageAccuracy(
+      session?.avgAccuracyM ?? null,
+      trackpointCount,
+      trackPoint.accuracyM
+    )
+
     await db.trackpoints.add(trackPoint)
     const updatedCount = await db.sessions.update(sessionId, {
-      durationS: metrics.durationS,
-      movingTimeS: metrics.movingTimeS,
-      distanceM: metrics.distanceM,
-      avgSpeedMps: metrics.avgSpeedMps,
-      avgAccuracyM: metrics.avgAccuracyM,
-      updatedAt: nowIso(),
+      durationS: getDurationSeconds(startTime, updatedAt),
+      movingTimeS,
+      distanceM,
+      avgSpeedMps: movingTimeS > 0 ? distanceM / movingTimeS : null,
+      avgAccuracyM,
+      updatedAt,
     })
 
     assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
@@ -99,10 +120,25 @@ export async function appendSessionTrackpoint(params: {
 
   return {
     trackPoint,
-    nextTrackpoints,
     nextSeq,
     lastTimestamp: nextPosition.timestamp,
   }
+}
+
+function appendAverageAccuracy(
+  previousAverage: number | null | undefined,
+  previousPointCount: number,
+  nextAccuracy: number | null | undefined
+) {
+  if (typeof nextAccuracy !== 'number') {
+    return previousAverage ?? null
+  }
+
+  if (typeof previousAverage !== 'number' || previousPointCount <= 0) {
+    return nextAccuracy
+  }
+
+  return (previousAverage * previousPointCount + nextAccuracy) / (previousPointCount + 1)
 }
 
 export async function createGrazingSessionRecord(params: {

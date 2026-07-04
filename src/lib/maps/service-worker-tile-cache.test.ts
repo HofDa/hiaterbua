@@ -101,12 +101,15 @@ async function waitFor<T>(read: () => T | Promise<T>, accept: (value: T) => bool
   throw new Error(`Timed out waiting for condition. Last value: ${String(lastValue)}`)
 }
 
-function createTileCacheController(maxCachedTiles: number) {
+function createTileCacheController(maxCachedTiles: number, existingDbName?: string) {
   const source = readFileSync(resolve(process.cwd(), 'public/sw/tile-cache.js'), 'utf8')
-  const dbName = `pastore-sw-tile-cache-test-${Date.now()}-${Math.random()}`
+  const dbName =
+    existingDbName ?? `pastore-sw-tile-cache-test-${Date.now()}-${Math.random()}`
   const cache = new MemoryCache()
   let nowMs = Date.parse('2026-06-01T00:00:00.000Z')
-  dbNames.push(dbName)
+  if (!existingDbName) {
+    dbNames.push(dbName)
+  }
 
   const swScope: TestServiceWorkerScope = {
     __PASTORE_SW__: {
@@ -114,6 +117,8 @@ function createTileCacheController(maxCachedTiles: number) {
         TILE_CACHE_NAME: 'test-map-tiles',
         DB_NAME: dbName,
         MAP_TILE_STORE: 'mapTiles',
+        TILE_CACHE_SETTINGS_STORE: 'tileCacheSettings',
+        TILE_CACHING_ENABLED_KEY: 'runtimeCachingEnabled',
         TILE_DB_UPDATED_AT_INDEX: 'updatedAt',
         MAX_CACHED_TILES: maxCachedTiles,
       },
@@ -163,10 +168,25 @@ function createTileCacheController(maxCachedTiles: number) {
   return {
     cache,
     controller,
+    dbName,
     advanceTime(ms: number) {
       nowMs += ms
     },
   }
+}
+
+async function sendTileCachingMessage(
+  controller: TileCacheController,
+  enabled: boolean,
+  clearStoredTiles = false
+) {
+  const waitUntil = vi.fn()
+  controller.handleMessage(
+    { type: 'SET_TILE_CACHING', enabled, clearStoredTiles },
+    { waitUntil }
+  )
+
+  await Promise.all(waitUntil.mock.calls.map(([promise]) => promise))
 }
 
 afterEach(async () => {
@@ -189,7 +209,7 @@ describe('service-worker tile cache', () => {
       'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&REQUEST=GetMap&BBOX=3',
     ]
 
-    controller.handleMessage({ type: 'SET_TILE_CACHING', enabled: true }, { waitUntil: vi.fn() })
+    await sendTileCachingMessage(controller, true)
 
     for (const url of urls) {
       advanceTime(61_000)
@@ -206,5 +226,23 @@ describe('service-worker tile cache', () => {
     )
 
     expect(cachedUrls).toEqual([urls[1], urls[2]])
+  })
+
+  it('keeps runtime tile caching enabled after the service worker restarts', async () => {
+    const firstWorker = createTileCacheController(10)
+    const url =
+      'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&REQUEST=GetMap&BBOX=restart'
+
+    await sendTileCachingMessage(firstWorker.controller, true)
+
+    const restartedWorker = createTileCacheController(10, firstWorker.dbName)
+    await restartedWorker.controller.handleTileRequest(new Request(url))
+
+    const cachedUrls = await waitFor(
+      () => restartedWorker.cache.urls(),
+      (currentUrls) => currentUrls.includes(url)
+    )
+
+    expect(cachedUrls).toContain(url)
   })
 })

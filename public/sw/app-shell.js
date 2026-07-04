@@ -1,6 +1,7 @@
 (() => {
   const swScope = self.__PASTORE_SW__ || (self.__PASTORE_SW__ = {})
   const shared = swScope.shared
+  const NAVIGATION_NETWORK_TIMEOUT_MS = 3_000
 
   function createAppShell(precacheManifest) {
     const manifest = precacheManifest ?? shared.DEFAULT_PRECACHE_MANIFEST
@@ -70,16 +71,18 @@
       const requestUrl = new URL(request.url)
       const cache = await openCacheBestEffort()
       const cacheKey = getNavigationCacheKey(requestUrl)
-
-      try {
-        const networkResponse = await fetch(request)
-
-        if (cacheKey && networkResponse.ok) {
-          await putCacheBestEffort(cache, cacheKey, networkResponse)
+      const networkResponse = fetch(request).then(async (response) => {
+        if (cacheKey && response.ok) {
+          await putCacheBestEffort(cache, cacheKey, response)
         }
 
-        return networkResponse
+        return response
+      })
+
+      try {
+        return await raceNetworkResponse(networkResponse, NAVIGATION_NETWORK_TIMEOUT_MS)
       } catch {
+        void networkResponse.catch(() => undefined)
         const legacyRedirectTarget = getLegacyHerdRedirectUrl(requestUrl)
         if (legacyRedirectTarget) {
           return Response.redirect(legacyRedirectTarget, 302)
@@ -108,6 +111,21 @@
           },
         })
       }
+    }
+
+    function raceNetworkResponse(networkResponse, timeoutMs) {
+      let timeoutId = null
+      const timeout = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error('navigation_network_timeout'))
+        }, timeoutMs)
+      })
+
+      return Promise.race([networkResponse, timeout]).finally(() => {
+        if (timeoutId !== null) {
+          clearTimeout(timeoutId)
+        }
+      })
     }
 
     async function handleAppDataRequest(request) {

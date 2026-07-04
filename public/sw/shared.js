@@ -16,6 +16,8 @@
       /\.(?:css|js|json|txt|xml|ico|png|jpg|jpeg|svg|webp|gif|woff2?)$/i,
     DB_NAME: 'hirtenapp-tile-db',
     MAP_TILE_STORE: 'mapTiles',
+    TILE_CACHE_SETTINGS_STORE: 'tileCacheSettings',
+    TILE_CACHING_ENABLED_KEY: 'runtimeCachingEnabled',
     // Hard ceiling on cached tiles, enforced by both the client prefetch trim and
     // the service-worker runtime cache. Keep in sync with MAX_CACHED_TILES in
     // src/lib/maps/tile-cache.ts (the SW can't import from src).

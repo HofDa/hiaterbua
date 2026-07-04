@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getFreshPosition, isPositionFresh } from './map-core'
+import { getFreshPosition, getPositionDecision, isPositionFresh } from './map-core'
 
 describe('GPS position freshness', () => {
   const nowMs = 1_700_000_000_000
@@ -16,5 +16,42 @@ describe('GPS position freshness', () => {
     expect(isPositionFresh({ timestamp: Number.NaN }, 60_000, nowMs)).toBe(false)
     expect(isPositionFresh({ timestamp: nowMs - 60_001 }, 60_000, nowMs)).toBe(false)
     expect(isPositionFresh({ timestamp: nowMs + 5_001 }, 60_000, nowMs)).toBe(false)
+  })
+})
+
+describe('GPS position plausibility', () => {
+  const previous = {
+    latitude: 46.5,
+    longitude: 11,
+    accuracy: 5,
+    timestamp: Date.parse('2026-06-01T08:00:00.000Z'),
+  }
+
+  it('rejects an otherwise accurate point whose implied speed is not plausible', () => {
+    const teleport = {
+      latitude: 46.503,
+      longitude: 11,
+      accuracy: 5,
+      timestamp: previous.timestamp + 30_000,
+    }
+
+    expect(getPositionDecision(previous, teleport, 15, 2, 2)).toEqual({
+      accepted: false,
+      reason: 'speed',
+    })
+  })
+
+  it('accepts a normal walking-speed point', () => {
+    const next = {
+      latitude: 46.5005,
+      longitude: 11,
+      accuracy: 5,
+      timestamp: previous.timestamp + 30_000,
+    }
+
+    expect(getPositionDecision(previous, next, 15, 2, 2)).toEqual({
+      accepted: true,
+      reason: 'accepted',
+    })
   })
 })

@@ -5,9 +5,10 @@ export type GpsState = 'idle' | 'requesting' | 'tracking' | 'unsupported' | 'den
 
 export type PositionDecision =
   | { accepted: true; reason: 'initial' | 'accepted' }
-  | { accepted: false; reason: 'accuracy' | 'time' | 'distance' }
+  | { accepted: false; reason: 'accuracy' | 'time' | 'distance' | 'speed' }
 
 export const FRESH_POSITION_MAX_AGE_MS = 60_000
+export const MAX_REASONABLE_POSITION_SPEED_MPS = 4
 
 type PositionSample = {
   latitude: number
@@ -91,7 +92,8 @@ export function getPositionDecision(
   nextPosition: PositionSample,
   gpsAccuracyThresholdM: number,
   gpsMinTimeS: number,
-  gpsMinDistanceM: number
+  gpsMinDistanceM: number,
+  maxReasonableSpeedMps = MAX_REASONABLE_POSITION_SPEED_MPS
 ): PositionDecision {
   if (nextPosition.accuracy > gpsAccuracyThresholdM) {
     return { accepted: false, reason: 'accuracy' }
@@ -109,6 +111,10 @@ export function getPositionDecision(
   const distanceM = haversineDistanceM(previousPosition, nextPosition)
   if (distanceM < gpsMinDistanceM) {
     return { accepted: false, reason: 'distance' }
+  }
+
+  if (timeDiffS > 0 && distanceM / timeDiffS > maxReasonableSpeedMps) {
+    return { accepted: false, reason: 'speed' }
   }
 
   return { accepted: true, reason: 'accepted' }

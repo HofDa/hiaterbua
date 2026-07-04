@@ -3,11 +3,54 @@ import { emptyFeatureCollection } from '@/lib/maps/map-core'
 import {
   getSessionEventLabel,
 } from '@/lib/maps/grazing-session-map-formatters'
+import { isContinuousTrackSegment } from '@/lib/maps/grazing-session-map-metrics'
 import type {
   EditableTrackPoint,
   SessionEvent,
   TrackPoint,
 } from '@/lib/maps/grazing-session-map-helper-types'
+
+function buildContinuousLineFeatures(
+  trackpoints: TrackPoint[],
+  kind: string
+): GeoJSON.Feature<GeoJSON.LineString>[] {
+  const lineFeatures: GeoJSON.Feature<GeoJSON.LineString>[] = []
+  let segment: TrackPoint[] = []
+
+  trackpoints.forEach((point) => {
+    const previous = segment.length > 0 ? segment[segment.length - 1] : null
+    if (previous && !isContinuousTrackSegment(previous, point)) {
+      if (segment.length >= 2) {
+        lineFeatures.push(buildLineFeature(segment, kind))
+      }
+      segment = []
+    }
+
+    segment.push(point)
+  })
+
+  if (segment.length >= 2) {
+    lineFeatures.push(buildLineFeature(segment, kind))
+  }
+
+  return lineFeatures
+}
+
+function buildLineFeature(
+  trackpoints: TrackPoint[],
+  kind: string
+): GeoJSON.Feature<GeoJSON.LineString> {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'LineString',
+      coordinates: trackpoints.map((point) => [point.lon, point.lat]),
+    },
+    properties: {
+      kind,
+    },
+  }
+}
 
 export function buildTrackpointsFeatureCollection(
   trackpoints: TrackPoint[]
@@ -32,16 +75,7 @@ export function buildTrackpointsFeatureCollection(
   const features: GeoJSON.Feature[] = [...pointFeatures]
 
   if (sorted.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: sorted.map((point) => [point.lon, point.lat]),
-      },
-      properties: {
-        kind: 'session-line',
-      },
-    })
+    features.unshift(...buildContinuousLineFeatures(sorted, 'session-line'))
   }
 
   return {

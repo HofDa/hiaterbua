@@ -16,6 +16,7 @@ import {
   buildMergedSessionEventFeatureCollection,
   buildSessionHistoryStats,
   buildSessionMetrics,
+  buildSessionMetricsFromRecord,
   buildTrackpointsFeatureCollection,
   buildTrackpointsFromEditableTrackpoints,
   groupSessionHistoryByDay,
@@ -164,19 +165,15 @@ export function useGrazingSessionMapData({
           ? currentSession.endTime
           : currentSession.updatedAt
 
-    return buildSessionMetrics(safeCurrentTrackpoints, currentSession.startTime, effectiveEndTime)
-  }, [currentSession, liveDurationTick, safeCurrentTrackpoints])
+    return buildSessionMetricsFromRecord(currentSession, effectiveEndTime ?? undefined)
+  }, [currentSession, liveDurationTick])
 
   const selectedMetrics = useMemo(
     () =>
       selectedSession
-        ? buildSessionMetrics(
-            safeSelectedTrackpoints,
-            selectedSession.startTime,
-            selectedSession.endTime
-          )
+        ? buildSessionMetricsFromRecord(selectedSession, selectedSession.endTime ?? undefined)
         : null,
-    [safeSelectedTrackpoints, selectedSession]
+    [selectedSession]
   )
 
   const sessionHistoryStats = useMemo(

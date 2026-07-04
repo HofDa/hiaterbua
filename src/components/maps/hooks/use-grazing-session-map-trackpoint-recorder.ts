@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { appendSessionTrackpoint } from '@/lib/db/repositories/sessions'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
@@ -15,6 +15,15 @@ type UseGrazingSessionMapTrackpointRecorderOptions = {
 // A stable category for the failure, independent of the (changing) pending
 // count — so dedupe keys on the kind, not on the count-bearing display string.
 type RecordingErrorKind = 'quota' | 'write' | null
+type LockManagerLike = {
+  request<T>(
+    name: string,
+    options: { mode: 'exclusive' },
+    callback: () => T | Promise<T>
+  ): Promise<T>
+}
+
+const RECORDING_RETRY_INTERVAL_MS = 5_000
 
 function getRecordingErrorKind(error: unknown): RecordingErrorKind {
   return isQuotaExceededError(error) ? 'quota' : 'write'
@@ -26,6 +35,11 @@ function buildRecordingErrorMessage(kind: RecordingErrorKind, pendingCount: numb
   }
 
   return `Trackpunkt konnte nicht gespeichert werden (${pendingCount} ausstehend). Wird automatisch erneut versucht.`
+}
+
+function getRecordingLockManager() {
+  if (typeof navigator === 'undefined') return null
+  return (navigator as Navigator & { locks?: LockManagerLike }).locks ?? null
 }
 
 export function useGrazingSessionMapTrackpointRecorder({
@@ -80,7 +94,11 @@ export function useGrazingSessionMapTrackpointRecorder({
             lastTimestamp: currentLastTimestampRef.current,
             nextSeq: currentSeqRef.current + 1,
             nextPosition,
-            currentTrackpoints: currentTrackpointsRef.current,
+            previousTrackPoint:
+              currentTrackpointsRef.current.length > 0
+                ? currentTrackpointsRef.current[currentTrackpointsRef.current.length - 1]
+                : null,
+            trackpointCount: currentTrackpointsRef.current.length,
             startTime: currentSessionStartTimeRef.current ?? nowIso(),
           })
 
@@ -88,7 +106,7 @@ export function useGrazingSessionMapTrackpointRecorder({
           pendingPositionsRef.current.shift()
 
           if (result) {
-            currentTrackpointsRef.current = result.nextTrackpoints
+            currentTrackpointsRef.current.push(result.trackPoint)
             currentSeqRef.current = result.nextSeq
             currentLastTimestampRef.current = result.lastTimestamp
           }
@@ -110,10 +128,39 @@ export function useGrazingSessionMapTrackpointRecorder({
     }
   }
 
+  async function flushPendingPositionsWithLock() {
+    const sessionId = currentSessionIdRef.current
+    const locks = getRecordingLockManager()
+    if (!sessionId || !locks) {
+      await persistPendingPositions()
+      return
+    }
+
+    await locks.request(
+      `pastore:grazing-session:${sessionId}:recording`,
+      { mode: 'exclusive' },
+      () => persistPendingPositions()
+    )
+  }
+
+  const flushPendingPositionsWithLockRef = useLatestValueRef(flushPendingPositionsWithLock)
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (pendingPositionsRef.current.length > 0) {
+        void flushPendingPositionsWithLockRef.current()
+      }
+    }, RECORDING_RETRY_INTERVAL_MS)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [flushPendingPositionsWithLockRef])
+
   async function appendSessionPoint(nextPosition: PositionData) {
     if (!currentSessionIdRef.current) return
     pendingPositionsRef.current.push(nextPosition)
-    await persistPendingPositions()
+    await flushPendingPositionsWithLock()
   }
 
   const appendSessionPointRef = useLatestValueRef(appendSessionPoint)

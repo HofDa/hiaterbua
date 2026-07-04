@@ -53,6 +53,11 @@ class TileCacheDB extends Dexie {
     this.version(2).stores({
       mapTiles: 'url, updatedAt',
     })
+
+    this.version(3).stores({
+      mapTiles: 'url, updatedAt',
+      tileCacheSettings: 'key',
+    })
   }
 }
 
@@ -284,6 +289,9 @@ async function persistTileResponseBestEffort(
 
   if (cache) {
     try {
+      // Keep the Cache API copy for cross-origin image responses that may be
+      // opaque to IndexedDB serialization; IndexedDB remains the countable,
+      // trimmable store for normal CORS tile responses.
       await cache.put(request, response.clone())
       didPersist = true
     } catch (error) {

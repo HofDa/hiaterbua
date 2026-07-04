@@ -105,7 +105,9 @@ export function useLivePositionMapPresentation({
         ? `Letzter Punkt verworfen: Genauigkeit schlechter als ${effectiveSettings.gpsAccuracyThresholdM} m.`
         : lastPositionDecision.reason === 'time'
           ? `Letzter Punkt verworfen: Mindestzeit von ${effectiveSettings.gpsMinTimeS} s noch nicht erreicht.`
-          : `Letzter Punkt verworfen: Mindestdistanz von ${effectiveSettings.gpsMinDistanceM} m noch nicht erreicht.`
+          : lastPositionDecision.reason === 'distance'
+            ? `Letzter Punkt verworfen: Mindestdistanz von ${effectiveSettings.gpsMinDistanceM} m noch nicht erreicht.`
+            : 'Letzter Punkt verworfen: Positionssprung war unplausibel.'
       : lastPositionDecision?.accepted
         ? 'Letzter Punkt wurde für Karte und Tracking akzeptiert.'
         : 'GPS-Filter noch ohne Entscheidung.'

@@ -25,8 +25,13 @@ export {
   buildTrackpointsFeatureCollection,
 } from '@/lib/maps/grazing-session-map-feature-collections'
 export {
+  buildSessionMetricsFromRecord,
   buildSessionHistoryStats,
   buildSessionMetrics,
+  buildTrackpointMetricDelta,
+  getDurationSeconds,
+  isContinuousTrackSegment,
+  MAX_MOVING_SEGMENT_GAP_S,
   groupSessionHistoryByDay,
 } from '@/lib/maps/grazing-session-map-metrics'
 export {

@@ -67,7 +67,8 @@ describe('appendSessionTrackpoint', () => {
       lastTimestamp: null,
       nextSeq: 1,
       nextPosition: position({ timestamp: Date.parse('2026-06-01T08:00:00.000Z') }),
-      currentTrackpoints: [],
+      previousTrackPoint: null,
+      trackpointCount: 0,
       startTime: session.startTime,
     })
     expect(first).not.toBeNull()
@@ -79,9 +80,10 @@ describe('appendSessionTrackpoint', () => {
       nextPosition: position({
         latitude: 46.51,
         longitude: 11.01,
-        timestamp: Date.parse('2026-06-01T08:05:00.000Z'),
+        timestamp: Date.parse('2026-06-01T08:00:30.000Z'),
       }),
-      currentTrackpoints: first!.nextTrackpoints,
+      previousTrackPoint: first!.trackPoint,
+      trackpointCount: 1,
       startTime: session.startTime,
     })
     expect(second).not.toBeNull()
@@ -107,7 +109,8 @@ describe('appendSessionTrackpoint', () => {
       lastTimestamp: sameTimestamp,
       nextSeq: 1,
       nextPosition: position({ timestamp: sameTimestamp }),
-      currentTrackpoints: [],
+      previousTrackPoint: null,
+      trackpointCount: 0,
       startTime: session.startTime,
     })
 
@@ -236,7 +239,8 @@ describe('deleteGrazingSessionRecord', () => {
       lastTimestamp: null,
       nextSeq: 1,
       nextPosition: position(),
-      currentTrackpoints: [],
+      previousTrackPoint: null,
+      trackpointCount: 0,
       startTime: session.startTime,
     })
 
