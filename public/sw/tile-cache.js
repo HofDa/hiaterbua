@@ -170,8 +170,10 @@
             if (deletedCount < overflow) {
               deletedCount += 1
               cursor.delete()
+              if (deletedCount < overflow) {
+                cursor.continue()
+              }
             }
-            cursor.continue()
           }
         }
       })

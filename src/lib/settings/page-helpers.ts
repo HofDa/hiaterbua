@@ -1,4 +1,5 @@
 import { defaultAppSettings, normalizeMapBaseLayer } from '@/lib/settings/defaults'
+import { resolveGpsMaxSpeedMps } from '@/lib/settings/gps-presets'
 import type { AppSettings } from '@/types/domain'
 
 const SETTINGS_FALLBACK_KEY = 'hirtenapp-settings-fallback'
@@ -21,6 +22,19 @@ export function formatCurrentPositionError(error: GeolocationPositionError) {
 export function normalizeSettingsValue(
   settings: Partial<AppSettings> | null | undefined,
 ): AppSettings {
+  const gpsAccuracyThresholdM = Math.max(
+    1,
+    Math.round(settings?.gpsAccuracyThresholdM ?? defaultAppSettings.gpsAccuracyThresholdM),
+  )
+  const gpsMinTimeS = Math.max(
+    1,
+    Math.round(settings?.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS),
+  )
+  const gpsMinDistanceM = Math.max(
+    1,
+    Math.round(settings?.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM),
+  )
+
   return {
     ...defaultAppSettings,
     ...settings,
@@ -29,21 +43,17 @@ export function normalizeSettingsValue(
       typeof settings?.userName === 'string' ? settings.userName.trim() : defaultAppSettings.userName,
     language: 'de',
     mapBaseLayer: normalizeMapBaseLayer(settings?.mapBaseLayer),
-    gpsAccuracyThresholdM: Math.max(
-      1,
-      Math.round(settings?.gpsAccuracyThresholdM ?? defaultAppSettings.gpsAccuracyThresholdM),
-    ),
-    gpsMinTimeS: Math.max(
-      1,
-      Math.round(settings?.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS),
-    ),
-    gpsMinDistanceM: Math.max(
-      1,
-      Math.round(settings?.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM),
-    ),
-    gpsMaxSpeedMps: Math.max(
-      1,
-      settings?.gpsMaxSpeedMps ?? defaultAppSettings.gpsMaxSpeedMps,
+    gpsAccuracyThresholdM,
+    gpsMinTimeS,
+    gpsMinDistanceM,
+    gpsMaxSpeedMps: resolveGpsMaxSpeedMps(
+      {
+        gpsAccuracyThresholdM,
+        gpsMinTimeS,
+        gpsMinDistanceM,
+        gpsMaxSpeedMps: settings?.gpsMaxSpeedMps,
+      },
+      defaultAppSettings.gpsMaxSpeedMps
     ),
   }
 }

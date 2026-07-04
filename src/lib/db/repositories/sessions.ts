@@ -108,6 +108,7 @@ export async function appendSessionTrackpoint(params: {
     const movingTimeS = (session?.movingTimeS ?? 0) + metricDelta.movingTimeS
     const avgAccuracyM = appendAverageAccuracy(
       session?.avgAccuracyM ?? null,
+      // Seq is contiguous: appends assign max(seq)+1 and session edits renumber points.
       previousTrackPoint?.seq ?? 0,
       nextTrackPoint.accuracyM
     )

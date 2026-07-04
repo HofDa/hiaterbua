@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { defaultAppSettings, normalizeMapBaseLayer } from '@/lib/settings/defaults'
+import { resolveGpsMaxSpeedMps } from '@/lib/settings/gps-presets'
 import {
   optionalNumber,
   optionalTrimmedString,
@@ -18,24 +19,38 @@ export const settingsRecordSchema = z
     tileCachingEnabled: z.boolean().optional(),
     theme: z.enum(['system', 'light']).optional(),
   })
-  .transform((value): AppSettings => ({
-    id: 'app',
-    userName: value.userName ?? defaultAppSettings.userName,
-    language: 'de',
-    mapBaseLayer: normalizeMapBaseLayer(value.mapBaseLayer),
-    gpsAccuracyThresholdM: Math.max(
+  .transform((value): AppSettings => {
+    const gpsAccuracyThresholdM = Math.max(
       1,
       Math.round(value.gpsAccuracyThresholdM ?? defaultAppSettings.gpsAccuracyThresholdM)
-    ),
-    gpsMinTimeS: Math.max(1, Math.round(value.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS)),
-    gpsMinDistanceM: Math.max(
+    )
+    const gpsMinTimeS = Math.max(
+      1,
+      Math.round(value.gpsMinTimeS ?? defaultAppSettings.gpsMinTimeS)
+    )
+    const gpsMinDistanceM = Math.max(
       1,
       Math.round(value.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM)
-    ),
-    gpsMaxSpeedMps: Math.max(
-      1,
-      value.gpsMaxSpeedMps ?? defaultAppSettings.gpsMaxSpeedMps
-    ),
-    tileCachingEnabled: value.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
-    theme: value.theme ?? defaultAppSettings.theme,
-  }))
+    )
+
+    return {
+      id: 'app',
+      userName: value.userName ?? defaultAppSettings.userName,
+      language: 'de',
+      mapBaseLayer: normalizeMapBaseLayer(value.mapBaseLayer),
+      gpsAccuracyThresholdM,
+      gpsMinTimeS,
+      gpsMinDistanceM,
+      gpsMaxSpeedMps: resolveGpsMaxSpeedMps(
+        {
+          gpsAccuracyThresholdM,
+          gpsMinTimeS,
+          gpsMinDistanceM,
+          gpsMaxSpeedMps: value.gpsMaxSpeedMps,
+        },
+        defaultAppSettings.gpsMaxSpeedMps
+      ),
+      tileCachingEnabled: value.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
+      theme: value.theme ?? defaultAppSettings.theme,
+    }
+  })

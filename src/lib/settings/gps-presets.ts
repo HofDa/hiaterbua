@@ -47,7 +47,7 @@ export const gpsPresets: GpsPreset[] = [
   },
 ]
 
-/** The three tunable GPS fields of a preset, ready to merge into settings. */
+/** The tunable GPS fields of a preset, ready to merge into settings. */
 export function getGpsTuning(preset: GpsPreset): GpsTuning {
   return {
     gpsAccuracyThresholdM: preset.gpsAccuracyThresholdM,
@@ -55,6 +55,24 @@ export function getGpsTuning(preset: GpsPreset): GpsTuning {
     gpsMinDistanceM: preset.gpsMinDistanceM,
     gpsMaxSpeedMps: preset.gpsMaxSpeedMps,
   }
+}
+
+export function resolveGpsMaxSpeedMps(
+  settings: Partial<GpsTuning> | null | undefined,
+  fallbackGpsMaxSpeedMps: number
+) {
+  if (typeof settings?.gpsMaxSpeedMps === 'number' && Number.isFinite(settings.gpsMaxSpeedMps)) {
+    return Math.max(1, settings.gpsMaxSpeedMps)
+  }
+
+  const legacyPreset = gpsPresets.find(
+    (preset) =>
+      preset.gpsAccuracyThresholdM === settings?.gpsAccuracyThresholdM &&
+      preset.gpsMinTimeS === settings?.gpsMinTimeS &&
+      preset.gpsMinDistanceM === settings?.gpsMinDistanceM
+  )
+
+  return legacyPreset?.gpsMaxSpeedMps ?? fallbackGpsMaxSpeedMps
 }
 
 /**
