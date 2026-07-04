@@ -1,3 +1,4 @@
+import Dexie from 'dexie'
 import { assertUpdated } from '@/lib/db/assert-updated'
 import { db } from '@/lib/db/dexie'
 import {
@@ -56,19 +57,13 @@ export function listAllSessionEvents(): Promise<SessionEvent[]> {
 export async function appendSessionTrackpoint(params: {
   sessionId: string
   lastTimestamp: number | null
-  nextSeq: number
   nextPosition: PositionData
-  previousTrackPoint: TrackPoint | null
-  trackpointCount: number
   startTime: string
 }) {
   const {
     sessionId,
     lastTimestamp,
-    nextSeq,
     nextPosition,
-    previousTrackPoint,
-    trackpointCount,
     startTime,
   } = params
 
@@ -76,36 +71,48 @@ export async function appendSessionTrackpoint(params: {
     return null
   }
 
-  const trackPoint: TrackPoint = {
-    id: createId('trackpoint'),
-    sessionId,
-    enclosureWalkId: null,
-    seq: nextSeq,
-    timestamp: new Date(nextPosition.timestamp).toISOString(),
-    lat: nextPosition.latitude,
-    lon: nextPosition.longitude,
-    accuracyM: nextPosition.accuracy,
-    speedMps: nextPosition.speed,
-    headingDeg: nextPosition.heading,
-    accepted: true,
-  }
-
-  const metricDelta = buildTrackpointMetricDelta(previousTrackPoint, trackPoint)
   const updatedAt = nowIso()
 
-  await db.transaction('rw', db.trackpoints, db.sessions, async () => {
+  const trackPoint = await db.transaction('rw', db.trackpoints, db.sessions, async () => {
     const session = await db.sessions.get(sessionId)
     assertUpdated(session ? 1 : 0, 'Weidegang wurde nicht gefunden.')
 
+    const previousTrackPoint = await db.trackpoints
+      .where('[sessionId+seq]')
+      .between([sessionId, Dexie.minKey], [sessionId, Dexie.maxKey])
+      .last()
+
+    if (
+      previousTrackPoint &&
+      new Date(previousTrackPoint.timestamp).getTime() >= nextPosition.timestamp
+    ) {
+      return null
+    }
+
+    const nextSeq = (previousTrackPoint?.seq ?? 0) + 1
+    const nextTrackPoint: TrackPoint = {
+      id: createId('trackpoint'),
+      sessionId,
+      enclosureWalkId: null,
+      seq: nextSeq,
+      timestamp: new Date(nextPosition.timestamp).toISOString(),
+      lat: nextPosition.latitude,
+      lon: nextPosition.longitude,
+      accuracyM: nextPosition.accuracy,
+      speedMps: nextPosition.speed,
+      headingDeg: nextPosition.heading,
+      accepted: true,
+    }
+    const metricDelta = buildTrackpointMetricDelta(previousTrackPoint ?? null, nextTrackPoint)
     const distanceM = (session?.distanceM ?? 0) + metricDelta.distanceM
     const movingTimeS = (session?.movingTimeS ?? 0) + metricDelta.movingTimeS
     const avgAccuracyM = appendAverageAccuracy(
       session?.avgAccuracyM ?? null,
-      trackpointCount,
-      trackPoint.accuracyM
+      previousTrackPoint?.seq ?? 0,
+      nextTrackPoint.accuracyM
     )
 
-    await db.trackpoints.add(trackPoint)
+    await db.trackpoints.add(nextTrackPoint)
     const updatedCount = await db.sessions.update(sessionId, {
       durationS: getDurationSeconds(startTime, updatedAt),
       movingTimeS,
@@ -116,11 +123,17 @@ export async function appendSessionTrackpoint(params: {
     })
 
     assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
+
+    return nextTrackPoint
   })
+
+  if (!trackPoint) {
+    return null
+  }
 
   return {
     trackPoint,
-    nextSeq,
+    nextSeq: trackPoint.seq,
     lastTimestamp: nextPosition.timestamp,
   }
 }

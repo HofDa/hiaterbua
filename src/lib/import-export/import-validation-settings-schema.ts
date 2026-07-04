@@ -14,6 +14,7 @@ export const settingsRecordSchema = z
     gpsAccuracyThresholdM: optionalNumber,
     gpsMinTimeS: optionalNumber,
     gpsMinDistanceM: optionalNumber,
+    gpsMaxSpeedMps: optionalNumber,
     tileCachingEnabled: z.boolean().optional(),
     theme: z.enum(['system', 'light']).optional(),
   })
@@ -30,6 +31,10 @@ export const settingsRecordSchema = z
     gpsMinDistanceM: Math.max(
       1,
       Math.round(value.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM)
+    ),
+    gpsMaxSpeedMps: Math.max(
+      1,
+      value.gpsMaxSpeedMps ?? defaultAppSettings.gpsMaxSpeedMps
     ),
     tileCachingEnabled: value.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
     theme: value.theme ?? defaultAppSettings.theme,

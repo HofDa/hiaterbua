@@ -92,13 +92,7 @@ export function useGrazingSessionMapTrackpointRecorder({
           const result = await appendSessionTrackpoint({
             sessionId,
             lastTimestamp: currentLastTimestampRef.current,
-            nextSeq: currentSeqRef.current + 1,
             nextPosition,
-            previousTrackPoint:
-              currentTrackpointsRef.current.length > 0
-                ? currentTrackpointsRef.current[currentTrackpointsRef.current.length - 1]
-                : null,
-            trackpointCount: currentTrackpointsRef.current.length,
             startTime: currentSessionStartTimeRef.current ?? nowIso(),
           })
 

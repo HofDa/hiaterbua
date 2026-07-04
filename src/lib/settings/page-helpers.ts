@@ -41,6 +41,10 @@ export function normalizeSettingsValue(
       1,
       Math.round(settings?.gpsMinDistanceM ?? defaultAppSettings.gpsMinDistanceM),
     ),
+    gpsMaxSpeedMps: Math.max(
+      1,
+      settings?.gpsMaxSpeedMps ?? defaultAppSettings.gpsMaxSpeedMps,
+    ),
   }
 }
 

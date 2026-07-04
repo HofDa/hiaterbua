@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 type ResponseLike = {
   ok: boolean
-  type: string
   status: number
   statusText: string
   headers: Headers
@@ -28,17 +27,16 @@ type TestServiceWorkerScope = {
   }
 }
 
-class OpaqueTileResponse implements ResponseLike {
-  readonly ok = false
-  readonly type = 'opaque'
-  readonly status = 0
-  readonly statusText = ''
-  readonly headers = new Headers()
+class TileResponse implements ResponseLike {
+  readonly ok = true
+  readonly status = 200
+  readonly statusText = 'OK'
+  readonly headers = new Headers({ 'Content-Type': 'image/png' })
 
   constructor(private readonly bodyText: string) {}
 
   clone() {
-    return new OpaqueTileResponse(this.bodyText)
+    return new TileResponse(this.bodyText)
   }
 
   async blob() {
@@ -46,39 +44,7 @@ class OpaqueTileResponse implements ResponseLike {
   }
 }
 
-class MemoryCache {
-  private readonly items = new Map<string, ResponseLike>()
-
-  async put(request: RequestInfo | URL, response: ResponseLike) {
-    this.items.set(getRequestUrl(request), response.clone())
-  }
-
-  async match(request: RequestInfo | URL) {
-    return this.items.get(getRequestUrl(request))?.clone()
-  }
-
-  async delete(request: RequestInfo | URL) {
-    return this.items.delete(getRequestUrl(request))
-  }
-
-  async keys() {
-    return this.urls().map((url) => new Request(url))
-  }
-
-  urls() {
-    return [...this.items.keys()]
-  }
-
-  clear() {
-    this.items.clear()
-  }
-}
-
 const dbNames: string[] = []
-
-function getRequestUrl(request: RequestInfo | URL) {
-  return request instanceof Request ? request.url : request.toString()
-}
 
 function deleteIndexedDb(name: string) {
   return new Promise<void>((resolve, reject) => {
@@ -101,11 +67,35 @@ async function waitFor<T>(read: () => T | Promise<T>, accept: (value: T) => bool
   throw new Error(`Timed out waiting for condition. Last value: ${String(lastValue)}`)
 }
 
+function getStoredTiles(dbName: string) {
+  return new Promise<Array<{ url: string; blob: Blob }>>((resolve, reject) => {
+    const openRequest = indexedDB.open(dbName)
+    openRequest.onerror = () => reject(openRequest.error)
+    openRequest.onsuccess = () => {
+      const database = openRequest.result
+      const transaction = database.transaction('mapTiles', 'readonly')
+      const store = transaction.objectStore('mapTiles')
+      const getAllRequest = store.getAll()
+
+      getAllRequest.onsuccess = () => resolve(getAllRequest.result)
+      getAllRequest.onerror = () => reject(getAllRequest.error)
+      transaction.oncomplete = () => database.close()
+      transaction.onabort = () => {
+        database.close()
+        reject(transaction.error)
+      }
+    }
+  })
+}
+
+async function getStoredTileUrls(dbName: string) {
+  return (await getStoredTiles(dbName)).map((tile) => tile.url)
+}
+
 function createTileCacheController(maxCachedTiles: number, existingDbName?: string) {
   const source = readFileSync(resolve(process.cwd(), 'public/sw/tile-cache.js'), 'utf8')
   const dbName =
     existingDbName ?? `pastore-sw-tile-cache-test-${Date.now()}-${Math.random()}`
-  const cache = new MemoryCache()
   let nowMs = Date.parse('2026-06-01T00:00:00.000Z')
   if (!existingDbName) {
     dbNames.push(dbName)
@@ -128,14 +118,18 @@ function createTileCacheController(maxCachedTiles: number, existingDbName?: stri
     },
   }
   const cacheStorage = {
-    open: vi.fn(async () => cache),
-    delete: vi.fn(async () => {
-      cache.clear()
-      return true
-    }),
+    delete: vi.fn(async () => true),
   }
-  const fetchMock = vi.fn(async (request: Request) => new OpaqueTileResponse(request.url))
+  const fetchMock = vi.fn(async (request: Request) => new TileResponse(request.url))
   const TestDate = class extends Date {
+    constructor(value?: string | number | Date) {
+      if (value instanceof Date) {
+        super(value.getTime())
+      } else {
+        super(value ?? nowMs)
+      }
+    }
+
     static now() {
       return nowMs
     }
@@ -166,9 +160,9 @@ function createTileCacheController(maxCachedTiles: number, existingDbName?: stri
   }
 
   return {
-    cache,
     controller,
     dbName,
+    fetchMock,
     advanceTime(ms: number) {
       nowMs += ms
     },
@@ -201,8 +195,8 @@ afterEach(async () => {
 })
 
 describe('service-worker tile cache', () => {
-  it('evicts Cache API-only tiles beyond the shared cache ceiling', async () => {
-    const { cache, controller, advanceTime } = createTileCacheController(2)
+  it('evicts IndexedDB tiles beyond the shared cache ceiling', async () => {
+    const { controller, dbName, advanceTime } = createTileCacheController(2)
     const urls = [
       'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&REQUEST=GetMap&BBOX=1',
       'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&REQUEST=GetMap&BBOX=2',
@@ -215,17 +209,17 @@ describe('service-worker tile cache', () => {
       advanceTime(61_000)
       await controller.handleTileRequest(new Request(url))
       await waitFor(
-        () => cache.urls(),
-        (cachedUrls) => cachedUrls.includes(url)
+        () => getStoredTileUrls(dbName),
+        (storedUrls) => storedUrls.includes(url)
       )
     }
 
-    const cachedUrls = await waitFor(
-      () => cache.urls(),
+    const storedUrls = await waitFor(
+      () => getStoredTileUrls(dbName),
       (currentUrls) => currentUrls.length === 2 && !currentUrls.includes(urls[0])
     )
 
-    expect(cachedUrls).toEqual([urls[1], urls[2]])
+    expect(storedUrls.sort()).toEqual([urls[1], urls[2]].sort())
   })
 
   it('keeps runtime tile caching enabled after the service worker restarts', async () => {
@@ -238,11 +232,30 @@ describe('service-worker tile cache', () => {
     const restartedWorker = createTileCacheController(10, firstWorker.dbName)
     await restartedWorker.controller.handleTileRequest(new Request(url))
 
-    const cachedUrls = await waitFor(
-      () => restartedWorker.cache.urls(),
+    const storedUrls = await waitFor(
+      () => getStoredTileUrls(firstWorker.dbName),
       (currentUrls) => currentUrls.includes(url)
     )
 
-    expect(cachedUrls).toContain(url)
+    expect(storedUrls).toContain(url)
+  })
+
+  it('serves a cached tile from IndexedDB when the network is unavailable', async () => {
+    const worker = createTileCacheController(10)
+    const url =
+      'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&REQUEST=GetMap&BBOX=offline'
+
+    await sendTileCachingMessage(worker.controller, true)
+    await worker.controller.handleTileRequest(new Request(url))
+    await waitFor(
+      () => getStoredTileUrls(worker.dbName),
+      (storedUrls) => storedUrls.includes(url)
+    )
+
+    worker.fetchMock.mockRejectedValueOnce(new Error('network unavailable'))
+    const offlineResponse = await worker.controller.handleTileRequest(new Request(url))
+
+    expect(worker.fetchMock).toHaveBeenCalledTimes(2)
+    await expect((offlineResponse as Response).text()).resolves.toBe(url)
   })
 })

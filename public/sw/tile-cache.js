@@ -48,25 +48,8 @@
       return requestType === 'GetMap' && service === 'WMS'
     }
 
-    async function openTileCacheBestEffort() {
-      try {
-        return await caches.open(shared.TILE_CACHE_NAME)
-      } catch {
-        return null
-      }
-    }
-
     async function handleTileRequest(request) {
-      const cache = await openTileCacheBestEffort()
-      const cachedResponse = cache ? await cache.match(request).catch(() => null) : null
       const shouldPersistTiles = await getTileCachingEnabled()
-
-      if (cachedResponse) {
-        if (shouldPersistTiles) {
-          void updateTileInBackground(cache, request)
-        }
-        return cachedResponse
-      }
 
       let storedTile = null
       try {
@@ -77,14 +60,14 @@
 
       if (storedTile) {
         if (shouldPersistTiles) {
-          void updateTileInBackground(cache, request)
+          void updateTileInBackground(request)
         }
         return responseFromStoredTile(storedTile)
       }
 
       const networkResponse = await fetch(request)
-      if (shouldPersistTiles && (networkResponse.ok || networkResponse.type === 'opaque')) {
-        void persistTileBestEffort(cache, request, networkResponse)
+      if (shouldPersistTiles && networkResponse.ok) {
+        void persistTileBestEffort(request, networkResponse)
       }
 
       return networkResponse
@@ -104,38 +87,26 @@
       return tileCachingEnabled
     }
 
-    async function updateTileInBackground(cache, request) {
+    async function updateTileInBackground(request) {
       try {
         const networkResponse = await fetch(request)
-        if (networkResponse.ok || networkResponse.type === 'opaque') {
-          await persistTileBestEffort(cache, request, networkResponse)
+        if (networkResponse.ok) {
+          await persistTileBestEffort(request, networkResponse)
         }
       } catch {
         // Ignore background refresh failures and keep the cached tile.
       }
     }
 
-    async function persistTileBestEffort(cache, request, response) {
+    async function persistTileBestEffort(request, response) {
       let didPersist = false
-      const cacheResponse = response.clone()
       const storedResponse = response.clone()
-
-      if (cache) {
-        try {
-          // Cache API keeps opaque cross-origin image responses available;
-          // IndexedDB below is the countable/trimmable store for CORS tiles.
-          await cache.put(request, cacheResponse)
-          didPersist = true
-        } catch {
-          // Cache writes can fail under storage pressure. Keep serving the tile.
-        }
-      }
 
       try {
         await putStoredTile(request, storedResponse)
         didPersist = true
       } catch {
-        // IndexedDB is a secondary offline store; failures must not break maps.
+        // Tile persistence is opportunistic; failures must not break maps.
       }
 
       if (didPersist) {
@@ -154,41 +125,17 @@
     }
 
     async function evictOldTilesBestEffort(cap) {
-      let deletedStoredUrls = []
-      let retainedStoredUrls = new Set()
+      let deletedStoredCount = 0
 
       try {
         const storedTrim = await deleteOldestStoredTiles(cap)
-        deletedStoredUrls = storedTrim.deletedUrls
-        retainedStoredUrls = storedTrim.retainedUrls
+        deletedStoredCount = storedTrim.deletedCount
       } catch {
-        // If IndexedDB is unavailable, still trim the Cache API below.
+        // Best-effort: a failed trim just leaves the store as-is until next time.
       }
 
-      try {
-        const cache = await openTileCacheBestEffort()
-        if (!cache) {
-          if (deletedStoredUrls.length > 0) {
-            scheduleTileCacheUpdatedMessage()
-          }
-          return
-        }
-
-        if (deletedStoredUrls.length > 0) {
-          await Promise.allSettled(deletedStoredUrls.map((url) => cache.delete(url)))
-        }
-
-        const deletedCacheOnlyCount = await deleteCacheOnlyTilesPastLimit(
-          cache,
-          retainedStoredUrls,
-          cap
-        )
-
-        if (deletedStoredUrls.length > 0 || deletedCacheOnlyCount > 0) {
-          scheduleTileCacheUpdatedMessage()
-        }
-      } catch {
-        // Best-effort: a failed trim just leaves the cache as-is until next time.
+      if (deletedStoredCount > 0) {
+        scheduleTileCacheUpdatedMessage()
       }
     }
 
@@ -196,14 +143,13 @@
       const database = await openTileDb()
 
       return new Promise((resolve, reject) => {
-        const deletedUrls = []
-        const retainedUrls = new Set()
+        let deletedCount = 0
         const transaction = database.transaction(shared.MAP_TILE_STORE, 'readwrite')
         const store = transaction.objectStore(shared.MAP_TILE_STORE)
 
         transaction.oncomplete = () => {
           database.close()
-          resolve({ deletedUrls, retainedUrls })
+          resolve({ deletedCount })
         }
         transaction.onabort = () => {
           database.close()
@@ -213,6 +159,7 @@
         const countRequest = store.count()
         countRequest.onsuccess = () => {
           const overflow = Math.max(0, countRequest.result - cap)
+          if (overflow <= 0) return
 
           // Oldest-first: the updatedAt index iterates ascending by default.
           const cursorRequest = store.index(shared.TILE_DB_UPDATED_AT_INDEX).openCursor()
@@ -220,30 +167,14 @@
             const cursor = cursorRequest.result
             if (!cursor) return
 
-            if (deletedUrls.length < overflow) {
-              deletedUrls.push(cursor.value.url)
+            if (deletedCount < overflow) {
+              deletedCount += 1
               cursor.delete()
-            } else {
-              retainedUrls.add(cursor.value.url)
             }
             cursor.continue()
           }
         }
       })
-    }
-
-    async function deleteCacheOnlyTilesPastLimit(cache, retainedStoredUrls, cap) {
-      const cachedRequests = await cache.keys()
-      const cacheOnlyRequests = cachedRequests.filter(
-        (request) => !retainedStoredUrls.has(request.url)
-      )
-      const unionCount = retainedStoredUrls.size + cacheOnlyRequests.length
-      const overflow = unionCount - cap
-      if (overflow <= 0) return 0
-
-      const requestsToDelete = cacheOnlyRequests.slice(0, overflow)
-      await Promise.allSettled(requestsToDelete.map((request) => cache.delete(request)))
-      return requestsToDelete.length
     }
 
     function scheduleTileCacheUpdatedMessage() {
@@ -401,8 +332,6 @@
     }
 
     async function putStoredTile(request, response) {
-      if (response.type === 'opaque') return
-
       const database = await openTileDb()
 
       return new Promise(async (resolve, reject) => {
@@ -441,7 +370,6 @@
     }
 
     return {
-      cacheName: shared.TILE_CACHE_NAME,
       handleMessage,
       handleTileRequest,
       isCacheableTileRequest,

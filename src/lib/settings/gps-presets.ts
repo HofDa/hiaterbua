@@ -4,7 +4,7 @@ export type GpsPresetId = 'precise' | 'standard' | 'longTour'
 
 export type GpsTuning = Pick<
   AppSettings,
-  'gpsAccuracyThresholdM' | 'gpsMinTimeS' | 'gpsMinDistanceM'
+  'gpsAccuracyThresholdM' | 'gpsMinTimeS' | 'gpsMinDistanceM' | 'gpsMaxSpeedMps'
 >
 
 export type GpsPreset = GpsTuning & {
@@ -14,7 +14,7 @@ export type GpsPreset = GpsTuning & {
 }
 
 // Ordered most-precise → most battery-saving. The geolocation watcher reads
-// these three fields live (via getPositionDecision), so switching preset changes
+// these fields live (via getPositionDecision), so switching preset changes
 // recording fidelity and power draw from the next accepted fix onward — the key
 // lever for stretching battery across a long day on the mountain.
 export const gpsPresets: GpsPreset[] = [
@@ -25,6 +25,7 @@ export const gpsPresets: GpsPreset[] = [
     gpsAccuracyThresholdM: 15,
     gpsMinTimeS: 2,
     gpsMinDistanceM: 2,
+    gpsMaxSpeedMps: 4,
   },
   {
     id: 'standard',
@@ -33,14 +34,16 @@ export const gpsPresets: GpsPreset[] = [
     gpsAccuracyThresholdM: 25,
     gpsMinTimeS: 5,
     gpsMinDistanceM: 5,
+    gpsMaxSpeedMps: 7,
   },
   {
     id: 'longTour',
     label: 'Lange Tour',
-    description: 'Akku sparen: seltenere Punkte für ganztägige Touren.',
+    description: 'Akku sparen: seltenere Punkte und höhere Geschwindigkeit für lange Touren.',
     gpsAccuracyThresholdM: 40,
     gpsMinTimeS: 20,
     gpsMinDistanceM: 15,
+    gpsMaxSpeedMps: 12,
   },
 ]
 
@@ -50,6 +53,7 @@ export function getGpsTuning(preset: GpsPreset): GpsTuning {
     gpsAccuracyThresholdM: preset.gpsAccuracyThresholdM,
     gpsMinTimeS: preset.gpsMinTimeS,
     gpsMinDistanceM: preset.gpsMinDistanceM,
+    gpsMaxSpeedMps: preset.gpsMaxSpeedMps,
   }
 }
 
@@ -62,7 +66,8 @@ export function matchGpsPreset(settings: GpsTuning): GpsPresetId | null {
     (preset) =>
       preset.gpsAccuracyThresholdM === settings.gpsAccuracyThresholdM &&
       preset.gpsMinTimeS === settings.gpsMinTimeS &&
-      preset.gpsMinDistanceM === settings.gpsMinDistanceM,
+      preset.gpsMinDistanceM === settings.gpsMinDistanceM &&
+      preset.gpsMaxSpeedMps === settings.gpsMaxSpeedMps,
   )
 
   return match?.id ?? null

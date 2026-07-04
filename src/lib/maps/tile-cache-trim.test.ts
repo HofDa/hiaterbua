@@ -21,6 +21,10 @@ class TestTileDb extends Dexie {
   constructor() {
     super(TILE_DB_NAME)
     this.version(2).stores({ mapTiles: 'url, updatedAt' })
+    this.version(3).stores({
+      mapTiles: 'url, updatedAt',
+      tileCacheSettings: 'key',
+    })
   }
 }
 

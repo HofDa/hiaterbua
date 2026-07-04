@@ -1,6 +1,11 @@
 import { useEffect } from 'react'
 import type { MutableRefObject } from 'react'
-import { getPositionDecision, type GpsState, type PositionDecision } from '@/lib/maps/map-core'
+import {
+  getPositionDecision,
+  MAX_REASONABLE_POSITION_SPEED_MPS,
+  type GpsState,
+  type PositionDecision,
+} from '@/lib/maps/map-core'
 import type { AppSettings } from '@/types/domain'
 
 type BaseTrackedPosition = {
@@ -111,7 +116,8 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
             nextPosition,
             currentSettings.gpsAccuracyThresholdM,
             currentSettings.gpsMinTimeS,
-            currentSettings.gpsMinDistanceM
+            currentSettings.gpsMinDistanceM,
+            currentSettings.gpsMaxSpeedMps ?? MAX_REASONABLE_POSITION_SPEED_MPS
           )
 
           setLastPositionDecision(decision)

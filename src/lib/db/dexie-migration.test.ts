@@ -113,7 +113,7 @@ describe('HirtenAppDB schema migration from v3', () => {
 
     await db.open()
 
-    expect(db.verno).toBe(8)
+    expect(db.verno).toBe(9)
     expect(await db.herds.get('herd_legacy')).toEqual(legacyHerd())
     expect(await db.enclosures.get('enclosure_legacy')).toEqual(legacyEnclosure())
     expect(await db.sessions.get('session_legacy')).toEqual(legacySession())

@@ -8,7 +8,7 @@ export type PositionDecision =
   | { accepted: false; reason: 'accuracy' | 'time' | 'distance' | 'speed' }
 
 export const FRESH_POSITION_MAX_AGE_MS = 60_000
-export const MAX_REASONABLE_POSITION_SPEED_MPS = 4
+export const MAX_REASONABLE_POSITION_SPEED_MPS = 7
 
 type PositionSample = {
   latitude: number

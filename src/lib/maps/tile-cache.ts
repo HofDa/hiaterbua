@@ -12,7 +12,7 @@ export const PREFETCH_CONCURRENCY = 8
 // areas would otherwise grow the cache without bound — and persistent storage
 // makes the browser unlikely to evict it for us. ~5000 256px tiles is roughly
 // 150-250 MB depending on the layer; oldest tiles are trimmed past this.
-// The service worker enforces the same ceiling on its runtime cache — keep this
+// The service worker enforces the same ceiling on its runtime tile store — keep this
 // in sync with MAX_CACHED_TILES in public/sw/shared.js.
 export const MAX_CACHED_TILES = 5000
 export const TILE_CACHE_CHANGED_EVENT = 'hirtenapp:tile-cache-changed'
@@ -213,9 +213,8 @@ export async function clearTileCacheStorage() {
 
 /**
  * Evicts the oldest tiles (by `updatedAt`) once the cache exceeds `limit`,
- * keeping IndexedDB and the Cache API in sync. Best-effort: failures are logged
- * and swallowed so a trim never breaks the prefetch that triggered it. Returns
- * the number of tiles removed.
+ * Best-effort: failures are logged and swallowed so a trim never breaks the
+ * prefetch that triggered it. Returns the number of tiles removed.
  */
 export async function trimTileCacheToLimit(limit = MAX_CACHED_TILES): Promise<number> {
   if (typeof window === 'undefined') {
@@ -236,16 +235,6 @@ export async function trimTileCacheToLimit(limit = MAX_CACHED_TILES): Promise<nu
 
     const staleUrls = staleTiles.map((tile) => tile.url)
     await tileDb.mapTiles.bulkDelete(staleUrls)
-
-    if ('caches' in window) {
-      const cache = await window.caches.open(TILE_CACHE_NAME).catch((error) => {
-        logError('trimTileCacheToLimit.openCache', error)
-        return null
-      })
-      if (cache) {
-        await Promise.all(staleUrls.map((url) => cache.delete(url)))
-      }
-    }
 
     return staleUrls.length
   } catch (error) {
@@ -280,30 +269,7 @@ export async function requestPersistentStorage() {
   }
 }
 
-async function persistTileResponseBestEffort(
-  request: Request,
-  response: Response,
-  cache?: Cache | null
-) {
-  let didPersist = false
-
-  if (cache) {
-    try {
-      // Keep the Cache API copy for cross-origin image responses that may be
-      // opaque to IndexedDB serialization; IndexedDB remains the countable,
-      // trimmable store for normal CORS tile responses.
-      await cache.put(request, response.clone())
-      didPersist = true
-    } catch (error) {
-      logError('persistTileResponseBestEffort.cache', error)
-    }
-  }
-
-  // Opaque responses cannot be reliably serialized into IndexedDB.
-  if (response.type === 'opaque') {
-    return didPersist
-  }
-
+async function persistTileResponseBestEffort(request: Request, response: Response) {
   try {
     const blob = await response.clone().blob()
     await tileDb.mapTiles.put({
@@ -314,12 +280,11 @@ async function persistTileResponseBestEffort(
       statusText: response.statusText || undefined,
       updatedAt: new Date().toISOString(),
     })
-    didPersist = true
+    return true
   } catch (error) {
     logError('persistTileResponseBestEffort.db', error)
+    return false
   }
-
-  return didPersist
 }
 
 export async function prefetchTileUrls(
@@ -330,12 +295,6 @@ export async function prefetchTileUrls(
     throw new Error('Browser-APIs sind nicht verfuegbar.')
   }
 
-  const cache = 'caches' in window
-    ? await window.caches.open(TILE_CACHE_NAME).catch((error) => {
-        logError('prefetchTileUrls.openCache', error)
-        return null
-      })
-    : null
   let completed = 0
   let succeeded = 0
   let failed = 0
@@ -355,11 +314,11 @@ export async function prefetchTileUrls(
             })
             const response = await fetch(request)
 
-            if (!response.ok && response.type !== 'opaque') {
+            if (!response.ok) {
               throw new Error(`Tile konnte nicht geladen werden: ${response.status}`)
             }
 
-            const didPersist = await persistTileResponseBestEffort(request, response, cache)
+            const didPersist = await persistTileResponseBestEffort(request, response)
             if (!didPersist) {
               throw new Error('Tile konnte nicht lokal gespeichert werden.')
             }

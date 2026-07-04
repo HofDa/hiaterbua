@@ -1,6 +1,7 @@
 import {
   formatAccuracy,
   formatTimestamp,
+  MAX_REASONABLE_POSITION_SPEED_MPS,
   type GpsState,
   type PositionDecision,
 } from '@/lib/maps/map-core'
@@ -62,7 +63,7 @@ export function useGrazingSessionMapPresentation({
           ? `Letzter Punkt verworfen: Mindestzeit von ${effectiveSettings.gpsMinTimeS} s noch nicht erreicht.`
           : lastPositionDecision.reason === 'distance'
             ? `Letzter Punkt verworfen: Mindestdistanz von ${effectiveSettings.gpsMinDistanceM} m noch nicht erreicht.`
-            : 'Letzter Punkt verworfen: Positionssprung war unplausibel.'
+            : `Letzter Punkt verworfen: schneller als ${effectiveSettings.gpsMaxSpeedMps ?? MAX_REASONABLE_POSITION_SPEED_MPS} m/s.`
       : lastPositionDecision?.accepted
         ? 'Letzter Punkt wurde für den Weidegang akzeptiert.'
         : 'GPS-Filter noch ohne Entscheidung.'

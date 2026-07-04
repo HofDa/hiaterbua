@@ -200,6 +200,7 @@ export interface AppSettings {
   gpsAccuracyThresholdM: number
   gpsMinTimeS: number
   gpsMinDistanceM: number
+  gpsMaxSpeedMps: number
   tileCachingEnabled: boolean
   theme: 'system' | 'light'
   // ISO timestamp of the last successful full export; device-local backup

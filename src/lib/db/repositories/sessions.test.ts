@@ -65,10 +65,7 @@ describe('appendSessionTrackpoint', () => {
     const first = await appendSessionTrackpoint({
       sessionId: session.id,
       lastTimestamp: null,
-      nextSeq: 1,
       nextPosition: position({ timestamp: Date.parse('2026-06-01T08:00:00.000Z') }),
-      previousTrackPoint: null,
-      trackpointCount: 0,
       startTime: session.startTime,
     })
     expect(first).not.toBeNull()
@@ -76,23 +73,62 @@ describe('appendSessionTrackpoint', () => {
     const second = await appendSessionTrackpoint({
       sessionId: session.id,
       lastTimestamp: first!.lastTimestamp,
-      nextSeq: first!.nextSeq + 1,
       nextPosition: position({
         latitude: 46.51,
         longitude: 11.01,
         timestamp: Date.parse('2026-06-01T08:00:30.000Z'),
       }),
-      previousTrackPoint: first!.trackPoint,
-      trackpointCount: 1,
       startTime: session.startTime,
     })
     expect(second).not.toBeNull()
 
     const stored = await listSessionTrackpoints(session.id)
     expect(stored).toHaveLength(2)
+    expect(stored.map((point) => point.seq)).toEqual([1, 2])
 
     const updated = await db.sessions.get(session.id)
     expect(updated?.distanceM).toBeGreaterThan(0)
+  })
+
+  it('derives seq and duplicate checks from stored trackpoints inside the transaction', async () => {
+    const session = await createGrazingSessionRecord({
+      herdId: 'herd_1',
+      animalCount: null,
+      notes: '',
+      position: null,
+    })
+    const firstTimestamp = Date.parse('2026-06-01T08:00:00.000Z')
+
+    const first = await appendSessionTrackpoint({
+      sessionId: session.id,
+      lastTimestamp: null,
+      nextPosition: position({ timestamp: firstTimestamp }),
+      startTime: session.startTime,
+    })
+    expect(first?.nextSeq).toBe(1)
+
+    const duplicateFromStaleTab = await appendSessionTrackpoint({
+      sessionId: session.id,
+      lastTimestamp: null,
+      nextPosition: position({ timestamp: firstTimestamp }),
+      startTime: session.startTime,
+    })
+    expect(duplicateFromStaleTab).toBeNull()
+
+    const second = await appendSessionTrackpoint({
+      sessionId: session.id,
+      lastTimestamp: null,
+      nextPosition: position({
+        latitude: 46.51,
+        longitude: 11.01,
+        timestamp: Date.parse('2026-06-01T08:00:30.000Z'),
+      }),
+      startTime: session.startTime,
+    })
+    expect(second?.nextSeq).toBe(2)
+
+    const stored = await listSessionTrackpoints(session.id)
+    expect(stored.map((point) => point.seq)).toEqual([1, 2])
   })
 
   it('ignores a fix with the same timestamp as the previous one', async () => {
@@ -107,10 +143,7 @@ describe('appendSessionTrackpoint', () => {
     const result = await appendSessionTrackpoint({
       sessionId: session.id,
       lastTimestamp: sameTimestamp,
-      nextSeq: 1,
       nextPosition: position({ timestamp: sameTimestamp }),
-      previousTrackPoint: null,
-      trackpointCount: 0,
       startTime: session.startTime,
     })
 
@@ -237,10 +270,7 @@ describe('deleteGrazingSessionRecord', () => {
     await appendSessionTrackpoint({
       sessionId: session.id,
       lastTimestamp: null,
-      nextSeq: 1,
       nextPosition: position(),
-      previousTrackPoint: null,
-      trackpointCount: 0,
       startTime: session.startTime,
     })
 

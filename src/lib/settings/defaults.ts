@@ -8,6 +8,7 @@ export const defaultAppSettings: AppSettings = {
   gpsAccuracyThresholdM: 25,
   gpsMinTimeS: 5,
   gpsMinDistanceM: 5,
+  gpsMaxSpeedMps: 7,
   tileCachingEnabled: false,
   theme: 'system',
 }

@@ -54,4 +54,18 @@ describe('GPS position plausibility', () => {
       reason: 'accepted',
     })
   })
+
+  it('accepts faster movement when the active GPS preset allows it', () => {
+    const fastButAllowed = {
+      latitude: 46.503,
+      longitude: 11,
+      accuracy: 5,
+      timestamp: previous.timestamp + 30_000,
+    }
+
+    expect(getPositionDecision(previous, fastButAllowed, 15, 2, 2, 12)).toEqual({
+      accepted: true,
+      reason: 'accepted',
+    })
+  })
 })

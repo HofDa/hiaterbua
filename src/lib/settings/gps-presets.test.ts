@@ -26,12 +26,13 @@ describe('gpsPresets', () => {
 })
 
 describe('getGpsTuning', () => {
-  it('returns only the three tunable GPS fields', () => {
+  it('returns only the tunable GPS fields', () => {
     const longTour = gpsPresets.find((preset) => preset.id === 'longTour')!
     expect(getGpsTuning(longTour)).toEqual({
       gpsAccuracyThresholdM: longTour.gpsAccuracyThresholdM,
       gpsMinTimeS: longTour.gpsMinTimeS,
       gpsMinDistanceM: longTour.gpsMinDistanceM,
+      gpsMaxSpeedMps: longTour.gpsMaxSpeedMps,
     })
   })
 })
@@ -47,6 +48,7 @@ describe('matchGpsPreset', () => {
       gpsAccuracyThresholdM: 30,
       gpsMinTimeS: 7,
       gpsMinDistanceM: 9,
+      gpsMaxSpeedMps: 6,
     }
     expect(matchGpsPreset(custom)).toBeNull()
   })
@@ -55,6 +57,16 @@ describe('matchGpsPreset', () => {
     const standard = gpsPresets.find((preset) => preset.id === 'standard')!
     expect(
       matchGpsPreset({ ...getGpsTuning(standard), gpsMinTimeS: standard.gpsMinTimeS + 1 }),
+    ).toBeNull()
+  })
+
+  it('requires the speed cap to match as part of a preset', () => {
+    const standard = gpsPresets.find((preset) => preset.id === 'standard')!
+    expect(
+      matchGpsPreset({
+        ...getGpsTuning(standard),
+        gpsMaxSpeedMps: standard.gpsMaxSpeedMps + 1,
+      }),
     ).toBeNull()
   })
 })

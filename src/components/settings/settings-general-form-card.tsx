@@ -92,7 +92,7 @@ export function SettingsGeneralFormCard({
             </p>
           </FormField>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-4">
             <FormField>
               <FormLabel>GPS-Genauigkeit (m)</FormLabel>
               <FormInput
@@ -133,6 +133,22 @@ export function SettingsGeneralFormCard({
                   setDraft((current) => ({
                     ...current,
                     gpsMinDistanceM: Number(event.target.value),
+                  }))
+                }
+              />
+            </FormField>
+
+            <FormField>
+              <FormLabel>Max. Tempo (m/s)</FormLabel>
+              <FormInput
+                type="number"
+                min={1}
+                step={0.5}
+                value={draft.gpsMaxSpeedMps}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    gpsMaxSpeedMps: Number(event.target.value),
                   }))
                 }
               />

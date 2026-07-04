@@ -31,7 +31,6 @@ self.addEventListener('activate', (event) => {
       await Promise.allSettled(
         cacheNames
           .filter((cacheName) => {
-            if (cacheName === tileCache.cacheName) return false
             return cacheName !== appShell.cacheName
           })
           .map((cacheName) => caches.delete(cacheName))
