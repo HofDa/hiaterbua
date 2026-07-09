@@ -1,6 +1,11 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import type { ImportPreview } from '@/lib/import-export/export-page-helpers'
+import {
+  consumePendingLaunchFiles,
+  subscribeToLaunchFiles,
+} from '@/lib/import-export/launch-files'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
@@ -44,6 +49,33 @@ export function ExportImportCard({
   onReplaceExistingChange,
   onImport,
 }: ExportImportCardProps) {
+  // Keep the latest handler available to the launch-files effect without
+  // re-running it — the page recreates `onFileSelection` on every render.
+  const onFileSelectionRef = useRef(onFileSelection)
+  useEffect(() => {
+    onFileSelectionRef.current = onFileSelection
+  }, [onFileSelection])
+
+  // Files opened via the PWA "Open with" flow (manifest file_handlers +
+  // launchQueue) land in a module-level queue; feed them into the exact same
+  // handler as a manual file selection. Covers both orders: files queued
+  // before this card mounts (the normal case — the launch routes to /export)
+  // and files arriving while the card is already visible.
+  useEffect(() => {
+    const applyPendingLaunchFiles = () => {
+      const files = consumePendingLaunchFiles()
+      // The import flow handles one file at a time; the most recently opened
+      // file is what the user intends to import.
+      const file = files.length > 0 ? files[files.length - 1] : null
+      if (file) {
+        void onFileSelectionRef.current(file)
+      }
+    }
+
+    applyPendingLaunchFiles()
+    return subscribeToLaunchFiles(applyPendingLaunchFiles)
+  }, [])
+
   return (
     <Card>
       <CardHeader>

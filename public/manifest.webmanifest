@@ -9,6 +9,22 @@
   "background_color": "#e7e2d7",
   "theme_color": "#163d2f",
   "orientation": "portrait-primary",
+  "file_handlers": [
+    {
+      "action": "/export",
+      "accept": {
+        "application/json": [
+          ".json"
+        ],
+        "application/geo+json": [
+          ".geojson"
+        ],
+        "application/zip": [
+          ".zip"
+        ]
+      }
+    }
+  ],
   "icons": [
     {
       "src": "/favicon.ico",
