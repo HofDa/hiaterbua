@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { WifiOff } from 'lucide-react'
-import { StatusAlert } from './alert'
 
 export function ConnectivityBanner() {
   const [isOffline, setIsOffline] = useState(false)
@@ -23,10 +22,14 @@ export function ConnectivityBanner() {
   if (!isOffline) return null
 
   return (
-    <div className="pointer-events-none fixed bottom-[calc(var(--app-bottom-nav-height)+var(--app-recording-bar-height)+env(safe-area-inset-bottom)+0.75rem)] left-3 right-3 z-50 animate-in fade-in slide-in-from-bottom-4 md:bottom-[calc(var(--app-recording-bar-height)+1rem)] md:left-4 md:right-4">
-      <StatusAlert variant="warning" icon={<WifiOff className="h-4 w-4" />}>
-        Offline – Änderungen werden lokal gespeichert.
-      </StatusAlert>
+    <div className="pointer-events-none fixed bottom-[calc(var(--app-bottom-nav-height)+var(--app-recording-bar-height)+env(safe-area-inset-bottom)+0.75rem)] left-0 right-0 z-50 flex justify-center animate-in fade-in slide-in-from-bottom-4 md:bottom-[calc(var(--app-recording-bar-height)+1rem)]">
+      <div
+        role="status"
+        className="flex items-center gap-1.5 rounded-full border border-warning-border bg-warning-surface/90 px-3 py-1.5 text-xs font-medium text-warning-ink shadow-sm backdrop-blur-sm"
+      >
+        <WifiOff className="h-3.5 w-3.5" />
+        Offline – wird lokal gespeichert
+      </div>
     </div>
   )
 }
