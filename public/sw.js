@@ -49,6 +49,11 @@ self.addEventListener('message', (event) => {
     return
   }
 
+  if (data.type === 'ENSURE_APP_SHELL') {
+    event.waitUntil(appShell.repairAppShellCache())
+    return
+  }
+
   tileCache.handleMessage(data, event)
 })
 

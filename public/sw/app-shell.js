@@ -17,6 +17,7 @@
     const appDataRoutes = new Set(appRouteToDataRoute.values())
     const precacheUrls = Array.from(new Set([shared.OFFLINE_URL, ...(manifest.urls ?? [])]))
     const precacheUrlSet = new Set(precacheUrls)
+    const precacheDataRoutePairs = Array.from(appRouteToDataRoute.entries())
 
     async function openCacheBestEffort() {
       try {
@@ -26,23 +27,127 @@
       }
     }
 
+    // Next serves these prerendered error documents with their semantic error
+    // status (404/500); the body is still the correct page to cache.
+    function isErrorStatusAppPage(url) {
+      return url === '/_not-found' || url === '/_global-error'
+    }
+
+    // An unconsumed response body keeps its HTTP/1.1 connection checked out of
+    // the pool; a handful of discarded responses can wedge every later install
+    // fetch. Cancel the stream whenever a response won't be cached.
+    function discardResponseBody(response) {
+      try {
+        void response.body?.cancel()
+      } catch {
+        // Releasing the connection is best-effort.
+      }
+    }
+
+    // A hung fetch must never wedge the install/repair forever. Generous for
+    // core urls (large chunks on slow field connections), short for the
+    // opportunistic data payloads. Guarded: not every runtime has AbortSignal.
+    const PRECACHE_URL_FETCH_TIMEOUT_MS = 120_000
+    const PRECACHE_DATA_FETCH_TIMEOUT_MS = 20_000
+
+    function timeoutSignal(timeoutMs) {
+      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+        return AbortSignal.timeout(timeoutMs)
+      }
+
+      return undefined
+    }
+
+    async function cacheUrlIfMissing(cache, url) {
+      const cacheKey = shared.createCacheKey(url)
+      const existing = await matchCacheBestEffort(cache, cacheKey)
+      if (existing) return true
+
+      try {
+        const response = await fetch(new Request(cacheKey, { cache: 'reload' }), {
+          signal: timeoutSignal(PRECACHE_URL_FETCH_TIMEOUT_MS),
+        })
+        if (!response.ok && response.type !== 'opaque' && !isErrorStatusAppPage(url)) {
+          discardResponseBody(response)
+          return false
+        }
+
+        await cache.put(cacheKey, response.clone())
+        return true
+      } catch {
+        return false
+      }
+    }
+
+    // RSC payloads make offline client-side navigation seamless, but not every
+    // server exposes the static `.rsc` path (e.g. `next start`), so fall back
+    // to requesting the page route with the RSC header. Always best-effort:
+    // a failed hydration payload still degrades gracefully to a cached full
+    // navigation, so it must never block the install.
+    async function cacheDataRouteBestEffort(cache, routePath, dataRoute) {
+      const cacheKey = shared.createCacheKey(dataRoute)
+      const existing = await matchCacheBestEffort(cache, cacheKey)
+      if (existing) return
+
+      try {
+        let response = await fetch(new Request(shared.createCacheKey(dataRoute), { cache: 'reload' }), {
+          signal: timeoutSignal(PRECACHE_DATA_FETCH_TIMEOUT_MS),
+        })
+        if (!response.ok) {
+          discardResponseBody(response)
+          response = await fetch(
+            new Request(shared.createCacheKey(routePath), {
+              cache: 'reload',
+              headers: { RSC: '1' },
+            }),
+            { signal: timeoutSignal(PRECACHE_DATA_FETCH_TIMEOUT_MS) }
+          )
+        }
+
+        if (response.ok) {
+          await putCacheBestEffort(cache, cacheKey, response)
+        } else {
+          discardResponseBody(response)
+        }
+      } catch {
+        // Opportunistic only; the cached page navigation remains the fallback.
+      }
+    }
+
+    // Strict on purpose: a partially precached shell used to install "successfully"
+    // and later strand the user on the offline page mid-field. Failing the install
+    // keeps the previous, complete shell active until a retry succeeds.
     async function precacheAppShell() {
+      const cache = await caches.open(appCacheName)
+
+      const results = await Promise.all(precacheUrls.map((url) => cacheUrlIfMissing(cache, url)))
+
+      await Promise.allSettled(
+        precacheDataRoutePairs.map(([routePath, dataRoute]) =>
+          cacheDataRouteBestEffort(cache, routePath, dataRoute)
+        )
+      )
+
+      const failedCount = results.filter((ok) => !ok).length
+      if (failedCount > 0) {
+        throw new Error(
+          `app-shell precache incomplete: ${failedCount} of ${precacheUrls.length} urls failed`
+        )
+      }
+    }
+
+    // Refill any precache entries that were lost (storage eviction, or a partial
+    // install from an older service-worker version). Best-effort by design —
+    // it runs opportunistically whenever the app regains connectivity.
+    async function repairAppShellCache() {
       const cache = await openCacheBestEffort()
       if (!cache) return
 
+      await Promise.allSettled(precacheUrls.map((url) => cacheUrlIfMissing(cache, url)))
       await Promise.allSettled(
-        precacheUrls.map(async (url) => {
-          try {
-            const response = await fetch(new Request(url, { cache: 'reload' }))
-            if (!response.ok && response.type !== 'opaque') {
-              return
-            }
-
-            await cache.put(shared.createCacheKey(url), response.clone())
-          } catch {
-            // Ignore individual precache failures and keep the install resilient.
-          }
-        })
+        precacheDataRoutePairs.map(([routePath, dataRoute]) =>
+          cacheDataRouteBestEffort(cache, routePath, dataRoute)
+        )
       )
     }
 
@@ -128,20 +233,26 @@
       })
     }
 
+    // Mirror the navigation strategy: on flaky field signal a fetch can hang for
+    // minutes without rejecting, which froze client-side navigation. Race the
+    // network against the same short timeout and fall back to the cached payload.
     async function handleAppDataRequest(request) {
       const requestUrl = new URL(request.url)
       const cache = await openCacheBestEffort()
       const cacheKey = getAppDataCacheKey(request, requestUrl)
-
-      try {
-        const networkResponse = await fetch(request)
-
-        if (cacheKey && networkResponse.ok) {
-          await putCacheBestEffort(cache, cacheKey, networkResponse)
+      const networkResponse = fetch(request).then(async (response) => {
+        if (cacheKey && response.ok) {
+          await putCacheBestEffort(cache, cacheKey, response)
         }
 
-        return networkResponse
+        return response
+      })
+
+      try {
+        return await raceNetworkResponse(networkResponse, NAVIGATION_NETWORK_TIMEOUT_MS)
       } catch {
+        void networkResponse.catch(() => undefined)
+
         if (cacheKey) {
           const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
           if (cachedResponse) {
@@ -263,6 +374,7 @@
       handleAppAssetRequest,
       handleAppDataRequest,
       handleNavigationRequest,
+      repairAppShellCache,
       isAppDataRequest(request, url) {
         return (
           appDataRoutes.has(url.pathname) ||

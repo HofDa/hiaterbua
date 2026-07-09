@@ -10,6 +10,8 @@ import {
   readFallbackSettingsSnapshot,
   subscribeToFallbackSettings,
 } from '@/lib/settings/page-helpers'
+import { useFieldSafety } from '@/lib/field-safety/use-field-safety'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
 import { logError } from '@/lib/utils/log'
@@ -37,12 +39,14 @@ function postTileCachingMessage(
 type ServiceWorkerUpdatePromptProps = {
   isApplyingUpdate: boolean
   onApplyUpdate: () => void
+  onDismiss: () => void
   waitingWorker: ServiceWorker | null
 }
 
 function ServiceWorkerUpdatePrompt({
   isApplyingUpdate,
   onApplyUpdate,
+  onDismiss,
   waitingWorker,
 }: ServiceWorkerUpdatePromptProps) {
   const [backupStatus, setBackupStatus] = useState<BackupStatus>('idle')
@@ -109,7 +113,19 @@ function ServiceWorkerUpdatePrompt({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:shrink-0">
+            <button
+              type="button"
+              onClick={onDismiss}
+              disabled={isApplyingUpdate}
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'sm' }),
+                'h-10 px-3 text-ink-muted',
+              )}
+            >
+              Später
+            </button>
+
             <button
               type="button"
               onClick={() => void handleBackupExport()}
@@ -153,7 +169,9 @@ export function ServiceWorkerSync() {
   const didReloadForUpdate = useRef(false)
   const tileCachingEnabledRef = useRef<boolean | null>(null)
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null)
+  const [isUpdatePromptDismissed, setIsUpdatePromptDismissed] = useState(false)
   const [isApplyingUpdate, setIsApplyingUpdate] = useState(false)
+  const { canShowDisruptivePrompt } = useFieldSafety()
   const fallbackSettingsSnapshot = useSyncExternalStore(
     subscribeToFallbackSettings,
     readFallbackSettingsSnapshot,
@@ -183,12 +201,22 @@ export function ServiceWorkerSync() {
         if (isCancelled) return
 
         registrationRef.current = registration
+        recordFieldDiagnostic({
+          type: 'service_worker_registered',
+          message: 'Service Worker registriert.',
+          details: { scope: registration.scope },
+        })
 
         const handleWaitingWorker = (worker: ServiceWorker | null | undefined) => {
           if (isCancelled || !worker || !navigator.serviceWorker.controller) {
             return
           }
 
+          recordFieldDiagnostic({
+            type: 'service_worker_update_waiting',
+            message: 'Service-Worker-Update wartet.',
+            details: { state: worker.state },
+          })
           setWaitingWorker(worker)
         }
 
@@ -199,13 +227,24 @@ export function ServiceWorkerSync() {
           }
 
           installingWorker.addEventListener('statechange', () => {
+            recordFieldDiagnostic({
+              type: 'service_worker_statechange',
+              message: `Service Worker Status: ${installingWorker.state}.`,
+              details: { state: installingWorker.state },
+            })
             if (installingWorker.state === 'installed') {
               handleWaitingWorker(registration.waiting ?? installingWorker)
             }
           })
         }
 
-        registration.addEventListener('updatefound', trackInstallingWorker)
+        registration.addEventListener('updatefound', () => {
+          recordFieldDiagnostic({
+            type: 'service_worker_updatefound',
+            message: 'Service-Worker-Update gefunden.',
+          })
+          trackInstallingWorker()
+        })
         trackInstallingWorker()
         handleWaitingWorker(registration.waiting)
 
@@ -226,9 +265,22 @@ export function ServiceWorkerSync() {
           previousTileCachingEnabled.current = currentTileCachingEnabled
         }
 
-        void registration.update().catch(() => undefined)
-      } catch {
+        void registration.update().catch((error) => {
+          recordFieldDiagnostic({
+            type: 'service_worker_update_error',
+            level: 'warning',
+            message: 'Service-Worker-Updateprüfung fehlgeschlagen.',
+            details: error,
+          })
+        })
+      } catch (error) {
         // Service worker registration is optional for the app to function.
+        recordFieldDiagnostic({
+          type: 'service_worker_registration_error',
+          level: 'warning',
+          message: 'Service-Worker-Registrierung fehlgeschlagen.',
+          details: error,
+        })
       }
     }
 
@@ -266,6 +318,11 @@ export function ServiceWorkerSync() {
     if (!navigator.serviceWorker) return
 
     function handleControllerChange() {
+      recordFieldDiagnostic({
+        type: 'service_worker_controllerchange',
+        message: 'Aktiver Service Worker hat gewechselt.',
+      })
+
       if (isUpdateActivationRequested.current && !didReloadForUpdate.current) {
         didReloadForUpdate.current = true
         window.location.reload()
@@ -302,6 +359,31 @@ export function ServiceWorkerSync() {
     void requestPersistentStorage()
   }, [])
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return
+    }
+
+    // A partial precache (install on weak signal with an older SW version) or
+    // storage eviction leaves the offline shell incomplete. Ask the worker to
+    // refill missing entries whenever connectivity is available, so the app
+    // never strands the user on the offline page once the signal drops again.
+    const requestAppShellRepair = () => {
+      navigator.serviceWorker.controller?.postMessage({ type: 'ENSURE_APP_SHELL' })
+    }
+
+    window.addEventListener('online', requestAppShellRepair)
+    void navigator.serviceWorker.ready.then(() => {
+      if (navigator.onLine) {
+        requestAppShellRepair()
+      }
+    })
+
+    return () => {
+      window.removeEventListener('online', requestAppShellRepair)
+    }
+  }, [])
+
   const applyWaitingUpdate = useCallback(() => {
     if (!waitingWorker || isApplyingUpdate) {
       return
@@ -314,6 +396,12 @@ export function ServiceWorkerSync() {
       waitingWorker.postMessage({ type: 'SKIP_WAITING' })
     } catch (error) {
       logError('ServiceWorkerSync.applyWaitingUpdate', error)
+      recordFieldDiagnostic({
+        type: 'service_worker_apply_update_error',
+        level: 'error',
+        message: 'Service-Worker-Update konnte nicht aktiviert werden.',
+        details: error,
+      })
       isUpdateActivationRequested.current = false
       setIsApplyingUpdate(false)
     }
@@ -323,7 +411,10 @@ export function ServiceWorkerSync() {
     <ServiceWorkerUpdatePrompt
       isApplyingUpdate={isApplyingUpdate}
       onApplyUpdate={applyWaitingUpdate}
-      waitingWorker={waitingWorker}
+      onDismiss={() => setIsUpdatePromptDismissed(true)}
+      waitingWorker={
+        isUpdatePromptDismissed || !canShowDisruptivePrompt ? null : waitingWorker
+      }
     />
   )
 }

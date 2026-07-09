@@ -65,12 +65,27 @@
         return responseFromStoredTile(storedTile)
       }
 
-      const networkResponse = await fetch(request)
-      if (shouldPersistTiles && networkResponse.ok) {
-        void persistTileBestEffort(request, networkResponse)
-      }
+      try {
+        const networkResponse = await fetch(request)
+        if (!networkResponse.ok) {
+          postFieldDiagnostic('map_tile_or_network_error', 'warning', 'Kartentile lieferte Fehlerstatus.', {
+            status: networkResponse.status,
+            statusText: networkResponse.statusText,
+          })
+          return transparentTileResponse()
+        }
 
-      return networkResponse
+        if (shouldPersistTiles && networkResponse.ok) {
+          void persistTileBestEffort(request, networkResponse)
+        }
+
+        return networkResponse
+      } catch (error) {
+        postFieldDiagnostic('map_tile_or_network_error', 'warning', 'Kartentile konnte nicht geladen werden.', {
+          error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+        })
+        return transparentTileResponse()
+      }
     }
 
     async function getTileCachingEnabled() {
@@ -105,7 +120,10 @@
       try {
         await putStoredTile(request, storedResponse)
         didPersist = true
-      } catch {
+      } catch (error) {
+        postFieldDiagnostic('indexeddb_write_failed', 'warning', 'Kartentile konnte im Service Worker nicht gespeichert werden.', {
+          error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+        })
         // Tile persistence is opportunistic; failures must not break maps.
       }
 
@@ -369,6 +387,41 @@
           'Content-Type': storedTile.contentType || 'image/png',
         },
       })
+    }
+
+    function transparentTileResponse() {
+      return new Response(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"></svg>',
+        {
+          status: 200,
+          statusText: 'Tile unavailable',
+          headers: {
+            'Content-Type': 'image/svg+xml',
+            'Cache-Control': 'no-store',
+            'X-Pastore-Tile-Fallback': '1',
+          },
+        }
+      )
+    }
+
+    function postFieldDiagnostic(type, level, message, details) {
+      try {
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'FIELD_DIAGNOSTIC',
+              diagnostic: {
+                type,
+                level,
+                message,
+                details,
+              },
+            })
+          })
+        })
+      } catch {
+        // Diagnostics are best-effort and must never affect tile handling.
+      }
     }
 
     return {

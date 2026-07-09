@@ -172,7 +172,10 @@
         </div>
 
         <div class="actions">
-          <button class="button primary" type="button" onclick="window.location.reload()">
+          <button class="button primary" type="button" onclick="window.location.replace('/')">
+            Weiter in der App (offline)
+          </button>
+          <button class="button secondary" type="button" onclick="window.location.reload()">
             Verbindung erneut prüfen
           </button>
           <button class="button secondary" type="button" onclick="history.back()">
@@ -181,5 +184,21 @@
         </div>
       </section>
     </main>
+    <script>
+      // The app shell is precached, so the start page works without a
+      // connection — never leave the user stranded on this page. Poll as a
+      // fallback: mobile browsers can miss the online event (backgrounded
+      // tab, WebView quirks).
+      function returnToApp() {
+        window.location.replace('/')
+      }
+
+      window.addEventListener('online', returnToApp)
+      setInterval(() => {
+        if (navigator.onLine) {
+          returnToApp()
+        }
+      }, 3000)
+    </script>
   </body>
 </html>

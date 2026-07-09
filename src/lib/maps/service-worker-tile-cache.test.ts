@@ -258,4 +258,16 @@ describe('service-worker tile cache', () => {
     expect(worker.fetchMock).toHaveBeenCalledTimes(2)
     await expect((offlineResponse as Response).text()).resolves.toBe(url)
   })
+
+  it('returns a transparent fallback tile when network and cache both miss', async () => {
+    const worker = createTileCacheController(10)
+    const url =
+      'https://geoservices.buergernetz.bz.it/mapproxy/ows?SERVICE=WMS&REQUEST=GetMap&BBOX=missing'
+
+    worker.fetchMock.mockRejectedValueOnce(new Error('network unavailable'))
+    const response = await worker.controller.handleTileRequest(new Request(url))
+
+    expect((response as Response).ok).toBe(true)
+    expect((response as Response).headers.get('X-Pastore-Tile-Fallback')).toBe('1')
+  })
 })
