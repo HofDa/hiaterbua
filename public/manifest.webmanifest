@@ -2,6 +2,7 @@
   "name": "Pastore 1.01",
   "short_name": "Pastore",
   "description": "Offlinefähige Feld- und Alm-Dokumentation für Herden, Pferche und Weidegänge.",
+  "id": "/",
   "lang": "de",
   "start_url": "/",
   "scope": "/",
@@ -9,6 +10,10 @@
   "background_color": "#e7e2d7",
   "theme_color": "#163d2f",
   "orientation": "portrait-primary",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/favicon.ico",
@@ -26,6 +31,53 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Herden",
+      "url": "/herds",
+      "icons": [
+        {
+          "src": "/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Export & Sicherung",
+      "url": "/export",
+      "icons": [
+        {
+          "src": "/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Arbeit",
+      "url": "/work",
+      "icons": [
+        {
+          "src": "/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

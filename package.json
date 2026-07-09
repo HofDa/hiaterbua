@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:local-pwa": "next dev --hostname 127.0.0.1 --port 43031",
     "metadata:sync": "node ./scripts/sync-app-metadata.mjs",
+    "icons:generate": "node ./scripts/generate-pwa-icons.mjs",
     "build": "npm run metadata:sync && next build --webpack && npm run pwa:precache",
     "build:local-pwa": "npm run build",
     "pwa:precache": "node ./scripts/generate-pwa-precache-manifest.mjs",
@@ -51,6 +52,7 @@
     "eslint-config-next": "^16.1.0",
     "fake-indexeddb": "^6.2.5",
     "postcss": "^8.5.8",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4.1.14",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
