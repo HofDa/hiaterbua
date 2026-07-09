@@ -10,6 +10,7 @@ import { FieldDiagnosticsRuntime } from '@/components/diagnostics/field-diagnost
 import { FieldUiBlockerDetector } from '@/components/diagnostics/field-ui-blocker-detector'
 import { APP_TITLE } from '@/lib/app-metadata'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
+import { LaunchQueueFileHandler } from '@/components/pwa/launch-queue-file-handler'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
 import { SessionRecoveryManager } from '@/components/session-recovery/session-recovery-manager'
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
@@ -56,6 +57,7 @@ export default function RootLayout({
           <FieldDiagnosticsRuntime />
           <FieldUiBlockerDetector />
           <ServiceWorkerSync />
+          <LaunchQueueFileHandler />
           <AppRoutePrefetch />
           <ConfirmDialogProvider>
             <TopBar />
