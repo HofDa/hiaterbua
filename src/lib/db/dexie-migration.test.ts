@@ -113,10 +113,28 @@ describe('HirtenAppDB schema migration from v3', () => {
 
     await db.open()
 
-    expect(db.verno).toBe(9)
-    expect(await db.herds.get('herd_legacy')).toEqual(legacyHerd())
-    expect(await db.enclosures.get('enclosure_legacy')).toEqual(legacyEnclosure())
-    expect(await db.sessions.get('session_legacy')).toEqual(legacySession())
+    expect(db.verno).toBe(11)
+    expect(await db.herds.get('herd_legacy')).toEqual({
+      ...legacyHerd(),
+      deletedAt: null,
+      deviceId: expect.stringMatching(/^device_/),
+      syncStatus: 'dirty',
+      lastLocalChangeAt: ISO,
+    })
+    expect(await db.enclosures.get('enclosure_legacy')).toEqual({
+      ...legacyEnclosure(),
+      deletedAt: null,
+      deviceId: expect.stringMatching(/^device_/),
+      syncStatus: 'dirty',
+      lastLocalChangeAt: ISO,
+    })
+    expect(await db.sessions.get('session_legacy')).toEqual({
+      ...legacySession(),
+      deletedAt: null,
+      deviceId: expect.stringMatching(/^device_/),
+      syncStatus: 'dirty',
+      lastLocalChangeAt: ISO,
+    })
   })
 
   it('seeds default settings when the upgraded install had none', async () => {

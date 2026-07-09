@@ -4,6 +4,7 @@ import {
   isActiveEnclosure,
   selectActiveAssignments,
 } from '@/lib/db/repositories/enclosure-rules'
+import { buildLocalChangeMetadata, buildLocalChangePatch } from '@/lib/sync/local-metadata'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type { Enclosure, EnclosureAssignment } from '@/types/domain'
@@ -80,11 +81,13 @@ export async function assignHerdToEnclosureRecord(params: {
       notes: notes.trim() || undefined,
       createdAt: timestamp,
       updatedAt: timestamp,
+      ...buildLocalChangeMetadata(timestamp),
     })
 
     await db.enclosures.update(enclosure.id, {
       herdId,
       updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
     })
   })
 }
@@ -96,11 +99,13 @@ export async function endEnclosureAssignmentRecord(assignment: EnclosureAssignme
     await db.enclosureAssignments.update(assignment.id, {
       endTime: timestamp,
       updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
     })
 
     await db.enclosures.update(assignment.enclosureId, {
       herdId: null,
       updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
     })
   })
 }
@@ -124,6 +129,7 @@ export async function updateEditedEnclosureRecord(params: {
     pointsCount,
     notes: notes.trim() || undefined,
     updatedAt: timestamp,
+    ...buildLocalChangePatch(timestamp),
   })
 }
 
@@ -176,6 +182,7 @@ export async function saveWalkEnclosureRecord(params: {
     avgAccuracyM: averageAccuracy,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.enclosures.put(enclosure)
@@ -206,6 +213,7 @@ export async function saveDrawnEnclosureRecord(params: {
     avgAccuracyM: accuracyM,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.enclosures.add(enclosure)

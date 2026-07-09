@@ -51,6 +51,32 @@ export type WorkEventType = 'start' | 'pause' | 'resume' | 'stop' | 'note'
 
 export type MapBaseLayer = 'south-tyrol-basemap' | 'south-tyrol-orthophoto-2023'
 
+export type SyncStatus = 'dirty' | 'synced' | 'syncing' | 'error'
+
+export interface LocalRecordMetadata {
+  deletedAt?: string | null
+  deviceId?: string | null
+  syncStatus?: SyncStatus
+  lastLocalChangeAt?: string | null
+}
+
+export type FieldDiagnosticLevel = 'info' | 'warning' | 'error'
+
+export interface FieldDiagnosticEvent {
+  id: string
+  type: string
+  level: FieldDiagnosticLevel
+  message: string
+  createdAt: string
+  online: boolean
+  route?: string
+  userAgent?: string
+  activeWorkSessionId?: string | null
+  activeGrazingSessionId?: string | null
+  activeRecordingId?: string | null
+  details?: unknown
+}
+
 export interface MapTileRecord {
   url: string
   blob: Blob
@@ -60,7 +86,7 @@ export interface MapTileRecord {
   updatedAt: string
 }
 
-export interface Herd {
+export interface Herd extends LocalRecordMetadata {
   id: string
   name: string
   fallbackCount?: number | null
@@ -70,7 +96,7 @@ export interface Herd {
   updatedAt: string
 }
 
-export interface Animal {
+export interface Animal extends LocalRecordMetadata {
   id: string
   herdId: string
   earTag: string
@@ -82,7 +108,7 @@ export interface Animal {
   updatedAt: string
 }
 
-export interface Enclosure {
+export interface Enclosure extends LocalRecordMetadata {
   id: string
   name: string
   method: EnclosureMethod
@@ -101,7 +127,7 @@ export interface Enclosure {
   updatedAt: string
 }
 
-export interface SurveyArea {
+export interface SurveyArea extends LocalRecordMetadata {
   id: string
   name: string
   geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
@@ -113,7 +139,7 @@ export interface SurveyArea {
   importOrder?: number
 }
 
-export interface EnclosureAssignment {
+export interface EnclosureAssignment extends LocalRecordMetadata {
   id: string
   enclosureId: string
   herdId: string
@@ -125,7 +151,7 @@ export interface EnclosureAssignment {
   updatedAt: string
 }
 
-export interface GrazingSession {
+export interface GrazingSession extends LocalRecordMetadata {
   id: string
   herdId: string
   animalCount?: number | null
@@ -142,7 +168,7 @@ export interface GrazingSession {
   updatedAt: string
 }
 
-export interface WorkSession {
+export interface WorkSession extends LocalRecordMetadata {
   id: string
   type: WorkType
   activityId?: WorkActivityId | null
@@ -160,15 +186,17 @@ export interface WorkSession {
   updatedAt: string
 }
 
-export interface WorkEvent {
+export interface WorkEvent extends LocalRecordMetadata {
   id: string
   workSessionId: string
   timestamp: string
   type: WorkEventType
   comment?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
-export interface TrackPoint {
+export interface TrackPoint extends LocalRecordMetadata {
   id: string
   sessionId?: string | null
   enclosureWalkId?: string | null
@@ -180,9 +208,11 @@ export interface TrackPoint {
   speedMps?: number | null
   headingDeg?: number | null
   accepted: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
-export interface SessionEvent {
+export interface SessionEvent extends LocalRecordMetadata {
   id: string
   sessionId: string
   timestamp: string
@@ -190,6 +220,8 @@ export interface SessionEvent {
   lat?: number | null
   lon?: number | null
   comment?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface AppSettings {

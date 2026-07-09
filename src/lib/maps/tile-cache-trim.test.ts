@@ -1,9 +1,10 @@
 import Dexie, { type Table } from 'dexie'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   MAX_CACHED_TILES,
   MAX_PREFETCH_TILES,
   TILE_DB_NAME,
+  prefetchTileUrls,
   trimTileCacheToLimit,
 } from '@/lib/maps/tile-cache'
 import type { MapTileRecord } from '@/types/domain'
@@ -39,7 +40,15 @@ beforeAll(() => {
   testDb = new TestTileDb()
 })
 
+beforeEach(() => {
+  globalWithWindow.window = {
+    ...(globalWithWindow.window as object),
+    dispatchEvent: vi.fn(),
+  }
+})
+
 afterEach(async () => {
+  vi.unstubAllGlobals()
   await testDb.mapTiles.clear()
 })
 
@@ -84,5 +93,36 @@ describe('trimTileCacheToLimit', () => {
 
   it('defaults to a ceiling above a single prefetch batch', () => {
     expect(MAX_CACHED_TILES).toBeGreaterThan(MAX_PREFETCH_TILES)
+  })
+})
+
+describe('prefetchTileUrls', () => {
+  it('reports tile fetch failures without throwing', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+
+    const result = await prefetchTileUrls(['https://tiles.test/1', 'https://tiles.test/2'])
+
+    expect(result).toEqual({
+      succeeded: 0,
+      failed: 2,
+      total: 2,
+      cancelled: false,
+    })
+  })
+
+  it('can be cancelled before fetching tiles', async () => {
+    const abortController = new AbortController()
+    abortController.abort()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await prefetchTileUrls(['https://tiles.test/1'], {
+      signal: abortController.signal,
+    })
+
+    expect(result.cancelled).toBe(true)
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

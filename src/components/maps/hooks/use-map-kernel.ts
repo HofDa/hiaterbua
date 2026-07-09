@@ -86,12 +86,15 @@ export function useMapKernel({
   const [prefetchStatus, setPrefetchStatus] = useState('')
   const [prefetchingMapArea, setPrefetchingMapArea] = useState(false)
   const hasLoadedBaseLayerSettingsRef = useRef(false)
+  const prefetchAbortControllerRef = useRef<AbortController | null>(null)
 
   const {
     containerRef,
     mapRef,
     markerRef,
     mapReady,
+    mapLoadState,
+    mapWarning,
   } = useRasterMapInstance({ registerLayers })
 
   useEffect(() => {
@@ -195,10 +198,21 @@ export function useMapKernel({
 
     setPrefetchingMapArea(true)
     setPrefetchStatus('Lade sichtbaren Ausschnitt in den Cache ...')
+    prefetchAbortControllerRef.current?.abort()
+    const abortController = new AbortController()
+    prefetchAbortControllerRef.current = abortController
 
     try {
       const cacheCountBefore = await getTileCacheCount()
-      const result = await prefetchTileUrls(urls)
+      const result = await prefetchTileUrls(urls, {
+        signal: abortController.signal,
+      })
+      if (result.cancelled) {
+        setPrefetchStatus(
+          `Vorladen abgebrochen (${result.succeeded} von ${result.total} Tiles gesichert).`
+        )
+        return
+      }
       const cacheCount = await getTileCacheCount()
       const tileSummary =
         result.failed === 0
@@ -218,8 +232,16 @@ export function useMapKernel({
     } catch {
       setPrefetchStatus('Ausschnitt konnte nicht vorgeladen werden.')
     } finally {
+      if (prefetchAbortControllerRef.current === abortController) {
+        prefetchAbortControllerRef.current = null
+      }
       setPrefetchingMapArea(false)
     }
+  }
+
+  function cancelPrefetchVisibleMapArea() {
+    prefetchAbortControllerRef.current?.abort()
+    setPrefetchStatus('Vorladen wird abgebrochen ...')
   }
 
   function centerMapOnPosition() {
@@ -261,6 +283,8 @@ export function useMapKernel({
     mapRef: mapRef as MutableRefObject<MapLibreMap | null>,
     markerRef: markerRef as MutableRefObject<Marker | null>,
     mapReady,
+    mapLoadState,
+    mapWarning,
     baseLayer,
     isBaseLayerMenuOpen,
     showSurveyAreas,
@@ -270,6 +294,7 @@ export function useMapKernel({
     setShowSurveyAreas,
     updateBaseLayer,
     prefetchVisibleMapArea,
+    cancelPrefetchVisibleMapArea,
     centerMapOnPosition,
     focusSurveyArea,
     resizeMap,

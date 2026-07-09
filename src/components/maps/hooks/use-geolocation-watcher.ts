@@ -6,6 +6,7 @@ import {
   type GpsState,
   type PositionDecision,
 } from '@/lib/maps/map-core'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import type { AppSettings } from '@/types/domain'
 
 type BaseTrackedPosition = {
@@ -64,8 +65,14 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
 
     const clearActiveWatch = () => {
       if (watchIdRef.current !== null) {
+        const watchId = watchIdRef.current
         navigator.geolocation.clearWatch(watchIdRef.current)
         watchIdRef.current = null
+        recordFieldDiagnostic({
+          type: 'gps_watch_stopped',
+          message: 'GPS-Watch wurde gestoppt.',
+          details: { watchId },
+        })
       }
     }
 
@@ -85,6 +92,12 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
         if (stopped) return
 
         setGpsState('error')
+        recordFieldDiagnostic({
+          type: 'gps_watch_error',
+          level: 'warning',
+          message: 'GPS-Watch liefert seit längerer Zeit keine Position.',
+          details: { reason: 'stall_timeout', timeoutMs: WATCH_STALL_TIMEOUT_MS },
+        })
         scheduleRestart()
       }, WATCH_STALL_TIMEOUT_MS)
     }
@@ -134,6 +147,12 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
         },
         (error) => {
           clearStallTimer()
+          recordFieldDiagnostic({
+            type: 'gps_watch_error',
+            level: error.code === error.PERMISSION_DENIED ? 'error' : 'warning',
+            message: error.message || 'GPS-Watch meldet einen Fehler.',
+            details: { code: error.code, message: error.message },
+          })
 
           // Losing GPS permission is terminal; nothing to recover.
           if (error.code === error.PERMISSION_DENIED) {
@@ -154,6 +173,11 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
           timeout: 20_000,
         }
       )
+      recordFieldDiagnostic({
+        type: 'gps_watch_started',
+        message: 'GPS-Watch wurde gestartet.',
+        details: { watchId: watchIdRef.current },
+      })
     }
 
     startWatch()
@@ -167,6 +191,10 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
         clearTimeout(restartTimer)
         restartTimer = null
       }
+      recordFieldDiagnostic({
+        type: 'gps_watch_retry',
+        message: 'GPS-Watch wird manuell neu gestartet.',
+      })
       clearActiveWatch()
       startWatch()
     }

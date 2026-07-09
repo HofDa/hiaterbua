@@ -1,6 +1,7 @@
 'use client'
 
 import { Component, ErrorInfo, ReactNode } from 'react'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { logError } from '@/lib/utils/log'
 import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { ErrorAlert } from './alert'
@@ -34,6 +35,15 @@ export class ErrorBoundary extends Component<Props, State> {
     // a trace in production, not just in dev. The component stack stays visible
     // in the dev-only details panel below.
     logError('ErrorBoundary', error)
+    recordFieldDiagnostic({
+      type: 'react_error_boundary',
+      level: 'error',
+      message: error.message || 'React ErrorBoundary hat einen Fehler abgefangen.',
+      details: {
+        error,
+        componentStack: errorInfo.componentStack,
+      },
+    })
 
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo)

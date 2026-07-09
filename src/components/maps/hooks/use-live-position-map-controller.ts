@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import type { MutableRefObject } from 'react'
 import { useLivePositionMapDrawWalkController } from '@/components/maps/hooks/use-live-position-map-draw-walk-controller'
 import { useLivePositionMapEnclosureController } from '@/components/maps/hooks/use-live-position-map-enclosure-controller'
+import { useTransientFieldOperation } from '@/lib/field-safety/field-safety-store'
 import type { LivePositionMapState } from '@/components/maps/hooks/use-live-position-map-state'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 import type {
@@ -56,6 +57,8 @@ export function useLivePositionMapController({
   const { isWalking, walkPoints } = walk
   const { selectedEnclosureId, setMobilePanel } = selection
   const { editingEnclosureId } = edit
+
+  useTransientFieldOperation('live-position-walk-recording', 'gps-recording', isWalking)
 
   useEffect(() => {
     if (editingEnclosureId || selectedEnclosureId) {

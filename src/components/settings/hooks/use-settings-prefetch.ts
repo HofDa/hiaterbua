@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useMemo, useRef, useState } from 'react'
 import type {
   PrefetchLayerChoice,
 } from '@/components/settings/settings-options'
@@ -48,6 +48,7 @@ export function useSettingsPrefetch(options: {
   const [currentPositionLoading, setCurrentPositionLoading] = useState(false)
   const [currentPositionStatus, setCurrentPositionStatus] = useState('')
   const [isPrefetchOpen, setIsPrefetchOpen] = useState(false)
+  const prefetchAbortControllerRef = useRef<AbortController | null>(null)
 
   const parsedPreviewPosition = useMemo(() => {
     const latitude = Number.parseFloat(prefetchLat)
@@ -80,11 +81,22 @@ export function useSettingsPrefetch(options: {
 
     setPrefetchProgress({ completed: 0, total: urls.length })
 
-    const result = await prefetchTileUrls(urls, (completed, total) =>
-      setPrefetchProgress({ completed, total })
-    )
+    prefetchAbortControllerRef.current?.abort()
+    const abortController = new AbortController()
+    prefetchAbortControllerRef.current = abortController
+    const result = await prefetchTileUrls(urls, {
+      signal: abortController.signal,
+      onProgress: (completed, total) => setPrefetchProgress({ completed, total }),
+    })
 
     onTileCacheCountChange(await getTileCacheCount())
+
+    if (result.cancelled) {
+      setPrefetchStatus(
+        `Vorladen abgebrochen (${result.succeeded} von ${result.total} Tiles gesichert).`
+      )
+      return
+    }
 
     if (result.failed === 0) {
       setPrefetchStatus(`${successMessage} (${result.succeeded} Tiles).`)
@@ -101,6 +113,11 @@ export function useSettingsPrefetch(options: {
     setPrefetchError(
       `Keine Tiles gesichert (${result.failed} von ${result.total} fehlgeschlagen). Netzverbindung und Speicher prüfen.`
     )
+  }
+
+  function cancelPrefetch() {
+    prefetchAbortControllerRef.current?.abort()
+    setPrefetchStatus('Vorladen wird abgebrochen ...')
   }
 
   function applyCurrentPosition() {
@@ -178,6 +195,7 @@ export function useSettingsPrefetch(options: {
     } catch {
       setPrefetchError('Vorladen ist fehlgeschlagen. Netzverbindung und Tile-Caching prüfen.')
     } finally {
+      prefetchAbortControllerRef.current = null
       setPrefetching(false)
     }
   }
@@ -205,6 +223,7 @@ export function useSettingsPrefetch(options: {
     } catch {
       setPrefetchError('Südtirol konnte nicht vollständig gesichert werden.')
     } finally {
+      prefetchAbortControllerRef.current = null
       setSouthTyrolPrefetching(false)
     }
   }
@@ -241,6 +260,7 @@ export function useSettingsPrefetch(options: {
     } catch {
       setPrefetchError('Detailgebiet konnte nicht vollständig gesichert werden.')
     } finally {
+      prefetchAbortControllerRef.current = null
       setHighDetailPrefetching(false)
     }
   }
@@ -259,6 +279,7 @@ export function useSettingsPrefetch(options: {
       prefetching,
       southTyrolPrefetching,
       highDetailPrefetching,
+      canCancelPrefetch: prefetching || southTyrolPrefetching || highDetailPrefetching,
       currentPositionLoading,
       currentPositionStatus,
       parsedPreviewPosition,
@@ -274,6 +295,7 @@ export function useSettingsPrefetch(options: {
       onApplyCurrentPosition: applyCurrentPosition,
       onPrefetchWholeSouthTyrol: prefetchWholeSouthTyrol,
       onPrefetchHighDetailArea: prefetchHighDetailArea,
+      onCancelPrefetch: cancelPrefetch,
     },
   }
 }

@@ -1,4 +1,5 @@
 import { db } from '@/lib/db/dexie'
+import { buildLocalChangeMetadata } from '@/lib/sync/local-metadata'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type {
@@ -35,14 +36,18 @@ export async function logSessionEvent(
   position: PositionData | null,
   comment?: string
 ) {
+  const timestamp = nowIso()
   const event: SessionEvent = {
     id: createId('event'),
     sessionId,
-    timestamp: nowIso(),
+    timestamp,
     type,
     lat: position?.latitude ?? null,
     lon: position?.longitude ?? null,
     comment,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.events.add(event)

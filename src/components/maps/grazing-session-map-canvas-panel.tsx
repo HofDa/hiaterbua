@@ -12,6 +12,7 @@ import {
 } from '@/components/maps/map-toolbar-icons'
 import { MapMenuToggleButton, MapTopControls } from '@/components/maps/map-top-controls'
 import { MapEditActionOverlay } from '@/components/maps/map-edit-action-overlay'
+import { MapFallbackPanel } from '@/components/maps/map-fallback-panel'
 import {
   MobileMapToolbar,
   MobileMapToolbarButton,
@@ -55,6 +56,9 @@ export function GrazingSessionMapCanvasPanel({
     showSessionEventsOnMap,
     prefetchingMapArea,
     prefetchStatus,
+    mapReady,
+    mapLoadState,
+    mapWarning,
     isAddingEditTrackpoint,
     selectedEditTrackpointIndex,
     editTrackpointsLength,
@@ -75,6 +79,7 @@ export function GrazingSessionMapCanvasPanel({
     onToggleShowSurveyAreas,
     onToggleShowSessionEventsOnMap,
     onPrefetchVisibleMapArea,
+    onCancelPrefetchVisibleMapArea,
     onStartAddEditTrackpoint,
     onRemoveSelectedEditTrackpoint,
     onSaveEditedSession,
@@ -82,6 +87,13 @@ export function GrazingSessionMapCanvasPanel({
   } = useGrazingSessionMapStore((state) => state.canvasHandles)
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
   const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(false)
+  const showMapFallback = !mapReady && mapLoadState !== 'loading'
+  const sessionStatusLabel =
+    currentSessionStatus === 'active'
+      ? 'Weidegang läuft'
+      : currentSessionStatus === 'paused'
+        ? 'Weidegang pausiert'
+        : 'kein Weidegang aktiv'
 
   const hasMobileToolbar = !editingSessionId
   const managementOverlay = !editingSessionId ? (
@@ -123,6 +135,8 @@ export function GrazingSessionMapCanvasPanel({
       onUpdateBaseLayer={onUpdateBaseLayer}
       onToggleShowSurveyAreas={onToggleShowSurveyAreas}
       onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
+      onCancelPrefetchVisibleMapArea={onCancelPrefetchVisibleMapArea}
+      mapWarning={mapWarning}
       extraControls={
         <button
           type="button"
@@ -165,6 +179,61 @@ export function GrazingSessionMapCanvasPanel({
         ref={containerRef}
         className="h-[420px] w-full bg-surface-raised sm:h-[520px] lg:h-[calc(100vh-8rem)]"
       />
+      {mapWarning && !showMapFallback ? (
+        <div className="pointer-events-none absolute inset-x-2 top-2 z-20 lg:inset-x-3 lg:top-3">
+          <div className="mx-auto max-w-md rounded-[1rem] border border-warning-border bg-warning-surface/95 px-3 py-2 text-xs font-semibold text-warning-ink shadow-sm">
+            {mapWarning}
+          </div>
+        </div>
+      ) : null}
+      {showMapFallback ? (
+        <MapFallbackPanel
+          title="Karte momentan nicht verfügbar"
+          detail="Tiles oder Kartenmodul konnten nicht geladen werden. Weidegang und Ereignisse bleiben lokal nutzbar."
+          position={position}
+          statusLabel={sessionStatusLabel}
+        >
+          <button
+            type="button"
+            onClick={() => void onStartOrResumeSession()}
+            disabled={
+              isSaving ||
+              currentSessionStatus === 'active' ||
+              (currentSessionStatus === null && !hasHerds)
+            }
+            className="min-h-12 rounded-[1rem] border border-border-strong bg-surface-muted px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50"
+          >
+            {currentSessionStatus === 'paused' ? 'Weiterführen' : 'Starten'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void onPauseSession()}
+            disabled={isSaving || currentSessionStatus !== 'active'}
+            className="min-h-12 rounded-[1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50"
+          >
+            Pause
+          </button>
+          <button
+            type="button"
+            onClick={() => void onAddSessionMarkerEvent('note', eventNote)}
+            disabled={isEventSaving || !currentSessionStatus || !eventNote.trim()}
+            className="min-h-12 rounded-[1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50"
+          >
+            Notiz speichern
+          </button>
+          <button
+            type="button"
+            onClick={() => void onStopSession()}
+            disabled={
+              isSaving ||
+              (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')
+            }
+            className="min-h-12 rounded-[1rem] border border-error-border bg-error-surface px-4 py-3 text-sm font-semibold text-error-ink disabled:opacity-50"
+          >
+            Beenden
+          </button>
+        </MapFallbackPanel>
+      ) : null}
       {hasMobileToolbar ? (
         <button
           type="button"

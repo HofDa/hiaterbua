@@ -28,6 +28,7 @@ type SettingsPrefetchCardState = {
   prefetching: boolean
   southTyrolPrefetching: boolean
   highDetailPrefetching: boolean
+  canCancelPrefetch: boolean
   currentPositionLoading: boolean
   currentPositionStatus: string
   parsedPreviewPosition: { latitude: number; longitude: number } | null
@@ -44,6 +45,7 @@ type SettingsPrefetchCardActions = {
   onApplyCurrentPosition: () => void
   onPrefetchWholeSouthTyrol: () => void | Promise<void>
   onPrefetchHighDetailArea: () => void | Promise<void>
+  onCancelPrefetch: () => void
 }
 
 type SettingsPrefetchCardProps = {
@@ -244,6 +246,16 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
           >
             {state.prefetching ? 'Lädt Tiles ...' : 'Ausschnitt vorladen'}
           </FormButton>
+          {state.canCancelPrefetch ? (
+            <FormButton
+              type="button"
+              onClick={actions.onCancelPrefetch}
+              variant="secondary"
+              className="rounded-[1.25rem]"
+            >
+              Vorladen abbrechen
+            </FormButton>
+          ) : null}
         </form>
         </CardContent>
       ) : null}

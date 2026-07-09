@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import {
   nonEmptyString,
+  localRecordMetadataSchemaFields,
+  normalizeLocalRecordMetadata,
   nullableInteger,
   nullableNumber,
   nullableTrimmedString,
@@ -32,6 +34,7 @@ export const grazingSessionSchema = z
     notes: optionalTrimmedString,
     createdAt: timestampString.optional(),
     updatedAt: timestampString.optional(),
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): GrazingSession => ({
     id: value.id,
@@ -48,6 +51,7 @@ export const grazingSessionSchema = z
     notes: value.notes,
     createdAt: value.createdAt ?? value.startTime,
     updatedAt: value.updatedAt ?? value.endTime ?? value.startTime,
+    ...normalizeLocalRecordMetadata(value),
   }))
 
 export const trackPointSchema = z
@@ -63,6 +67,9 @@ export const trackPointSchema = z
     speedMps: nullableNumber.optional(),
     headingDeg: nullableNumber.optional(),
     accepted: z.boolean().optional(),
+    createdAt: timestampString.optional(),
+    updatedAt: timestampString.optional(),
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): TrackPoint => ({
     id: value.id,
@@ -76,6 +83,9 @@ export const trackPointSchema = z
     speedMps: value.speedMps ?? null,
     headingDeg: value.headingDeg ?? null,
     accepted: value.accepted ?? true,
+    createdAt: value.createdAt ?? value.timestamp,
+    updatedAt: value.updatedAt ?? value.timestamp,
+    ...normalizeLocalRecordMetadata(value),
   }))
 
 export const sessionEventSchema = z
@@ -97,6 +107,9 @@ export const sessionEventSchema = z
     lat: nullableNumber.optional(),
     lon: nullableNumber.optional(),
     comment: optionalTrimmedString,
+    createdAt: timestampString.optional(),
+    updatedAt: timestampString.optional(),
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): SessionEvent => ({
     id: value.id,
@@ -106,6 +119,9 @@ export const sessionEventSchema = z
     lat: value.lat ?? null,
     lon: value.lon ?? null,
     comment: value.comment,
+    createdAt: value.createdAt ?? value.timestamp,
+    updatedAt: value.updatedAt ?? value.timestamp,
+    ...normalizeLocalRecordMetadata(value),
   }))
 
 export const workSessionSchema = z
@@ -154,6 +170,7 @@ export const workSessionSchema = z
     notes: optionalTrimmedString,
     createdAt: timestampString.optional(),
     updatedAt: timestampString.optional(),
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): WorkSession => ({
     id: value.id,
@@ -171,6 +188,7 @@ export const workSessionSchema = z
     notes: value.notes,
     createdAt: value.createdAt ?? value.startTime,
     updatedAt: value.updatedAt ?? value.endTime ?? value.startTime,
+    ...normalizeLocalRecordMetadata(value),
   }))
 
 export const workEventSchema = z
@@ -180,6 +198,9 @@ export const workEventSchema = z
     timestamp: timestampString,
     type: z.enum(['start', 'pause', 'resume', 'stop', 'note']),
     comment: optionalTrimmedString,
+    createdAt: timestampString.optional(),
+    updatedAt: timestampString.optional(),
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): WorkEvent => ({
     id: value.id,
@@ -187,4 +208,7 @@ export const workEventSchema = z
     timestamp: value.timestamp,
     type: value.type,
     comment: value.comment,
+    createdAt: value.createdAt ?? value.timestamp,
+    updatedAt: value.updatedAt ?? value.timestamp,
+    ...normalizeLocalRecordMetadata(value),
   }))

@@ -9,6 +9,7 @@ import {
   logSessionEvent,
   type EditableTrackPoint,
 } from '@/lib/maps/grazing-session-map-helpers'
+import { buildLocalChangeMetadata, buildLocalChangePatch } from '@/lib/sync/local-metadata'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type { GpsTrackPosition } from '@/lib/maps/position-types'
@@ -102,6 +103,9 @@ export async function appendSessionTrackpoint(params: {
       speedMps: nextPosition.speed,
       headingDeg: nextPosition.heading,
       accepted: true,
+      createdAt: updatedAt,
+      updatedAt,
+      ...buildLocalChangeMetadata(updatedAt),
     }
     const metricDelta = buildTrackpointMetricDelta(previousTrackPoint ?? null, nextTrackPoint)
     const distanceM = (session?.distanceM ?? 0) + metricDelta.distanceM
@@ -121,6 +125,7 @@ export async function appendSessionTrackpoint(params: {
       avgSpeedMps: movingTimeS > 0 ? distanceM / movingTimeS : null,
       avgAccuracyM,
       updatedAt,
+      ...buildLocalChangePatch(updatedAt),
     })
 
     assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
@@ -179,6 +184,7 @@ export async function createGrazingSessionRecord(params: {
     notes: notes.trim() || undefined,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.transaction('rw', db.sessions, db.events, async () => {
@@ -194,10 +200,12 @@ export async function updateGrazingSessionAnimalCountRecord(params: {
   animalCount: number
 }) {
   const { sessionId, animalCount } = params
+  const timestamp = nowIso()
 
   await db.sessions.update(sessionId, {
     animalCount,
-    updatedAt: nowIso(),
+    updatedAt: timestamp,
+    ...buildLocalChangePatch(timestamp),
   })
 }
 
@@ -209,6 +217,7 @@ export async function pauseGrazingSessionRecord(params: {
 }) {
   const { sessionId, startTime, trackpoints, position } = params
   const metrics = buildSessionMetrics(trackpoints, startTime)
+  const timestamp = nowIso()
 
   await db.transaction('rw', db.sessions, db.events, async () => {
     const updatedCount = await db.sessions.update(sessionId, {
@@ -218,7 +227,8 @@ export async function pauseGrazingSessionRecord(params: {
       distanceM: metrics.distanceM,
       avgSpeedMps: metrics.avgSpeedMps,
       avgAccuracyM: metrics.avgAccuracyM,
-      updatedAt: nowIso(),
+      updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
     })
 
     assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
@@ -232,11 +242,13 @@ export async function resumeGrazingSessionRecord(params: {
   position: PositionData | null
 }) {
   const { sessionId, position } = params
+  const timestamp = nowIso()
 
   await db.transaction('rw', db.sessions, db.events, async () => {
     const updatedCount = await db.sessions.update(sessionId, {
       status: 'active',
-      updatedAt: nowIso(),
+      updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
     })
 
     assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
@@ -265,6 +277,7 @@ export async function stopGrazingSessionRecord(params: {
       avgSpeedMps: metrics.avgSpeedMps,
       avgAccuracyM: metrics.avgAccuracyM,
       updatedAt: endTime,
+      ...buildLocalChangePatch(endTime),
     })
 
     assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
@@ -297,11 +310,17 @@ export async function saveEditedGrazingSessionRecord(params: {
     editedEndTime,
     existingTrackpoints,
   } = params
+  const timestamp = nowIso()
   const nextTrackpoints = buildTrackpointsFromEditableTrackpoints(
     editTrackpoints,
     sessionId,
     existingTrackpoints
-  )
+  ).map((trackpoint) => ({
+    ...trackpoint,
+    createdAt: trackpoint.timestamp,
+    updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
+  }))
 
   const metrics = buildSessionMetrics(nextTrackpoints, editedStartTime, editedEndTime)
 
@@ -322,18 +341,23 @@ export async function saveEditedGrazingSessionRecord(params: {
       distanceM: metrics.distanceM,
       avgSpeedMps: metrics.avgSpeedMps,
       avgAccuracyM: metrics.avgAccuracyM,
-      updatedAt: nowIso(),
+      updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
     })
 
     if (startEvent) {
       await db.events.update(startEvent.id, {
         timestamp: editedStartTime,
+        updatedAt: timestamp,
+        ...buildLocalChangePatch(timestamp),
       })
     }
 
     if (stopEvent && editedEndTime) {
       await db.events.update(stopEvent.id, {
         timestamp: editedEndTime,
+        updatedAt: timestamp,
+        ...buildLocalChangePatch(timestamp),
       })
     }
   })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { saveAppSettings } from '@/lib/db/repositories/settings'
 import {
   MAX_PREFETCH_TILES,
@@ -30,6 +30,7 @@ export function useSecureAreaPrefetch({
   const [status, setStatus] = useState<SecureAreaStatus>('idle')
   const [message, setMessage] = useState('')
   const [progress, setProgress] = useState<{ completed: number; total: number } | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const isBusy = status === 'locating' || status === 'prefetching'
 
@@ -59,13 +60,23 @@ export function useSecureAreaPrefetch({
       }
 
       setProgress({ completed: 0, total: urls.length })
-      const result = await prefetchTileUrls(urls, (completed, total) =>
-        setProgress({ completed, total }),
-      )
+      abortControllerRef.current?.abort()
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
+      const result = await prefetchTileUrls(urls, {
+        signal: abortController.signal,
+        onProgress: (completed, total) => setProgress({ completed, total }),
+      })
 
       // prefetchTileUrls dispatches TILE_CACHE_CHANGED_EVENT, which the status
       // strip listens for to refresh its tile count — no need to read it here.
       const prefix = cacheJustEnabled ? 'Tile-Cache aktiviert. ' : ''
+
+      if (result.cancelled) {
+        setStatus('idle')
+        setMessage(`${prefix}Sicherung abgebrochen (${result.succeeded}/${result.total} Tiles).`)
+        return
+      }
 
       if (result.failed === 0) {
         setStatus('done')
@@ -85,8 +96,14 @@ export function useSecureAreaPrefetch({
       setStatus('error')
       setMessage('Sicherung fehlgeschlagen. Netzverbindung prüfen.')
     } finally {
+      abortControllerRef.current = null
       setProgress(null)
     }
+  }
+
+  function cancelPrefetch() {
+    abortControllerRef.current?.abort()
+    setMessage('Sicherung wird abgebrochen …')
   }
 
   function secureCurrentArea() {
@@ -112,5 +129,5 @@ export function useSecureAreaPrefetch({
     )
   }
 
-  return { status, message, progress, isBusy, secureCurrentArea }
+  return { status, message, progress, isBusy, secureCurrentArea, cancelPrefetch }
 }

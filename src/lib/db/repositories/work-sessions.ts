@@ -4,6 +4,7 @@ import {
   getWorkSessionStatusEventType,
   getWorkSessionStatusPatch,
 } from '@/lib/db/repositories/work-session-rules'
+import { buildLocalChangeMetadata, buildLocalChangePatch } from '@/lib/sync/local-metadata'
 import { addWorkEvent } from '@/lib/work/work-session-persistence'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
@@ -74,6 +75,7 @@ export async function createWorkSessionRecord(params: {
     notes: notes.trim() || undefined,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.transaction('rw', db.workSessions, db.workEvents, async () => {
@@ -98,7 +100,10 @@ export async function updateWorkSessionStatusRecord(
   const eventType = getWorkSessionStatusEventType(nextStatus)
 
   await db.transaction('rw', db.workSessions, db.workEvents, async () => {
-    const updatedCount = await db.workSessions.update(activeSession.id, patch)
+    const updatedCount = await db.workSessions.update(activeSession.id, {
+      ...patch,
+      ...buildLocalChangePatch(timestamp),
+    })
     assertUpdated(updatedCount, 'Arbeitseinsatz wurde nicht gefunden.')
 
     await addWorkEvent(activeSession.id, eventType)
@@ -110,8 +115,13 @@ export async function saveEditedWorkSessionRecord(
   sessionId: string,
   patch: Partial<WorkSession>,
 ): Promise<void> {
+  const timestamp = nowIso()
   await db.transaction('rw', db.workSessions, db.workEvents, async () => {
-    const updatedCount = await db.workSessions.update(sessionId, patch)
+    const updatedCount = await db.workSessions.update(sessionId, {
+      ...patch,
+      updatedAt: patch.updatedAt ?? timestamp,
+      ...buildLocalChangePatch(patch.updatedAt ?? timestamp),
+    })
     assertUpdated(updatedCount, 'Arbeitseinsatz konnte nicht aktualisiert werden.')
 
     await addWorkEvent(sessionId, 'note', 'Arbeitseinsatz bearbeitet')
@@ -127,6 +137,7 @@ export async function markWorkSessionReminded(
   await db.workSessions.update(sessionId, {
     lastReminderAt: remindedAt,
     updatedAt: remindedAt,
+    ...buildLocalChangePatch(remindedAt),
   })
   await addWorkEvent(sessionId, 'note', message)
 }

@@ -25,6 +25,16 @@ import type {
 
 const START = '2026-06-01T08:00:00.000Z'
 const LATER = '2026-06-01T09:30:00.000Z'
+const SAMPLE_DEVICE_ID = 'device_sample'
+
+function localMeta(lastLocalChangeAt: string) {
+  return {
+    deletedAt: null,
+    deviceId: SAMPLE_DEVICE_ID,
+    syncStatus: 'dirty' as const,
+    lastLocalChangeAt,
+  }
+}
 
 function square(lon: number, lat: number): GeoJSON.Polygon {
   return {
@@ -65,6 +75,7 @@ export function buildSampleDataset(): SampleDataset {
       isArchived: false,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
     {
       id: 'herd_b',
@@ -73,6 +84,7 @@ export function buildSampleDataset(): SampleDataset {
       isArchived: false,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
   ]
 
@@ -86,6 +98,7 @@ export function buildSampleDataset(): SampleDataset {
       isArchived: false,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
     {
       id: 'animal_2',
@@ -95,6 +108,7 @@ export function buildSampleDataset(): SampleDataset {
       isArchived: false,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
   ]
 
@@ -116,6 +130,7 @@ export function buildSampleDataset(): SampleDataset {
       pointsCount: null,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
     {
       id: 'enclosure_walk',
@@ -133,6 +148,7 @@ export function buildSampleDataset(): SampleDataset {
       pointsCount: 1,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
   ]
 
@@ -145,6 +161,7 @@ export function buildSampleDataset(): SampleDataset {
       areaHa: 0.99,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
   ]
 
@@ -158,6 +175,7 @@ export function buildSampleDataset(): SampleDataset {
       endTime: null,
       createdAt: START,
       updatedAt: START,
+      ...localMeta(START),
     },
   ]
 
@@ -177,6 +195,7 @@ export function buildSampleDataset(): SampleDataset {
       notes: 'Schöner Tag',
       createdAt: START,
       updatedAt: LATER,
+      ...localMeta(LATER),
     },
   ]
 
@@ -193,6 +212,9 @@ export function buildSampleDataset(): SampleDataset {
       speedMps: null,
       headingDeg: null,
       accepted: true,
+      createdAt: START,
+      updatedAt: START,
+      ...localMeta(START),
     },
     {
       id: 'trackpoint_2',
@@ -206,6 +228,9 @@ export function buildSampleDataset(): SampleDataset {
       speedMps: null,
       headingDeg: null,
       accepted: true,
+      createdAt: '2026-06-01T08:30:00.000Z',
+      updatedAt: '2026-06-01T08:30:00.000Z',
+      ...localMeta('2026-06-01T08:30:00.000Z'),
     },
     {
       id: 'trackpoint_walk_1',
@@ -219,6 +244,9 @@ export function buildSampleDataset(): SampleDataset {
       speedMps: null,
       headingDeg: null,
       accepted: true,
+      createdAt: START,
+      updatedAt: START,
+      ...localMeta(START),
     },
   ]
 
@@ -230,6 +258,9 @@ export function buildSampleDataset(): SampleDataset {
       type: 'start',
       lat: 46.5,
       lon: 11.0,
+      createdAt: START,
+      updatedAt: START,
+      ...localMeta(START),
     },
     {
       id: 'event_note',
@@ -239,6 +270,9 @@ export function buildSampleDataset(): SampleDataset {
       lat: 46.5005,
       lon: 11.0005,
       comment: 'Wasserstelle geprüft',
+      createdAt: '2026-06-01T08:45:00.000Z',
+      updatedAt: '2026-06-01T08:45:00.000Z',
+      ...localMeta('2026-06-01T08:45:00.000Z'),
     },
     {
       id: 'event_stop',
@@ -247,6 +281,9 @@ export function buildSampleDataset(): SampleDataset {
       type: 'stop',
       lat: 46.501,
       lon: 11.001,
+      createdAt: LATER,
+      updatedAt: LATER,
+      ...localMeta(LATER),
     },
   ]
 
@@ -267,6 +304,7 @@ export function buildSampleDataset(): SampleDataset {
       notes: 'Zaun repariert',
       createdAt: START,
       updatedAt: LATER,
+      ...localMeta(LATER),
     },
   ]
 
@@ -276,12 +314,18 @@ export function buildSampleDataset(): SampleDataset {
       workSessionId: 'work_1',
       timestamp: START,
       type: 'start',
+      createdAt: START,
+      updatedAt: START,
+      ...localMeta(START),
     },
     {
       id: 'work_event_stop',
       workSessionId: 'work_1',
       timestamp: LATER,
       type: 'stop',
+      createdAt: LATER,
+      updatedAt: LATER,
+      ...localMeta(LATER),
     },
   ]
 

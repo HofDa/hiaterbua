@@ -14,11 +14,13 @@ type MapTopControlsProps = {
   showSurveyAreas: boolean
   prefetchingMapArea: boolean
   prefetchStatus: string
+  mapWarning?: string
   onCenterMap: () => void
   onToggleBaseLayerMenu: () => void
   onUpdateBaseLayer: (nextBaseLayer: MapBaseLayer) => void | Promise<void>
   onToggleShowSurveyAreas: () => void
   onPrefetchVisibleMapArea: () => void | Promise<void>
+  onCancelPrefetchVisibleMapArea?: () => void
   extraControls?: ReactNode
   extraMenuItems?: ReactNode
 }
@@ -66,11 +68,13 @@ export function MapTopControls({
   showSurveyAreas,
   prefetchingMapArea,
   prefetchStatus,
+  mapWarning,
   onCenterMap,
   onToggleBaseLayerMenu,
   onUpdateBaseLayer,
   onToggleShowSurveyAreas,
   onPrefetchVisibleMapArea,
+  onCancelPrefetchVisibleMapArea,
   extraControls,
   extraMenuItems,
 }: MapTopControlsProps) {
@@ -131,12 +135,20 @@ export function MapTopControls({
           {extraMenuItems}
           <button
             type="button"
-            onClick={() => void onPrefetchVisibleMapArea()}
-            disabled={prefetchingMapArea}
+            onClick={() =>
+              prefetchingMapArea
+                ? onCancelPrefetchVisibleMapArea?.()
+                : void onPrefetchVisibleMapArea()
+            }
             className="mt-1.5 w-full rounded-xl border border-border bg-surface-raised px-2.5 py-2 text-left text-xs font-medium text-ink disabled:opacity-50"
           >
-            {prefetchingMapArea ? 'Sichert ...' : 'Ausschnitt sichern'}
+            {prefetchingMapArea ? 'Vorladen abbrechen' : 'Ausschnitt sichern'}
           </button>
+          {mapWarning ? (
+            <div className="mt-1.5 rounded-xl border border-warning-border bg-warning-surface px-2.5 py-2 text-[11px] font-medium text-warning-ink">
+              {mapWarning}
+            </div>
+          ) : null}
           {prefetchStatus ? (
             <div className="mt-1.5 rounded-xl bg-surface-muted px-2.5 py-2 text-[11px] font-medium text-ink">
               {prefetchStatus}

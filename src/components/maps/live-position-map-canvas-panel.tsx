@@ -7,6 +7,7 @@ import { LivePositionMapMobileDrawToolbar } from '@/components/maps/live-positio
 import { LivePositionMapMobileWalkToolbar } from '@/components/maps/live-position-map-mobile-walk-toolbar'
 import { MapTopControls } from '@/components/maps/map-top-controls'
 import { ControlsIcon } from '@/components/maps/map-toolbar-icons'
+import { MapFallbackPanel } from '@/components/maps/map-fallback-panel'
 import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 import { cn } from '@/lib/utils/cn'
 
@@ -29,6 +30,9 @@ export function LivePositionMapCanvasPanel({
     showSurveyAreas,
     prefetchingMapArea,
     prefetchStatus,
+    mapReady,
+    mapLoadState,
+    mapWarning,
     isDrawing,
     isWalking,
     draftPointsLength,
@@ -58,6 +62,7 @@ export function LivePositionMapCanvasPanel({
     onUpdateBaseLayer,
     onToggleShowSurveyAreas,
     onPrefetchVisibleMapArea,
+    onCancelPrefetchVisibleMapArea,
     onStartDrawing,
     onFinishDrawing,
     onUndoLastPoint,
@@ -87,6 +92,12 @@ export function LivePositionMapCanvasPanel({
 
   const hasMobileToolbar =
     !editingEnclosureId && (mobilePanel === 'draw' || mobilePanel === 'walk')
+  const showMapFallback = !mapReady && mapLoadState !== 'loading'
+  const fallbackStatusLabel = isWalking
+    ? 'Pferch-Ablaufen läuft'
+    : isDrawing
+      ? 'Pferch-Zeichnung aktiv'
+      : 'keine GPS-Aufzeichnung aktiv'
 
   return (
     <div className={cn('relative overflow-hidden', !embedded && 'app-panel')}>
@@ -94,6 +105,54 @@ export function LivePositionMapCanvasPanel({
         ref={containerRef}
         className="h-[420px] w-full bg-surface-raised sm:h-[520px] lg:h-[calc(100vh-8rem)]"
       />
+      {mapWarning && !showMapFallback ? (
+        <div className="pointer-events-none absolute inset-x-2 top-2 z-20 lg:inset-x-3 lg:top-3">
+          <div className="mx-auto max-w-md rounded-[1rem] border border-warning-border bg-warning-surface/95 px-3 py-2 text-xs font-semibold text-warning-ink shadow-sm">
+            {mapWarning}
+          </div>
+        </div>
+      ) : null}
+      {showMapFallback ? (
+        <MapFallbackPanel
+          title="Karte momentan nicht verfügbar"
+          detail="Tiles oder Kartenmodul konnten nicht geladen werden. Pferch- und GPS-Aktionen bleiben lokal nutzbar."
+          position={position}
+          statusLabel={fallbackStatusLabel}
+        >
+          <button
+            type="button"
+            onClick={() => void onStartWalkMode()}
+            disabled={isWalking || isDrawing || isWalkSaving}
+            className="min-h-12 rounded-[1rem] border border-border-strong bg-surface-muted px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50"
+          >
+            GPS-Ablaufen starten
+          </button>
+          <button
+            type="button"
+            onClick={onStopWalkMode}
+            disabled={!isWalking || isWalkSaving}
+            className="min-h-12 rounded-[1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50"
+          >
+            Ablaufen stoppen
+          </button>
+          <button
+            type="button"
+            onClick={() => void onUndoLastWalkPoint()}
+            disabled={isWalkSaving || walkPointsLength === 0}
+            className="min-h-12 rounded-[1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50"
+          >
+            Letzten Punkt zurück
+          </button>
+          <button
+            type="button"
+            onClick={() => void onDiscardWalkMode()}
+            disabled={isWalkSaving || (!isWalking && walkPointsLength === 0)}
+            className="min-h-12 rounded-[1rem] border border-error-border bg-error-surface px-4 py-3 text-sm font-semibold text-error-ink disabled:opacity-50"
+          >
+            Ablaufen verwerfen
+          </button>
+        </MapFallbackPanel>
+      ) : null}
       {hasMobileToolbar ? (
         <button
           type="button"
@@ -193,6 +252,8 @@ export function LivePositionMapCanvasPanel({
           onUpdateBaseLayer={onUpdateBaseLayer}
           onToggleShowSurveyAreas={onToggleShowSurveyAreas}
           onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
+          onCancelPrefetchVisibleMapArea={onCancelPrefetchVisibleMapArea}
+          mapWarning={mapWarning}
           extraControls={
             <button
               type="button"
@@ -227,6 +288,8 @@ export function LivePositionMapCanvasPanel({
           onUpdateBaseLayer={onUpdateBaseLayer}
           onToggleShowSurveyAreas={onToggleShowSurveyAreas}
           onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
+          onCancelPrefetchVisibleMapArea={onCancelPrefetchVisibleMapArea}
+          mapWarning={mapWarning}
         />
       </div>
       {editingEnclosureId ? (

@@ -7,6 +7,7 @@ import {
   type SettingsTileCachePanelProps,
 } from '@/components/settings/settings-tile-cache-panel'
 import type { AppSettings, MapBaseLayer } from '@/types/domain'
+import type { BrowserNotificationPermissionState } from '@/lib/notifications/browser-notifications'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormField, FormLabel, FormSelect, FormInput, FormButton } from '@/components/ui/form'
 import { StatusAlert } from '@/components/ui/alert'
@@ -20,7 +21,25 @@ type SettingsGeneralFormCardProps = {
   saving: boolean
   onSubmit: FormEventHandler<HTMLFormElement>
   onResetSettings: () => void
+  browserNotificationPermission: BrowserNotificationPermissionState
+  onRequestBrowserNotifications: () => void
   tileCachePanel: SettingsTileCachePanelProps
+}
+
+function getBrowserNotificationStatusText(permission: BrowserNotificationPermissionState) {
+  if (permission === 'granted') {
+    return 'Aktiv: Erinnerungen können zusätzlich als Browser-Benachrichtigung erscheinen.'
+  }
+
+  if (permission === 'denied') {
+    return 'Blockiert: Erinnerungen erscheinen weiter in der App. Browser-Benachrichtigungen kannst du in den Website-Einstellungen erlauben.'
+  }
+
+  if (permission === 'unsupported') {
+    return 'Nicht verfügbar: Erinnerungen erscheinen weiter in der App.'
+  }
+
+  return 'Nicht aktiv: Erinnerungen erscheinen in der App. Browser-Benachrichtigungen kannst du hier bewusst aktivieren.'
 }
 
 export function SettingsGeneralFormCard({
@@ -30,10 +49,13 @@ export function SettingsGeneralFormCard({
   saving,
   onSubmit,
   onResetSettings,
+  browserNotificationPermission,
+  onRequestBrowserNotifications,
   tileCachePanel,
 }: SettingsGeneralFormCardProps) {
   const activePreset = matchGpsPreset(draft)
   const activePresetDescription = gpsPresets.find((preset) => preset.id === activePreset)?.description
+  const canRequestBrowserNotifications = browserNotificationPermission === 'default'
 
   return (
     <Card>
@@ -186,6 +208,26 @@ export function SettingsGeneralFormCard({
           </label>
 
           <SettingsTileCachePanel {...tileCachePanel} tileCachingEnabled={draft.tileCachingEnabled} />
+
+          <FormField>
+            <FormLabel>Browser-Benachrichtigungen</FormLabel>
+            <div className="rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3">
+              <p className="text-sm font-medium text-ink-muted">
+                {getBrowserNotificationStatusText(browserNotificationPermission)}
+              </p>
+              <FormButton
+                type="button"
+                onClick={onRequestBrowserNotifications}
+                disabled={!canRequestBrowserNotifications}
+                variant="secondary"
+                className="mt-3"
+              >
+                {browserNotificationPermission === 'granted'
+                  ? 'Browser-Benachrichtigungen aktiv'
+                  : 'Browser-Benachrichtigungen aktivieren'}
+              </FormButton>
+            </div>
+          </FormField>
 
           {status && <StatusAlert className="mt-3">{status}</StatusAlert>}
 

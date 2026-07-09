@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl'
 import { createDefaultMarker, createRasterMap } from '@/lib/maps/maplibre-runtime'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 
 type UseRasterMapInstanceOptions = {
   // Called once, after the map's `load` event, to register the feature's
@@ -17,6 +18,10 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRef = useRef<Marker | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  const [mapLoadState, setMapLoadState] = useState<'loading' | 'retrying' | 'ready' | 'failed'>(
+    'loading'
+  )
+  const [mapWarning, setMapWarning] = useState('')
   const containerRef = useCallback((node: HTMLDivElement | null) => {
     setContainerElement(node)
   }, [])
@@ -29,11 +34,48 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
     let loadResizeFrame = 0
     const loadResizeTimers: ReturnType<typeof setTimeout>[] = []
 
+    // A failed chunk load (e.g. signal drop before the map bundle was cached)
+    // must not leave the map blank forever — retry when the connection returns
+    // or after a short backoff. Failed dynamic imports are not cached by the
+    // module system, so re-attempting re-issues the request.
+    function waitForImportRetrySignal() {
+      return new Promise<void>((resolve) => {
+        let timer: ReturnType<typeof setTimeout> | null = null
+        const settle = () => {
+          window.removeEventListener('online', settle)
+          if (timer !== null) clearTimeout(timer)
+          resolve()
+        }
+        timer = setTimeout(settle, 5_000)
+        window.addEventListener('online', settle)
+      })
+    }
+
+    async function loadMapLibre() {
+      for (;;) {
+        try {
+          return await import('maplibre-gl')
+        } catch (error) {
+          if (cancelled) return null
+          recordFieldDiagnostic({
+            type: 'map_runtime_error',
+            level: 'warning',
+            message: 'Kartenmodul konnte nicht geladen werden.',
+            details: error,
+          })
+          setMapLoadState('retrying')
+          setMapWarning('Kartenmodul konnte noch nicht geladen werden. Feldfunktionen bleiben nutzbar.')
+          await waitForImportRetrySignal()
+          if (cancelled) return null
+        }
+      }
+    }
+
     async function setupMap() {
       if (!containerElement || mapRef.current) return
 
-      const maplibre = await import('maplibre-gl')
-      if (cancelled || !containerElement) return
+      const maplibre = await loadMapLibre()
+      if (!maplibre || cancelled || !containerElement) return
 
       const map = createRasterMap(maplibre, containerElement)
 
@@ -41,12 +83,24 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
         if (cancelled) return
         registerLayers(map)
         setMapReady(true)
+        setMapLoadState('ready')
 
         loadResizeFrame = requestAnimationFrame(() => {
           map.resize()
           loadResizeTimers.push(setTimeout(() => map.resize(), 250))
           loadResizeTimers.push(setTimeout(() => map.resize(), 800))
         })
+      })
+
+      map.on('error', (event) => {
+        if (cancelled) return
+        recordFieldDiagnostic({
+          type: 'map_tile_or_network_error',
+          level: 'warning',
+          message: 'Kartenfehler oder fehlende Kartentiles.',
+          details: event,
+        })
+        setMapWarning('Kartentiles fehlen oder konnten nicht geladen werden. Dokumentation bleibt möglich.')
       })
 
       mapRef.current = map
@@ -65,6 +119,23 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
       mapRef.current = null
     }
   }, [containerElement, registerLayers])
+
+  useEffect(() => {
+    if (!containerElement || mapReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      setMapLoadState((current) => (current === 'ready' ? current : 'failed'))
+      recordFieldDiagnostic({
+        type: 'map_runtime_error',
+        level: 'warning',
+        message: 'Karte wurde nicht rechtzeitig bereit.',
+        details: { timeoutMs: 12_000 },
+      })
+      setMapWarning('Karte ist nicht verfügbar. Nutze die Feldsteuerung ohne sichtbare Karte.')
+    }, 12_000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [containerElement, mapReady])
 
   useEffect(() => {
     if (!mapReady || !containerElement || typeof ResizeObserver === 'undefined') {
@@ -98,5 +169,7 @@ export function useRasterMapInstance({ registerLayers }: UseRasterMapInstanceOpt
     mapRef,
     markerRef,
     mapReady,
+    mapLoadState,
+    mapWarning,
   }
 }

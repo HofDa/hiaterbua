@@ -1,4 +1,5 @@
 import { db } from '@/lib/db/dexie'
+import { buildLocalChangeMetadata, buildLocalChangePatch } from '@/lib/sync/local-metadata'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type { Animal, Species } from '@/types/domain'
@@ -46,6 +47,7 @@ export async function createAnimalRecord(params: {
     isArchived: false,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.animals.add(animal)
@@ -60,7 +62,12 @@ export function updateAnimalRecord(
   animalId: string,
   patch: Partial<Pick<Animal, 'earTag' | 'species' | 'name' | 'notes' | 'isArchived'>>,
 ): Promise<number> {
-  return db.animals.update(animalId, { ...patch, updatedAt: nowIso() })
+  const timestamp = nowIso()
+  return db.animals.update(animalId, {
+    ...patch,
+    updatedAt: timestamp,
+    ...buildLocalChangePatch(timestamp),
+  })
 }
 
 export function deleteAnimalRecord(animalId: string): Promise<void> {

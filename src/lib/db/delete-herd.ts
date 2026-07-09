@@ -1,4 +1,6 @@
 import { db } from '@/lib/db/dexie'
+import { buildLocalChangePatch } from '@/lib/sync/local-metadata'
+import { nowIso } from '@/lib/utils/time'
 
 export async function deleteHerdCascade(herdId: string) {
   const herdEnclosures = await db.enclosures.where('herdId').equals(herdId).toArray()
@@ -21,9 +23,13 @@ export async function deleteHerdCascade(herdId: string) {
       db.workEvents,
     ],
     async () => {
+      const timestamp = nowIso()
+
       for (const enclosure of herdEnclosures) {
         await db.enclosures.update(enclosure.id, {
           herdId: null,
+          updatedAt: timestamp,
+          ...buildLocalChangePatch(timestamp),
         })
       }
 

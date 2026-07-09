@@ -21,6 +21,9 @@ export type LivePositionCanvasSlice = {
   showSurveyAreas: boolean
   prefetchingMapArea: boolean
   prefetchStatus: string
+  mapReady: boolean
+  mapLoadState: 'loading' | 'retrying' | 'ready' | 'failed'
+  mapWarning: string
   isDrawing: boolean
   isWalking: boolean
   draftPointsLength: number
@@ -52,6 +55,7 @@ export type LivePositionCanvasHandles = {
   onUpdateBaseLayer: (nextBaseLayer: MapBaseLayer) => void | Promise<void>
   onToggleShowSurveyAreas: () => void
   onPrefetchVisibleMapArea: () => void | Promise<void>
+  onCancelPrefetchVisibleMapArea: () => void
   onStartDrawing: () => void
   onFinishDrawing: () => void
   onUndoLastPoint: () => void
@@ -87,6 +91,9 @@ const initialCanvasSlice: LivePositionCanvasSlice = {
   showSurveyAreas: true,
   prefetchingMapArea: false,
   prefetchStatus: '',
+  mapReady: false,
+  mapLoadState: 'loading',
+  mapWarning: '',
   isDrawing: false,
   isWalking: false,
   draftPointsLength: 0,
@@ -119,6 +126,7 @@ const initialCanvasHandles: LivePositionCanvasHandles = {
   onUpdateBaseLayer: noop,
   onToggleShowSurveyAreas: noop,
   onPrefetchVisibleMapArea: noop,
+  onCancelPrefetchVisibleMapArea: noop,
   onStartDrawing: noop,
   onFinishDrawing: noop,
   onUndoLastPoint: noop,

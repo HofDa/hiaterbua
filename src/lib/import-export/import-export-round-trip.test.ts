@@ -132,6 +132,56 @@ describe('app export → import round-trip', () => {
 
     expect(prepared.payload.animals).toHaveLength(1)
   })
+
+  it('accepts old exports without local sync metadata', () => {
+    const payload: ImportPayload = {
+      grazingSessions: [
+        {
+          id: 'session_old',
+          herdId: 'herd_in_db',
+          status: 'finished',
+          startTime: '2026-06-01T08:00:00.000Z',
+          endTime: '2026-06-01T09:00:00.000Z',
+          durationS: 3600,
+          movingTimeS: 1800,
+          distanceM: 500,
+        },
+      ],
+      trackpoints: [
+        {
+          id: 'trackpoint_old',
+          sessionId: 'session_old',
+          enclosureWalkId: null,
+          seq: 1,
+          timestamp: '2026-06-01T08:00:00.000Z',
+          lat: 46.5,
+          lon: 11.1,
+          accepted: true,
+        },
+      ],
+    }
+    const presentKeys = getPresentImportPayloadKeys(payload)
+    const existingRefs = emptyExistingRefs()
+    existingRefs.herdIds.add('herd_in_db')
+
+    const prepared = prepareImportPayload(
+      payload,
+      { kind: 'app-data-json', presentKeys, isCompleteAppData: false },
+      false,
+      existingRefs,
+    )
+
+    expect(prepared.payload.grazingSessions[0]).toMatchObject({
+      id: 'session_old',
+      createdAt: '2026-06-01T08:00:00.000Z',
+      updatedAt: '2026-06-01T09:00:00.000Z',
+    })
+    expect(prepared.payload.trackpoints[0]).toMatchObject({
+      id: 'trackpoint_old',
+      createdAt: '2026-06-01T08:00:00.000Z',
+      updatedAt: '2026-06-01T08:00:00.000Z',
+    })
+  })
 })
 
 describe('import validation rejects corrupted payloads', () => {

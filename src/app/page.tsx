@@ -210,6 +210,18 @@ export default function HomePage() {
                     ? 'Sichert …'
                     : 'Kartenbereich sichern'}
               </button>
+              {secureArea.status === 'prefetching' ? (
+                <button
+                  type="button"
+                  onClick={secureArea.cancelPrefetch}
+                  className={cn(
+                    buttonVariants({ variant: 'secondary' }),
+                    'min-h-11 rounded-full',
+                  )}
+                >
+                  Abbrechen
+                </button>
+              ) : null}
               <Link
                 href="/settings"
                 className={cn(buttonVariants({ variant: 'secondary' }), 'min-h-11 rounded-full')}

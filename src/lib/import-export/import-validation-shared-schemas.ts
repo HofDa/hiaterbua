@@ -2,7 +2,7 @@ import { area as turfArea } from '@turf/turf'
 import { z } from 'zod'
 import type { ImportPayloadKey } from '@/lib/import-export/import-validation-types'
 import { importPayloadKeys } from '@/lib/import-export/import-validation-types'
-import type { Enclosure, SurveyArea } from '@/types/domain'
+import type { Enclosure, LocalRecordMetadata, SurveyArea } from '@/types/domain'
 
 export const rawImportPayloadSchema = z
   .object(
@@ -15,6 +15,7 @@ export const rawImportPayloadSchema = z
 
 export const nonEmptyString = z.string().trim().min(1)
 export const timestampString = z.string().trim().min(1)
+export const syncStatusSchema = z.enum(['dirty', 'synced', 'syncing', 'error'])
 
 export const optionalTrimmedString = z.preprocess((value) => {
   if (value === null || value === undefined) return undefined
@@ -43,6 +44,24 @@ export const nullableNumber = z.preprocess((value) => {
 export const nullableInteger = nullableNumber.transform((value) =>
   value === null ? null : Math.round(value)
 )
+
+export const localRecordMetadataSchemaFields = {
+  deletedAt: nullableTrimmedString.optional(),
+  deviceId: nullableTrimmedString.optional(),
+  syncStatus: syncStatusSchema.optional(),
+  lastLocalChangeAt: nullableTrimmedString.optional(),
+}
+
+export function normalizeLocalRecordMetadata(value: LocalRecordMetadata): LocalRecordMetadata {
+  return {
+    ...(value.deletedAt !== undefined ? { deletedAt: value.deletedAt ?? null } : {}),
+    ...(value.deviceId !== undefined ? { deviceId: value.deviceId ?? null } : {}),
+    ...(value.syncStatus !== undefined ? { syncStatus: value.syncStatus } : {}),
+    ...(value.lastLocalChangeAt !== undefined
+      ? { lastLocalChangeAt: value.lastLocalChangeAt ?? null }
+      : {}),
+  }
+}
 
 export const coordinateSchema = z.tuple([z.coerce.number().finite(), z.coerce.number().finite()])
 

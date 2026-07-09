@@ -3,56 +3,61 @@
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db/dexie'
-import { listAllEnclosures } from '@/lib/db/repositories/enclosures'
-import { listAllHerds } from '@/lib/db/repositories/herds'
-import { listAllSessions } from '@/lib/db/repositories/sessions'
-import { listAllWorkSessions } from '@/lib/db/repositories/work-sessions'
 import { StatusAlert } from '@/components/ui/alert'
+import { useFieldSafety } from '@/lib/field-safety/use-field-safety'
 import { daysSince, shouldRemindBackup } from '@/lib/settings/backup-reminder'
+import {
+  getLocalChangeSummary,
+  hasLocalChangesSinceBackup,
+} from '@/lib/sync/local-change-summary'
+
+function formatBackupTime(value: string | null) {
+  if (!value) return 'noch nicht erstellt'
+
+  return new Intl.DateTimeFormat('de', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
+}
 
 export function BackupReminder() {
+  const { isFieldOperationActive } = useFieldSafety()
   const info = useLiveQuery(async () => {
-    const [settings, herds, enclosures, sessions, workSessions, assignments] = await Promise.all([
+    const [settings, changeSummary] = await Promise.all([
       db.settings.get('app'),
-      listAllHerds(),
-      listAllEnclosures(),
-      listAllSessions(),
-      listAllWorkSessions(),
-      db.enclosureAssignments.toArray(),
+      getLocalChangeSummary(),
     ])
 
-    const hasData =
-      herds.length > 0 ||
-      enclosures.length > 0 ||
-      sessions.length > 0 ||
-      workSessions.length > 0
-
-    const updatedTimes = [
-      ...herds.map((herd) => herd.updatedAt),
-      ...enclosures.map((enclosure) => enclosure.updatedAt),
-      ...sessions.map((session) => session.updatedAt),
-      ...workSessions.map((session) => session.updatedAt),
-      ...assignments.map((assignment) => assignment.updatedAt),
-    ].filter((value): value is string => Boolean(value))
-
-    const latestChangeAt =
-      updatedTimes.length > 0
-        ? updatedTimes.reduce((latest, value) => (value > latest ? value : latest))
-        : null
-
-    return { lastExportAt: settings?.lastExportAt ?? null, hasData, latestChangeAt }
+    return {
+      lastExportAt: settings?.lastExportAt ?? null,
+      hasData: changeSummary.recordCount > 0,
+      latestChangeAt: changeSummary.latestLocalChangeAt,
+      hasLocalChanges: hasLocalChangesSinceBackup(
+        changeSummary.latestLocalChangeAt,
+        settings?.lastExportAt
+      ),
+    }
   }, [])
 
-  if (!info || !shouldRemindBackup(info)) return null
+  if (isFieldOperationActive || !info || !info.hasData) return null
 
-  const message = info.lastExportAt
-    ? `Letztes Backup vor ${daysSince(info.lastExportAt)} Tagen – es gibt neue Daten.`
-    : 'Noch kein Backup erstellt. Deine Daten liegen nur auf diesem Gerät.'
+  const backupRecommended = shouldRemindBackup(info)
+  const localChangesLabel = info.hasLocalChanges
+    ? 'Lokale Änderungen vorhanden'
+    : 'Keine neuen lokalen Änderungen seit dem letzten Backup'
+  const backupLabel = `Letztes Backup: ${formatBackupTime(info.lastExportAt)}`
+  const recommendationLabel = backupRecommended
+    ? 'Backup empfohlen'
+    : info.lastExportAt
+      ? `Backup vor ${daysSince(info.lastExportAt)} Tagen`
+      : 'Backup noch offen'
 
   return (
     <StatusAlert variant="info">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span>{message}</span>
+        <span>
+          {localChangesLabel} · {backupLabel} · {recommendationLabel}
+        </span>
         <Link href="/export" className="font-semibold underline underline-offset-2">
           Jetzt sichern
         </Link>

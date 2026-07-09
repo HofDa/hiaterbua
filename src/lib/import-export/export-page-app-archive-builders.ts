@@ -5,6 +5,7 @@ import {
   hasGeometry,
 } from '@/lib/import-export/file-formats'
 import { APP_TITLE } from '@/lib/app-metadata'
+import { getOrCreateLocalDeviceId } from '@/lib/sync/local-metadata'
 import type {
   Animal,
   Enclosure,
@@ -31,6 +32,20 @@ type BuildAppExportArtifactsOptions = {
   workSessions: WorkSession[]
   workEvents: WorkEvent[]
   settings: AppSettings[]
+}
+
+function exportLocalMetadata(record: {
+  deletedAt?: string | null
+  deviceId?: string | null
+  syncStatus?: string
+  lastLocalChangeAt?: string | null
+}) {
+  return {
+    deletedAt: record.deletedAt ?? null,
+    deviceId: record.deviceId ?? null,
+    syncStatus: record.syncStatus ?? null,
+    lastLocalChangeAt: record.lastLocalChangeAt ?? null,
+  }
 }
 
 export function buildAppExportArtifacts({
@@ -81,6 +96,7 @@ export function buildAppExportArtifacts({
         pointsCount: enclosure.pointsCount ?? null,
         createdAt: enclosure.createdAt,
         updatedAt: enclosure.updatedAt,
+        ...exportLocalMetadata(enclosure),
       },
     }))
 
@@ -96,6 +112,7 @@ export function buildAppExportArtifacts({
         areaHa: surveyArea.areaHa,
         createdAt: surveyArea.createdAt,
         updatedAt: surveyArea.updatedAt,
+        ...exportLocalMetadata(surveyArea),
       },
     }))
 
@@ -129,6 +146,7 @@ export function buildAppExportArtifacts({
             notes: session.notes ?? null,
             createdAt: session.createdAt,
             updatedAt: session.updatedAt,
+            ...exportLocalMetadata(session),
           },
         },
       ]
@@ -153,6 +171,9 @@ export function buildAppExportArtifacts({
         speedMps: point.speedMps ?? null,
         headingDeg: point.headingDeg ?? null,
         accepted: point.accepted,
+        createdAt: point.createdAt ?? null,
+        updatedAt: point.updatedAt ?? null,
+        ...exportLocalMetadata(point),
       },
     }))
 
@@ -174,6 +195,9 @@ export function buildAppExportArtifacts({
         speedMps: point.speedMps ?? null,
         headingDeg: point.headingDeg ?? null,
         accepted: point.accepted,
+        createdAt: point.createdAt ?? null,
+        updatedAt: point.updatedAt ?? null,
+        ...exportLocalMetadata(point),
       },
     }))
 
@@ -199,6 +223,9 @@ export function buildAppExportArtifacts({
           type: event.type,
           timestamp: event.timestamp,
           comment: event.comment ?? null,
+          createdAt: event.createdAt ?? null,
+          updatedAt: event.updatedAt ?? null,
+          ...exportLocalMetadata(event),
         },
       }
     })
@@ -206,6 +233,7 @@ export function buildAppExportArtifacts({
   const appData = {
     exportedAt: new Date().toISOString(),
     app: APP_TITLE,
+    deviceId: getOrCreateLocalDeviceId(),
     herds,
     animals,
     enclosures,

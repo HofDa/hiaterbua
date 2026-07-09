@@ -6,9 +6,12 @@ import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
 import { RecordingStatusBar } from '@/components/layout/recording-status-bar'
+import { FieldDiagnosticsRuntime } from '@/components/diagnostics/field-diagnostics-runtime'
+import { FieldUiBlockerDetector } from '@/components/diagnostics/field-ui-blocker-detector'
 import { APP_TITLE } from '@/lib/app-metadata'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
+import { SessionRecoveryManager } from '@/components/session-recovery/session-recovery-manager'
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
 import { ConnectivityBanner } from '@/components/ui/connectivity-banner'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
@@ -50,11 +53,14 @@ export default function RootLayout({
     <html lang="de" suppressHydrationWarning>
       <body className={cn('min-h-screen bg-background font-sans antialiased', GeistSans.variable)}>
         <div className="min-h-screen text-ink-strong">
+          <FieldDiagnosticsRuntime />
+          <FieldUiBlockerDetector />
           <ServiceWorkerSync />
           <AppRoutePrefetch />
           <ConfirmDialogProvider>
             <TopBar />
             <StatusStrip />
+            <SessionRecoveryManager />
             <ErrorBoundary>
               <PageContainer>{children}</PageContainer>
             </ErrorBoundary>

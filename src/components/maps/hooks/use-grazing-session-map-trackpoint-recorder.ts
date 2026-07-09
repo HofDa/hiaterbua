@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { appendSessionTrackpoint } from '@/lib/db/repositories/sessions'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { isQuotaExceededError } from '@/lib/utils/storage-health'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
@@ -110,6 +111,14 @@ export function useGrazingSessionMapTrackpointRecorder({
           // Keep the point queued and retry on the next accepted position so a
           // transient write failure doesn't punch a hole in the recorded track.
           const kind = getRecordingErrorKind(error)
+          recordFieldDiagnostic({
+            type: 'indexeddb_write_failed',
+            level: 'error',
+            message: 'Weidegang-Trackpunkt konnte lokal nicht gespeichert werden.',
+            activeGrazingSessionId: sessionId,
+            activeRecordingId: sessionId,
+            details: { kind, error },
+          })
           reportRecordingError(
             kind,
             buildRecordingErrorMessage(kind, pendingPositionsRef.current.length)

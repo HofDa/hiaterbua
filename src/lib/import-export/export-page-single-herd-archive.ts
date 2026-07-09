@@ -1,6 +1,7 @@
 import { db } from '@/lib/db/dexie'
 import { defaultAppSettings } from '@/lib/settings/defaults'
 import { APP_TITLE } from '@/lib/app-metadata'
+import { getOrCreateLocalDeviceId } from '@/lib/sync/local-metadata'
 import {
   buildHerdExportBundles,
   sanitizeFilenamePart,
@@ -87,6 +88,7 @@ export async function buildSingleHerdExportArchive(herdId: string) {
           {
             exportedAt: new Date().toISOString(),
             app: APP_TITLE,
+            deviceId: getOrCreateLocalDeviceId(),
             settings: [settings ?? defaultAppSettings],
             herd: bundle,
           },

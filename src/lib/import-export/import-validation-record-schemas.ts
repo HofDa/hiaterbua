@@ -2,7 +2,9 @@ import { z } from 'zod'
 import {
   enclosureGeometrySchema,
   getAreaMetrics,
+  localRecordMetadataSchemaFields,
   nonEmptyString,
+  normalizeLocalRecordMetadata,
   nullableInteger,
   nullableNumber,
   nullableTrimmedString,
@@ -28,6 +30,7 @@ export const herdSchema = z
     isArchived: z.boolean(),
     createdAt: timestampString,
     updatedAt: timestampString,
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): Herd => ({
     id: value.id,
@@ -37,6 +40,7 @@ export const herdSchema = z
     isArchived: value.isArchived,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+    ...normalizeLocalRecordMetadata(value),
   }))
 
 export const animalSchema = z
@@ -50,6 +54,7 @@ export const animalSchema = z
     isArchived: z.boolean(),
     createdAt: timestampString,
     updatedAt: timestampString,
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): Animal => ({
     id: value.id,
@@ -61,6 +66,7 @@ export const animalSchema = z
     isArchived: value.isArchived,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+    ...normalizeLocalRecordMetadata(value),
   }))
 
 export const enclosureSchema = z
@@ -81,6 +87,7 @@ export const enclosureSchema = z
     pointsCount: nullableInteger.optional(),
     createdAt: timestampString,
     updatedAt: timestampString,
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): Enclosure => {
     const derivedAreaM2 = value.geometry ? getAreaMetrics(value.geometry).areaM2 : 0
@@ -103,6 +110,7 @@ export const enclosureSchema = z
       pointsCount: value.pointsCount ?? null,
       createdAt: value.createdAt,
       updatedAt: value.updatedAt,
+      ...normalizeLocalRecordMetadata(value),
     }
   })
 
@@ -116,6 +124,7 @@ export const surveyAreaSchema = z
     areaHa: optionalNumber,
     createdAt: timestampString,
     updatedAt: timestampString,
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): SurveyArea => {
     const metrics = getAreaMetrics(value.geometry)
@@ -130,6 +139,7 @@ export const surveyAreaSchema = z
       areaHa: value.areaHa ?? areaM2 / 10_000,
       createdAt: value.createdAt,
       updatedAt: value.updatedAt,
+      ...normalizeLocalRecordMetadata(value),
     }
   })
 
@@ -144,6 +154,7 @@ export const enclosureAssignmentSchema = z
     notes: optionalTrimmedString,
     createdAt: timestampString,
     updatedAt: timestampString,
+    ...localRecordMetadataSchemaFields,
   })
   .transform((value): EnclosureAssignment => ({
     id: value.id,
@@ -155,4 +166,5 @@ export const enclosureAssignmentSchema = z
     notes: value.notes,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+    ...normalizeLocalRecordMetadata(value),
   }))

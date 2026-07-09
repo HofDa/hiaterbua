@@ -40,6 +40,9 @@ export type GrazingCanvasSlice = {
   showSessionEventsOnMap: boolean
   prefetchingMapArea: boolean
   prefetchStatus: string
+  mapReady: boolean
+  mapLoadState: 'loading' | 'retrying' | 'ready' | 'failed'
+  mapWarning: string
   isAddingEditTrackpoint: boolean
   selectedEditTrackpointIndex: number | null
   editTrackpointsLength: number
@@ -62,6 +65,7 @@ export type GrazingCanvasHandles = {
   onToggleShowSurveyAreas: () => void
   onToggleShowSessionEventsOnMap: () => void
   onPrefetchVisibleMapArea: () => void | Promise<void>
+  onCancelPrefetchVisibleMapArea: () => void
   onStartAddEditTrackpoint: () => void
   onRemoveSelectedEditTrackpoint: () => void
   onSaveEditedSession: () => void | Promise<void>
@@ -95,6 +99,9 @@ const initialCanvasSlice: GrazingCanvasSlice = {
   showSessionEventsOnMap: true,
   prefetchingMapArea: false,
   prefetchStatus: '',
+  mapReady: false,
+  mapLoadState: 'loading',
+  mapWarning: '',
   isAddingEditTrackpoint: false,
   selectedEditTrackpointIndex: null,
   editTrackpointsLength: 0,
@@ -116,6 +123,7 @@ const initialCanvasHandles: GrazingCanvasHandles = {
   onToggleShowSurveyAreas: noop,
   onToggleShowSessionEventsOnMap: noop,
   onPrefetchVisibleMapArea: noop,
+  onCancelPrefetchVisibleMapArea: noop,
   onStartAddEditTrackpoint: noop,
   onRemoveSelectedEditTrackpoint: noop,
   onSaveEditedSession: noop,

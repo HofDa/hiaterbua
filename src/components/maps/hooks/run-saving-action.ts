@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 
 type SavingActionErrorMessage = string | ((error: unknown) => string)
 
@@ -31,6 +32,12 @@ export async function runSavingAction<TSavingState, TResult = void>({
   try {
     return await action()
   } catch (error) {
+    recordFieldDiagnostic({
+      type: 'indexeddb_write_failed',
+      level: 'error',
+      message: typeof errorMessage === 'function' ? 'Lokale Speicheraktion fehlgeschlagen.' : errorMessage,
+      details: error,
+    })
     setError(
       typeof errorMessage === 'function' ? errorMessage(error) : errorMessage
     )

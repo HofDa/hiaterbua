@@ -6,6 +6,9 @@ import {
   deleteWorkSessionRecord,
   updateWorkSessionStatusRecord,
 } from '@/lib/db/repositories/work-sessions'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
+import { getBrowserNotificationPermission } from '@/lib/notifications/browser-notifications'
+import { getWorkSessionStartedStatusMessage } from '@/lib/work/work-session-notifications'
 import { getWorkLabel } from '@/lib/work/work-session-helpers'
 import type { WorkActivityId, WorkSession, WorkStatus, WorkType } from '@/types/domain'
 
@@ -69,7 +72,7 @@ export function useWorkPageSessionActions({
     try {
       const parsedReminderIntervalMin = Number.parseInt(reminderIntervalMin, 10) || 0
 
-      await createWorkSessionRecord({
+      const session = await createWorkSessionRecord({
         type: workType,
         activityId: workActivityId,
         herdId: selectedHerdId || null,
@@ -77,21 +80,33 @@ export function useWorkPageSessionActions({
         reminderIntervalMin: parsedReminderIntervalMin,
         notes,
       })
-
-      if (
-        parsedReminderIntervalMin > 0 &&
-        typeof window !== 'undefined' &&
-        'Notification' in window &&
-        window.Notification.permission === 'default'
-      ) {
-        void window.Notification.requestPermission()
-      }
+      recordFieldDiagnostic({
+        type: 'work_session_started',
+        message: 'Arbeitseinsatz gestartet.',
+        activeWorkSessionId: session.id,
+        details: {
+          workType,
+          activityId: workActivityId,
+          reminderEnabled: parsedReminderIntervalMin > 0,
+        },
+      })
 
       resetStartedSessionForm()
       setActiveReminderMessage('')
-      setStatusMessage('Arbeitseinsatz gestartet.')
+      setStatusMessage(
+        getWorkSessionStartedStatusMessage({
+          reminderIntervalMin: parsedReminderIntervalMin,
+          notificationPermission: getBrowserNotificationPermission(),
+        })
+      )
       triggerHaptic('success')
     } catch (currentError) {
+      recordFieldDiagnostic({
+        type: 'indexeddb_write_failed',
+        level: 'error',
+        message: 'Arbeitseinsatz konnte lokal nicht gestartet werden.',
+        details: currentError,
+      })
       setError(
         currentError instanceof Error
           ? currentError.message
@@ -111,6 +126,14 @@ export function useWorkPageSessionActions({
 
     try {
       await updateWorkSessionStatusRecord(activeSession, nextStatus)
+      if (nextStatus === 'finished') {
+        recordFieldDiagnostic({
+          type: 'work_session_stopped',
+          message: 'Arbeitseinsatz beendet.',
+          activeWorkSessionId: activeSession.id,
+          details: { previousStatus: activeSession.status },
+        })
+      }
 
       setStatusMessage(getStatusUpdateMessage(nextStatus))
       triggerHaptic(nextStatus === 'finished' ? 'success' : 'medium')
@@ -123,6 +146,13 @@ export function useWorkPageSessionActions({
         resetReminderTrigger()
       }
     } catch (currentError) {
+      recordFieldDiagnostic({
+        type: 'indexeddb_write_failed',
+        level: 'error',
+        message: 'Arbeitseinsatz-Status konnte lokal nicht gespeichert werden.',
+        activeWorkSessionId: activeSession.id,
+        details: currentError,
+      })
       setError(
         currentError instanceof Error
           ? currentError.message

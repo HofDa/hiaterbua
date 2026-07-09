@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { logError } from '@/lib/utils/log'
 import type { MapBaseLayer } from '@/types/domain'
 import type { MapTileRecord } from '@/types/domain'
@@ -21,6 +22,19 @@ export type PrefetchTileResult = {
   succeeded: number
   failed: number
   total: number
+  cancelled: boolean
+}
+
+export class TilePrefetchCancelledError extends Error {
+  constructor() {
+    super('Tile prefetch cancelled.')
+    this.name = 'TilePrefetchCancelledError'
+  }
+}
+
+export type PrefetchTileUrlsOptions = {
+  signal?: AbortSignal
+  onProgress?: (completed: number, total: number) => void
 }
 
 export const tileTemplates: Record<MapBaseLayer, string> = {
@@ -283,34 +297,56 @@ async function persistTileResponseBestEffort(request: Request, response: Respons
     return true
   } catch (error) {
     logError('persistTileResponseBestEffort.db', error)
+    recordFieldDiagnostic({
+      type: 'indexeddb_write_failed',
+      level: 'warning',
+      message: 'Kartentile konnte nicht lokal gespeichert werden.',
+      details: error,
+    })
     return false
   }
 }
 
 export async function prefetchTileUrls(
   urls: string[],
-  onProgress?: (completed: number, total: number) => void
+  optionsOrProgress?: PrefetchTileUrlsOptions | ((completed: number, total: number) => void)
 ): Promise<PrefetchTileResult> {
   if (typeof window === 'undefined') {
     throw new Error('Browser-APIs sind nicht verfuegbar.')
   }
 
+  const options =
+    typeof optionsOrProgress === 'function'
+      ? { onProgress: optionsOrProgress }
+      : optionsOrProgress ?? {}
+  const { signal, onProgress } = options
   let completed = 0
   let succeeded = 0
   let failed = 0
   let firstTileError: unknown = null
+  let cancelled = false
 
   try {
     for (let index = 0; index < urls.length; index += PREFETCH_CONCURRENCY) {
+      if (signal?.aborted) {
+        cancelled = true
+        break
+      }
+
       const batch = urls.slice(index, index + PREFETCH_CONCURRENCY)
 
       await Promise.all(
         batch.map(async (url) => {
+          if (signal?.aborted) {
+            return
+          }
+
           try {
             const request = new Request(url, {
               method: 'GET',
               mode: 'cors',
               cache: 'reload',
+              signal,
             })
             const response = await fetch(request)
 
@@ -325,6 +361,11 @@ export async function prefetchTileUrls(
 
             succeeded += 1
           } catch (error) {
+            if (signal?.aborted || error instanceof TilePrefetchCancelledError) {
+              cancelled = true
+              return
+            }
+
             failed += 1
             firstTileError ??= error
           } finally {
@@ -347,11 +388,22 @@ export async function prefetchTileUrls(
       total: urls.length,
       firstError: firstTileError,
     })
+    recordFieldDiagnostic({
+      type: 'map_tile_or_network_error',
+      level: 'warning',
+      message: 'Kartentiles konnten nicht vorgeladen werden.',
+      details: {
+        failed,
+        total: urls.length,
+        firstError: firstTileError,
+      },
+    })
   }
 
   return {
     succeeded,
     failed,
     total: urls.length,
+    cancelled,
   }
 }

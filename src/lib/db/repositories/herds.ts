@@ -1,4 +1,5 @@
 import { db } from '@/lib/db/dexie'
+import { buildLocalChangeMetadata, buildLocalChangePatch } from '@/lib/sync/local-metadata'
 import { createId } from '@/lib/utils/ids'
 import { nowIso } from '@/lib/utils/time'
 import type { Herd } from '@/types/domain'
@@ -47,6 +48,7 @@ export async function createHerdRecord(params: {
     isArchived: false,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.herds.add(herd)
@@ -62,5 +64,10 @@ export function updateHerdRecord(
   herdId: string,
   patch: Partial<Pick<Herd, 'name' | 'fallbackCount' | 'notes' | 'isArchived'>>,
 ): Promise<number> {
-  return db.herds.update(herdId, { ...patch, updatedAt: nowIso() })
+  const timestamp = nowIso()
+  return db.herds.update(herdId, {
+    ...patch,
+    updatedAt: timestamp,
+    ...buildLocalChangePatch(timestamp),
+  })
 }

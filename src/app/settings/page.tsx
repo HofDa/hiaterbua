@@ -17,6 +17,8 @@ export default function SettingsPage() {
     setTileCacheCount,
     saveSettings,
     resetSettings,
+    browserNotificationPermission,
+    requestBrowserNotifications,
     tileCachePanel,
   } = useSettingsPagePreferences()
 
@@ -40,6 +42,8 @@ export default function SettingsPage() {
         saving={saving}
         onSubmit={saveSettings}
         onResetSettings={resetSettings}
+        browserNotificationPermission={browserNotificationPermission}
+        onRequestBrowserNotifications={requestBrowserNotifications}
         tileCachePanel={tileCachePanel}
       />
 

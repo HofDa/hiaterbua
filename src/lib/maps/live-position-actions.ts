@@ -1,4 +1,5 @@
 import { db } from '@/lib/db/dexie'
+import { buildLocalChangeMetadata, buildLocalChangePatch } from '@/lib/sync/local-metadata'
 import { createId } from '@/lib/utils/ids'
 import type { GpsPosition } from '@/lib/maps/position-types'
 import type { Animal, Herd, TrackPoint } from '@/types/domain'
@@ -17,16 +18,20 @@ export async function appendWalkTrackpoint(params: {
     return null
   }
 
+  const timestamp = new Date(nextPosition.timestamp).toISOString()
   const trackPoint: TrackPoint = {
     id: createId('trackpoint'),
     enclosureWalkId,
     sessionId: null,
     seq: nextSeq,
-    timestamp: new Date(nextPosition.timestamp).toISOString(),
+    timestamp,
     lat: nextPosition.latitude,
     lon: nextPosition.longitude,
     accuracyM: nextPosition.accuracy,
     accepted: true,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    ...buildLocalChangeMetadata(timestamp),
   }
 
   await db.trackpoints.add(trackPoint)
@@ -74,6 +79,8 @@ export async function removeWalkTrackpointAtIndex(params: {
       remainingTrackPoints.map((trackPoint, index) =>
         db.trackpoints.update(trackPoint.id, {
           seq: index + 1,
+          updatedAt: trackPoint.timestamp,
+          ...buildLocalChangePatch(trackPoint.timestamp),
         })
       )
     )

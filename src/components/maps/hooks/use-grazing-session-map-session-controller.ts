@@ -16,6 +16,7 @@ import { useGrazingSessionMapSessionRuntime } from '@/components/maps/hooks/use-
 import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/use-grazing-session-map-trackpoint-recorder'
 import { getSessionEventLabel } from '@/lib/maps/grazing-session-map-helpers'
 import { getFreshPosition } from '@/lib/maps/map-core'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { getStorageEstimate } from '@/lib/utils/storage-health'
 import type { GrazingSessionMapState } from '@/components/maps/hooks/use-grazing-session-map-state'
@@ -137,6 +138,13 @@ export function useGrazingSessionMapSessionController({
           notes: sessionNotes,
           position: currentPosition,
         })
+        recordFieldDiagnostic({
+          type: 'grazing_session_started',
+          message: 'Weidegang gestartet.',
+          activeGrazingSessionId: session.id,
+          activeRecordingId: session.id,
+          details: { hasInitialPosition: Boolean(currentPosition) },
+        })
 
         runtimeRefs.currentSessionIdRef.current = session.id
         runtimeRefs.currentSessionStatusRef.current = 'active'
@@ -235,6 +243,13 @@ export function useGrazingSessionMapSessionController({
           startTime,
           trackpoints: runtimeRefs.currentTrackpointsRef.current,
           position: getFreshAcceptedPosition(),
+        })
+        recordFieldDiagnostic({
+          type: 'grazing_session_stopped',
+          message: 'Weidegang beendet.',
+          activeGrazingSessionId: sessionId,
+          activeRecordingId: sessionId,
+          details: { trackpointCount: runtimeRefs.currentTrackpointsRef.current.length },
         })
 
         setSelectedSessionId(sessionId)

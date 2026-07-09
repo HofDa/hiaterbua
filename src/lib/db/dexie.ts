@@ -1,10 +1,15 @@
 import Dexie, { type Table } from 'dexie'
 import { defaultAppSettings } from '@/lib/settings/defaults'
+import {
+  buildLocalChangeMetadata,
+  getRecordChangeTimestamp,
+} from '@/lib/sync/local-metadata'
 import type {
   Animal,
   AppSettings,
   Enclosure,
   EnclosureAssignment,
+  FieldDiagnosticEvent,
   GrazingSession,
   Herd,
   SessionEvent,
@@ -25,6 +30,7 @@ export class HirtenAppDB extends Dexie {
   events!: Table<SessionEvent, string>
   workSessions!: Table<WorkSession, string>
   workEvents!: Table<WorkEvent, string>
+  fieldDiagnostics!: Table<FieldDiagnosticEvent, string>
   settings!: Table<AppSettings, 'app'>
 
   constructor() {
@@ -120,6 +126,82 @@ export class HirtenAppDB extends Dexie {
       events: 'id, sessionId, timestamp, type',
       workSessions: 'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt',
       workEvents: 'id, workSessionId, timestamp, type',
+      settings: 'id',
+    })
+
+    this.version(10)
+      .stores({
+        herds: 'id, name, isArchived, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        animals:
+          'id, herdId, earTag, species, isArchived, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        enclosures:
+          'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        surveyAreas: 'id, name, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        enclosureAssignments:
+          'id, enclosureId, herdId, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        sessions:
+          'id, herdId, status, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        trackpoints:
+          'id, sessionId, enclosureWalkId, seq, timestamp, accepted, [sessionId+seq], syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        events: 'id, sessionId, timestamp, type, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        workSessions:
+          'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        workEvents: 'id, workSessionId, timestamp, type, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+        settings: 'id',
+      })
+      .upgrade(async (tx) => {
+        const localTables = [
+          'herds',
+          'animals',
+          'enclosures',
+          'surveyAreas',
+          'enclosureAssignments',
+          'sessions',
+          'trackpoints',
+          'events',
+          'workSessions',
+          'workEvents',
+        ]
+
+        for (const tableName of localTables) {
+          await tx.table(tableName).toCollection().modify((record: Record<string, unknown>) => {
+            const timestamp = getRecordChangeTimestamp(record)
+            const metadata = buildLocalChangeMetadata(timestamp)
+
+            if (record.createdAt === undefined) {
+              record.createdAt = timestamp
+            }
+
+            if (record.updatedAt === undefined) {
+              record.updatedAt = timestamp
+            }
+
+            record.deletedAt = record.deletedAt ?? metadata.deletedAt
+            record.deviceId = record.deviceId ?? metadata.deviceId
+            record.syncStatus = record.syncStatus ?? metadata.syncStatus
+            record.lastLocalChangeAt = record.lastLocalChangeAt ?? metadata.lastLocalChangeAt
+          })
+        }
+      })
+
+    this.version(11).stores({
+      herds: 'id, name, isArchived, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      animals:
+        'id, herdId, earTag, species, isArchived, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      enclosures:
+        'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      surveyAreas: 'id, name, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      enclosureAssignments:
+        'id, enclosureId, herdId, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      sessions:
+        'id, herdId, status, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      trackpoints:
+        'id, sessionId, enclosureWalkId, seq, timestamp, accepted, [sessionId+seq], syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      events: 'id, sessionId, timestamp, type, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      workSessions:
+        'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      workEvents: 'id, workSessionId, timestamp, type, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      fieldDiagnostics: 'id, type, level, createdAt',
       settings: 'id',
     })
   }

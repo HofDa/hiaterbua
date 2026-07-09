@@ -9,6 +9,7 @@ import {
 import { saveWalkEnclosureRecord } from '@/lib/db/repositories/enclosures'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
 import { getFreshPosition } from '@/lib/maps/map-core'
+import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { isQuotaExceededError } from '@/lib/utils/storage-health'
 import type { PositionData } from '@/components/maps/live-position-map-types'
 import { createId } from '@/lib/utils/ids'
@@ -81,6 +82,13 @@ export function useLivePositionMapWalkController({
       nextSeq: walkSeqRef.current + 1,
       nextPosition,
     }).catch((error) => {
+      recordFieldDiagnostic({
+        type: 'indexeddb_write_failed',
+        level: 'error',
+        message: 'GPS-Walk-Punkt konnte lokal nicht gespeichert werden.',
+        activeRecordingId: enclosureWalkId,
+        details: error,
+      })
       setWalkError(buildWalkRecordingErrorMessage(error))
       return null
     })
@@ -125,6 +133,12 @@ export function useLivePositionMapWalkController({
     setSelectedWalkPointIndex(null)
     setSelectedEnclosureId(null)
     setEditingEnclosureId(null)
+    recordFieldDiagnostic({
+      type: 'gps_recording_started',
+      message: 'GPS-Ablaufen gestartet.',
+      activeRecordingId: enclosureId,
+      details: { hasInitialPosition: Boolean(getFreshPosition(acceptedPositionRef.current)) },
+    })
 
     const currentPosition = getFreshPosition(acceptedPositionRef.current)
     if (currentPosition) {
@@ -141,6 +155,12 @@ export function useLivePositionMapWalkController({
     isWalkingRef.current = false
     setIsWalking(false)
     setWalkError('')
+    recordFieldDiagnostic({
+      type: 'gps_recording_stopped',
+      message: 'GPS-Ablaufen gestoppt.',
+      activeRecordingId: walkEnclosureIdRef.current,
+      details: { pointCount: walkPoints.length },
+    })
   }
 
   async function discardWalkMode() {
@@ -158,6 +178,12 @@ export function useLivePositionMapWalkController({
     walkEnclosureIdRef.current = null
 
     await discardWalkTrack(enclosureWalkId)
+    recordFieldDiagnostic({
+      type: 'gps_recording_stopped',
+      level: 'warning',
+      message: 'GPS-Ablaufen verworfen.',
+      activeRecordingId: enclosureWalkId,
+    })
   }
 
   async function removeWalkPointAtIndex(pointIndex: number) {
