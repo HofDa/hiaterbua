@@ -23,6 +23,11 @@ import { downloadBlob } from '@/lib/import-export/file-formats'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
+import { useStorageUsage } from '@/hooks/use-storage-usage'
+import {
+  formatStorageBytes,
+  formatStorageRatioPercent,
+} from '@/lib/utils/storage-health'
 import { cn } from '@/lib/utils/cn'
 import type { FieldDiagnosticEvent } from '@/types/domain'
 
@@ -45,6 +50,75 @@ function formatDetails(details: unknown) {
 
 function buildExportJson(diagnostics: FieldDiagnosticEvent[]) {
   return serializeFieldDiagnosticsExport(buildFieldDiagnosticsExport(diagnostics))
+}
+
+// Deterministic German thousands grouping for raw byte counts, independent of
+// the device locale.
+function formatRawBytes(bytes: number) {
+  return `${Math.round(bytes).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} Bytes`
+}
+
+function StorageUsageCard() {
+  const storageUsage = useStorageUsage()
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        <div>
+          <h2 className="text-lg font-semibold text-ink-strong">Speichernutzung</h2>
+          <p className="mt-1 text-sm font-medium text-ink-muted">
+            Rohwerte aus <code>navigator.storage.estimate()</code>. Diese Werte landen auch im
+            Feldproblem-Export.
+          </p>
+        </div>
+
+        {storageUsage.status === 'loading' ? (
+          <p className="rounded-[1rem] bg-surface-raised px-4 py-3 text-sm font-medium text-ink-muted">
+            Speichernutzung wird geprüft ...
+          </p>
+        ) : storageUsage.status === 'unavailable' ? (
+          <p className="rounded-[1rem] bg-surface-raised px-4 py-3 text-sm font-medium text-ink-muted">
+            Speichernutzung nicht verfügbar
+          </p>
+        ) : (
+          <dl className="grid gap-2 rounded-[1rem] bg-surface-raised px-4 py-3 text-sm sm:grid-cols-3">
+            <div>
+              <dt className="text-xs font-semibold text-ink-muted">Belegt</dt>
+              <dd className="mt-0.5 font-mono text-sm text-ink-strong">
+                {formatRawBytes(storageUsage.usageBytes ?? 0)}
+                <span className="ml-1 text-ink-muted">
+                  ({formatStorageBytes(storageUsage.usageBytes ?? 0)})
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold text-ink-muted">Kontingent</dt>
+              <dd className="mt-0.5 font-mono text-sm text-ink-strong">
+                {formatRawBytes(storageUsage.quotaBytes ?? 0)}
+                <span className="ml-1 text-ink-muted">
+                  ({formatStorageBytes(storageUsage.quotaBytes ?? 0)})
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold text-ink-muted">Auslastung</dt>
+              <dd
+                className={cn(
+                  'mt-0.5 font-mono text-sm',
+                  storageUsage.level === 'warning'
+                    ? 'font-semibold text-warning-ink'
+                    : 'text-ink-strong'
+                )}
+              >
+                {formatStorageRatioPercent(storageUsage.ratio ?? 0)}
+                {storageUsage.level === 'warning' ? ' – fast voll' : ''}
+              </dd>
+            </div>
+          </dl>
+        )}
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function DiagnosticsPage() {
@@ -218,6 +292,8 @@ export default function DiagnosticsPage() {
 
       {status ? <StatusAlert variant="info">{status}</StatusAlert> : null}
       {error ? <ErrorAlert>{error}</ErrorAlert> : null}
+
+      <StorageUsageCard />
 
       <Card>
         <CardContent className="space-y-3 p-4">
