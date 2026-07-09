@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy, Download, LifeBuoy, Trash2 } from 'lucide-react'
+import { Copy, Download, LifeBuoy, Share2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -19,7 +19,8 @@ import {
   isDebugFieldDiagnosticsEnabled,
   setDebugFieldDiagnosticsEnabled,
 } from '@/lib/diagnostics/ui-blocker-detector'
-import { downloadBlob } from '@/lib/import-export/file-formats'
+import { downloadBlob, shareOrDownloadBlob } from '@/lib/import-export/file-formats'
+import { useCanShareFiles } from '@/hooks/use-can-share-files'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
@@ -51,6 +52,7 @@ export default function DiagnosticsPage() {
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [debugFieldDiagnostics, setDebugFieldDiagnostics] = useState(false)
+  const canShareFiles = useCanShareFiles()
   const diagnostics = useLiveQuery(
     () => db.fieldDiagnostics.orderBy('createdAt').reverse().toArray(),
     []
@@ -103,7 +105,7 @@ export default function DiagnosticsPage() {
     setStatus('Diagnose exportiert.')
   }
 
-  async function exportFieldIssueBundle() {
+  async function exportFieldIssueBundle(mode: 'download' | 'share' = 'download') {
     setStatus('')
     setError('')
 
@@ -112,8 +114,20 @@ export default function DiagnosticsPage() {
       const blob = new Blob([serializeFieldIssueReport(report)], {
         type: 'application/json',
       })
+      const filename = `pastore-feldproblem-${report.exportedAt.slice(0, 10)}.json`
 
-      downloadBlob(blob, `pastore-feldproblem-${report.exportedAt.slice(0, 10)}.json`)
+      if (mode === 'share') {
+        const outcome = await shareOrDownloadBlob(blob, filename, 'Feldproblem-Bericht')
+        if (outcome === 'cancelled') return
+        setStatus(
+          outcome === 'shared'
+            ? 'Feldproblem-Bericht geteilt.'
+            : 'Feldproblem-Bericht exportiert. Datei an die Entwickler senden.'
+        )
+        return
+      }
+
+      downloadBlob(blob, filename)
       setStatus('Feldproblem-Bericht exportiert. Datei an die Entwickler senden.')
     } catch {
       setError('Feldproblem-Bericht konnte nicht erstellt werden.')
@@ -168,6 +182,16 @@ export default function DiagnosticsPage() {
             <LifeBuoy aria-hidden="true" className="h-4 w-4" />
             Feldproblem exportieren
           </button>
+          {canShareFiles ? (
+            <button
+              type="button"
+              onClick={() => void exportFieldIssueBundle('share')}
+              className={cn(buttonVariants({ variant: 'secondary' }), 'gap-2 rounded-full')}
+            >
+              <Share2 aria-hidden="true" className="h-4 w-4" />
+              Feldproblem teilen
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => void copyDiagnostics()}

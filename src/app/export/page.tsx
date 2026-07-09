@@ -7,7 +7,11 @@ import { ExportWorkCard } from '@/components/export/export-work-card'
 import { ExportZipCard } from '@/components/export/export-zip-card'
 import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
 import { useConfirm } from '@/components/ui/confirm-dialog'
-import { downloadBlob } from '@/lib/import-export/file-formats'
+import {
+  downloadBlob,
+  shareOrDownloadBlob,
+  type ShareBlobOutcome,
+} from '@/lib/import-export/file-formats'
 import {
   buildAppExportArchive,
   buildImportPreview,
@@ -20,7 +24,24 @@ import {
 } from '@/lib/import-export/export-page-helpers'
 import { recordDataBackup } from '@/lib/settings/backup-reminder'
 import { useAsyncOperation } from '@/hooks/use-async-operation'
+import { useCanShareFiles } from '@/hooks/use-can-share-files'
 import { useExportPageData } from '@/hooks/use-export-page'
+
+type ExportDelivery = 'download' | 'share'
+
+async function deliverExportBlob(
+  mode: ExportDelivery,
+  blob: Blob,
+  filename: string,
+  shareTitle: string,
+): Promise<ShareBlobOutcome> {
+  if (mode === 'share') {
+    return shareOrDownloadBlob(blob, filename, shareTitle)
+  }
+
+  downloadBlob(blob, filename)
+  return 'downloaded'
+}
 
 function buildReplaceImportConfirmation(importPreview: ImportPreview) {
   const counts = importPreview.counts
@@ -47,9 +68,10 @@ function buildReplaceImportConfirmation(importPreview: ImportPreview) {
 export default function ExportPage() {
   const confirm = useConfirm()
   const pageData = useExportPageData()
-  const exportZip = useAsyncOperation<{ blob: Blob; filename: string }>()
-  const exportHerd = useAsyncOperation<{ blob: Blob; filename: string; herdName: string }>()
-  const exportWork = useAsyncOperation<{ blob: Blob; filename: string; counts: { workSessions: number; workEvents: number } }>()
+  const canShareFiles = useCanShareFiles()
+  const exportZip = useAsyncOperation<{ outcome: ShareBlobOutcome }>()
+  const exportHerd = useAsyncOperation<{ outcome: ShareBlobOutcome; herdName: string }>()
+  const exportWork = useAsyncOperation<{ outcome: ShareBlobOutcome; counts: { workSessions: number; workEvents: number } }>()
   const importData = useAsyncOperation<{
     herds: number
     animals: number
@@ -68,19 +90,26 @@ export default function ExportPage() {
   const canReplaceExisting = canImportPreviewReplaceExisting(pageData.importPreview)
 
 
-  async function handleExportZip() {
+  async function handleExportZip(mode: ExportDelivery = 'download') {
     await exportZip.execute(async () => {
       const { blob, filename } = await buildAppExportArchive()
-      downloadBlob(blob, filename)
-      await recordDataBackup()
-      return { blob, filename }
+      const outcome = await deliverExportBlob(mode, blob, filename, 'ZIP-Export')
+      if (outcome !== 'cancelled') {
+        await recordDataBackup()
+      }
+      return { outcome }
     }, {
       loadingMessage: 'Erstelle ZIP-Export...',
-      successMessage: 'ZIP-Export erstellt.'
+      successMessage: (result) =>
+        result.outcome === 'cancelled'
+          ? ''
+          : result.outcome === 'shared'
+            ? 'ZIP-Export geteilt.'
+            : 'ZIP-Export erstellt.'
     })
   }
 
-  async function handleExportSingleHerd() {
+  async function handleExportSingleHerd(mode: ExportDelivery = 'download') {
     if (!pageData.activeHerdExportId) {
       exportZip.setError('Bitte zuerst eine Herde wählen.')
       return
@@ -88,23 +117,40 @@ export default function ExportPage() {
 
     await exportHerd.execute(async () => {
       const result = await buildSingleHerdExportArchive(pageData.activeHerdExportId)
-      downloadBlob(result.blob, result.filename)
-      return result
+      const outcome = await deliverExportBlob(
+        mode,
+        result.blob,
+        result.filename,
+        `Herde ${result.herdName}`,
+      )
+      return { outcome, herdName: result.herdName }
     }, {
       loadingMessage: 'Erstellt Herden-JSON...',
-      successMessage: (result) => `Herde "${result.herdName}" als JSON exportiert.`
+      successMessage: (result) =>
+        result.outcome === 'cancelled'
+          ? ''
+          : result.outcome === 'shared'
+            ? `Herde "${result.herdName}" als JSON geteilt.`
+            : `Herde "${result.herdName}" als JSON exportiert.`
     })
   }
 
-  async function handleExportWorkSessions() {
+  async function handleExportWorkSessions(mode: ExportDelivery = 'download') {
     await exportWork.execute(async () => {
       const result = await buildWorkSessionsExportArchive()
-      downloadBlob(result.blob, result.filename)
-      return result
+      const outcome = await deliverExportBlob(
+        mode,
+        result.blob,
+        result.filename,
+        'Arbeitseinsätze',
+      )
+      return { outcome, counts: result.counts }
     }, {
       loadingMessage: 'Erstelle Arbeitseinsätze-Export...',
-      successMessage: (result) => 
-        `${result.counts.workSessions} Arbeitseinsätze und ${result.counts.workEvents} Arbeitsereignisse als JSON exportiert.`
+      successMessage: (result) =>
+        result.outcome === 'cancelled'
+          ? ''
+          : `${result.counts.workSessions} Arbeitseinsätze und ${result.counts.workEvents} Arbeitsereignisse als JSON ${result.outcome === 'shared' ? 'geteilt' : 'exportiert'}.`
     })
   }
 
@@ -167,21 +213,30 @@ export default function ExportPage() {
     <div className="space-y-4">
       <ExportPageHeader />
 
-      <ExportZipCard isExporting={exportZip.isLoading} onExportZip={handleExportZip} />
+      <ExportZipCard
+        isExporting={exportZip.isLoading}
+        canShare={canShareFiles}
+        onExportZip={() => handleExportZip('download')}
+        onShareZip={() => handleExportZip('share')}
+      />
 
       <ExportHerdCard
         exportableHerds={pageData.exportableHerds}
         activeHerdExportId={pageData.activeHerdExportId}
         isExportingHerd={exportHerd.isLoading}
+        canShare={canShareFiles}
         onSelectedHerdChange={pageData.setSelectedHerdExportId}
-        onExportSingleHerd={handleExportSingleHerd}
+        onExportSingleHerd={() => handleExportSingleHerd('download')}
+        onShareSingleHerd={() => handleExportSingleHerd('share')}
       />
 
       <ExportWorkCard
         workSessionCount={pageData.workSessionCount}
         workEventCount={pageData.workEventCount}
         isExportingWorkSessions={exportWork.isLoading}
-        onExportWorkSessions={handleExportWorkSessions}
+        canShare={canShareFiles}
+        onExportWorkSessions={() => handleExportWorkSessions('download')}
+        onShareWorkSessions={() => handleExportWorkSessions('share')}
       />
 
       <ExportImportCard

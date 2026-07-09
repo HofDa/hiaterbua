@@ -53,6 +53,71 @@ export function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+export type ShareBlobOutcome = 'shared' | 'cancelled' | 'downloaded'
+
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as { name?: unknown }).name === 'AbortError'
+  )
+}
+
+/**
+ * True when the current browser can share files via the Web Share API
+ * (Web Share Level 2). Feature-detected at runtime; safe to call in any
+ * environment, including SSR and browsers without the API.
+ */
+export function canShareFiles(): boolean {
+  if (typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') {
+    return false
+  }
+
+  try {
+    const probe = new File([''], 'test.json', { type: 'application/json' })
+    return navigator.canShare({ files: [probe] })
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Delivers an export file via the native share sheet when file sharing is
+ * supported, otherwise falls back to a regular download.
+ *
+ * A user-cancelled share (`AbortError`) is not an error: it returns
+ * `'cancelled'` silently — no fallback download, no message. Any other share
+ * failure falls back to the download path.
+ */
+export async function shareOrDownloadBlob(
+  blob: Blob,
+  filename: string,
+  title?: string,
+): Promise<ShareBlobOutcome> {
+  const file = new File([blob], filename, { type: blob.type })
+
+  if (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.canShare === 'function' &&
+    typeof navigator.share === 'function' &&
+    navigator.canShare({ files: [file] })
+  ) {
+    try {
+      await navigator.share({ files: [file], title: title ?? filename })
+      return 'shared'
+    } catch (error) {
+      if (isAbortError(error)) {
+        return 'cancelled'
+      }
+      // Any other share failure: fall through to the download fallback.
+    }
+  }
+
+  downloadBlob(blob, filename)
+  return 'downloaded'
+}
+
 export function sanitizeFilenamePart(value: string) {
   const normalized = value
     .toLowerCase()

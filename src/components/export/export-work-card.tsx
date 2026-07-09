@@ -8,14 +8,18 @@ type ExportWorkCardProps = {
   workSessionCount: number | null
   workEventCount: number | null
   isExportingWorkSessions: boolean
+  canShare: boolean
   onExportWorkSessions: () => void | Promise<void>
+  onShareWorkSessions: () => void | Promise<void>
 }
 
 export function ExportWorkCard({
   workSessionCount,
   workEventCount,
   isExportingWorkSessions,
+  canShare,
   onExportWorkSessions,
+  onShareWorkSessions,
 }: ExportWorkCardProps) {
   const isLoading = workSessionCount === null || workEventCount === null
   const hasWorkSessions = (workSessionCount ?? 0) > 0
@@ -60,17 +64,28 @@ export function ExportWorkCard({
               </Card>
             </div>
 
-            <FormButton
-              type="button"
-              onClick={() => void onExportWorkSessions()}
-              disabled={isExportingWorkSessions}
-              variant="primary"
-              className="mt-4"
-            >
-              {isExportingWorkSessions
-                ? 'Erstellt Arbeits-JSON ...'
-                : 'Arbeitseinsätze als JSON herunterladen'}
-            </FormButton>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <FormButton
+                type="button"
+                onClick={() => void onExportWorkSessions()}
+                disabled={isExportingWorkSessions}
+                variant="primary"
+              >
+                {isExportingWorkSessions
+                  ? 'Erstellt Arbeits-JSON ...'
+                  : 'Arbeitseinsätze als JSON herunterladen'}
+              </FormButton>
+              {canShare ? (
+                <FormButton
+                  type="button"
+                  onClick={() => void onShareWorkSessions()}
+                  disabled={isExportingWorkSessions}
+                  variant="secondary"
+                >
+                  Teilen
+                </FormButton>
+              ) : null}
+            </div>
           </>
         )}
       </CardContent>
