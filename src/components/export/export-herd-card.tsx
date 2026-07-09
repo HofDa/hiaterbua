@@ -9,16 +9,20 @@ type ExportHerdCardProps = {
   exportableHerds: Herd[] | null
   activeHerdExportId: string
   isExportingHerd: boolean
+  canShare: boolean
   onSelectedHerdChange: (herdId: string) => void
   onExportSingleHerd: () => void | Promise<void>
+  onShareSingleHerd: () => void | Promise<void>
 }
 
 export function ExportHerdCard({
   exportableHerds,
   activeHerdExportId,
   isExportingHerd,
+  canShare,
   onSelectedHerdChange,
   onExportSingleHerd,
+  onShareSingleHerd,
 }: ExportHerdCardProps) {
   return (
     <Card>
@@ -52,13 +56,20 @@ export function ExportHerdCard({
               </FormSelect>
             </FormLabel>
 
-            <FormButton
-              onClick={() => void onExportSingleHerd()}
-              disabled={isExportingHerd}
-              className="mt-4"
-            >
-              {isExportingHerd ? 'Erstellt Herden-JSON ...' : 'Herde als JSON herunterladen'}
-            </FormButton>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <FormButton onClick={() => void onExportSingleHerd()} disabled={isExportingHerd}>
+                {isExportingHerd ? 'Erstellt Herden-JSON ...' : 'Herde als JSON herunterladen'}
+              </FormButton>
+              {canShare ? (
+                <FormButton
+                  onClick={() => void onShareSingleHerd()}
+                  disabled={isExportingHerd}
+                  variant="secondary"
+                >
+                  Teilen
+                </FormButton>
+              ) : null}
+            </div>
           </>
         )}
       </CardContent>

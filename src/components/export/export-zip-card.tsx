@@ -5,10 +5,17 @@ import { FormButton } from '@/components/ui/form'
 
 type ExportZipCardProps = {
   isExporting: boolean
+  canShare: boolean
   onExportZip: () => void | Promise<void>
+  onShareZip: () => void | Promise<void>
 }
 
-export function ExportZipCard({ isExporting, onExportZip }: ExportZipCardProps) {
+export function ExportZipCard({
+  isExporting,
+  canShare,
+  onExportZip,
+  onShareZip,
+}: ExportZipCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -40,15 +47,26 @@ export function ExportZipCard({ isExporting, onExportZip }: ExportZipCardProps) 
           </Card>
         </div>
 
-        <FormButton
-          type="button"
-          onClick={() => void onExportZip()}
-          disabled={isExporting}
-          variant="primary"
-          className="mt-4"
-        >
-          {isExporting ? 'Erstellt Export ...' : 'ZIP-Export herunterladen'}
-        </FormButton>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <FormButton
+            type="button"
+            onClick={() => void onExportZip()}
+            disabled={isExporting}
+            variant="primary"
+          >
+            {isExporting ? 'Erstellt Export ...' : 'ZIP-Export herunterladen'}
+          </FormButton>
+          {canShare ? (
+            <FormButton
+              type="button"
+              onClick={() => void onShareZip()}
+              disabled={isExporting}
+              variant="secondary"
+            >
+              Teilen
+            </FormButton>
+          ) : null}
+        </div>
 
         <p className="mt-3 text-xs font-medium text-ink-muted">
           GeoPackage ist bewusst noch nicht enthalten, weil im Projekt aktuell keine Schreibbibliothek
