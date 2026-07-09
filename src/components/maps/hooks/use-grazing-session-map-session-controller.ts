@@ -18,7 +18,7 @@ import { getSessionEventLabel } from '@/lib/maps/grazing-session-map-helpers'
 import { getFreshPosition } from '@/lib/maps/map-core'
 import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
-import { getStorageEstimate } from '@/lib/utils/storage-health'
+import { getStorageEstimate, STORAGE_WARNING_RATIO } from '@/lib/utils/storage-health'
 import type { GrazingSessionMapState } from '@/components/maps/hooks/use-grazing-session-map-state'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type {
@@ -89,7 +89,7 @@ export function useGrazingSessionMapSessionController({
 
   async function warnIfStorageNearlyFull() {
     const estimate = await getStorageEstimate()
-    if (estimate && estimate.ratio >= 0.9) {
+    if (estimate && estimate.ratio >= STORAGE_WARNING_RATIO) {
       setActionError(
         `Gerätespeicher fast voll (${Math.round(estimate.ratio * 100)} %). Die Aufzeichnung könnte abbrechen – bitte Speicher freigeben.`
       )

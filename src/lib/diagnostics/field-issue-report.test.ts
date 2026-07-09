@@ -27,6 +27,7 @@ const testEnvironment: FieldIssueEnvironment = {
   indexedDb: { available: true, error: null },
   persistentStorage: true,
   tileCacheCount: 42,
+  storage: { usageBytes: 123_000_000, quotaBytes: 2_000_000_000, usageRatio: 0.0615 },
 }
 
 function buildDiagnosticEvent(overrides: Partial<FieldDiagnosticEvent> = {}): FieldDiagnosticEvent {
@@ -202,6 +203,8 @@ describe('collectFieldIssueReport', () => {
     expect(report.reportType).toBe(FIELD_ISSUE_REPORT_TYPE)
     expect(report.environment.indexedDb.available).toBe(true)
     expect(report.environment.serviceWorker.supported).toBe(false)
+    // navigator.storage.estimate is absent here; export must degrade to null.
+    expect(report.environment.storage).toBeNull()
     expect(() => JSON.parse(serializeFieldIssueReport(report))).not.toThrow()
   })
 })
