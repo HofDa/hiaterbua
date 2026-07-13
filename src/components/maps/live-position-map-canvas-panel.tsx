@@ -100,7 +100,13 @@ export function LivePositionMapCanvasPanel({
       : 'keine GPS-Aufzeichnung aktiv'
 
   return (
-    <div className={cn('relative overflow-hidden', !embedded && 'app-panel')}>
+    <div
+      className={cn(
+        'relative overflow-hidden',
+        !embedded && 'app-panel',
+        hasMobileToolbar && isMobileControlsOpen && 'map-mobile-toolbar-open',
+      )}
+    >
       <div
         ref={containerRef}
         className="h-[420px] w-full bg-surface-raised sm:h-[520px] lg:h-[calc(100vh-8rem)]"
@@ -161,7 +167,7 @@ export function LivePositionMapCanvasPanel({
           onClick={() => setIsMobileControlsOpen((current) => !current)}
           className={cn(
             'absolute left-2 z-30 flex items-center justify-center app-map-icon-button text-ink-strong transition-all lg:hidden',
-            isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
+            isMobileControlsOpen ? 'bottom-[7.5rem]' : 'bottom-2',
           )}
         >
           <ControlsIcon />

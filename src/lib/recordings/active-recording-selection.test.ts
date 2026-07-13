@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { selectActiveRecordingSource } from './active-recording-selection'
+import {
+  selectActiveRecordingSource,
+  selectCurrentSession,
+} from './active-recording-selection'
 import type { GrazingSession, WorkSession } from '@/types/domain'
 
 function grazingSession(
@@ -87,5 +90,16 @@ describe('selectActiveRecordingSource', () => {
         [workSession('finished', 'finished', '2026-07-13T09:00:00.000Z')],
       ),
     ).toBeNull()
+  })
+})
+
+describe('selectCurrentSession', () => {
+  it('prefers an older active session to a newer paused session', () => {
+    const selected = selectCurrentSession([
+      workSession('paused_newer', 'paused', '2026-07-13T11:00:00.000Z'),
+      workSession('active_older', 'active', '2026-07-13T08:00:00.000Z'),
+    ])
+
+    expect(selected?.id).toBe('active_older')
   })
 })

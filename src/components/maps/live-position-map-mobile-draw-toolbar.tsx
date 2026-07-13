@@ -30,10 +30,13 @@ export function LivePositionMapMobileDrawToolbar({
 }: LivePositionMapMobileDrawToolbarProps) {
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
-      <MobileMapToolbar>
-        <MobileMapToolbarStat>
-          {draftPointsLength} P · {formatArea(draftAreaM2)}
-        </MobileMapToolbarStat>
+      <MobileMapToolbar
+        stats={
+          <MobileMapToolbarStat>
+            {draftPointsLength} P · {formatArea(draftAreaM2)}
+          </MobileMapToolbarStat>
+        }
+      >
         <MobileMapToolbarButton
           aria-label="Zeichnen starten"
           title="Zeichnen starten"

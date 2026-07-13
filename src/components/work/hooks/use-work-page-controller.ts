@@ -3,6 +3,7 @@ import { useWorkPageEditController } from '@/components/work/hooks/use-work-page
 import { useWorkPageFormState } from '@/components/work/hooks/use-work-page-controller/use-work-page-form-state'
 import { useWorkPageSessionActions } from '@/components/work/hooks/use-work-page-controller/use-work-page-session-actions'
 import { useWorkPageReminders } from '@/components/work/hooks/use-work-page-reminders'
+import { selectCurrentSession } from '@/lib/recordings/active-recording-selection'
 import type { WorkSession } from '@/types/domain'
 
 type UseWorkPageControllerOptions = {
@@ -31,9 +32,7 @@ export function useWorkPageController({ sessions }: UseWorkPageControllerOptions
   const [isSaving, setIsSaving] = useState(false)
 
   const activeSession = useMemo(
-    () =>
-      sessions.find((session) => session.status === 'active' || session.status === 'paused') ??
-      null,
+    () => selectCurrentSession(sessions),
     [sessions]
   )
 

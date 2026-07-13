@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils/cn'
 
 type MobileMapToolbarProps = {
   children: ReactNode
+  /** Read-only pills (counts, timer) rendered above the buttons. */
+  stats?: ReactNode
 }
 
 type MobileMapToolbarStatProps = {
@@ -16,10 +18,16 @@ type MobileMapToolbarButtonProps = {
   variant?: 'primary' | 'secondary'
 } & React.ButtonHTMLAttributes<HTMLButtonElement>
 
-export function MobileMapToolbar({ children }: MobileMapToolbarProps) {
+/*
+ * Stats and buttons live on separate rows: a single scrollable row hid the
+ * rightmost actions (Stop/Abbruch) off-screen on phone widths with no scroll
+ * affordance — every action must stay visible while recording in the field.
+ */
+export function MobileMapToolbar({ children, stats }: MobileMapToolbarProps) {
   return (
-    <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto app-map-toolbar px-2 py-2">
-      {children}
+    <div className="pointer-events-auto space-y-2 app-map-toolbar px-2 py-2">
+      {stats ? <div className="flex flex-wrap items-center gap-2">{stats}</div> : null}
+      <div className="flex flex-wrap items-center gap-2">{children}</div>
     </div>
   )
 }
@@ -49,7 +57,7 @@ export function MobileMapToolbarButton({
     <button
       type={type}
       className={cn(
-        'flex h-11 min-w-[4.4rem] shrink-0 items-center justify-center gap-1.5 rounded-2xl border px-3 text-sm font-semibold transition-colors',
+        'flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl border px-2 text-sm font-semibold transition-colors lg:min-w-[4.4rem] lg:flex-none lg:px-3',
         variantClass,
         className,
       )}

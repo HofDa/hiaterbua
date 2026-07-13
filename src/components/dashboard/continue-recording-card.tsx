@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, CircleDot, Pause } from 'lucide-react'
 import {
   getRecordingElapsedS,
-  useActiveRecording,
+  useActiveRecordingSnapshot,
 } from '@/components/layout/use-active-recording'
 import { metaLabelClassName } from '@/components/ui/typography'
 import { formatDistance, formatDuration } from '@/lib/maps/grazing-session-map-helpers'
@@ -14,17 +13,7 @@ import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 // Home-screen hero while a recording runs: the answer to "what am I doing
 // right now" belongs above everything else, one tap from resuming the session.
 export function ContinueRecordingCard() {
-  const recording = useActiveRecording()
-
-  const [nowMs, setNowMs] = useState(() => Date.now())
-  const isActive = recording?.status === 'active'
-  const startTime = recording?.startTime
-
-  useEffect(() => {
-    if (!isActive) return
-    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1000)
-    return () => window.clearInterval(intervalId)
-  }, [isActive, startTime])
+  const { recording, nowMs } = useActiveRecordingSnapshot()
 
   if (!recording) return null
 

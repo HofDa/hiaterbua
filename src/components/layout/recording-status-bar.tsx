@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronRight, CircleDot, Pause } from 'lucide-react'
 import { formatDistance, formatDuration } from '@/lib/maps/grazing-session-map-helpers'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { cn } from '@/lib/utils/cn'
-import { getRecordingElapsedS, useActiveRecording } from './use-active-recording'
+import { getRecordingElapsedS, useActiveRecordingSnapshot } from './use-active-recording'
 
 // Fixed height of the bar. Published to `--app-recording-bar-height` so page
 // content and bottom-fixed banners reserve matching space; kept in one place so
@@ -14,20 +14,8 @@ import { getRecordingElapsedS, useActiveRecording } from './use-active-recording
 const RECORDING_BAR_HEIGHT = '3.25rem'
 
 export function RecordingStatusBar() {
-  const recording = useActiveRecording()
-
-  const [nowMs, setNowMs] = useState(() => Date.now())
+  const { recording, nowMs } = useActiveRecordingSnapshot()
   const isRecording = recording != null
-  const isActive = recording?.status === 'active'
-  const startTime = recording?.startTime
-
-  // Tick once a second only while actively recording; paused sessions show a
-  // frozen duration, so there is nothing to update.
-  useEffect(() => {
-    if (!isActive) return
-    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1000)
-    return () => window.clearInterval(intervalId)
-  }, [isActive, startTime])
 
   // Reserve space above the bottom nav so fixed banners and page content clear
   // the bar (see the --app-recording-bar-height consumers).

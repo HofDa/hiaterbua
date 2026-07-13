@@ -36,10 +36,13 @@ export function LivePositionMapMobileWalkToolbar({
 }: LivePositionMapMobileWalkToolbarProps) {
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
-      <MobileMapToolbar>
-        <MobileMapToolbarStat>
-          {walkPointsLength} P · {formatArea(walkAreaM2)}
-        </MobileMapToolbarStat>
+      <MobileMapToolbar
+        stats={
+          <MobileMapToolbarStat>
+            {walkPointsLength} P · {formatArea(walkAreaM2)}
+          </MobileMapToolbarStat>
+        }
+      >
         <MobileMapToolbarButton
           aria-label="Walk starten"
           title="Walk starten"

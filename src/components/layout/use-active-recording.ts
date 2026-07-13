@@ -1,6 +1,14 @@
 'use client'
 
 import { useLiveQuery } from 'dexie-react-hooks'
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react'
 import { db } from '@/lib/db/dexie'
 import { selectActiveRecordingSource } from '@/lib/recordings/active-recording-selection'
 import { getLiveDurationS } from '@/lib/work/work-session-formatting'
@@ -22,8 +30,14 @@ export type ActiveRecording = {
   activeSince: string | null
 }
 
-/** The one recording the user most needs to see; undefined while loading. */
-export function useActiveRecording(): ActiveRecording | null | undefined {
+type ActiveRecordingSnapshot = {
+  recording: ActiveRecording | null | undefined
+  nowMs: number
+}
+
+const ActiveRecordingContext = createContext<ActiveRecordingSnapshot | null>(null)
+
+function useActiveRecordingQuery(): ActiveRecording | null | undefined {
   return useLiveQuery<ActiveRecording | null>(async () => {
     const [grazingSessions, workSessions] = await Promise.all([
       db.sessions.where('status').anyOf('active', 'paused').toArray(),
@@ -60,6 +74,31 @@ export function useActiveRecording(): ActiveRecording | null | undefined {
       activeSince: work.activeSince ?? null,
     }
   }, [])
+}
+
+export function ActiveRecordingProvider({ children }: { children: ReactNode }) {
+  const recording = useActiveRecordingQuery()
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  const isActive = recording?.status === 'active'
+  const startTime = recording?.startTime
+
+  useEffect(() => {
+    if (!isActive) return
+
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1000)
+    return () => window.clearInterval(intervalId)
+  }, [isActive, startTime])
+
+  return createElement(ActiveRecordingContext.Provider, { value: { recording, nowMs } }, children)
+}
+
+export function useActiveRecordingSnapshot(): ActiveRecordingSnapshot {
+  const snapshot = useContext(ActiveRecordingContext)
+  if (!snapshot) {
+    throw new Error('useActiveRecordingSnapshot must be used within ActiveRecordingProvider.')
+  }
+
+  return snapshot
 }
 
 /**

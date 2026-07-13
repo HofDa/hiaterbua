@@ -6,6 +6,7 @@ import { PageContainer } from '@/components/layout/page-container'
 import { StatusStrip } from '@/components/layout/status-strip'
 import { TopBar } from '@/components/layout/top-bar'
 import { RecordingStatusBar } from '@/components/layout/recording-status-bar'
+import { ActiveRecordingProvider } from '@/components/layout/use-active-recording'
 import { FieldDiagnosticsRuntime } from '@/components/diagnostics/field-diagnostics-runtime'
 import { FieldUiBlockerDetector } from '@/components/diagnostics/field-ui-blocker-detector'
 import { APP_TITLE } from '@/lib/app-metadata'
@@ -57,18 +58,20 @@ export default function RootLayout({
           <FieldUiBlockerDetector />
           <ServiceWorkerSync />
           <AppRoutePrefetch />
-          <ConfirmDialogProvider>
-            <TopBar />
-            <StatusStrip />
-            <SessionRecoveryManager />
-            <ErrorBoundary>
-              <PageContainer>{children}</PageContainer>
-            </ErrorBoundary>
-            <BottomNav />
-            <RecordingStatusBar />
-            <ConnectivityBanner />
-            <Toaster />
-          </ConfirmDialogProvider>
+          <ActiveRecordingProvider>
+            <ConfirmDialogProvider>
+              <TopBar />
+              <StatusStrip />
+              <SessionRecoveryManager />
+              <ErrorBoundary>
+                <PageContainer>{children}</PageContainer>
+              </ErrorBoundary>
+              <BottomNav />
+              <RecordingStatusBar />
+              <ConnectivityBanner />
+              <Toaster />
+            </ConfirmDialogProvider>
+          </ActiveRecordingProvider>
         </div>
       </body>
     </html>

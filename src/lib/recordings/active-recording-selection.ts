@@ -9,7 +9,8 @@ type RecordingRow = {
   startTime: string
 }
 
-function pickCurrent<T extends RecordingRow>(rows: T[]): T | null {
+/** Active before paused, then most recently started within the same status. */
+export function selectCurrentSession<T extends RecordingRow>(rows: readonly T[]): T | null {
   return (
     rows
       .filter((row) => row.status !== 'finished')
@@ -29,8 +30,8 @@ export function selectActiveRecordingSource(
   grazingSessions: GrazingSession[],
   workSessions: WorkSession[],
 ): ActiveRecordingSource | null {
-  const grazing = pickCurrent(grazingSessions)
-  const work = pickCurrent(workSessions)
+  const grazing = selectCurrentSession(grazingSessions)
+  const work = selectCurrentSession(workSessions)
 
   if (!grazing) return work ? { kind: 'work', recording: work } : null
   if (!work) return { kind: 'grazing', recording: grazing }

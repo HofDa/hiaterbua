@@ -11,6 +11,7 @@ import {
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { buildAnimalsByHerdId } from '@/lib/maps/live-position-map-helpers'
 import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
+import { selectCurrentSession } from '@/lib/recordings/active-recording-selection'
 import {
   buildEditableTrackpointsFeatureCollection,
   buildMergedSessionEventFeatureCollection,
@@ -99,10 +100,7 @@ export function useGrazingSessionMapData({
   )
   const animalsByHerdId = useMemo(() => buildAnimalsByHerdId(safeAnimals), [safeAnimals])
   const activeSession = useMemo(
-    () =>
-      safeRecentSessions.find(
-        (session) => session.status === 'active' || session.status === 'paused'
-      ) ?? null,
+    () => selectCurrentSession(safeRecentSessions),
     [safeRecentSessions]
   )
 

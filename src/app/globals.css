@@ -408,6 +408,22 @@ textarea {
   color: var(--chrome-control-ink);
 }
 
+/* The expanded attribution grows leftward from the bottom-right corner; cap it
+   so it wraps instead of running under the bottom-left tools toggle
+   (2.75rem button + 0.5rem inset + 1rem breathing room). */
+.maplibregl-ctrl-bottom-right {
+  max-width: calc(100% - 4.25rem);
+}
+
+/* While the mobile map toolbar (two rows, ~7rem incl. inset) is open it spans
+   the full bottom edge — lift the attribution above it so the ⓘ stays
+   visible and tappable. */
+@media (max-width: 1023px) {
+  .map-mobile-toolbar-open .maplibregl-ctrl-bottom-right {
+    bottom: 7rem;
+  }
+}
+
 @media (max-width: 767px) {
   :root {
     /* pt-1 (0.25rem) + h-14 tab (3.5rem) + 0.45rem base bottom padding; the

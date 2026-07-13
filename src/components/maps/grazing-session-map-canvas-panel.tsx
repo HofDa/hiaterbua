@@ -173,6 +173,7 @@ export function GrazingSessionMapCanvasPanel({
       className={cn(
         'relative overflow-hidden',
         !embedded && 'app-panel lg:sticky lg:top-4',
+        hasMobileToolbar && isMobileControlsOpen && 'map-mobile-toolbar-open',
       )}
     >
       <div
@@ -242,7 +243,7 @@ export function GrazingSessionMapCanvasPanel({
           onClick={() => setIsMobileControlsOpen((current) => !current)}
           className={cn(
             'absolute left-2 z-30 flex items-center justify-center app-map-icon-button text-ink-strong transition-all lg:hidden',
-            isMobileControlsOpen ? 'bottom-[5.5rem]' : 'bottom-2',
+            isMobileControlsOpen ? 'bottom-[7.5rem]' : 'bottom-2',
           )}
         >
           <ControlsIcon />
@@ -250,16 +251,21 @@ export function GrazingSessionMapCanvasPanel({
       ) : null}
       {!editingSessionId && isMobileControlsOpen ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 lg:hidden">
-          <MobileMapToolbar>
-            <MobileMapToolbarStat>
-              <span className="inline-flex items-center gap-1">
-                <TrackpointsIcon />
-                <span>
-                  {safeCurrentTrackpointsLength} · {formatDistance(currentDistanceM)}
-                </span>
-              </span>
-            </MobileMapToolbarStat>
-            <MobileMapToolbarStat>{formatDuration(currentDurationS)}</MobileMapToolbarStat>
+          <MobileMapToolbar
+            stats={
+              <>
+                <MobileMapToolbarStat>
+                  <span className="inline-flex items-center gap-1">
+                    <TrackpointsIcon />
+                    <span>
+                      {safeCurrentTrackpointsLength} · {formatDistance(currentDistanceM)}
+                    </span>
+                  </span>
+                </MobileMapToolbarStat>
+                <MobileMapToolbarStat>{formatDuration(currentDurationS)}</MobileMapToolbarStat>
+              </>
+            }
+          >
             <MobileMapToolbarButton
               aria-label={currentSessionStatus === 'paused' ? 'Fortsetzen' : 'Weidegang starten'}
               title={currentSessionStatus === 'paused' ? 'Fortsetzen' : 'Weidegang starten'}
