@@ -15,6 +15,25 @@ export function formatDate(value: string | null | undefined) {
   return new Date(value).toLocaleDateString('de-DE')
 }
 
+/** Compact "seit ..." phrase for list rows, e.g. "seit 3 Tagen" / "seit 5 Std." / "seit 20 min". */
+export function formatSince(startTime: string | null | undefined) {
+  if (!startTime) return null
+
+  const startMs = new Date(startTime).getTime()
+  const nowMs = new Date(nowIso()).getTime()
+
+  if (!Number.isFinite(startMs) || nowMs < startMs) return null
+
+  const totalMinutes = Math.floor((nowMs - startMs) / 1000 / 60)
+  const days = Math.floor(totalMinutes / (60 * 24))
+  if (days >= 1) return days === 1 ? 'seit 1 Tag' : `seit ${days} Tagen`
+
+  const hours = Math.floor(totalMinutes / 60)
+  if (hours >= 1) return `seit ${hours} Std.`
+
+  return `seit ${totalMinutes} min`
+}
+
 export function formatDurationFromIso(startTime: string | null | undefined, endTime?: string | null) {
   if (!startTime) return 'unbekannt'
 

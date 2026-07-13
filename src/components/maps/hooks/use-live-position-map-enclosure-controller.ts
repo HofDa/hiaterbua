@@ -36,7 +36,6 @@ export function useLivePositionMapEnclosureController({
   function clearSelectedEnclosure() {
     selection.setSelectedEnclosureId(null)
     selection.setShowSelectedTrack(false)
-    selection.setIsSelectedEnclosureInfoOpen(false)
   }
 
   function toggleSelectedTrackForEnclosure(enclosureId: string) {

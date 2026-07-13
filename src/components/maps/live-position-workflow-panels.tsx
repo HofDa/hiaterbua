@@ -42,7 +42,6 @@ export function LivePositionWorkflowPanels({
     selectedWalkPoint,
     filteredEnclosures,
     enclosureListFilter,
-    selectedEnclosure,
     selectedEnclosureId,
     assignmentEditorEnclosureId,
     assignmentHerdId,
@@ -55,7 +54,6 @@ export function LivePositionWorkflowPanels({
     herdsById,
     animalsByHerdId,
     activeAssignmentsByHerdId,
-    isSelectedEnclosureInfoOpen,
     showSelectedTrack,
   } = useLivePositionMapStore((state) => state.workflow)
   const {
@@ -78,7 +76,6 @@ export function LivePositionWorkflowPanels({
     onSaveWalkEnclosure,
     onEnclosureListFilterChange,
     onSelectedEnclosureChange,
-    onToggleSelectedEnclosureInfo,
     onToggleShowSelectedTrack,
     onDeleteEnclosure,
     onOpenAssignmentEditor,
@@ -177,7 +174,6 @@ export function LivePositionWorkflowPanels({
         <LivePositionSavedEnclosuresMobilePanel
           filteredEnclosures={filteredEnclosures}
           enclosureListFilter={enclosureListFilter}
-          selectedEnclosure={selectedEnclosure}
           selectedEnclosureId={selectedEnclosureId}
           assignmentEditorEnclosureId={assignmentEditorEnclosureId}
           assignmentHerdId={assignmentHerdId}
@@ -190,11 +186,9 @@ export function LivePositionWorkflowPanels({
           herdsById={herdsById}
           animalsByHerdId={animalsByHerdId}
           activeAssignmentsByHerdId={activeAssignmentsByHerdId}
-          isSelectedEnclosureInfoOpen={isSelectedEnclosureInfoOpen}
           showSelectedTrack={showSelectedTrack}
           onEnclosureListFilterChange={onEnclosureListFilterChange}
           onSelectedEnclosureChange={onSelectedEnclosureChange}
-          onToggleSelectedEnclosureInfo={onToggleSelectedEnclosureInfo}
           onToggleShowSelectedTrack={onToggleShowSelectedTrack}
           onStartEditEnclosure={onStartEditEnclosure}
           onDeleteEnclosure={onDeleteEnclosure}

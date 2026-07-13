@@ -2,7 +2,6 @@
 
 import {
   Briefcase,
-  ChevronRight,
   Download,
   DownloadCloud,
   Loader2,
@@ -17,6 +16,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
 import { BackupReminder } from '@/components/dashboard/backup-reminder'
+import { ContinueRecordingCard } from '@/components/dashboard/continue-recording-card'
 import { useSecureAreaPrefetch } from '@/components/dashboard/use-secure-area-prefetch'
 import { metaLabelClassName } from '@/components/ui/typography'
 import { db } from '@/lib/db/dexie'
@@ -31,9 +31,9 @@ import { cn } from '@/lib/utils/cn'
 function DashboardStat({ label, value }: { label: string; value: number | string }) {
   return (
     <Card variant="dashboard">
-      <CardContent className="p-5">
+      <CardContent className="p-4">
         <div className="text-sm font-semibold text-ink-soft">{label}</div>
-        <div className="mt-2 text-3xl font-semibold text-ink-strong">{value}</div>
+        <div className="mt-1 text-2xl font-semibold text-ink-strong">{value}</div>
       </CardContent>
     </Card>
   )
@@ -42,35 +42,16 @@ function DashboardStat({ label, value }: { label: string; value: number | string
 type FieldStartLink = {
   href: string
   title: string
-  description: string
   icon: LucideIcon
 }
 
+// Icon + title only: the four destinations are used daily, so descriptions are
+// onboarding text that would cost a screen of scroll on every open.
 const fieldStartLinks = [
-  {
-    href: '/work',
-    title: 'Arbeit',
-    description: 'Arbeitszeit im Feld mit Erinnerung erfassen.',
-    icon: Briefcase,
-  },
-  {
-    href: '/sessions',
-    title: 'Weidegang',
-    description: 'Geführten Weidegang direkt starten oder fortsetzen.',
-    icon: Map,
-  },
-  {
-    href: '/enclosures',
-    title: 'Pferch',
-    description: 'Pferch zeichnen, Walk starten und Belegung prüfen.',
-    icon: MapPin,
-  },
-  {
-    href: '/herds',
-    title: 'Herde',
-    description: 'Herde öffnen, Tiere prüfen und Belegungen anpassen.',
-    icon: Users,
-  },
+  { href: '/work', title: 'Arbeit', icon: Briefcase },
+  { href: '/sessions', title: 'Weidegang', icon: Map },
+  { href: '/enclosures', title: 'Pferch', icon: MapPin },
+  { href: '/herds', title: 'Herde', icon: Users },
 ] satisfies FieldStartLink[]
 
 const utilityLinks = [
@@ -117,20 +98,19 @@ export default function HomePage() {
   })
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <BackupReminder />
 
-      <section className="space-y-3 md:app-panel md:p-5">
-        <div className="px-1 md:px-0">
-          <CardTitle className={metaLabelClassName({ tracking: 'wider', tone: 'soft' })}>
-            Feldstart
-          </CardTitle>
-          <h2 className="mt-2 text-2xl font-semibold leading-tight text-ink-strong md:text-xl">
-            Direkt loslegen
-          </h2>
-        </div>
+      <ContinueRecordingCard />
 
-        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+      <section className="space-y-3 md:app-panel md:p-5">
+        <CardTitle
+          className={metaLabelClassName({ tracking: 'wider', tone: 'soft' }, 'px-1 md:px-0')}
+        >
+          Feldstart
+        </CardTitle>
+
+        <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
           {fieldStartLinks.map((link) => {
             const Icon = link.icon
 
@@ -138,20 +118,15 @@ export default function HomePage() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex min-h-24 items-center gap-3 rounded-[1.15rem] border-2 border-border-ink bg-surface-raised px-3.5 py-3.5 text-ink app-shadow-action transition-colors hover:bg-surface-hover md:min-h-28 md:rounded-[1.35rem] md:px-4 md:py-4"
+                onClick={() => triggerHaptic('light')}
+                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-[1.15rem] border-2 border-border-ink bg-surface-raised px-3 py-3.5 text-ink app-shadow-action transition-colors hover:bg-surface-hover md:rounded-[1.35rem]"
               >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-accent text-primary">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-accent text-primary">
                   <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={2.2} />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-lg font-semibold leading-tight text-ink-strong">
-                    {link.title}
-                  </span>
-                  <span className="mt-1 block text-sm font-medium leading-snug text-ink-muted">
-                    {link.description}
-                  </span>
+                <span className="block max-w-full truncate text-base font-semibold leading-tight text-ink-strong">
+                  {link.title}
                 </span>
-                <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted" />
               </Link>
             )
           })}
@@ -176,17 +151,17 @@ export default function HomePage() {
       </section>
 
       <Card>
-        <CardContent className="flex flex-col gap-3 py-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+        <CardContent className="flex flex-col gap-2.5 py-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <div className="min-w-0 flex-1 basis-52">
               <CardTitle className={metaLabelClassName({ tracking: 'wider', tone: 'soft' })}>
                 Einsatzbereit
               </CardTitle>
-              <CardDescription className="mt-1">
-                Vor dem Aufstieg den Kartenbereich sichern, solange noch Netz da ist.
+              <CardDescription className="mt-0.5">
+                Kartenbereich sichern, solange noch Netz da ist.
               </CardDescription>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -222,12 +197,6 @@ export default function HomePage() {
                   Abbrechen
                 </button>
               ) : null}
-              <Link
-                href="/settings"
-                className={cn(buttonVariants({ variant: 'secondary' }), 'min-h-11 rounded-full')}
-              >
-                Offline & GPS prüfen
-              </Link>
             </div>
           </div>
 
@@ -251,14 +220,32 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <DashboardStat label="Aktive Herden" value={dashboardData?.herdsCount ?? '...'} />
-        <DashboardStat label="Pferche" value={dashboardData?.enclosuresCount ?? '...'} />
-        <DashboardStat label="Laufende Weidegänge" value={dashboardData?.activeSessionsCount ?? '...'} />
-        <DashboardStat label="Weidegänge gesamt" value={dashboardData?.sessionsCount ?? '...'} />
-        <DashboardStat label="Aktive Pferch-Belegungen" value={dashboardData?.activeAssignmentsCount ?? '...'} />
-        <DashboardStat label="Arbeit läuft" value={dashboardData?.activeWorkSessionsCount ?? '...'} />
-      </div>
+      {/* Counts are review/admin info, not field info — collapsed by default so
+          the field controls above stay within one screen. */}
+      <details className="app-panel-sm group px-4 py-3">
+        <summary
+          className={metaLabelClassName(
+            { tracking: 'wider', tone: 'soft' },
+            'flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden',
+          )}
+        >
+          Übersicht
+          <span
+            aria-hidden="true"
+            className="text-base font-semibold text-ink-muted transition-transform group-open:rotate-180"
+          >
+            ⌄
+          </span>
+        </summary>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <DashboardStat label="Aktive Herden" value={dashboardData?.herdsCount ?? '...'} />
+          <DashboardStat label="Pferche" value={dashboardData?.enclosuresCount ?? '...'} />
+          <DashboardStat label="Laufende Weidegänge" value={dashboardData?.activeSessionsCount ?? '...'} />
+          <DashboardStat label="Weidegänge gesamt" value={dashboardData?.sessionsCount ?? '...'} />
+          <DashboardStat label="Aktive Pferch-Belegungen" value={dashboardData?.activeAssignmentsCount ?? '...'} />
+          <DashboardStat label="Arbeit läuft" value={dashboardData?.activeWorkSessionsCount ?? '...'} />
+        </div>
+      </details>
     </div>
   )
 }

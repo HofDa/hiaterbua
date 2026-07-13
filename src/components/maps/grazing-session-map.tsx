@@ -34,9 +34,16 @@ export function GrazingSessionMap() {
     currentDurationS,
   } = useGrazingSessionMapScreen()
 
-  const mobileMapSummary = `${safeCurrentTrackpointsLength} Punkte · ${formatDistance(
-    currentDistanceM
-  )} · ${formatDuration(currentDurationS)}`
+  // Zeroed metrics before a session starts read like something is broken;
+  // only show them once a recording exists.
+  const currentSessionStatus = useGrazingSessionMapStore(
+    (state) => state.management.currentSessionStatus,
+  )
+  const mobileMapSummary = currentSessionStatus
+    ? `${safeCurrentTrackpointsLength} Punkte · ${formatDistance(
+        currentDistanceM
+      )} · ${formatDuration(currentDurationS)}`
+    : 'Route und Pferche ansehen'
 
   // GPS problems are actionable even when the map is closed, so the status card
   // (which carries the "Standort aktivieren" retry) must stay reachable on mobile.

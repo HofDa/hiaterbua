@@ -1,18 +1,11 @@
 'use client'
 
-import type { EnclosureListFilter } from '@/lib/maps/live-position-map-helpers'
+import { enclosureFilterOptions } from '@/lib/maps/live-position-map-helpers'
 import { LivePositionSavedEnclosureCard } from '@/components/maps/live-position-saved-enclosure-card'
 import { LivePositionSurveyAreasPanel } from '@/components/maps/live-position-survey-areas-panel'
 import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 import { cn } from '@/lib/utils/cn'
 import type { Enclosure } from '@/types/domain'
-
-const enclosureFilterOptions: { id: EnclosureListFilter; label: string }[] = [
-  { id: 'all', label: 'Alle' },
-  { id: 'active', label: 'Aktiv belegt' },
-  { id: 'unused', label: 'Ohne Nutzung' },
-  { id: 'most-used', label: 'Meist genutzt' },
-]
 
 export type LivePositionSidebarPanelProps = {
   onFocusEnclosure: (enclosure: Enclosure) => void
@@ -171,7 +164,7 @@ export function LivePositionSidebarPanel({
           <span className="text-sm text-ink-soft">{filteredEnclosures.length}</span>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-3 grid grid-cols-3 gap-2">
           {enclosureFilterOptions.map((filterOption) => (
             <button
               key={filterOption.id}

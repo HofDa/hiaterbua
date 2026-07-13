@@ -26,6 +26,38 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Weidegang starten",
+      "short_name": "Weidegang",
+      "url": "/sessions",
+      "icons": [
+        {
+          "src": "/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Arbeit starten",
+      "short_name": "Arbeit",
+      "url": "/work",
+      "icons": [
+        {
+          "src": "/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

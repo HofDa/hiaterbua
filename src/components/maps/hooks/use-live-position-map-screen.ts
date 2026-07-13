@@ -346,11 +346,11 @@ export function useLivePositionMapScreen() {
     lastPositionDecision: gps.lastPositionDecision,
     effectiveSettings,
     safeEnclosures: data.safeEnclosures,
+    selectedEnclosureId: selection.selectedEnclosureId,
     openEnclosureDetailsRef: refs.openEnclosureDetailsRef,
     focusMapOnEnclosure: runtime.focusEnclosure,
     setSelectedEnclosureId: selection.setSelectedEnclosureId,
     setShowSelectedTrack: selection.setShowSelectedTrack,
-    setIsSelectedEnclosureInfoOpen: selection.setIsSelectedEnclosureInfoOpen,
     setEditingEnclosureId: edit.setEditingEnclosureId,
   })
 

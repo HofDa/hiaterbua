@@ -1,14 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { WorkPageHero } from '@/components/work/work-page-hero'
 import { WorkOverviewCard } from '@/components/work/work-overview-card'
 import { WorkReminderBanner } from '@/components/work/work-reminder-banner'
 import { WorkSessionControlCard } from '@/components/work/work-session-control-card'
 import { WorkSessionHistoryCard } from '@/components/work/work-session-history-card'
-import { WorkUserCard } from '@/components/work/work-user-card'
 import { useWorkPageController } from '@/components/work/hooks/use-work-page-controller'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils/cn'
 import type { Enclosure, Herd, WorkSession } from '@/types/domain'
+
+// The field screen shows just enough history to confirm "did I log that?";
+// the full (capped) list stays one tap away instead of pushing the start
+// controls off-screen.
+const COLLAPSED_HISTORY_COUNT = 3
+const MAX_HISTORY_COUNT = 12
 
 type WorkPageContentProps = {
   sessions: WorkSession[]
@@ -21,7 +28,11 @@ export function WorkPageContent({
   herds,
   enclosures,
 }: WorkPageContentProps) {
-  const visibleSessions = useMemo(() => sessions.slice(0, 12), [sessions])
+  const [showFullHistory, setShowFullHistory] = useState(false)
+  const visibleSessions = useMemo(
+    () => sessions.slice(0, showFullHistory ? MAX_HISTORY_COUNT : COLLAPSED_HISTORY_COUNT),
+    [sessions, showFullHistory]
+  )
   const herdsById = useMemo(() => new Map(herds.map((herd) => [herd.id, herd])), [herds])
   const enclosuresById = useMemo(
     () => new Map(enclosures.map((enclosure) => [enclosure.id, enclosure])),
@@ -86,7 +97,6 @@ export function WorkPageContent({
       ) : null}
 
       <WorkPageHero />
-      <WorkUserCard />
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
         <WorkSessionControlCard
@@ -117,7 +127,7 @@ export function WorkPageContent({
           onNotesChange={setNotes}
         />
 
-        <WorkOverviewCard activeSession={activeSession} sessions={sessions} nowMs={nowMs} />
+        <WorkOverviewCard sessions={sessions} nowMs={nowMs} />
       </section>
 
       <WorkSessionHistoryCard
@@ -152,6 +162,18 @@ export function WorkPageContent({
         onEditEndTimeChange={setEditEndTime}
         onEditNotesChange={setEditNotes}
       />
+
+      {sessions.length > COLLAPSED_HISTORY_COUNT ? (
+        <button
+          type="button"
+          onClick={() => setShowFullHistory((current) => !current)}
+          className={cn(buttonVariants({ variant: 'secondary' }), 'w-full rounded-full sm:w-auto')}
+        >
+          {showFullHistory
+            ? 'Weniger anzeigen'
+            : `Verlauf anzeigen (${Math.min(sessions.length, MAX_HISTORY_COUNT)})`}
+        </button>
+      ) : null}
     </div>
   )
 }

@@ -46,7 +46,6 @@ export function useLivePositionMapDrawWalkController({
     setIsSaving: draw.setIsSaving,
     setSelectedEnclosureId: selection.setSelectedEnclosureId,
     setShowSelectedTrack: selection.setShowSelectedTrack,
-    setIsSelectedEnclosureInfoOpen: selection.setIsSelectedEnclosureInfoOpen,
     setEditingEnclosureId: edit.setEditingEnclosureId,
     setAssignmentEditorEnclosureId: assignment.setAssignmentEditorEnclosureId,
     focusEnclosure,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type FormEventHandler } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { WorkActivityPicker } from '@/components/work/work-activity-picker'
 import {
   getDefaultWorkSelectionForSection,
@@ -276,8 +277,11 @@ export function WorkNewSessionForm({
   return (
     <form ref={formRef} className="mt-4 space-y-4" onSubmit={onSubmit}>
       <div className="space-y-4 sm:hidden">
+        {/* Full-width rows: the German labels don't fit half-width tiles
+            without auto-hyphenation, and the description doubles as an
+            explanation of what each category covers. */}
         {mobileStep === 'section' ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-2.5">
             {workPickerSections.map((section) => (
               <ToggleButton
                 key={section.id}
@@ -289,9 +293,17 @@ export function WorkNewSessionForm({
                   setIsMobileDetailsOpen(false)
                   setMobileStep('option')
                 }}
-                className="min-h-[4.5rem] rounded-[1.35rem]"
+                className="min-h-16 rounded-[1.35rem]"
               >
-                {section.label}
+                <span className="flex items-center justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block text-base leading-snug">{section.label}</span>
+                    <span className="mt-0.5 block text-xs font-medium leading-snug text-ink-muted">
+                      {section.description}
+                    </span>
+                  </span>
+                  <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted" />
+                </span>
               </ToggleButton>
             ))}
           </div>
@@ -305,7 +317,7 @@ export function WorkNewSessionForm({
               onBack={() => { setHasStartedFlow(true); setMobileStep('section') }}
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2.5">
               {activeSection.options.map((option) => (
                 <ToggleButton
                   key={option.id}
@@ -316,7 +328,7 @@ export function WorkNewSessionForm({
                     setIsMobileDetailsOpen(false)
                     setMobileStep('confirm')
                   }}
-                  className="min-h-[4.75rem]"
+                  className="min-h-14 rounded-[1.35rem] text-base"
                 >
                   {option.label}
                 </ToggleButton>

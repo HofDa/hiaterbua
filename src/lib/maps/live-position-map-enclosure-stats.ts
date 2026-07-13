@@ -1,4 +1,5 @@
-import { getDurationSecondsFromIso } from '@/lib/maps/live-position-map-formatters'
+import { formatSince, getDurationSecondsFromIso } from '@/lib/maps/live-position-map-formatters'
+import { formatArea } from '@/lib/maps/map-core'
 import type {
   EnclosureListFilter,
   EnclosureStats,
@@ -157,42 +158,79 @@ export function buildEnclosureStatsById(
   return map
 }
 
+// The list row is the daily overview: for occupied Pferche the herd and how
+// long it has been in ("rotate next?"), for free ones the size and rest time
+// ("regrown enough?").
+export function getEnclosureOccupancySummary(
+  enclosure: Enclosure,
+  activeAssignment: EnclosureAssignment | undefined,
+  stats: EnclosureStats | undefined,
+  herdsById: Map<string, Herd>
+) {
+  if (activeAssignment) {
+    const herdName = herdsById.get(activeAssignment.herdId)?.name ?? 'Unbekannte Herde'
+    const since = formatSince(activeAssignment.startTime)
+    return since ? `${herdName} · ${since}` : herdName
+  }
+
+  const area = formatArea(enclosure.areaM2)
+  if ((stats?.totalAssignments ?? 0) === 0) return `${area} · noch nie belegt`
+
+  const restedSince = formatSince(stats?.lastEndTime)
+  return restedSince ? `${area} · frei ${restedSince}` : area
+}
+
+export const enclosureFilterOptions: { id: EnclosureListFilter; label: string }[] = [
+  { id: 'all', label: 'Alle' },
+  { id: 'active', label: 'Belegt' },
+  { id: 'free', label: 'Frei' },
+]
+
+// Occupied Pferche sort longest-occupied first (the herd due to rotate next),
+// free ones longest-rested first (the Pferch with the most regrowth); a Pferch
+// that was never occupied counts as fully rested.
+function compareLongestOccupiedFirst(left: FilteredEnclosureItem, right: FilteredEnclosureItem) {
+  const startDiff = (left.activeAssignment?.startTime ?? '').localeCompare(
+    right.activeAssignment?.startTime ?? ''
+  )
+  if (startDiff !== 0) return startDiff
+
+  return left.enclosure.name.localeCompare(right.enclosure.name, 'de')
+}
+
+function compareLongestRestedFirst(left: FilteredEnclosureItem, right: FilteredEnclosureItem) {
+  const restDiff = (left.stats?.lastEndTime ?? '').localeCompare(right.stats?.lastEndTime ?? '')
+  if (restDiff !== 0) return restDiff
+
+  return left.enclosure.name.localeCompare(right.enclosure.name, 'de')
+}
+
 export function buildFilteredEnclosures(
   enclosures: Enclosure[],
   activeAssignmentsByEnclosureId: Map<string, EnclosureAssignment>,
   enclosureStatsById: Map<string, EnclosureStats>,
   filter: EnclosureListFilter
 ): FilteredEnclosureItem[] {
-  const withMeta = enclosures.map((enclosure) => ({
+  const withMeta: FilteredEnclosureItem[] = enclosures.map((enclosure) => ({
     enclosure,
     stats: enclosureStatsById.get(enclosure.id),
     activeAssignment: activeAssignmentsByEnclosureId.get(enclosure.id),
   }))
 
+  const occupied = withMeta
+    .filter((item) => Boolean(item.activeAssignment))
+    .sort(compareLongestOccupiedFirst)
+  const free = withMeta
+    .filter((item) => !item.activeAssignment)
+    .sort(compareLongestRestedFirst)
+
   switch (filter) {
     case 'active':
-      return withMeta
-        .filter((item) => Boolean(item.activeAssignment))
-        .sort((left, right) => right.enclosure.updatedAt.localeCompare(left.enclosure.updatedAt))
-    case 'unused':
-      return withMeta
-        .filter((item) => (item.stats?.totalAssignments ?? 0) === 0)
-        .sort((left, right) => left.enclosure.name.localeCompare(right.enclosure.name, 'de'))
-    case 'most-used':
-      return withMeta.sort((left, right) => {
-        const assignmentsDiff =
-          (right.stats?.totalAssignments ?? 0) - (left.stats?.totalAssignments ?? 0)
-        if (assignmentsDiff !== 0) return assignmentsDiff
-
-        const durationDiff = (right.stats?.totalDurationS ?? 0) - (left.stats?.totalDurationS ?? 0)
-        if (durationDiff !== 0) return durationDiff
-
-        return left.enclosure.name.localeCompare(right.enclosure.name, 'de')
-      })
+      return occupied
+    case 'free':
+      return free
     case 'all':
     default:
-      return withMeta.sort((left, right) =>
-        right.enclosure.updatedAt.localeCompare(left.enclosure.updatedAt)
-      )
+      return [...occupied, ...free]
   }
 }

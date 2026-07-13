@@ -55,7 +55,6 @@ export type LivePositionWorkflowSlice = {
   herdsById: Map<string, Herd>
   animalsByHerdId: Map<string, Animal[]>
   activeAssignmentsByHerdId: Map<string, EnclosureAssignment>
-  isSelectedEnclosureInfoOpen: boolean
   showSelectedTrack: boolean
 }
 
@@ -80,7 +79,6 @@ export type LivePositionWorkflowHandles = {
   onSaveWalkEnclosure: (event: FormEvent<HTMLFormElement>) => void
   onEnclosureListFilterChange: (filter: EnclosureListFilter) => void
   onSelectedEnclosureChange: (nextId: string) => void
-  onToggleSelectedEnclosureInfo: () => void
   onToggleShowSelectedTrack: () => void
   onDeleteEnclosure: (enclosure: Enclosure) => void
   onOpenAssignmentEditor: (enclosure: Enclosure) => void
@@ -114,7 +112,7 @@ const initialWorkflowSlice: LivePositionWorkflowSlice = {
   selectedWalkPointIndex: null,
   selectedWalkPoint: null,
   filteredEnclosures: [],
-  enclosureListFilter: 'active',
+  enclosureListFilter: 'all',
   selectedEnclosure: null,
   selectedEnclosureId: null,
   assignmentEditorEnclosureId: null,
@@ -128,7 +126,6 @@ const initialWorkflowSlice: LivePositionWorkflowSlice = {
   herdsById: new Map(),
   animalsByHerdId: new Map(),
   activeAssignmentsByHerdId: new Map(),
-  isSelectedEnclosureInfoOpen: false,
   showSelectedTrack: false,
 }
 
@@ -152,7 +149,6 @@ const initialWorkflowHandles: LivePositionWorkflowHandles = {
   onSaveWalkEnclosure: noop,
   onEnclosureListFilterChange: noop,
   onSelectedEnclosureChange: noop,
-  onToggleSelectedEnclosureInfo: noop,
   onToggleShowSelectedTrack: noop,
   onDeleteEnclosure: noop,
   onOpenAssignmentEditor: noop,

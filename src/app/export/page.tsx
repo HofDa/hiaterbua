@@ -69,6 +69,10 @@ export default function ExportPage() {
 
 
   async function handleExportZip() {
+    exportHerd.reset()
+    exportWork.reset()
+    importData.reset()
+
     await exportZip.execute(async () => {
       const { blob, filename } = await buildAppExportArchive()
       downloadBlob(blob, filename)
@@ -81,6 +85,10 @@ export default function ExportPage() {
   }
 
   async function handleExportSingleHerd() {
+    exportZip.reset()
+    exportWork.reset()
+    importData.reset()
+
     if (!pageData.activeHerdExportId) {
       exportZip.setError('Bitte zuerst eine Herde wählen.')
       return
@@ -97,6 +105,10 @@ export default function ExportPage() {
   }
 
   async function handleExportWorkSessions() {
+    exportZip.reset()
+    exportHerd.reset()
+    importData.reset()
+
     await exportWork.execute(async () => {
       const result = await buildWorkSessionsExportArchive()
       downloadBlob(result.blob, result.filename)
@@ -109,6 +121,10 @@ export default function ExportPage() {
   }
 
   async function handleImport() {
+    exportZip.reset()
+    exportHerd.reset()
+    exportWork.reset()
+
     if (!pageData.selectedFile || !pageData.importPreview) {
       importData.setError('Bitte zuerst eine Importdatei wählen.')
       return

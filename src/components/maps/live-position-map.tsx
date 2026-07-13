@@ -72,7 +72,10 @@ export function LivePositionMap() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(360px,420px)] lg:items-start">
-        <div>
+        {/* min-w-0: the MapLibre canvas keeps a fixed pixel width while the mobile
+            map is collapsed; without it the canvas blows the grid track past the
+            viewport and the whole page scrolls horizontally. */}
+        <div className="min-w-0">
           <div className="space-y-3">
             <div className="app-panel overflow-hidden">
               <button
@@ -120,7 +123,7 @@ export function LivePositionMap() {
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <LivePositionSidebarPanel
             onFocusEnclosure={handleFocusEnclosureFromSavedList}
             onStartEditEnclosure={handleStartEditEnclosureFromSavedList}

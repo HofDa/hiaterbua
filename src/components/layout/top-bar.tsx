@@ -19,19 +19,21 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-chrome-border bg-chrome-shell pt-[env(safe-area-inset-top)] text-white app-chrome-top">
-      <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-3 py-2.5 md:min-h-18 md:gap-4 md:px-4 md:py-3 xl:max-w-[88rem]">
-        <div className="min-w-0 shrink">
-          <p className="truncate text-base font-semibold text-white md:text-lg">{APP_TITLE}</p>
+      <div className="mx-auto flex min-h-14 max-w-6xl items-center justify-between gap-3 px-3 py-1.5 md:min-h-18 md:gap-4 md:px-4 md:py-3 xl:max-w-[88rem]">
+        {/* Installed standalone use means the user already knows which app is
+            open — on mobile the page title is the header, not the app name. */}
+        <p className="min-w-0 truncate text-lg font-semibold text-white md:hidden">
+          {activeItem?.label ?? APP_TITLE}
+        </p>
+        <div className="hidden min-w-0 shrink md:block">
+          <p className="truncate text-lg font-semibold text-white">{APP_TITLE}</p>
           <p
             className={metaLabelClassName(
               { tracking: 'wider', tone: 'inherit', weight: 'normal' },
-              'hidden text-chrome-muted md:block',
+              'text-chrome-muted',
             )}
           >
             Offlinefähige Felddokumentation
-          </p>
-          <p className="truncate text-xs font-semibold text-chrome-muted md:hidden">
-            {activeItem?.label ?? 'Felddokumentation'}
           </p>
         </div>
 

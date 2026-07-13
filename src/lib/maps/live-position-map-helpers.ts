@@ -12,6 +12,7 @@ export {
   formatDurationFromIso,
   formatDurationSeconds,
   formatPointTimestamp,
+  formatSince,
   getDurationSecondsFromIso,
 } from '@/lib/maps/live-position-map-formatters'
 export {
@@ -39,6 +40,8 @@ export {
   buildEnclosureStatsById,
   buildFilteredEnclosures,
   buildHerdsById,
+  enclosureFilterOptions,
   getEffectiveHerdCount,
   getAssignableHerds,
+  getEnclosureOccupancySummary,
 } from '@/lib/maps/live-position-map-enclosure-stats'

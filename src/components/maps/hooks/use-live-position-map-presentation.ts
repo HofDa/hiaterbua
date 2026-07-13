@@ -15,11 +15,11 @@ type UseLivePositionMapPresentationOptions = {
   lastPositionDecision: PositionDecision | null
   effectiveSettings: AppSettings
   safeEnclosures: Enclosure[]
+  selectedEnclosureId: string | null
   openEnclosureDetailsRef: MutableRefObject<(enclosureId: string) => void>
   focusMapOnEnclosure: (enclosure: Enclosure) => void
   setSelectedEnclosureId: Dispatch<SetStateAction<string | null>>
   setShowSelectedTrack: Dispatch<SetStateAction<boolean>>
-  setIsSelectedEnclosureInfoOpen: Dispatch<SetStateAction<boolean>>
   setEditingEnclosureId: Dispatch<SetStateAction<string | null>>
 }
 
@@ -29,11 +29,11 @@ export function useLivePositionMapPresentation({
   lastPositionDecision,
   effectiveSettings,
   safeEnclosures,
+  selectedEnclosureId,
   openEnclosureDetailsRef,
   focusMapOnEnclosure,
   setSelectedEnclosureId,
   setShowSelectedTrack,
-  setIsSelectedEnclosureInfoOpen,
   setEditingEnclosureId,
 }: UseLivePositionMapPresentationOptions) {
   function focusEnclosure(enclosure: Enclosure) {
@@ -43,11 +43,18 @@ export function useLivePositionMapPresentation({
   }
 
   function handleMobileSelectedEnclosureChange(nextId: string) {
+    // Selection drives the inline row expansion on mobile — tapping the
+    // expanded row again collapses it.
+    if (selectedEnclosureId === nextId) {
+      setSelectedEnclosureId(null)
+      setShowSelectedTrack(false)
+      return
+    }
+
     const nextEnclosure = safeEnclosures.find((enclosure) => enclosure.id === nextId) ?? null
     if (!nextEnclosure) return
 
     focusEnclosure(nextEnclosure)
-    setIsSelectedEnclosureInfoOpen(true)
   }
 
   useEffect(() => {

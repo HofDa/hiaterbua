@@ -4,9 +4,7 @@ import { useMemo } from 'react'
 import {
   formatDuration,
   getLiveDurationS,
-  getWorkLabel,
   getWorkPickerSectionId,
-  getWorkStatusLabel,
   workPickerSections,
 } from '@/lib/work/work-session-helpers'
 import { MetaLabel } from '@/components/ui/typography'
@@ -14,7 +12,6 @@ import { cn } from '@/lib/utils/cn'
 import type { WorkSession } from '@/types/domain'
 
 type WorkOverviewCardProps = {
-  activeSession: WorkSession | null
   sessions: WorkSession[]
   nowMs: number
 }
@@ -42,7 +39,7 @@ const overviewColors = {
   },
 } as const
 
-export function WorkOverviewCard({ activeSession, sessions, nowMs }: WorkOverviewCardProps) {
+export function WorkOverviewCard({ sessions, nowMs }: WorkOverviewCardProps) {
   const sectionStats = useMemo(() => {
     const totals = new Map(
       workPickerSections.map((section) => [
@@ -100,42 +97,20 @@ export function WorkOverviewCard({ activeSession, sessions, nowMs }: WorkOvervie
 
   return (
     <div className="app-panel p-5">
-      <h2 className="text-lg font-semibold tracking-[-0.02em]">Übersicht</h2>
-      <div className="mt-4 grid gap-3 text-sm">
-        <div className="app-surface-row px-4 py-3">
-          <div className="text-ink-muted">Laufender Einsatz</div>
-          <div className="mt-1 font-medium text-ink">
-            {activeSession ? getWorkLabel(activeSession) : 'Keiner'}
-          </div>
-        </div>
-        <div className="app-surface-row px-4 py-3">
-          <div className="text-ink-muted">Letzter Status</div>
-          <div className="mt-1 font-medium text-ink">
-            {getWorkStatusLabel(activeSession?.status)}
-          </div>
-        </div>
-        <div className="app-surface-row px-4 py-3">
-          <div className="text-ink-muted">Erfasste Einsätze</div>
-          <div className="mt-1 font-medium text-ink">{sessions.length}</div>
+      {/* The running session and its status already live in the control card
+          right above — this card only owns the time-per-category evaluation. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold tracking-[-0.02em]">Auswertung</h2>
+        <div className="rounded-full border border-border-soft bg-surface-warm px-3 py-1 text-xs font-semibold text-ink">
+          {sessions.length} {sessions.length === 1 ? 'Einsatz' : 'Einsätze'} · Gesamt{' '}
+          {formatDuration(sectionStats.totalDurationS)}
         </div>
       </div>
 
-      <div className="mt-4 rounded-[1.3rem] border border-border bg-surface-raised px-4 py-4 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold text-ink">Grafische Auswertung</div>
-            <div className="mt-1 text-xs font-medium text-ink-muted">
-              Kreisdiagramm der Arbeitszeit nach Bereich
-            </div>
-          </div>
-          <div className="rounded-full border border-border-soft bg-surface-warm px-3 py-1 text-xs font-semibold text-ink">
-            Gesamt {formatDuration(sectionStats.totalDurationS)}
-          </div>
-        </div>
-
+      <div className="mt-3 rounded-[1.3rem] border border-border bg-surface-raised px-4 py-4 shadow-sm">
         {hasChartData ? (
           <>
-            <div className="mt-4">
+            <div>
               <div className="mx-auto w-fit">
                 <div
                   className="relative h-40 w-40 rounded-full border border-chart-border shadow-sm sm:h-44 sm:w-44"
@@ -208,7 +183,7 @@ export function WorkOverviewCard({ activeSession, sessions, nowMs }: WorkOvervie
             </div>
           </>
         ) : (
-          <div className="mt-4 rounded-[1rem] border border-border-soft bg-surface-warm px-4 py-3 text-sm text-ink">
+          <div className="text-sm text-ink-muted">
             Noch keine Dauerwerte für eine Auswertung vorhanden.
           </div>
         )}

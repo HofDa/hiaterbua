@@ -21,7 +21,6 @@ type UseLivePositionMapDrawControllerOptions = {
   setIsSaving: Dispatch<SetStateAction<boolean>>
   setSelectedEnclosureId: Dispatch<SetStateAction<string | null>>
   setShowSelectedTrack: Dispatch<SetStateAction<boolean>>
-  setIsSelectedEnclosureInfoOpen: Dispatch<SetStateAction<boolean>>
   setEditingEnclosureId: Dispatch<SetStateAction<string | null>>
   setAssignmentEditorEnclosureId: Dispatch<SetStateAction<string | null>>
   focusEnclosure: (enclosure: Enclosure) => void
@@ -41,7 +40,6 @@ export function useLivePositionMapDrawController({
   setIsSaving,
   setSelectedEnclosureId,
   setShowSelectedTrack,
-  setIsSelectedEnclosureInfoOpen,
   setEditingEnclosureId,
   setAssignmentEditorEnclosureId,
   focusEnclosure,
@@ -49,7 +47,6 @@ export function useLivePositionMapDrawController({
   function startDrawing() {
     setSelectedEnclosureId(null)
     setShowSelectedTrack(false)
-    setIsSelectedEnclosureInfoOpen(false)
     setEditingEnclosureId(null)
     setAssignmentEditorEnclosureId(null)
     setIsDrawing(true)
@@ -110,7 +107,6 @@ export function useLivePositionMapDrawController({
 
         setSelectedEnclosureId(enclosure.id)
         setShowSelectedTrack(false)
-        setIsSelectedEnclosureInfoOpen(true)
         setEditingEnclosureId(null)
         setAssignmentEditorEnclosureId(null)
         focusEnclosure(enclosure)

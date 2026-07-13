@@ -410,7 +410,9 @@ textarea {
 
 @media (max-width: 767px) {
   :root {
-    --app-bottom-nav-height: 4.95rem;
+    /* pt-1 (0.25rem) + h-14 tab (3.5rem) + 0.45rem base bottom padding; the
+       env(safe-area-inset-bottom) share is added by each consumer. */
+    --app-bottom-nav-height: 4.2rem;
   }
 
   body {

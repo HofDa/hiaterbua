@@ -47,6 +47,24 @@ export function useLivePositionMapPublish({
   presentation,
 }: UseLivePositionMapPublishOptions) {
   const { gps, draw, walk, selection, edit, assignment } = state
+  const enclosurePanelValues = {
+    filteredEnclosures: data.filteredEnclosures,
+    enclosureListFilter: selection.enclosureListFilter,
+    selectedEnclosure: data.selectedEnclosure,
+    selectedEnclosureId: selection.selectedEnclosureId,
+    assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
+    assignmentHerdId: assignment.assignmentHerdId,
+    assignmentCount: assignment.assignmentCount,
+    assignmentNotes: assignment.assignmentNotes,
+    assignmentError: assignment.assignmentError,
+    isAssignmentSaving: assignment.isAssignmentSaving,
+    endingAssignmentId: assignment.endingAssignmentId,
+    safeHerds: data.safeHerds,
+    herdsById: data.herdsById,
+    animalsByHerdId: data.animalsByHerdId,
+    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
+    showSelectedTrack: selection.showSelectedTrack,
+  }
 
   const statusValues: LivePositionStatusSlice = {
     gpsState: gps.gpsState,
@@ -139,6 +157,7 @@ export function useLivePositionMapPublish({
   // `onMobilePanelChange` is intentionally not published here — it stays a parent-wired prop
   // because it also opens the mobile map when switching to the draw tab.
   const workflowValues: LivePositionWorkflowSlice = {
+    ...enclosurePanelValues,
     mobilePanel: selection.mobilePanel,
     isDrawing: draw.isDrawing,
     draftPointsCount: draw.draftPoints.length,
@@ -157,23 +176,6 @@ export function useLivePositionMapPublish({
     isWalkPointsOpen: walk.isWalkPointsOpen,
     selectedWalkPointIndex: walk.selectedWalkPointIndex,
     selectedWalkPoint: data.selectedWalkPoint,
-    filteredEnclosures: data.filteredEnclosures,
-    enclosureListFilter: selection.enclosureListFilter,
-    selectedEnclosure: data.selectedEnclosure,
-    selectedEnclosureId: selection.selectedEnclosureId,
-    assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
-    assignmentHerdId: assignment.assignmentHerdId,
-    assignmentCount: assignment.assignmentCount,
-    assignmentNotes: assignment.assignmentNotes,
-    assignmentError: assignment.assignmentError,
-    isAssignmentSaving: assignment.isAssignmentSaving,
-    endingAssignmentId: assignment.endingAssignmentId,
-    safeHerds: data.safeHerds,
-    herdsById: data.herdsById,
-    animalsByHerdId: data.animalsByHerdId,
-    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
-    isSelectedEnclosureInfoOpen: selection.isSelectedEnclosureInfoOpen,
-    showSelectedTrack: selection.showSelectedTrack,
   }
   const workflowHandles = useStableHandles<LivePositionWorkflowHandles>({
     onEnclosureListFilterChange: selection.setEnclosureListFilter,
@@ -206,8 +208,6 @@ export function useLivePositionMapPublish({
     onWalkNotesChange: walk.setWalkNotes,
     onSaveWalkEnclosure: actions.saveWalkEnclosure,
     onSelectedEnclosureChange: presentation.handleMobileSelectedEnclosureChange,
-    onToggleSelectedEnclosureInfo: () =>
-      selection.setIsSelectedEnclosureInfoOpen((current) => !current),
     onToggleShowSelectedTrack: () => {
       if (data.selectedEnclosure) {
         actions.toggleSelectedTrackForEnclosure(data.selectedEnclosure.id)
@@ -237,28 +237,13 @@ export function useLivePositionMapPublish({
   // `onFocusEnclosure` / `onStartEditEnclosure` stay parent-wired props (they also open the
   // mobile map), so they are not published here.
   const sidebarValues: LivePositionSidebarSlice = {
+    ...enclosurePanelValues,
     mobilePanel: selection.mobilePanel,
     safeSurveyAreas: data.safeSurveyAreas,
     selectedSurveyArea: data.selectedSurveyArea,
     selectedSurveyAreaId: selection.selectedSurveyAreaId,
-    filteredEnclosures: data.filteredEnclosures,
-    enclosureListFilter: selection.enclosureListFilter,
-    selectedEnclosure: data.selectedEnclosure,
-    selectedEnclosureId: selection.selectedEnclosureId,
     expandedSavedEnclosureId: selection.expandedSavedEnclosureId,
-    assignmentEditorEnclosureId: assignment.assignmentEditorEnclosureId,
-    assignmentHerdId: assignment.assignmentHerdId,
-    assignmentCount: assignment.assignmentCount,
-    assignmentNotes: assignment.assignmentNotes,
-    assignmentError: assignment.assignmentError,
-    isAssignmentSaving: assignment.isAssignmentSaving,
-    endingAssignmentId: assignment.endingAssignmentId,
-    showSelectedTrack: selection.showSelectedTrack,
     selectedTrackSummary: data.selectedTrackSummary,
-    safeHerds: data.safeHerds,
-    herdsById: data.herdsById,
-    animalsByHerdId: data.animalsByHerdId,
-    activeAssignmentsByHerdId: data.activeAssignmentsByHerdId,
     assignmentHistoryByEnclosureId: data.assignmentHistoryByEnclosureId,
     editingEnclosureId: edit.editingEnclosureId,
     editName: edit.editName,

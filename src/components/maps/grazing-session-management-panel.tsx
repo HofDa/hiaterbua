@@ -70,6 +70,21 @@ export function GrazingSessionManagementPanel() {
         </>
       )}
 
+      {actionError ? (
+        <div className="mt-4 rounded-2xl bg-error-surface px-4 py-3 text-sm text-error-ink">
+          {actionError}
+        </div>
+      ) : null}
+
+      {/* Live metrics before event capture: duration/distance is what gets
+          glanced at constantly, the events card is tall and used on demand. */}
+      {currentSessionStatus ? (
+        <GrazingSessionMetricsGrid
+          safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
+          currentMetrics={currentMetrics}
+        />
+      ) : null}
+
       {currentSessionStatus ? (
         <GrazingSessionEventCapturePanel
           isEventSaving={isEventSaving}
@@ -80,19 +95,6 @@ export function GrazingSessionManagementPanel() {
           onAddSessionMarkerEvent={onAddSessionMarkerEvent}
         />
       ) : null}
-
-      {actionError ? (
-        <div className="mt-4 rounded-2xl bg-error-surface px-4 py-3 text-sm text-error-ink">
-          {actionError}
-        </div>
-      ) : null}
-
-      {currentSessionStatus ? (
-        <GrazingSessionMetricsGrid
-          safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
-          currentMetrics={currentMetrics}
-        />
-      ) : null}
     </>
   )
 
@@ -101,7 +103,13 @@ export function GrazingSessionManagementPanel() {
       data-grazing-session-management-card="true"
       className="app-panel p-5 lg:hidden"
     >
-      <h2 className="text-lg font-semibold">Weidegang verwalten</h2>
+      <h2 className="text-lg font-semibold">
+        {currentSessionStatus === null
+          ? 'Weidegang starten'
+          : currentSessionStatus === 'paused'
+            ? 'Weidegang pausiert'
+            : 'Laufender Weidegang'}
+      </h2>
       <div className="mt-4">{panelContent}</div>
     </div>
   )

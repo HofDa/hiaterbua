@@ -64,11 +64,15 @@ export function WorkSessionControlCard({
 }: WorkSessionControlCardProps) {
   return (
     <Card data-work-session-control-card="true">
-      <CardHeader>
-        <CardTitle>Neuer Arbeitseinsatz</CardTitle>
+      {/* Card already carries p-5; the CardHeader/CardContent p-6 defaults on
+          top of it would double the padding and blow the card up on mobile. */}
+      <CardHeader className="p-0">
+        <CardTitle className="text-xl">
+          {activeSession ? 'Laufender Arbeitseinsatz' : 'Neuer Arbeitseinsatz'}
+        </CardTitle>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-0">
         {activeSession ? (
           <WorkActiveSessionPanel
             activeSession={activeSession}

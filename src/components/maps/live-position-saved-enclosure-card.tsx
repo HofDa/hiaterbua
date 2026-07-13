@@ -1,8 +1,8 @@
 'use client'
 
 import type { FormEvent } from 'react'
-import { formatArea } from '@/lib/maps/map-core'
 import {
+  getEnclosureOccupancySummary,
   type FilteredEnclosureItem,
   type WalkTrackSummary,
 } from '@/lib/maps/live-position-map-helpers'
@@ -118,6 +118,13 @@ export function LivePositionSavedEnclosureCard({
   const { enclosure, stats: enclosureStats, activeAssignment } = item
   const isExpanded = expandedSavedEnclosureId === enclosure.id
   const isSelected = selectedEnclosureId === enclosure.id
+  const isActive = Boolean(activeAssignment)
+  const occupancySummary = getEnclosureOccupancySummary(
+    enclosure,
+    activeAssignment,
+    enclosureStats,
+    herdsById,
+  )
 
   return (
     <div
@@ -133,10 +140,20 @@ export function LivePositionSavedEnclosureCard({
         className="flex w-full min-w-0 items-start justify-between gap-3 text-left"
       >
         <div className="min-w-0">
-          <div className="font-medium text-ink">{enclosure.name}</div>
-          <div className="mt-1 text-sm text-ink-muted">
-            {formatArea(enclosure.areaM2)} · {enclosure.pointsCount ?? 0} Punkte
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="truncate font-medium text-ink">{enclosure.name}</div>
+            <span
+              className={cn(
+                'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                isActive
+                  ? 'border border-success-border bg-success-surface text-success-ink'
+                  : 'border border-border text-ink-soft',
+              )}
+            >
+              {isActive ? 'aktiv' : 'frei'}
+            </span>
           </div>
+          <div className="mt-1 text-sm text-ink-muted">{occupancySummary}</div>
         </div>
         <div className="shrink-0 text-right">
           <div className="text-xs text-ink-soft">

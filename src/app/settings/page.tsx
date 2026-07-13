@@ -3,6 +3,7 @@
 import { SettingsPageHeader } from '@/components/settings/settings-page-header'
 import { SettingsGeneralFormCard } from '@/components/settings/settings-general-form-card'
 import { SettingsPrefetchCard } from '@/components/settings/settings-prefetch-card'
+import { WorkUserCard } from '@/components/work/work-user-card'
 import { useSettingsPagePreferences } from '@/components/settings/hooks/use-settings-page-preferences'
 import { useSettingsPrefetch } from '@/components/settings/hooks/use-settings-prefetch'
 
@@ -46,6 +47,10 @@ export default function SettingsPage() {
         onRequestBrowserNotifications={requestBrowserNotifications}
         tileCachePanel={tileCachePanel}
       />
+
+      {/* Who is recording work sessions — settings content, so it lives here
+          instead of crowding the Arbeit field screen. */}
+      <WorkUserCard />
 
       <SettingsPrefetchCard
         state={prefetchState}

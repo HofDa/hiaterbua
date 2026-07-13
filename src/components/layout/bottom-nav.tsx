@@ -30,7 +30,10 @@ export function BottomNav() {
       aria-label="Hauptnavigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-chrome-border bg-chrome-shell app-chrome-bottom md:hidden"
     >
-      <div className="mx-auto grid max-w-md grid-cols-5 gap-1 px-2 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pt-2">
+      {/* Flat native-style tab bar: the active tab gets an icon pill, inactive
+          tabs stay flat — no bordered boxes, so the bar can sit lower and read
+          as chrome rather than content. Height feeds --app-bottom-nav-height. */}
+      <div className="mx-auto grid max-w-md grid-cols-5 px-2 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pt-1">
         {mobileNavItems.map((item) => {
           const active = isNavItemActive(pathname, item.href)
           const Icon = item.icon
@@ -41,13 +44,22 @@ export function BottomNav() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               onClick={() => triggerHaptic('light')}
-              className={cn(
-                'flex h-16 min-w-0 flex-col items-center justify-center rounded-[1.1rem] border px-1.5 text-center transition-colors',
-                active ? 'app-chrome-active' : 'app-chrome-control',
-              )}
+              className="flex h-14 min-w-0 flex-col items-center justify-center gap-1 px-1 text-center transition-colors"
             >
-              <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2.2} />
-              <span className="mt-1 max-w-full truncate text-[0.68rem] font-semibold leading-none">
+              <span
+                className={cn(
+                  'flex h-7 w-12 shrink-0 items-center justify-center rounded-full border border-transparent transition-colors',
+                  active ? 'app-chrome-active' : 'text-chrome-muted',
+                )}
+              >
+                <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2.2} />
+              </span>
+              <span
+                className={cn(
+                  'max-w-full truncate text-[0.68rem] font-semibold leading-none',
+                  active ? 'text-white' : 'text-chrome-muted',
+                )}
+              >
                 {item.label}
               </span>
             </Link>

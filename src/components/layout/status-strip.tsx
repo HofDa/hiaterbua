@@ -1,13 +1,12 @@
 'use client'
 
 import { useLiveQuery } from 'dexie-react-hooks'
+import { AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { db } from '@/lib/db/dexie'
-import {
-  getPersistentStorageStatus,
-  getTileCacheCount,
-  TILE_CACHE_CHANGED_EVENT,
-} from '@/lib/maps/tile-cache'
+import { getTileCacheCount, TILE_CACHE_CHANGED_EVENT } from '@/lib/maps/tile-cache'
+import { getOfflineMapReadinessProblem } from '@/lib/maps/offline-map-readiness'
 import { defaultAppSettings } from '@/lib/settings/defaults'
 import {
   parseFallbackSettingsSnapshot,
@@ -15,14 +14,6 @@ import {
   subscribeToFallbackSettings,
 } from '@/lib/settings/page-helpers'
 import { cn } from '@/lib/utils/cn'
-
-function chromeBadgeClass(isActive: boolean, className?: string) {
-  return cn(
-    'whitespace-nowrap rounded-full border px-3 py-1.5 font-semibold',
-    isActive ? 'app-chrome-active' : 'app-chrome-control',
-    className,
-  )
-}
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -33,10 +24,13 @@ function subscribeToHydration() {
   return () => {}
 }
 
+// The strip stays invisible while the app is field-ready. It only surfaces the
+// two preparedness problems the shepherd must fix before losing signal (no
+// offline maps, tile cache disabled) plus the one-time install prompt; plain
+// "offline" status is covered by the ConnectivityBanner.
 export function StatusStrip() {
   const [isOnline, setIsOnline] = useState(true)
   const [tileCacheCount, setTileCacheCount] = useState<number | null>(null)
-  const [persistentStorageGranted, setPersistentStorageGranted] = useState<boolean | null>(null)
   const [installPromptEvent, setInstallPromptEvent] =
     useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalling, setIsInstalling] = useState(false)
@@ -60,21 +54,6 @@ export function StatusStrip() {
         defaultAppSettings.tileCachingEnabled
       )
     : defaultAppSettings.tileCachingEnabled
-  const hasStoredTiles = tileCacheCount !== null && tileCacheCount > 0
-  const guidanceText = !isOnline
-    ? hasStoredTiles
-      ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
-      : tileCachingEnabled
-        ? 'Offline aktiv. Noch keine Tiles auf diesem Gerät. Bereich vorher online laden oder gezielt vorab sichern.'
-        : 'Offline ohne Tile-Cache. Tile-Caching aktivieren und Kartenausschnitte vorab sichern.'
-    : hasStoredTiles
-      ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
-      : installPromptEvent
-        ? 'Für den Außeneinsatz die App installieren und Kartenausschnitte vorab sichern.'
-        : tileCachingEnabled
-          ? 'Tile-Cache ist aktiv. Neu geladene Kartentiles werden lokal auf dem Gerät gehalten.'
-          : 'Für den Außeneinsatz Tile-Caching in den Einstellungen aktivieren.'
-
   useEffect(() => {
     const update = () => setIsOnline(navigator.onLine)
     update()
@@ -92,14 +71,10 @@ export function StatusStrip() {
     let cancelled = false
 
     async function refreshTileCacheState() {
-      const [count, persistent] = await Promise.all([
-        getTileCacheCount(),
-        getPersistentStorageStatus(),
-      ])
+      const count = await getTileCacheCount()
 
       if (!cancelled) {
         setTileCacheCount(count)
-        setPersistentStorageGranted(persistent)
       }
     }
 
@@ -172,62 +147,38 @@ export function StatusStrip() {
     }
   }
 
+  const problem = getOfflineMapReadinessProblem({
+    tileCachingEnabled,
+    isOnline,
+    tileCacheCount,
+  })
+
+  if (!problem && !installPromptEvent) return null
+
   return (
     <div className="border-b border-chrome-border bg-chrome-status text-white app-chrome-status">
       <div
-        aria-label="App-Status"
-        className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-3 py-2 text-xs [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+        role="status"
+        className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 text-xs md:px-4 md:text-sm xl:max-w-[88rem]"
       >
-        <span className={chromeBadgeClass(isOnline)}>
-          {isOnline ? 'Online' : 'Offline'}
-        </span>
-        <span className={chromeBadgeClass(hasStoredTiles)}>
-          {tileCacheCount === null
-            ? 'Karten prüfen'
-            : hasStoredTiles
-              ? 'Offline bereit'
-              : 'Keine Offline-Karten'}
-        </span>
-        <span className={chromeBadgeClass(tileCachingEnabled)}>
-          {tileCachingEnabled ? 'Cache an' : 'Cache aus'}
-        </span>
-        {persistentStorageGranted ? (
-          <span className={chromeBadgeClass(true)}>Speicher fix</span>
-        ) : null}
-        {installPromptEvent ? (
-          <button
-            type="button"
-            onClick={() => void handleInstallApp()}
-            disabled={isInstalling}
-            className="shrink-0 rounded-full border px-3 py-1.5 font-semibold app-chrome-control disabled:opacity-50"
-          >
-            {isInstalling ? 'Installiert ...' : 'Installieren'}
-          </button>
-        ) : null}
-      </div>
-
-      <div className="mx-auto hidden max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm md:flex xl:max-w-[88rem]">
-        <span className={chromeBadgeClass(isOnline)}>
-          {isOnline ? 'Online' : 'Offline'}
-        </span>
-        <span className={chromeBadgeClass(tileCachingEnabled)}>
-          {tileCachingEnabled
-            ? 'Tile-Cache aktiv'
-            : 'Tile-Cache aus'}
-        </span>
-        <span className={chromeBadgeClass(hasStoredTiles)}>
-          {tileCacheCount === null
-            ? 'Tiles werden geprüft'
-            : hasStoredTiles
-              ? `${tileCacheCount} Tiles auf Gerät`
-              : 'Keine Tiles auf Gerät'}
-        </span>
-        <span className={chromeBadgeClass(hasStoredTiles)}>
-          {hasStoredTiles ? 'Offline nutzbar' : 'Offline nicht vorbereitet'}
-        </span>
-        {persistentStorageGranted !== null ? (
-          <span className={chromeBadgeClass(persistentStorageGranted)}>
-            {persistentStorageGranted ? 'Persistenter Speicher aktiv' : 'Speicher nicht zugesichert'}
+        {problem ? (
+          <span className="flex min-w-0 flex-1 items-center gap-2 font-semibold">
+            <AlertTriangle
+              aria-hidden="true"
+              className={cn(
+                'h-4 w-4 shrink-0',
+                problem.tone === 'error' ? 'text-error-border' : 'text-warning-border',
+              )}
+            />
+            <span className="min-w-0">{problem.text}</span>
+            {problem.action ? (
+              <Link
+                href={problem.action.href}
+                className="shrink-0 rounded-full border px-3 py-1 font-semibold app-chrome-control"
+              >
+                {problem.action.label}
+              </Link>
+            ) : null}
           </span>
         ) : null}
         {installPromptEvent ? (
@@ -235,14 +186,14 @@ export function StatusStrip() {
             type="button"
             onClick={() => void handleInstallApp()}
             disabled={isInstalling}
-            className="rounded-full border px-3 py-1.5 font-semibold app-chrome-control disabled:opacity-50"
+            className={cn(
+              'shrink-0 rounded-full border px-3 py-1 font-semibold app-chrome-control disabled:opacity-50',
+              !problem && 'ml-auto',
+            )}
           >
             {isInstalling ? 'Installiert ...' : 'App installieren'}
           </button>
         ) : null}
-        <span className="w-full text-sm font-semibold text-chrome-foreground sm:w-auto sm:flex-1">
-          {guidanceText}
-        </span>
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { formatAccuracy } from '@/lib/maps/map-core'
 import { FormField, FormLabel, FormSelect, FormTextarea, FormButton } from '@/components/ui/form'
 import {
@@ -152,7 +153,9 @@ export function GrazingSessionMobileStartFlow({
   onStartSession: () => void | Promise<void>
 }) {
   const flowRef = useRef<HTMLDivElement | null>(null)
-  const [internalStep, setInternalStep] = useState<'herd' | 'count' | 'confirm'>('herd')
+  // Two steps only: pick the herd, then adjust the count and start on the same
+  // screen — a separate confirm step just delays the shepherd.
+  const [internalStep, setInternalStep] = useState<'herd' | 'setup'>('herd')
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [hasStartedFlow, setHasStartedFlow] = useState(false)
   const mobileStep = selectedHerdId ? internalStep : 'herd'
@@ -190,7 +193,9 @@ export function GrazingSessionMobileStartFlow({
           {safeHerds.length === 0 ? (
             <FlowEmptyState>Noch keine Herde angelegt.</FlowEmptyState>
           ) : (
-            <FlowOptionGrid>
+            /* Full-width rows: herd names don't fit half-width tiles without
+               breaking mid-word, and the chevron signals the next step. */
+            <FlowOptionGrid layout="single">
               {safeHerds.map((herd) => {
                 const isSelected = selectedHerdId === herd.id
 
@@ -201,13 +206,18 @@ export function GrazingSessionMobileStartFlow({
                       setHasStartedFlow(true)
                       onSelectedHerdIdChange(herd.id)
                       setIsDetailsOpen(false)
-                      setInternalStep('count')
+                      setInternalStep('setup')
                     }}
                     pressed={isSelected}
                     idleClassName="border-border bg-surface-raised text-ink-strong"
-                    className="min-h-[4.75rem] rounded-[1.35rem] py-4"
+                    className="min-h-16 rounded-[1.35rem]"
                   >
-                    {herd.name}
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 text-base leading-snug [overflow-wrap:anywhere]">
+                        {herd.name}
+                      </span>
+                      <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted" />
+                    </span>
                   </FlowSelectableTile>
                 )
               })}
@@ -216,7 +226,7 @@ export function GrazingSessionMobileStartFlow({
         </>
       ) : null}
 
-      {mobileStep === 'count' ? (
+      {mobileStep === 'setup' ? (
         <>
           <FlowStepHeader
             label={selectedHerd?.name ?? 'Herde wählen'}
@@ -236,27 +246,7 @@ export function GrazingSessionMobileStartFlow({
             <FlowStepperButton onClick={() => void onAdjustAnimalCount(1)}>
               +
             </FlowStepperButton>
-
-            <FlowPrimaryAction
-              onClick={() => {
-                setHasStartedFlow(true)
-                setInternalStep('confirm')
-              }}
-              className="col-span-2"
-            >
-              Weiter
-            </FlowPrimaryAction>
           </div>
-        </>
-      ) : null}
-
-      {mobileStep === 'confirm' ? (
-        <>
-          <FlowStepHeader
-            label={selectedHerd?.name ?? 'Herde wählen'}
-            sublabel={`${animalCount} Tiere bereit`}
-            onBack={() => { setHasStartedFlow(true); setInternalStep('count') }}
-          />
 
           <FlowPrimaryAction
             onClick={() => void onStartSession()}
@@ -272,7 +262,7 @@ export function GrazingSessionMobileStartFlow({
             }}
             aria-expanded={isDetailsOpen}
           >
-            {isDetailsOpen ? 'Details ausblenden' : 'Details'}
+            {isDetailsOpen ? 'Notiz ausblenden' : 'Notiz hinzufügen'}
           </FlowSecondaryAction>
 
           {isDetailsOpen ? (

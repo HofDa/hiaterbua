@@ -19,7 +19,7 @@ export type WalkTrackSummary = {
   lastTimestamp: string | null
 }
 
-export type EnclosureListFilter = 'all' | 'active' | 'unused' | 'most-used'
+export type EnclosureListFilter = 'all' | 'active' | 'free'
 
 export type EnclosureStats = {
   totalAssignments: number

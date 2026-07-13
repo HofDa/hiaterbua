@@ -42,7 +42,6 @@ type LivePositionWalkState = {
 type LivePositionSelectionState = {
   selectedEnclosureId: string | null
   showSelectedTrack: boolean
-  isSelectedEnclosureInfoOpen: boolean
   expandedSavedEnclosureId: string | null
   mobilePanel: MobilePanel
   selectedSurveyAreaId: string | null
@@ -99,11 +98,10 @@ const initialWalkState: LivePositionWalkState = {
 const initialSelectionState: LivePositionSelectionState = {
   selectedEnclosureId: null,
   showSelectedTrack: false,
-  isSelectedEnclosureInfoOpen: false,
   expandedSavedEnclosureId: null,
   mobilePanel: 'saved',
   selectedSurveyAreaId: null,
-  enclosureListFilter: 'active',
+  enclosureListFilter: 'all',
 }
 
 const initialEditState: LivePositionEditState = {
@@ -199,7 +197,6 @@ export function useLivePositionMapState() {
     return {
       setSelectedEnclosureId: setSelection('selectedEnclosureId'),
       setShowSelectedTrack: setSelection('showSelectedTrack'),
-      setIsSelectedEnclosureInfoOpen: setSelection('isSelectedEnclosureInfoOpen'),
       setExpandedSavedEnclosureId: setSelection('expandedSavedEnclosureId'),
       setMobilePanel: setSelection('mobilePanel'),
       setSelectedSurveyAreaId: setSelection('selectedSurveyAreaId'),
