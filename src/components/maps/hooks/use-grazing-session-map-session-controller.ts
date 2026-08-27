@@ -11,6 +11,7 @@ import {
   clearRuntimeSessionState,
   getDefaultAnimalCount,
 } from '@/components/maps/hooks/grazing-session-map-session-controller-helpers'
+import { withSessionRecordingLock } from '@/lib/db/session-recording-lock'
 import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import { useGrazingSessionMapSessionRuntime } from '@/components/maps/hooks/use-grazing-session-map-session-runtime'
 import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/use-grazing-session-map-trackpoint-recorder'
@@ -81,11 +82,42 @@ export function useGrazingSessionMapSessionController({
     setEventStatus,
     setLiveDurationTick,
   })
-  const { appendSessionPoint, handleAcceptedPositionRef } =
-    useGrazingSessionMapTrackpointRecorder({
-      runtimeRefs,
-      onRecordingErrorChange: setActionError,
-    })
+  const {
+    appendSessionPoint,
+    flushPendingPointsAssumingLock,
+    suspendPositionIntake,
+    resumePositionIntake,
+    handleAcceptedPositionRef,
+  } = useGrazingSessionMapTrackpointRecorder({
+    runtimeRefs,
+    onRecordingErrorChange: setActionError,
+  })
+
+  /**
+   * Runs a lifecycle transition atomically with respect to GPS recording:
+   * close the intake, take the session recording lock, flush everything still
+   * queued, and only then persist the transition.
+   *
+   * If the flush fails the transition never runs, the intake reopens and the
+   * queued points stay queued — a failed stop must never cost the user the last
+   * stretch of a walk.
+   */
+  async function runRecordingTransition(
+    sessionId: string,
+    persistTransition: () => Promise<void>
+  ) {
+    suspendPositionIntake()
+
+    try {
+      await withSessionRecordingLock(sessionId, async () => {
+        await flushPendingPointsAssumingLock()
+        await persistTransition()
+      })
+    } catch (error) {
+      resumePositionIntake()
+      throw error
+    }
+  }
 
   async function warnIfStorageNearlyFull() {
     const estimate = await getStorageEstimate()
@@ -148,7 +180,6 @@ export function useGrazingSessionMapSessionController({
 
         runtimeRefs.currentSessionIdRef.current = session.id
         runtimeRefs.currentSessionStatusRef.current = 'active'
-        runtimeRefs.currentSessionStartTimeRef.current = session.startTime
         runtimeRefs.currentTrackpointsRef.current = []
         runtimeRefs.currentSeqRef.current = 0
         runtimeRefs.currentLastTimestampRef.current = null
@@ -174,8 +205,7 @@ export function useGrazingSessionMapSessionController({
 
   async function pauseSession() {
     const sessionId = runtimeRefs.currentSessionIdRef.current
-    const startTime = runtimeRefs.currentSessionStartTimeRef.current
-    if (!sessionId || !startTime) return
+    if (!sessionId) return
 
     await runSavingAction({
       setSaving: setIsSaving,
@@ -184,11 +214,10 @@ export function useGrazingSessionMapSessionController({
       setError: setActionError,
       errorMessage: 'Weidegang konnte nicht pausiert werden.',
       action: async () => {
-        await pauseGrazingSessionRecord({
-          sessionId,
-          startTime,
-          trackpoints: runtimeRefs.currentTrackpointsRef.current,
-          position: getFreshAcceptedPosition(),
+        const position = getFreshAcceptedPosition()
+
+        await runRecordingTransition(sessionId, async () => {
+          await pauseGrazingSessionRecord({ sessionId, position })
         })
 
         runtimeRefs.currentSessionStatusRef.current = 'paused'
@@ -210,13 +239,19 @@ export function useGrazingSessionMapSessionController({
       errorMessage: 'Weidegang konnte nicht fortgesetzt werden.',
       action: async () => {
         const currentPosition = getFreshAcceptedPosition()
-        await resumeGrazingSessionRecord({
-          sessionId,
-          position: currentPosition,
+
+        // Serialized through the same lock as appends and pause/stop, so a
+        // resume can never interleave with a transition that is still flushing.
+        await withSessionRecordingLock(sessionId, async () => {
+          await resumeGrazingSessionRecord({
+            sessionId,
+            position: currentPosition,
+          })
         })
 
         runtimeRefs.currentSessionStatusRef.current = 'active'
         setCurrentSessionStatus('active')
+        resumePositionIntake()
         triggerHaptic('medium')
 
         if (currentPosition) {
@@ -228,8 +263,7 @@ export function useGrazingSessionMapSessionController({
 
   async function stopSession() {
     const sessionId = runtimeRefs.currentSessionIdRef.current
-    const startTime = runtimeRefs.currentSessionStartTimeRef.current
-    if (!sessionId || !startTime) return
+    if (!sessionId) return
 
     await runSavingAction({
       setSaving: setIsSaving,
@@ -238,12 +272,12 @@ export function useGrazingSessionMapSessionController({
       setError: setActionError,
       errorMessage: 'Weidegang konnte nicht beendet werden.',
       action: async () => {
-        await stopGrazingSessionRecord({
-          sessionId,
-          startTime,
-          trackpoints: runtimeRefs.currentTrackpointsRef.current,
-          position: getFreshAcceptedPosition(),
+        const position = getFreshAcceptedPosition()
+
+        await runRecordingTransition(sessionId, async () => {
+          await stopGrazingSessionRecord({ sessionId, position })
         })
+
         recordFieldDiagnostic({
           type: 'grazing_session_stopped',
           message: 'Weidegang beendet.',
@@ -252,6 +286,8 @@ export function useGrazingSessionMapSessionController({
           details: { trackpointCount: runtimeRefs.currentTrackpointsRef.current.length },
         })
 
+        // Runtime state is cleared only now — after the flush and the stop
+        // transaction both succeeded.
         setSelectedSessionId(sessionId)
         clearRuntimeSessionState({
           runtimeRefs,

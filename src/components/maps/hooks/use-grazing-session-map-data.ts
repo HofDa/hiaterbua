@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
-import { db } from '@/lib/db/dexie'
+import { getAppSettings } from '@/lib/db/repositories/settings'
+import { listSurveyAreas } from '@/lib/db/repositories/survey-areas'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
 import { listHerdsByName } from '@/lib/db/repositories/herds'
 import {
@@ -47,10 +48,10 @@ export function useGrazingSessionMapData({
   const herds = useLiveQuery(() => listHerdsByName(), [])
   const animals = useLiveQuery(() => listAllAnimals(), [])
   const surveyAreas = useLiveQuery(
-    () => db.surveyAreas.orderBy('id').toArray(),
+    () => listSurveyAreas(),
     []
   )
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
+  const settings = useLiveQuery(() => getAppSettings(), [])
   const recentSessions = useLiveQuery(
     () => listSessionsByRecent(),
     []

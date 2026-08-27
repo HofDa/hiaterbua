@@ -1,8 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
-import { db } from '@/lib/db/dexie'
+import { getAppSettings } from '@/lib/db/repositories/settings'
+import { listSurveyAreas } from '@/lib/db/repositories/survey-areas'
+import { listEnclosureWalkTrackpoints } from '@/lib/db/repositories/sessions'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
-import { listActiveEnclosuresByRecent } from '@/lib/db/repositories/enclosures'
+import {
+  listActiveEnclosuresByRecent,
+  listEnclosureAssignmentsByRecent,
+} from '@/lib/db/repositories/enclosures'
 import { listHerdsByName } from '@/lib/db/repositories/herds'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { sortSurveyAreasByImportOrder } from '@/lib/maps/survey-area-order'
@@ -56,19 +61,19 @@ export function useLivePositionMapData({
     []
   )
   const surveyAreas = useLiveQuery(
-    () => db.surveyAreas.orderBy('id').toArray(),
+    () => listSurveyAreas(),
     []
   )
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
+  const settings = useLiveQuery(() => getAppSettings(), [])
   const herds = useLiveQuery(() => listHerdsByName(), [])
   const animals = useLiveQuery(() => listAllAnimals(), [])
   const assignments = useLiveQuery(
-    () => db.enclosureAssignments.orderBy('updatedAt').reverse().toArray(),
+    () => listEnclosureAssignmentsByRecent(),
     []
   )
   const selectedTrackpoints = useLiveQuery(async () => {
     if (!selectedEnclosureId) return []
-    return db.trackpoints.where('enclosureWalkId').equals(selectedEnclosureId).sortBy('seq')
+    return listEnclosureWalkTrackpoints(selectedEnclosureId)
   }, [selectedEnclosureId])
 
   const safeEnclosures = useMemo(() => enclosures ?? [], [enclosures])

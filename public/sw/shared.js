@@ -19,8 +19,9 @@
     TILE_CACHE_SETTINGS_STORE: 'tileCacheSettings',
     TILE_CACHING_ENABLED_KEY: 'runtimeCachingEnabled',
     // Hard ceiling on cached tiles, enforced by both the client prefetch trim and
-    // the service-worker runtime cache. Keep in sync with MAX_CACHED_TILES in
-    // src/lib/maps/tile-cache.ts (the SW can't import from src).
+    // the service-worker runtime cache. This file can't import from src, so the
+    // tile-store names and this ceiling restate src/lib/maps/tile-cache.ts;
+    // service-worker-shared-constants.test.ts fails the build if they drift.
     MAX_CACHED_TILES: 5000,
     createCacheKey(pathOrUrl) {
       return new Request(new URL(pathOrUrl, self.location.origin).toString())

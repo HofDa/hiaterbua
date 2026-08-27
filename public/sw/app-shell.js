@@ -172,10 +172,52 @@
       }
     }
 
+    // Refresh a cached shell without ever blocking the page on it. Failures are
+    // the normal case in the field and must stay silent.
+    function revalidateNavigationInBackground(request, cache, cacheKey) {
+      if (self.navigator && self.navigator.onLine === false) {
+        return
+      }
+
+      void fetch(request)
+        .then(async (response) => {
+          if (response.ok) {
+            await putCacheBestEffort(cache, cacheKey, response)
+            return
+          }
+
+          discardResponseBody(response)
+        })
+        .catch(() => undefined)
+    }
+
     async function handleNavigationRequest(request) {
       const requestUrl = new URL(request.url)
+
+      // The server answers a legacy /herds/<id> URL with exactly this redirect,
+      // so there is nothing to gain from asking it — and offline it is the only
+      // way the canonical route ever gets its `?id=`. Answer it directly.
+      const legacyRedirectTarget = getLegacyHerdRedirectUrl(requestUrl)
+      if (legacyRedirectTarget) {
+        return Response.redirect(legacyRedirectTarget, 302)
+      }
+
       const cache = await openCacheBestEffort()
       const cacheKey = getNavigationCacheKey(requestUrl)
+
+      // A cache key only exists for a precached app-shell route, and the cache
+      // name carries BUILD_ID while `activate` deletes every other cache — so a
+      // hit here always belongs to the running build. Serving it first is what
+      // makes field navigation instant instead of costing up to
+      // NAVIGATION_NETWORK_TIMEOUT_MS on every tap.
+      if (cacheKey) {
+        const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
+        if (cachedResponse) {
+          revalidateNavigationInBackground(request, cache, cacheKey)
+          return cachedResponse
+        }
+      }
+
       const networkResponse = fetch(request).then(async (response) => {
         if (cacheKey && response.ok) {
           await putCacheBestEffort(cache, cacheKey, response)
@@ -188,18 +230,9 @@
         return await raceNetworkResponse(networkResponse, NAVIGATION_NETWORK_TIMEOUT_MS)
       } catch {
         void networkResponse.catch(() => undefined)
-        const legacyRedirectTarget = getLegacyHerdRedirectUrl(requestUrl)
-        if (legacyRedirectTarget) {
-          return Response.redirect(legacyRedirectTarget, 302)
-        }
 
-        if (cacheKey) {
-          const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
-          if (cachedResponse) {
-            return cachedResponse
-          }
-        }
-
+        // The cache was already consulted above; a hit would have returned
+        // before the network was ever raced, so only the offline page is left.
         const offlineResponse = await matchCacheBestEffort(
           cache,
           shared.createCacheKey(shared.OFFLINE_URL)
@@ -240,6 +273,18 @@
       const requestUrl = new URL(request.url)
       const cache = await openCacheBestEffort()
       const cacheKey = getAppDataCacheKey(request, requestUrl)
+
+      // Mirrors the navigation strategy: a key here is always a prerendered,
+      // BUILD_ID-versioned data route, so the cached flight payload is the
+      // right answer and the client router gets it without a network stall.
+      if (cacheKey) {
+        const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
+        if (cachedResponse) {
+          revalidateNavigationInBackground(request, cache, cacheKey)
+          return cachedResponse
+        }
+      }
+
       const networkResponse = fetch(request).then(async (response) => {
         if (cacheKey && response.ok) {
           await putCacheBestEffort(cache, cacheKey, response)
@@ -252,13 +297,6 @@
         return await raceNetworkResponse(networkResponse, NAVIGATION_NETWORK_TIMEOUT_MS)
       } catch {
         void networkResponse.catch(() => undefined)
-
-        if (cacheKey) {
-          const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
-          if (cachedResponse) {
-            return cachedResponse
-          }
-        }
 
         return new Response('', {
           status: 503,
@@ -344,7 +382,12 @@
         return null
       }
 
-      return `${legacyRoute.canonicalPath}?id=${encodeURIComponent(legacyRoute.herdId)}`
+      // Response.redirect() rejects a relative URL, so resolve against the
+      // origin here rather than relying on the caller's base URL.
+      const redirectUrl = new URL(legacyRoute.canonicalPath, self.location.origin)
+      redirectUrl.search = `?id=${encodeURIComponent(legacyRoute.herdId)}`
+
+      return redirectUrl.toString()
     }
 
     function matchLegacyHerdRoute(pathname) {

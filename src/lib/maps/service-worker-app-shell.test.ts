@@ -155,6 +155,76 @@ describe('service-worker app shell', () => {
     await expect(response.text()).resolves.toBe('cached flight payload')
   })
 
+  it('serves a cached navigation immediately instead of racing the network', async () => {
+    let resolveFetch: ((response: Response) => void) | null = null
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve
+        })
+    )
+    const { cache, controller } = createAppShell(fetchMock)
+    await cache.put(
+      new Request('https://app.test/sessions'),
+      new Response('<html>cached shell</html>', { status: 200 })
+    )
+
+    // No timer advance: a hit must resolve without waiting on the network at all.
+    const response = await controller.handleNavigationRequest(
+      new Request('https://app.test/sessions')
+    )
+
+    await expect(response.text()).resolves.toBe('<html>cached shell</html>')
+    expect(resolveFetch).not.toBeNull()
+  })
+
+  it('refreshes the cached shell in the background after serving it', async () => {
+    const fetchMock = vi.fn(async () => new Response('<html>fresh shell</html>', { status: 200 }))
+    const { cache, controller } = createAppShell(fetchMock)
+    await cache.put(
+      new Request('https://app.test/sessions'),
+      new Response('<html>stale shell</html>', { status: 200 })
+    )
+
+    const response = await controller.handleNavigationRequest(
+      new Request('https://app.test/sessions')
+    )
+    await expect(response.text()).resolves.toBe('<html>stale shell</html>')
+
+    await vi.waitFor(async () => {
+      const revalidated = await cache.match('https://app.test/sessions')
+      await expect(revalidated?.text()).resolves.toBe('<html>fresh shell</html>')
+    })
+  })
+
+  it('redirects a legacy herd url to its canonical route without a network round trip', async () => {
+    const fetchMock = vi.fn(async () => new Response('ok', { status: 200 }))
+    const { controller } = createAppShell(fetchMock)
+
+    const response = await controller.handleNavigationRequest(
+      new Request('https://app.test/herds/herd-1')
+    )
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toContain('/herd?id=herd-1')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('serves a cached data payload immediately instead of racing the network', async () => {
+    const fetchMock = vi.fn(() => new Promise<Response>(() => undefined))
+    const { cache, controller } = createAppShell(fetchMock)
+    await cache.put(
+      new Request('https://app.test/sessions.rsc'),
+      new Response('cached flight payload', { status: 200 })
+    )
+
+    const response = await controller.handleAppDataRequest(
+      new Request('https://app.test/sessions?_rsc=abc')
+    )
+
+    await expect(response.text()).resolves.toBe('cached flight payload')
+  })
+
   it('fails the precache when a core app-shell url cannot be fetched', async () => {
     const fetchMock = vi.fn(async (request: RequestInfo | URL) => {
       if (getRequestUrl(request).includes('/sessions')) {

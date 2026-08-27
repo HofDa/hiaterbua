@@ -9,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { db } from '@/lib/db/dexie'
+import { getHerd } from '@/lib/db/repositories/herds'
+import { listUnfinishedSessions } from '@/lib/db/repositories/sessions'
+import { listUnfinishedWorkSessions } from '@/lib/db/repositories/work-sessions'
 import { selectActiveRecordingSource } from '@/lib/recordings/active-recording-selection'
 import { getLiveDurationS } from '@/lib/work/work-session-formatting'
 import { getWorkLabel } from '@/lib/work/work-session-helpers'
@@ -40,8 +42,8 @@ const ActiveRecordingContext = createContext<ActiveRecordingSnapshot | null>(nul
 function useActiveRecordingQuery(): ActiveRecording | null | undefined {
   return useLiveQuery<ActiveRecording | null>(async () => {
     const [grazingSessions, workSessions] = await Promise.all([
-      db.sessions.where('status').anyOf('active', 'paused').toArray(),
-      db.workSessions.where('status').anyOf('active', 'paused').toArray(),
+      listUnfinishedSessions(),
+      listUnfinishedWorkSessions(),
     ])
 
     const source = selectActiveRecordingSource(grazingSessions, workSessions)
@@ -49,7 +51,7 @@ function useActiveRecordingQuery(): ActiveRecording | null | undefined {
 
     if (source.kind === 'grazing') {
       const grazing = source.recording
-      const herd = grazing.herdId ? await db.herds.get(grazing.herdId) : undefined
+      const herd = grazing.herdId ? await getHerd(grazing.herdId) : undefined
       return {
         kind: 'grazing',
         href: '/sessions',

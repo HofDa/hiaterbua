@@ -47,7 +47,6 @@ export function useGrazingSessionMapSessionRuntime({
 }: UseGrazingSessionMapSessionRuntimeOptions): GrazingSessionRuntimeRefs {
   const currentSessionIdRef = useRef<string | null>(null)
   const currentSessionStatusRef = useRef<SessionStatus | null>(null)
-  const currentSessionStartTimeRef = useRef<string | null>(null)
   const currentTrackpointsRef = useRef<TrackPoint[]>([])
   const currentSeqRef = useRef(0)
   const currentLastTimestampRef = useRef<number | null>(null)
@@ -55,7 +54,6 @@ export function useGrazingSessionMapSessionRuntime({
     () => ({
       currentSessionIdRef,
       currentSessionStatusRef,
-      currentSessionStartTimeRef,
       currentTrackpointsRef,
       currentSeqRef,
       currentLastTimestampRef,

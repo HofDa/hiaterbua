@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { db } from '@/lib/db/dexie'
+import { getAppSettings } from '@/lib/db/repositories/settings'
 import { getTileCacheCount, TILE_CACHE_CHANGED_EVENT } from '@/lib/maps/tile-cache'
 import { getOfflineMapReadinessProblem } from '@/lib/maps/offline-map-readiness'
 import { defaultAppSettings } from '@/lib/settings/defaults'
@@ -34,7 +34,7 @@ export function StatusStrip() {
   const [installPromptEvent, setInstallPromptEvent] =
     useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalling, setIsInstalling] = useState(false)
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
+  const settings = useLiveQuery(() => getAppSettings(), [])
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
     () => true,

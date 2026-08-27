@@ -43,6 +43,16 @@ export function countWorkEvents(): Promise<number> {
   return db.workEvents.count()
 }
 
+/** A single work session, or `undefined` when it does not exist. */
+export function getWorkSession(sessionId: string): Promise<WorkSession | undefined> {
+  return db.workSessions.get(sessionId)
+}
+
+/** Work sessions that are still running or paused — the recovery candidates. */
+export function listUnfinishedWorkSessions(): Promise<WorkSession[]> {
+  return db.workSessions.where('status').anyOf('active', 'paused').toArray()
+}
+
 // ---------------------------------------------------------------------------
 // Writes
 // ---------------------------------------------------------------------------

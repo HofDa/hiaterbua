@@ -46,6 +46,23 @@ export function listAllEnclosures(): Promise<Enclosure[]> {
   return db.enclosures.toArray()
 }
 
+/** Every herd-to-enclosure assignment — for counts, backup and export. */
+export function listAllEnclosureAssignments(): Promise<EnclosureAssignment[]> {
+  return db.enclosureAssignments.toArray()
+}
+
+/** Assignments across all enclosures, most recently updated first. */
+export function listEnclosureAssignmentsByRecent(): Promise<EnclosureAssignment[]> {
+  return db.enclosureAssignments.orderBy('updatedAt').reverse().toArray()
+}
+
+/** One herd's assignments, most recently updated first. */
+export function listHerdEnclosureAssignmentsByRecent(
+  herdId: string
+): Promise<EnclosureAssignment[]> {
+  return db.enclosureAssignments.where('herdId').equals(herdId).reverse().sortBy('updatedAt')
+}
+
 // ---------------------------------------------------------------------------
 // Writes
 // ---------------------------------------------------------------------------

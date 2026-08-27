@@ -4,8 +4,16 @@ import { logError } from '@/lib/utils/log'
 import type { MapBaseLayer } from '@/types/domain'
 import type { MapTileRecord } from '@/types/domain'
 
+// The service worker owns the same tile store from plain JS and cannot import
+// from `src`, so `public/sw/shared.js` restates every name below. That parity is
+// a hard requirement — a mismatch silently splits the cache in two — and is
+// enforced by `service-worker-shared-constants.test.ts`.
 export const TILE_CACHE_NAME = 'hirtenapp-map-tiles-v1'
 export const TILE_DB_NAME = 'hirtenapp-tile-db'
+export const MAP_TILE_STORE = 'mapTiles'
+export const TILE_CACHE_SETTINGS_STORE = 'tileCacheSettings'
+export const TILE_DB_UPDATED_AT_INDEX = 'updatedAt'
+export const TILE_CACHING_ENABLED_KEY = 'runtimeCachingEnabled'
 export const MAX_PREFETCH_TILES = 1200
 export const PREFETCH_CONCURRENCY = 8
 // Hard ceiling on how many tiles persist in IndexedDB. A single prefetch is
@@ -65,12 +73,12 @@ class TileCacheDB extends Dexie {
     super(TILE_DB_NAME)
 
     this.version(2).stores({
-      mapTiles: 'url, updatedAt',
+      [MAP_TILE_STORE]: `url, ${TILE_DB_UPDATED_AT_INDEX}`,
     })
 
     this.version(3).stores({
-      mapTiles: 'url, updatedAt',
-      tileCacheSettings: 'key',
+      [MAP_TILE_STORE]: `url, ${TILE_DB_UPDATED_AT_INDEX}`,
+      [TILE_CACHE_SETTINGS_STORE]: 'key',
     })
   }
 }

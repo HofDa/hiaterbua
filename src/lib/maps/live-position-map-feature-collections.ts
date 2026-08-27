@@ -1,59 +1,50 @@
 import type * as GeoJSON from 'geojson'
-import { emptyFeatureCollection } from '@/lib/maps/map-core'
+import { buildPointPathFeatureCollection, emptyFeatureCollection } from '@/lib/maps/map-core'
 import type { DraftPoint, WalkPoint } from '@/lib/maps/live-position-map-helper-types'
 import type { Enclosure, TrackPoint } from '@/types/domain'
 
+const fromLonLat = (point: { lon: number; lat: number }): GeoJSON.Position => [
+  point.lon,
+  point.lat,
+]
+
+const fromLongitudeLatitude = (point: {
+  longitude: number
+  latitude: number
+}): GeoJSON.Position => [point.longitude, point.latitude]
+
+/** The enclosure currently being drawn by tapping the map. */
 export function buildDraftFeatureCollection(points: DraftPoint[]): GeoJSON.FeatureCollection {
-  if (points.length === 0) {
-    return emptyFeatureCollection
-  }
+  return buildPointPathFeatureCollection({
+    points,
+    toCoordinates: fromLonLat,
+    lineKind: 'draft-line',
+    polygonKind: 'draft-polygon',
+  })
+}
 
-  const pointFeatures: GeoJSON.Feature<GeoJSON.Point>[] = points.map((point, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [point.lon, point.lat],
-    },
-    properties: {
-      index: index + 1,
-    },
-  }))
+/** The enclosure currently being walked, one point per accepted GPS fix. */
+export function buildWalkFeatureCollection(points: WalkPoint[]): GeoJSON.FeatureCollection {
+  return buildPointPathFeatureCollection({
+    points,
+    toCoordinates: fromLongitudeLatitude,
+    lineKind: 'walk-line',
+    polygonKind: 'walk-polygon',
+  })
+}
 
-  const features: GeoJSON.Feature[] = [...pointFeatures]
-
-  if (points.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: points.map((point) => [point.lon, point.lat]),
-      },
-      properties: {
-        kind: 'draft-line',
-      },
-    })
-  }
-
-  if (points.length >= 3) {
-    const ring = points.map((point) => [point.lon, point.lat])
-    ring.push([points[0].lon, points[0].lat])
-
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [ring],
-      },
-      properties: {
-        kind: 'draft-polygon',
-      },
-    })
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
-  }
+/**
+ * The stored walk of a saved enclosure. Left open — the enclosure's own polygon
+ * already shows the enclosed area, so closing the track would double the outline.
+ */
+export function buildTrackpointsFeatureCollection(
+  trackpoints: TrackPoint[]
+): GeoJSON.FeatureCollection {
+  return buildPointPathFeatureCollection({
+    points: [...trackpoints].sort((left, right) => left.seq - right.seq),
+    toCoordinates: fromLonLat,
+    lineKind: 'stored-walk-line',
+  })
 }
 
 export function buildSavedFeatureCollection(enclosures: Enclosure[]): GeoJSON.FeatureCollection {
@@ -77,59 +68,6 @@ export function buildSavedFeatureCollection(enclosures: Enclosure[]): GeoJSON.Fe
   }
 }
 
-export function buildWalkFeatureCollection(points: WalkPoint[]): GeoJSON.FeatureCollection {
-  if (points.length === 0) {
-    return emptyFeatureCollection
-  }
-
-  const pointFeatures: GeoJSON.Feature<GeoJSON.Point>[] = points.map((point, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [point.longitude, point.latitude],
-    },
-    properties: {
-      index: index + 1,
-    },
-  }))
-
-  const features: GeoJSON.Feature[] = [...pointFeatures]
-
-  if (points.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: points.map((point) => [point.longitude, point.latitude]),
-      },
-      properties: {
-        kind: 'walk-line',
-      },
-    })
-  }
-
-  if (points.length >= 3) {
-    const ring = points.map((point) => [point.longitude, point.latitude])
-    ring.push([points[0].longitude, points[0].latitude])
-
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [ring],
-      },
-      properties: {
-        kind: 'walk-polygon',
-      },
-    })
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
-  }
-}
-
 export function buildSelectedFeatureCollection(
   enclosure: Enclosure | null
 ): GeoJSON.FeatureCollection {
@@ -149,45 +87,6 @@ export function buildSelectedFeatureCollection(
         },
       },
     ],
-  }
-}
-
-export function buildTrackpointsFeatureCollection(trackpoints: TrackPoint[]): GeoJSON.FeatureCollection {
-  if (trackpoints.length === 0) {
-    return emptyFeatureCollection
-  }
-
-  const sorted = [...trackpoints].sort((left, right) => left.seq - right.seq)
-
-  const pointFeatures: GeoJSON.Feature<GeoJSON.Point>[] = sorted.map((point, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [point.lon, point.lat],
-    },
-    properties: {
-      index: index + 1,
-    },
-  }))
-
-  const features: GeoJSON.Feature[] = [...pointFeatures]
-
-  if (sorted.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: sorted.map((point) => [point.lon, point.lat]),
-      },
-      properties: {
-        kind: 'stored-walk-line',
-      },
-    })
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
   }
 }
 

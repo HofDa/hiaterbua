@@ -3,14 +3,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db/dexie'
+import { getHerdsByIds } from '@/lib/db/repositories/herds'
+import { withSessionRecordingLock } from '@/lib/db/session-recording-lock'
 import {
+  getGrazingSession,
   pauseGrazingSessionRecord,
   resumeGrazingSessionRecord,
   stopGrazingSessionRecord,
-  listSessionTrackpoints,
+  listUnfinishedSessions,
 } from '@/lib/db/repositories/sessions'
-import { updateWorkSessionStatusRecord } from '@/lib/db/repositories/work-sessions'
+import {
+  getWorkSession,
+  listUnfinishedWorkSessions,
+  updateWorkSessionStatusRecord,
+} from '@/lib/db/repositories/work-sessions'
 import { useTransientFieldOperation } from '@/lib/field-safety/field-safety-store'
 import { formatDuration } from '@/lib/maps/grazing-session-map-helpers'
 import { logSessionRecoveryEvent } from '@/lib/session-recovery/session-recovery-events'
@@ -73,11 +79,11 @@ export function SessionRecoveryManager() {
   const [isSaving, setIsSaving] = useState(false)
   const activeSessions = useLiveQuery<RecoverableSession[]>(async () => {
     const [grazingSessions, workSessions] = await Promise.all([
-      db.sessions.where('status').anyOf('active', 'paused').toArray(),
-      db.workSessions.where('status').anyOf('active', 'paused').toArray(),
+      listUnfinishedSessions(),
+      listUnfinishedWorkSessions(),
     ])
 
-    const herds = await db.herds.bulkGet(
+    const herds = await getHerdsByIds(
       Array.from(new Set(grazingSessions.map((session) => session.herdId)))
     )
     const herdsById = new Map(
@@ -297,7 +303,7 @@ export function SessionRecoveryManager() {
     try {
       if (session.status === 'paused') {
         if (session.kind === 'work') {
-          const storedSession = await db.workSessions.get(session.id)
+          const storedSession = await getWorkSession(session.id)
           if (storedSession) {
             await updateWorkSessionStatusRecord(storedSession, 'active')
           }
@@ -331,18 +337,18 @@ export function SessionRecoveryManager() {
 
     try {
       if (session.kind === 'work') {
-        const storedSession = await db.workSessions.get(session.id)
+        const storedSession = await getWorkSession(session.id)
         if (storedSession) {
           await updateWorkSessionStatusRecord(storedSession, 'paused')
         }
       } else {
-        const storedSession = await db.sessions.get(session.id)
+        const storedSession = await getGrazingSession(session.id)
         if (storedSession) {
-          await pauseGrazingSessionRecord({
-            sessionId: session.id,
-            startTime: storedSession.startTime,
-            trackpoints: await listSessionTrackpoints(session.id),
-            position: null,
+          // Through the recording lock: another tab may still be appending GPS
+          // points to this session, and its metrics are recomputed from what is
+          // actually stored.
+          await withSessionRecordingLock(session.id, async () => {
+            await pauseGrazingSessionRecord({ sessionId: session.id, position: null })
           })
         }
       }
@@ -363,18 +369,15 @@ export function SessionRecoveryManager() {
 
     try {
       if (session.kind === 'work') {
-        const storedSession = await db.workSessions.get(session.id)
+        const storedSession = await getWorkSession(session.id)
         if (storedSession) {
           await updateWorkSessionStatusRecord(storedSession, 'finished')
         }
       } else {
-        const storedSession = await db.sessions.get(session.id)
+        const storedSession = await getGrazingSession(session.id)
         if (storedSession) {
-          await stopGrazingSessionRecord({
-            sessionId: session.id,
-            startTime: storedSession.startTime,
-            trackpoints: await listSessionTrackpoints(session.id),
-            position: null,
+          await withSessionRecordingLock(session.id, async () => {
+            await stopGrazingSessionRecord({ sessionId: session.id, position: null })
           })
         }
       }

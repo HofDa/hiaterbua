@@ -8,10 +8,14 @@ import type {
   TrackPoint,
 } from '@/types/domain'
 
+/**
+ * Live recording state mirrored out of React rendering so GPS callbacks can read
+ * it synchronously. Deliberately no `startTime`: session metrics are computed
+ * inside the Dexie transaction from the stored session, never from here.
+ */
 export type GrazingSessionRuntimeRefs = {
   currentSessionIdRef: MutableRefObject<string | null>
   currentSessionStatusRef: MutableRefObject<SessionStatus | null>
-  currentSessionStartTimeRef: MutableRefObject<string | null>
   currentTrackpointsRef: MutableRefObject<TrackPoint[]>
   currentSeqRef: MutableRefObject<number>
   currentLastTimestampRef: MutableRefObject<number | null>
@@ -81,7 +85,6 @@ export function applyActiveSessionToRuntimeState({
 }: ActiveSessionRuntimeStateOptions) {
   runtimeRefs.currentSessionIdRef.current = activeSession.id
   runtimeRefs.currentSessionStatusRef.current = activeSession.status
-  runtimeRefs.currentSessionStartTimeRef.current = activeSession.startTime
   setCurrentSessionId(activeSession.id)
   setCurrentSessionStatus(activeSession.status)
   setSelectedHerdId(activeSession.herdId)
@@ -106,7 +109,6 @@ export function clearRuntimeSessionState({
 }: ClearRuntimeStateOptions) {
   runtimeRefs.currentSessionIdRef.current = null
   runtimeRefs.currentSessionStatusRef.current = null
-  runtimeRefs.currentSessionStartTimeRef.current = null
   runtimeRefs.currentTrackpointsRef.current = []
   runtimeRefs.currentSeqRef.current = 0
   runtimeRefs.currentLastTimestampRef.current = null

@@ -1,9 +1,15 @@
 import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl'
 import {
+  addAreaFillLayer,
   addGeoJsonSource,
   addOrthophotoLayer,
+  addPathLineLayer,
+  addPathPointLayer,
   addSurveyAreaLayers,
+  addTouchTargetLayer,
+  bindFeatureIdClick,
   bindPointerCursor,
+  bindPointIndexClick,
 } from '@/lib/maps/maplibre-runtime'
 import { mapStyleColors } from '@/lib/maps/map-style-tokens'
 
@@ -15,6 +21,8 @@ type LivePositionMapSetupHandlers = {
   onEditPointSelect: (index: number) => void
 }
 
+// Layers are added in paint order — each source's fill sits below its line,
+// which sits below its points — so the sequence here is load-bearing.
 export function registerLivePositionMapSetup(
   map: MapLibreMap,
   handlers: LivePositionMapSetupHandlers
@@ -23,235 +31,138 @@ export function registerLivePositionMapSetup(
   addGeoJsonSource(map, 'saved-enclosures')
   addSurveyAreaLayers(map)
 
-  map.addLayer({
+  addAreaFillLayer(map, {
     id: 'saved-enclosures-fill',
-    type: 'fill',
     source: 'saved-enclosures',
-    paint: {
-      'fill-color': mapStyleColors.savedEnclosureFill,
-      'fill-opacity': 0.18,
-    },
+    color: mapStyleColors.savedEnclosureFill,
+    opacity: 0.18,
   })
-
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'saved-enclosures-line',
-    type: 'line',
     source: 'saved-enclosures',
-    paint: {
-      'line-color': mapStyleColors.savedEnclosureLine,
-      'line-width': 2,
-    },
+    color: mapStyleColors.savedEnclosureLine,
+    width: 2,
   })
 
   addGeoJsonSource(map, 'selected-enclosure')
-  map.addLayer({
+  addAreaFillLayer(map, {
     id: 'selected-enclosure-fill',
-    type: 'fill',
     source: 'selected-enclosure',
-    paint: {
-      'fill-color': mapStyleColors.selectedEnclosureFill,
-      'fill-opacity': 0.2,
-    },
+    color: mapStyleColors.selectedEnclosureFill,
+    opacity: 0.2,
   })
-
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'selected-enclosure-line',
-    type: 'line',
     source: 'selected-enclosure',
-    paint: {
-      'line-color': mapStyleColors.selectedEnclosureLine,
-      'line-width': 4,
-    },
+    color: mapStyleColors.selectedEnclosureLine,
+    width: 4,
   })
 
   addGeoJsonSource(map, 'draft-enclosure')
-  map.addLayer({
+  addAreaFillLayer(map, {
     id: 'draft-enclosure-fill',
-    type: 'fill',
     source: 'draft-enclosure',
-    paint: {
-      'fill-color': mapStyleColors.draftEnclosureFill,
-      'fill-opacity': 0.16,
-    },
-    filter: ['==', '$type', 'Polygon'],
+    color: mapStyleColors.draftEnclosureFill,
+    opacity: 0.16,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'draft-enclosure-line',
-    type: 'line',
     source: 'draft-enclosure',
-    paint: {
-      'line-color': mapStyleColors.draftEnclosureLine,
-      'line-width': 3,
-    },
-    filter: ['==', '$type', 'LineString'],
+    color: mapStyleColors.draftEnclosureLine,
+    width: 3,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathPointLayer(map, {
     id: 'draft-enclosure-points',
-    type: 'circle',
     source: 'draft-enclosure',
-    paint: {
-      'circle-radius': 5,
-      'circle-color': mapStyleColors.draftEnclosureLine,
-      'circle-stroke-width': 2,
-      'circle-stroke-color': mapStyleColors.white,
-    },
-    filter: ['==', '$type', 'Point'],
+    color: mapStyleColors.draftEnclosureLine,
+    radius: 5,
+    strokeWidth: 2,
   })
 
   addGeoJsonSource(map, 'edit-enclosure')
-  map.addLayer({
+  addAreaFillLayer(map, {
     id: 'edit-enclosure-fill',
-    type: 'fill',
     source: 'edit-enclosure',
-    paint: {
-      'fill-color': mapStyleColors.editEnclosureFill,
-      'fill-opacity': 0.14,
-    },
-    filter: ['==', '$type', 'Polygon'],
+    color: mapStyleColors.editEnclosureFill,
+    opacity: 0.14,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'edit-enclosure-line',
-    type: 'line',
     source: 'edit-enclosure',
-    paint: {
-      'line-color': mapStyleColors.editEnclosureLine,
-      'line-width': 3,
-    },
-    filter: ['==', '$type', 'LineString'],
+    color: mapStyleColors.editEnclosureLine,
+    width: 3,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathPointLayer(map, {
     id: 'edit-enclosure-points',
-    type: 'circle',
     source: 'edit-enclosure',
-    paint: {
-      'circle-radius': 8,
-      'circle-color': mapStyleColors.editEnclosureLine,
-      'circle-stroke-width': 3,
-      'circle-stroke-color': mapStyleColors.white,
-    },
-    filter: ['==', '$type', 'Point'],
+    color: mapStyleColors.editEnclosureLine,
+    radius: 8,
+    strokeWidth: 3,
   })
-
-  map.addLayer({
+  addTouchTargetLayer(map, {
     id: 'edit-enclosure-touch-target',
-    type: 'circle',
     source: 'edit-enclosure',
-    paint: {
-      'circle-radius': 18,
-      'circle-color': mapStyleColors.white,
-      'circle-opacity': 0.01,
-    },
-    filter: ['==', '$type', 'Point'],
   })
 
   addGeoJsonSource(map, 'walk-track')
-  map.addLayer({
+  addAreaFillLayer(map, {
     id: 'walk-track-fill',
-    type: 'fill',
     source: 'walk-track',
-    paint: {
-      'fill-color': mapStyleColors.walkTrackFill,
-      'fill-opacity': 0.14,
-    },
-    filter: ['==', '$type', 'Polygon'],
+    color: mapStyleColors.walkTrackFill,
+    opacity: 0.14,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'walk-track-line',
-    type: 'line',
     source: 'walk-track',
-    paint: {
-      'line-color': mapStyleColors.walkTrackLine,
-      'line-width': 3,
-    },
-    filter: ['==', '$type', 'LineString'],
+    color: mapStyleColors.walkTrackLine,
+    width: 3,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathPointLayer(map, {
     id: 'walk-track-points',
-    type: 'circle',
     source: 'walk-track',
-    paint: {
-      'circle-radius': 4,
-      'circle-color': mapStyleColors.walkTrackLine,
-      'circle-stroke-width': 2,
-      'circle-stroke-color': mapStyleColors.white,
-    },
-    filter: ['==', '$type', 'Point'],
+    color: mapStyleColors.walkTrackLine,
+    radius: 4,
+    strokeWidth: 2,
   })
 
   addGeoJsonSource(map, 'selected-walk-point')
-  map.addLayer({
+  addPathPointLayer(map, {
     id: 'selected-walk-point',
-    type: 'circle',
     source: 'selected-walk-point',
-    paint: {
-      'circle-radius': 8,
-      'circle-color': mapStyleColors.selectedWalkPoint,
-      'circle-stroke-width': 3,
-      'circle-stroke-color': mapStyleColors.selectedWalkPointStroke,
-    },
-    filter: ['==', '$type', 'Point'],
+    color: mapStyleColors.selectedWalkPoint,
+    radius: 8,
+    strokeWidth: 3,
+    strokeColor: mapStyleColors.selectedWalkPointStroke,
   })
 
   addGeoJsonSource(map, 'selected-walk-track')
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'selected-walk-track-line',
-    type: 'line',
     source: 'selected-walk-track',
-    paint: {
-      'line-color': mapStyleColors.selectedWalkTrack,
-      'line-width': 4,
-    },
-    filter: ['==', '$type', 'LineString'],
+    color: mapStyleColors.selectedWalkTrack,
+    width: 4,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathPointLayer(map, {
     id: 'selected-walk-track-points',
-    type: 'circle',
     source: 'selected-walk-track',
-    paint: {
-      'circle-radius': 4,
-      'circle-color': mapStyleColors.selectedWalkTrack,
-      'circle-stroke-width': 2,
-      'circle-stroke-color': mapStyleColors.white,
-    },
-    filter: ['==', '$type', 'Point'],
+    color: mapStyleColors.selectedWalkTrack,
+    radius: 4,
+    strokeWidth: 2,
   })
 
   map.on('click', handlers.onMapClick)
 
-  map.on('click', 'saved-enclosures-fill', (event) => {
-    const enclosureId = event.features?.[0]?.properties?.id
-    if (typeof enclosureId === 'string') {
-      handlers.onSavedEnclosureSelect(enclosureId)
-    }
-  })
-
-  map.on('click', 'selected-enclosure-fill', (event) => {
-    const enclosureId = event.features?.[0]?.properties?.id
-    if (typeof enclosureId === 'string') {
-      handlers.onSelectedEnclosureSelect(enclosureId)
-    }
-  })
-
-  map.on('click', 'walk-track-points', (event) => {
-    const pointIndex = Number(event.features?.[0]?.properties?.index)
-    if (Number.isInteger(pointIndex) && pointIndex >= 1) {
-      handlers.onWalkPointSelect(pointIndex - 1)
-    }
-  })
-
-  map.on('click', 'edit-enclosure-touch-target', (event) => {
-    const pointIndex = Number(event.features?.[0]?.properties?.index)
-    if (Number.isInteger(pointIndex) && pointIndex >= 1) {
-      handlers.onEditPointSelect(pointIndex - 1)
-    }
-  })
+  bindFeatureIdClick(map, 'saved-enclosures-fill', handlers.onSavedEnclosureSelect)
+  bindFeatureIdClick(map, 'selected-enclosure-fill', handlers.onSelectedEnclosureSelect)
+  bindPointIndexClick(map, 'walk-track-points', 'index', handlers.onWalkPointSelect)
+  bindPointIndexClick(map, 'edit-enclosure-touch-target', 'index', handlers.onEditPointSelect)
 
   bindPointerCursor(map, [
     'saved-enclosures-fill',

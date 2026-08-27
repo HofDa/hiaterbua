@@ -1,12 +1,16 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { appendSessionTrackpoint } from '@/lib/db/repositories/sessions'
+import { withSessionRecordingLock } from '@/lib/db/session-recording-lock'
+import {
+  createTrackpointQueue,
+  type TrackpointQueueDeps,
+} from '@/lib/maps/grazing-trackpoint-queue'
 import { useLatestValueRef } from '@/components/maps/hooks/use-latest-value-ref'
 import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { isQuotaExceededError } from '@/lib/utils/storage-health'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import type { GrazingSessionRuntimeRefs } from '@/components/maps/hooks/grazing-session-map-session-controller-helpers'
-import { nowIso } from '@/lib/utils/time'
 
 type UseGrazingSessionMapTrackpointRecorderOptions = {
   runtimeRefs: GrazingSessionRuntimeRefs
@@ -16,13 +20,6 @@ type UseGrazingSessionMapTrackpointRecorderOptions = {
 // A stable category for the failure, independent of the (changing) pending
 // count — so dedupe keys on the kind, not on the count-bearing display string.
 type RecordingErrorKind = 'quota' | 'write' | null
-type LockManagerLike = {
-  request<T>(
-    name: string,
-    options: { mode: 'exclusive' },
-    callback: () => T | Promise<T>
-  ): Promise<T>
-}
 
 const RECORDING_RETRY_INTERVAL_MS = 5_000
 
@@ -38,11 +35,6 @@ function buildRecordingErrorMessage(kind: RecordingErrorKind, pendingCount: numb
   return `Trackpunkt konnte nicht gespeichert werden (${pendingCount} ausstehend). Wird automatisch erneut versucht.`
 }
 
-function getRecordingLockManager() {
-  if (typeof navigator === 'undefined') return null
-  return (navigator as Navigator & { locks?: LockManagerLike }).locks ?? null
-}
-
 export function useGrazingSessionMapTrackpointRecorder({
   runtimeRefs,
   onRecordingErrorChange,
@@ -50,15 +42,13 @@ export function useGrazingSessionMapTrackpointRecorder({
   const {
     currentSessionIdRef,
     currentSessionStatusRef,
-    currentSessionStartTimeRef,
     currentTrackpointsRef,
     currentSeqRef,
     currentLastTimestampRef,
   } = runtimeRefs
 
-  const pendingPositionsRef = useRef<PositionData[]>([])
-  const isFlushingRef = useRef(false)
   const lastErrorKindRef = useRef<RecordingErrorKind>(null)
+  const onRecordingErrorChangeRef = useLatestValueRef(onRecordingErrorChange)
 
   function reportRecordingError(kind: RecordingErrorKind, message: string) {
     const kindChanged = kind !== lastErrorKindRef.current
@@ -71,99 +61,86 @@ export function useGrazingSessionMapTrackpointRecorder({
 
     // Keep the displayed message current (its pending count grows) while the
     // failure persists, but stay quiet once recording is healthy again.
-    if (kind || kindChanged) onRecordingErrorChange?.(message)
+    if (kind || kindChanged) onRecordingErrorChangeRef.current?.(message)
   }
 
-  async function persistPendingPositions() {
-    if (isFlushingRef.current) return
-    isFlushingRef.current = true
+  const reportRecordingErrorRef = useLatestValueRef(reportRecordingError)
 
-    try {
-      while (pendingPositionsRef.current.length > 0) {
-        const sessionId = currentSessionIdRef.current
-        if (!sessionId) {
-          // The session ended; drop any positions still queued for it.
-          pendingPositionsRef.current = []
-          break
-        }
+  // Created once and kept for the lifetime of the screen: the queue owns
+  // in-flight GPS points, so re-creating it would drop them.
+  const [queue] = useState(createTrackpointQueue)
 
-        const nextPosition = pendingPositionsRef.current[0]
+  /**
+   * Built per call rather than captured once, so the queue never holds a ref
+   * across a render.
+   */
+  function getQueueDeps(): TrackpointQueueDeps {
+    return {
+      appendTrackpoint: appendSessionTrackpoint,
+      withLock: withSessionRecordingLock,
+      getLastTimestamp: () => currentLastTimestampRef.current,
+      onPersisted: (pending, result) => {
+        // Only mirror into the runtime refs while this is still the session on
+        // screen — a late point for a previous session must not rewrite them.
+        if (pending.sessionId !== currentSessionIdRef.current) return
 
-        try {
-          const result = await appendSessionTrackpoint({
-            sessionId,
-            lastTimestamp: currentLastTimestampRef.current,
-            nextPosition,
-            startTime: currentSessionStartTimeRef.current ?? nowIso(),
-          })
-
-          // Persisted (or skipped as a duplicate); remove it from the queue.
-          pendingPositionsRef.current.shift()
-
-          if (result) {
-            currentTrackpointsRef.current.push(result.trackPoint)
-            currentSeqRef.current = result.nextSeq
-            currentLastTimestampRef.current = result.lastTimestamp
-          }
-
-          reportRecordingError(null, '')
-        } catch (error) {
-          // Keep the point queued and retry on the next accepted position so a
-          // transient write failure doesn't punch a hole in the recorded track.
-          const kind = getRecordingErrorKind(error)
-          recordFieldDiagnostic({
-            type: 'indexeddb_write_failed',
-            level: 'error',
-            message: 'Weidegang-Trackpunkt konnte lokal nicht gespeichert werden.',
-            activeGrazingSessionId: sessionId,
-            activeRecordingId: sessionId,
-            details: { kind, error },
-          })
-          reportRecordingError(
-            kind,
-            buildRecordingErrorMessage(kind, pendingPositionsRef.current.length)
-          )
-          break
-        }
-      }
-    } finally {
-      isFlushingRef.current = false
+        currentTrackpointsRef.current.push(result.trackPoint)
+        currentSeqRef.current = result.nextSeq
+        currentLastTimestampRef.current = result.lastTimestamp
+      },
+      onHealthy: () => reportRecordingErrorRef.current(null, ''),
+      onWriteFailed: (pending, error, pendingCount) => {
+        const kind = getRecordingErrorKind(error)
+        recordFieldDiagnostic({
+          type: 'indexeddb_write_failed',
+          level: 'error',
+          message: 'Weidegang-Trackpunkt konnte lokal nicht gespeichert werden.',
+          activeGrazingSessionId: pending.sessionId,
+          activeRecordingId: pending.sessionId,
+          details: { kind, error },
+        })
+        reportRecordingErrorRef.current(kind, buildRecordingErrorMessage(kind, pendingCount))
+      },
+      onRejected: (pending, error) => {
+        recordFieldDiagnostic({
+          type: 'grazing_trackpoint_rejected',
+          level: 'error',
+          message: 'Trackpunkt verworfen: Der Weidegang zeichnet nicht mehr auf.',
+          activeGrazingSessionId: error.sessionId,
+          activeRecordingId: error.sessionId,
+          details: { status: error.status, timestamp: pending.position.timestamp },
+        })
+        reportRecordingErrorRef.current(
+          'write',
+          'Ein GPS-Punkt konnte nicht gespeichert werden: Der Weidegang zeichnet nicht mehr auf.'
+        )
+      },
     }
   }
 
-  async function flushPendingPositionsWithLock() {
-    const sessionId = currentSessionIdRef.current
-    const locks = getRecordingLockManager()
-    if (!sessionId || !locks) {
-      await persistPendingPositions()
-      return
-    }
-
-    await locks.request(
-      `pastore:grazing-session:${sessionId}:recording`,
-      { mode: 'exclusive' },
-      () => persistPendingPositions()
-    )
-  }
-
-  const flushPendingPositionsWithLockRef = useLatestValueRef(flushPendingPositionsWithLock)
+  const getQueueDepsRef = useLatestValueRef(getQueueDeps)
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      if (pendingPositionsRef.current.length > 0) {
-        void flushPendingPositionsWithLockRef.current()
+      if (queue.size() > 0) {
+        void queue.flush(currentSessionIdRef.current, getQueueDepsRef.current())
       }
     }, RECORDING_RETRY_INTERVAL_MS)
 
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [flushPendingPositionsWithLockRef])
+  }, [queue, currentSessionIdRef, getQueueDepsRef])
 
   async function appendSessionPoint(nextPosition: PositionData) {
-    if (!currentSessionIdRef.current) return
-    pendingPositionsRef.current.push(nextPosition)
-    await flushPendingPositionsWithLock()
+    const sessionId = currentSessionIdRef.current
+    if (!sessionId) return
+
+    // Returns false when a pause/stop is in flight: its flush has already
+    // snapshotted the queue, so a fix accepted now must not slip in behind it.
+    if (!queue.enqueue(sessionId, nextPosition)) return
+
+    await queue.flush(sessionId, getQueueDeps())
   }
 
   const appendSessionPointRef = useLatestValueRef(appendSessionPoint)
@@ -178,6 +155,10 @@ export function useGrazingSessionMapTrackpointRecorder({
 
   return {
     appendSessionPoint,
+    /** Drains the queue for a caller already holding the recording lock. */
+    flushPendingPointsAssumingLock: () => queue.flushAssumingLock(getQueueDeps()),
+    suspendPositionIntake: () => queue.suspendIntake(),
+    resumePositionIntake: () => queue.resumeIntake(),
     handleAcceptedPositionRef,
   }
 }

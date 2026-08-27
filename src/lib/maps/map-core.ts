@@ -120,6 +120,91 @@ export function getPositionDecision(
   return { accepted: true, reason: 'accepted' }
 }
 
+export type PointPathFeatureCollectionOptions<TPoint> = {
+  points: TPoint[]
+  /** Reads `[lon, lat]` off a point — the drawing and walking screens store them under different names. */
+  toCoordinates: (point: TPoint) => GeoJSON.Position
+  /** `kind` property of the connecting line, drawn once the path has two points. */
+  lineKind: string
+  /**
+   * `kind` property of the closed polygon, drawn once the path has three points.
+   * Omit for open paths (a recorded track is never closed into an area).
+   */
+  polygonKind?: string
+  /**
+   * Property carrying each point's 1-based position. Click handlers read it back
+   * to map a tapped feature to its array index, so it must match what the layer
+   * that renders this collection expects — the grazing map's track source reads
+   * `seq`, the enclosure map's sources read `index`.
+   */
+  pointPropertyName?: string
+}
+
+/**
+ * Renders an ordered list of points as numbered point features, plus the line
+ * (and optionally the closed polygon) they describe. The line and polygon are
+ * unshifted so they paint beneath the points.
+ *
+ * Every path the maps draw — a drawn draft, a walked boundary, a stored track —
+ * is this same collection with different coordinate accessors and layer kinds.
+ */
+export function buildPointPathFeatureCollection<TPoint>({
+  points,
+  toCoordinates,
+  lineKind,
+  polygonKind,
+  pointPropertyName = 'index',
+}: PointPathFeatureCollectionOptions<TPoint>): GeoJSON.FeatureCollection {
+  if (points.length === 0) {
+    return emptyFeatureCollection
+  }
+
+  const features: GeoJSON.Feature[] = points.map((point, index) => ({
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates: toCoordinates(point),
+    },
+    properties: {
+      [pointPropertyName]: index + 1,
+    },
+  }))
+
+  if (points.length >= 2) {
+    features.unshift({
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: points.map(toCoordinates),
+      },
+      properties: {
+        kind: lineKind,
+      },
+    })
+  }
+
+  if (polygonKind && points.length >= 3) {
+    const ring = points.map(toCoordinates)
+    ring.push(toCoordinates(points[0]))
+
+    features.unshift({
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [ring],
+      },
+      properties: {
+        kind: polygonKind,
+      },
+    })
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features,
+  }
+}
+
 export function buildSurveyAreaFeatureCollection(
   surveyAreas: SurveyArea[]
 ): GeoJSON.FeatureCollection {

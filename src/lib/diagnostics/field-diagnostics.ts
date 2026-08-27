@@ -139,3 +139,13 @@ export async function recordFieldDiagnosticForTests(
 export async function listFieldDiagnosticsForTests() {
   return db.fieldDiagnostics.orderBy('createdAt').toArray()
 }
+
+/** Recorded diagnostics, newest first — the order the diagnostics screen shows. */
+export function listFieldDiagnosticsByRecent(): Promise<FieldDiagnosticEvent[]> {
+  return db.fieldDiagnostics.orderBy('createdAt').reverse().toArray()
+}
+
+/** Drops every recorded diagnostic. */
+export function clearFieldDiagnostics(): Promise<void> {
+  return db.fieldDiagnostics.clear()
+}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db/dexie'
+import { getAppSettings } from '@/lib/db/repositories/settings'
 import { StatusAlert } from '@/components/ui/alert'
 import { useFieldSafety } from '@/lib/field-safety/use-field-safety'
 import { daysSince, shouldRemindBackup } from '@/lib/settings/backup-reminder'
@@ -24,7 +24,7 @@ export function BackupReminder() {
   const { isFieldOperationActive } = useFieldSafety()
   const info = useLiveQuery(async () => {
     const [settings, changeSummary] = await Promise.all([
-      db.settings.get('app'),
+      getAppSettings(),
       getLocalChangeSummary(),
     ])
 

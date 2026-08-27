@@ -17,10 +17,30 @@ import type {
   GrazingSession,
   SessionEvent,
   SessionEventType,
+  SessionStatus,
   TrackPoint,
 } from '@/types/domain'
 
 type PositionData = GpsTrackPosition
+
+export const SESSION_NOT_FOUND_MESSAGE = 'Weidegang wurde nicht gefunden.'
+
+/**
+ * Thrown when a trackpoint is offered to a session that is not recording. The
+ * queued point cannot belong to that session, so the recorder must stop
+ * retrying it rather than blocking every later point behind it.
+ */
+export class SessionNotRecordingError extends Error {
+  readonly sessionId: string
+  readonly status: SessionStatus
+
+  constructor(sessionId: string, status: SessionStatus) {
+    super(`Weidegang ${sessionId} zeichnet nicht auf (Status: ${status}).`)
+    this.name = 'SessionNotRecordingError'
+    this.sessionId = sessionId
+    this.status = status
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Reads
@@ -51,22 +71,43 @@ export function listAllSessionEvents(): Promise<SessionEvent[]> {
   return db.events.toArray()
 }
 
+/** A single grazing session, or `undefined` when it does not exist. */
+export function getGrazingSession(sessionId: string): Promise<GrazingSession | undefined> {
+  return db.sessions.get(sessionId)
+}
+
+/** Grazing sessions that are still running or paused — the recovery candidates. */
+export function listUnfinishedSessions(): Promise<GrazingSession[]> {
+  return db.sessions.where('status').anyOf('active', 'paused').toArray()
+}
+
+/** The trackpoints recorded while walking an enclosure boundary, in walk order. */
+export function listEnclosureWalkTrackpoints(enclosureWalkId: string): Promise<TrackPoint[]> {
+  return db.trackpoints.where('enclosureWalkId').equals(enclosureWalkId).sortBy('seq')
+}
+
 // ---------------------------------------------------------------------------
 // Writes
 // ---------------------------------------------------------------------------
 
+/**
+ * Appends one accepted GPS fix to a session.
+ *
+ * The session must still be `active`: a point that arrives after pause or stop
+ * belongs to no recording, and writing it would silently extend a session the
+ * user has already ended. The check lives inside the transaction so it cannot
+ * race the lifecycle transition, which takes the same session recording lock.
+ *
+ * `startTime` is read from the stored session rather than passed in — the caller
+ * holds it in React refs that can be stale or, worse, absent (the previous
+ * `?? nowIso()` fallback silently reset `durationS` to 0).
+ */
 export async function appendSessionTrackpoint(params: {
   sessionId: string
   lastTimestamp: number | null
   nextPosition: PositionData
-  startTime: string
 }) {
-  const {
-    sessionId,
-    lastTimestamp,
-    nextPosition,
-    startTime,
-  } = params
+  const { sessionId, lastTimestamp, nextPosition } = params
 
   if (lastTimestamp === nextPosition.timestamp) {
     return null
@@ -76,7 +117,16 @@ export async function appendSessionTrackpoint(params: {
 
   const trackPoint = await db.transaction('rw', db.trackpoints, db.sessions, async () => {
     const session = await db.sessions.get(sessionId)
-    assertUpdated(session ? 1 : 0, 'Weidegang wurde nicht gefunden.')
+
+    if (!session) {
+      throw new Error(SESSION_NOT_FOUND_MESSAGE)
+    }
+
+    if (session.status !== 'active') {
+      throw new SessionNotRecordingError(sessionId, session.status)
+    }
+
+    const startTime = session.startTime
 
     const previousTrackPoint = await db.trackpoints
       .where('[sessionId+seq]')
@@ -108,10 +158,10 @@ export async function appendSessionTrackpoint(params: {
       ...buildLocalChangeMetadata(updatedAt),
     }
     const metricDelta = buildTrackpointMetricDelta(previousTrackPoint ?? null, nextTrackPoint)
-    const distanceM = (session?.distanceM ?? 0) + metricDelta.distanceM
-    const movingTimeS = (session?.movingTimeS ?? 0) + metricDelta.movingTimeS
+    const distanceM = session.distanceM + metricDelta.distanceM
+    const movingTimeS = session.movingTimeS + metricDelta.movingTimeS
     const avgAccuracyM = appendAverageAccuracy(
-      session?.avgAccuracyM ?? null,
+      session.avgAccuracyM ?? null,
       // Seq is contiguous: appends assign max(seq)+1 and session edits renumber points.
       previousTrackPoint?.seq ?? 0,
       nextTrackPoint.accuracyM
@@ -128,7 +178,7 @@ export async function appendSessionTrackpoint(params: {
       ...buildLocalChangePatch(updatedAt),
     })
 
-    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
+    assertUpdated(updatedCount, SESSION_NOT_FOUND_MESSAGE)
 
     return nextTrackPoint
   })
@@ -209,17 +259,64 @@ export async function updateGrazingSessionAnimalCountRecord(params: {
   })
 }
 
+/**
+ * Loads a session for a lifecycle transition and decides whether it still needs
+ * to run. Returns `null` when the session is already in the target state, so a
+ * repeated pause or a double-tapped stop is an idempotent no-op instead of a
+ * second pause/stop event on the timeline.
+ */
+async function loadSessionForTransition(
+  sessionId: string,
+  targetStatus: SessionStatus
+): Promise<GrazingSession | null> {
+  const session = await db.sessions.get(sessionId)
+
+  if (!session) {
+    throw new Error(SESSION_NOT_FOUND_MESSAGE)
+  }
+
+  if (session.status === targetStatus) {
+    return null
+  }
+
+  // A finished session is terminal; reopening it would leave `endTime` pointing
+  // at a stop that is no longer the last one.
+  if (session.status === 'finished') {
+    throw new SessionNotRecordingError(sessionId, session.status)
+  }
+
+  return session
+}
+
+/**
+ * Recomputes a session's metrics from the trackpoints actually in IndexedDB.
+ *
+ * IndexedDB is the source of truth: React refs can lag behind a just-flushed
+ * point, and a metric computed from a stale ref would permanently understate the
+ * recorded distance. Callers must hold the session recording lock so no append
+ * can interleave between the read here and the status write.
+ */
+async function buildPersistedSessionMetrics(
+  session: GrazingSession,
+  effectiveEndTime: string
+) {
+  const trackpoints = await db.trackpoints.where('sessionId').equals(session.id).toArray()
+  return buildSessionMetrics(trackpoints, session.startTime, effectiveEndTime)
+}
+
 export async function pauseGrazingSessionRecord(params: {
   sessionId: string
-  startTime: string
-  trackpoints: TrackPoint[]
   position: PositionData | null
 }) {
-  const { sessionId, startTime, trackpoints, position } = params
-  const metrics = buildSessionMetrics(trackpoints, startTime)
+  const { sessionId, position } = params
   const timestamp = nowIso()
 
-  await db.transaction('rw', db.sessions, db.events, async () => {
+  await db.transaction('rw', db.sessions, db.trackpoints, db.events, async () => {
+    const session = await loadSessionForTransition(sessionId, 'paused')
+    if (!session) return
+
+    const metrics = await buildPersistedSessionMetrics(session, timestamp)
+
     const updatedCount = await db.sessions.update(sessionId, {
       status: 'paused',
       durationS: metrics.durationS,
@@ -231,7 +328,7 @@ export async function pauseGrazingSessionRecord(params: {
       ...buildLocalChangePatch(timestamp),
     })
 
-    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
+    assertUpdated(updatedCount, SESSION_NOT_FOUND_MESSAGE)
 
     await logSessionEvent(sessionId, 'pause', position)
   })
@@ -244,14 +341,17 @@ export async function resumeGrazingSessionRecord(params: {
   const { sessionId, position } = params
   const timestamp = nowIso()
 
-  await db.transaction('rw', db.sessions, db.events, async () => {
+  await db.transaction('rw', db.sessions, db.trackpoints, db.events, async () => {
+    const session = await loadSessionForTransition(sessionId, 'active')
+    if (!session) return
+
     const updatedCount = await db.sessions.update(sessionId, {
       status: 'active',
       updatedAt: timestamp,
       ...buildLocalChangePatch(timestamp),
     })
 
-    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
+    assertUpdated(updatedCount, SESSION_NOT_FOUND_MESSAGE)
 
     await logSessionEvent(sessionId, 'resume', position)
   })
@@ -259,15 +359,17 @@ export async function resumeGrazingSessionRecord(params: {
 
 export async function stopGrazingSessionRecord(params: {
   sessionId: string
-  startTime: string
-  trackpoints: TrackPoint[]
   position: PositionData | null
 }) {
-  const { sessionId, startTime, trackpoints, position } = params
+  const { sessionId, position } = params
   const endTime = nowIso()
-  const metrics = buildSessionMetrics(trackpoints, startTime, endTime)
 
-  await db.transaction('rw', db.sessions, db.events, async () => {
+  await db.transaction('rw', db.sessions, db.trackpoints, db.events, async () => {
+    const session = await loadSessionForTransition(sessionId, 'finished')
+    if (!session) return
+
+    const metrics = await buildPersistedSessionMetrics(session, endTime)
+
     const updatedCount = await db.sessions.update(sessionId, {
       status: 'finished',
       endTime,
@@ -280,7 +382,7 @@ export async function stopGrazingSessionRecord(params: {
       ...buildLocalChangePatch(endTime),
     })
 
-    assertUpdated(updatedCount, 'Weidegang wurde nicht gefunden.')
+    assertUpdated(updatedCount, SESSION_NOT_FOUND_MESSAGE)
 
     await logSessionEvent(sessionId, 'stop', position)
   })

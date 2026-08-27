@@ -1,5 +1,5 @@
 import type * as GeoJSON from 'geojson'
-import { emptyFeatureCollection } from '@/lib/maps/map-core'
+import { buildPointPathFeatureCollection, emptyFeatureCollection } from '@/lib/maps/map-core'
 import {
   getSessionEventLabel,
 } from '@/lib/maps/grazing-session-map-formatters'
@@ -111,43 +111,21 @@ export function buildSessionEventFeatureCollection(
   }
 }
 
+/**
+ * The trackpoints of a session being edited. Unlike the recorded track this is
+ * drawn as one continuous line: the editor works on the points as a sequence, so
+ * the recording gaps `buildContinuousLineFeatures` splits on are not meaningful here.
+ */
 export function buildEditableTrackpointsFeatureCollection(
   trackpoints: EditableTrackPoint[]
 ): GeoJSON.FeatureCollection {
-  if (trackpoints.length === 0) {
-    return emptyFeatureCollection
-  }
-
-  const pointFeatures: GeoJSON.Feature<GeoJSON.Point>[] = trackpoints.map((point, index) => ({
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [point.lon, point.lat],
-    },
-    properties: {
-      seq: index + 1,
-    },
-  }))
-
-  const features: GeoJSON.Feature[] = [...pointFeatures]
-
-  if (trackpoints.length >= 2) {
-    features.unshift({
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: trackpoints.map((point) => [point.lon, point.lat]),
-      },
-      properties: {
-        kind: 'session-line',
-      },
-    })
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
-  }
+  return buildPointPathFeatureCollection({
+    points: trackpoints,
+    toCoordinates: (point) => [point.lon, point.lat],
+    lineKind: 'session-line',
+    // The `selected-session-track` click handler reads `seq`.
+    pointPropertyName: 'seq',
+  })
 }
 
 export function buildMergedSessionEventFeatureCollection(

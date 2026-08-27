@@ -3,8 +3,12 @@
 import { Download, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db/dexie'
+import { getAppSettings } from '@/lib/db/repositories/settings'
 import { requestPersistentStorage } from '@/lib/maps/tile-cache'
+import {
+  postTileCachingMessage,
+  shouldClearStoredTiles,
+} from '@/lib/maps/tile-caching-sync'
 import {
   parseFallbackSettingsSnapshot,
   readFallbackSettingsSnapshot,
@@ -17,24 +21,6 @@ import { cn } from '@/lib/utils/cn'
 import { logError } from '@/lib/utils/log'
 
 type BackupStatus = 'idle' | 'exporting' | 'exported' | 'error'
-
-function postTileCachingMessage(
-  worker: ServiceWorker | null | undefined,
-  tileCachingEnabled: boolean | null,
-  clearStoredTiles: boolean,
-) {
-  if (!worker || tileCachingEnabled === null) {
-    return false
-  }
-
-  worker.postMessage({
-    type: 'SET_TILE_CACHING',
-    enabled: tileCachingEnabled,
-    clearStoredTiles,
-  })
-
-  return true
-}
 
 type ServiceWorkerUpdatePromptProps = {
   isApplyingUpdate: boolean
@@ -162,7 +148,7 @@ function ServiceWorkerUpdatePrompt({
 }
 
 export function ServiceWorkerSync() {
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
+  const settings = useLiveQuery(() => getAppSettings(), [])
   const previousTileCachingEnabled = useRef<boolean | null>(null)
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null)
   const isUpdateActivationRequested = useRef(false)
@@ -259,7 +245,7 @@ export function ServiceWorkerSync() {
           postTileCachingMessage(
             worker,
             currentTileCachingEnabled,
-            previousTileCachingEnabled.current === true && currentTileCachingEnabled === false,
+            shouldClearStoredTiles(previousTileCachingEnabled.current, currentTileCachingEnabled),
           )
         ) {
           previousTileCachingEnabled.current = currentTileCachingEnabled
@@ -307,7 +293,7 @@ export function ServiceWorkerSync() {
       postTileCachingMessage(
         worker,
         tileCachingEnabled,
-        previousTileCachingEnabled.current === true && tileCachingEnabled === false,
+        shouldClearStoredTiles(previousTileCachingEnabled.current, tileCachingEnabled),
       )
     ) {
       previousTileCachingEnabled.current = tileCachingEnabled
@@ -337,7 +323,7 @@ export function ServiceWorkerSync() {
         postTileCachingMessage(
           navigator.serviceWorker.controller,
           tileCachingEnabled,
-          previousTileCachingEnabled.current === true && tileCachingEnabled === false,
+          shouldClearStoredTiles(previousTileCachingEnabled.current, tileCachingEnabled),
         )
       ) {
         previousTileCachingEnabled.current = tileCachingEnabled

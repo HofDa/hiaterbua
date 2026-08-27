@@ -3,9 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { HerdDetailPageContent } from '@/components/herds/herd-detail-page-content'
-import { db } from '@/lib/db/dexie'
 import { listAnimalsByHerd } from '@/lib/db/repositories/animals'
-import { listActiveEnclosuresByName } from '@/lib/db/repositories/enclosures'
+import {
+  listActiveEnclosuresByName,
+  listHerdEnclosureAssignmentsByRecent,
+} from '@/lib/db/repositories/enclosures'
 import { getHerd } from '@/lib/db/repositories/herds'
 
 type HerdDetailRoutePageProps = {
@@ -23,7 +25,7 @@ export function HerdDetailRoutePage({ herdId }: HerdDetailRoutePageProps) {
   const assignments = useLiveQuery(
     () =>
       herdId
-        ? db.enclosureAssignments.where('herdId').equals(herdId).reverse().sortBy('updatedAt')
+        ? listHerdEnclosureAssignmentsByRecent(herdId)
         : [],
     [herdId]
   )

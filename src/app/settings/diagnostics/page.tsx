@@ -4,7 +4,10 @@ import { Copy, Download, LifeBuoy, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db/dexie'
+import {
+  clearFieldDiagnostics,
+  listFieldDiagnosticsByRecent,
+} from '@/lib/diagnostics/field-diagnostics'
 import {
   buildFieldDiagnosticsExport,
   serializeFieldDiagnosticsExport,
@@ -52,7 +55,7 @@ export default function DiagnosticsPage() {
   const [error, setError] = useState('')
   const [debugFieldDiagnostics, setDebugFieldDiagnostics] = useState(false)
   const diagnostics = useLiveQuery(
-    () => db.fieldDiagnostics.orderBy('createdAt').reverse().toArray(),
+    () => listFieldDiagnosticsByRecent(),
     []
   )
   const safeDiagnostics = useMemo(() => diagnostics ?? [], [diagnostics])
@@ -125,7 +128,7 @@ export default function DiagnosticsPage() {
     setError('')
 
     try {
-      await db.fieldDiagnostics.clear()
+      await clearFieldDiagnostics()
       setStatus('Diagnose gelöscht.')
     } catch {
       setError('Diagnose konnte nicht gelöscht werden.')

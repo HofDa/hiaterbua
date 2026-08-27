@@ -2,8 +2,12 @@ import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl'
 import {
   addGeoJsonSource,
   addOrthophotoLayer,
+  addPathLineLayer,
+  addPathPointLayer,
   addSurveyAreaLayers,
+  addTouchTargetLayer,
   bindPointerCursor,
+  bindPointIndexClick,
 } from '@/lib/maps/maplibre-runtime'
 import { mapStyleColors } from '@/lib/maps/map-style-tokens'
 
@@ -12,6 +16,8 @@ type GrazingSessionMapSetupHandlers = {
   onSelectedTrackpointClick: (index: number) => void
 }
 
+// Layers are added in paint order — each track's line sits below its points,
+// which sit below its touch target — so the sequence here is load-bearing.
 export function registerGrazingSessionMapSetup(
   map: MapLibreMap,
   handlers: GrazingSessionMapSetupHandlers
@@ -22,6 +28,7 @@ export function registerGrazingSessionMapSetup(
   addSurveyAreaLayers(map)
 
   addGeoJsonSource(map, 'session-events')
+  // The only data-driven layer on either map: one marker colour per event type.
   map.addLayer({
     id: 'session-events-points',
     type: 'circle',
@@ -55,75 +62,51 @@ export function registerGrazingSessionMapSetup(
   })
 
   addGeoJsonSource(map, 'current-session-track')
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'current-session-track-line',
-    type: 'line',
     source: 'current-session-track',
-    paint: {
-      'line-color': mapStyleColors.currentSessionTrack,
-      'line-width': 4,
-    },
-    filter: ['==', '$type', 'LineString'],
+    color: mapStyleColors.currentSessionTrack,
+    width: 4,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathPointLayer(map, {
     id: 'current-session-track-points',
-    type: 'circle',
     source: 'current-session-track',
-    paint: {
-      'circle-radius': 4,
-      'circle-color': mapStyleColors.currentSessionTrack,
-      'circle-stroke-width': 2,
-      'circle-stroke-color': mapStyleColors.white,
-    },
-    filter: ['==', '$type', 'Point'],
+    color: mapStyleColors.currentSessionTrack,
+    radius: 4,
+    strokeWidth: 2,
   })
 
   addGeoJsonSource(map, 'selected-session-track')
-  map.addLayer({
+  addPathLineLayer(map, {
     id: 'selected-session-track-line',
-    type: 'line',
     source: 'selected-session-track',
-    paint: {
-      'line-color': mapStyleColors.selectedSessionTrack,
-      'line-width': 4,
-    },
-    filter: ['==', '$type', 'LineString'],
+    color: mapStyleColors.selectedSessionTrack,
+    width: 4,
+    filterGeometry: true,
   })
-
-  map.addLayer({
+  addPathPointLayer(map, {
     id: 'selected-session-track-points',
-    type: 'circle',
     source: 'selected-session-track',
-    paint: {
-      'circle-radius': 7,
-      'circle-color': mapStyleColors.selectedSessionTrack,
-      'circle-stroke-width': 3,
-      'circle-stroke-color': mapStyleColors.white,
-    },
-    filter: ['==', '$type', 'Point'],
+    color: mapStyleColors.selectedSessionTrack,
+    radius: 7,
+    strokeWidth: 3,
   })
-
-  map.addLayer({
+  addTouchTargetLayer(map, {
     id: 'selected-session-track-touch-target',
-    type: 'circle',
     source: 'selected-session-track',
-    paint: {
-      'circle-radius': 18,
-      'circle-color': mapStyleColors.white,
-      'circle-opacity': 0.01,
-    },
-    filter: ['==', '$type', 'Point'],
   })
 
   map.on('click', handlers.onMapClick)
 
-  map.on('click', 'selected-session-track-touch-target', (event) => {
-    const pointIndex = Number(event.features?.[0]?.properties?.seq)
-    if (Number.isInteger(pointIndex) && pointIndex >= 1) {
-      handlers.onSelectedTrackpointClick(pointIndex - 1)
-    }
-  })
+  // `seq`, not `index`: this source also carries the recorded track, whose
+  // points are numbered by their stored sequence.
+  bindPointIndexClick(
+    map,
+    'selected-session-track-touch-target',
+    'seq',
+    handlers.onSelectedTrackpointClick
+  )
 
   bindPointerCursor(map, ['selected-session-track-touch-target'])
 }

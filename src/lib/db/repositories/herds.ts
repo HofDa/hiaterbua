@@ -28,6 +28,14 @@ export function getHerd(herdId: string): Promise<Herd | undefined> {
   return db.herds.get(herdId)
 }
 
+/**
+ * Herds for the given ids, positionally aligned with `herdIds`; an entry is
+ * `undefined` when that herd no longer exists.
+ */
+export function getHerdsByIds(herdIds: string[]): Promise<Array<Herd | undefined>> {
+  return db.herds.bulkGet(herdIds)
+}
+
 // ---------------------------------------------------------------------------
 // Writes
 // ---------------------------------------------------------------------------

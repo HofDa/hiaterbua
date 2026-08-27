@@ -19,8 +19,11 @@ import { BackupReminder } from '@/components/dashboard/backup-reminder'
 import { ContinueRecordingCard } from '@/components/dashboard/continue-recording-card'
 import { useSecureAreaPrefetch } from '@/components/dashboard/use-secure-area-prefetch'
 import { metaLabelClassName } from '@/components/ui/typography'
-import { db } from '@/lib/db/dexie'
-import { listActiveEnclosures } from '@/lib/db/repositories/enclosures'
+import { getAppSettings } from '@/lib/db/repositories/settings'
+import {
+  listActiveEnclosures,
+  listAllEnclosureAssignments,
+} from '@/lib/db/repositories/enclosures'
 import { listAllHerds } from '@/lib/db/repositories/herds'
 import { listAllSessions } from '@/lib/db/repositories/sessions'
 import { listAllWorkSessions } from '@/lib/db/repositories/work-sessions'
@@ -73,7 +76,7 @@ export default function HomePage() {
       listAllHerds(),
       listActiveEnclosures(),
       listAllSessions(),
-      db.enclosureAssignments.toArray(),
+      listAllEnclosureAssignments(),
       listAllWorkSessions(),
     ])
 
@@ -91,7 +94,7 @@ export default function HomePage() {
     }
   }, [])
 
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
+  const settings = useLiveQuery(() => getAppSettings(), [])
   const secureArea = useSecureAreaPrefetch({
     baseLayer: settings?.mapBaseLayer ?? defaultAppSettings.mapBaseLayer,
     tileCachingEnabled: settings?.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
