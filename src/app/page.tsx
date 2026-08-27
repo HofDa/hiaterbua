@@ -5,6 +5,7 @@ import {
   Download,
   DownloadCloud,
   Loader2,
+  Leaf,
   Map,
   MapPin,
   Settings,
@@ -48,12 +49,13 @@ type FieldStartLink = {
   icon: LucideIcon
 }
 
-// Icon + title only: the four destinations are used daily, so descriptions are
+// Icon + title only: these destinations are used in the field, so descriptions are
 // onboarding text that would cost a screen of scroll on every open.
 const fieldStartLinks = [
   { href: '/work', title: 'Arbeit', icon: Briefcase },
   { href: '/sessions', title: 'Weidegang', icon: Map },
   { href: '/enclosures', title: 'Pferch', icon: MapPin },
+  { href: '/care', title: 'Pflegecheck', icon: Leaf },
   { href: '/herds', title: 'Herde', icon: Users },
 ] satisfies FieldStartLink[]
 
@@ -113,7 +115,7 @@ export default function HomePage() {
           Feldstart
         </CardTitle>
 
-        <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
           {fieldStartLinks.map((link) => {
             const Icon = link.icon
 
