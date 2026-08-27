@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@/lib/db/dexie'
+import {
+  InvalidSessionTransitionError,
+  OpenGrazingSessionExistsError,
+} from '@/lib/domain/grazing-session-rules'
 import {
   appendSessionTrackpoint,
   SessionNotRecordingError,
@@ -34,6 +38,10 @@ beforeEach(async () => {
   await clearAllTables()
 })
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 describe('createGrazingSessionRecord', () => {
   it('creates an active session and logs a start event in one transaction', async () => {
     const session = await createGrazingSessionRecord({
@@ -51,6 +59,111 @@ describe('createGrazingSessionRecord', () => {
     const events = await listSessionEvents(session.id)
     expect(events).toHaveLength(1)
     expect(events[0].type).toBe('start')
+  })
+})
+
+
+describe('single open grazing session invariant', () => {
+  it('rejects a second session while another session is active', async () => {
+    const first = await createGrazingSessionRecord({
+      herdId: 'herd_1',
+      animalCount: null,
+      notes: '',
+      position: null,
+    })
+
+    await expect(
+      createGrazingSessionRecord({
+        herdId: 'herd_2',
+        animalCount: null,
+        notes: '',
+        position: null,
+      })
+    ).rejects.toMatchObject({
+      name: 'OpenGrazingSessionExistsError',
+      existingSessionId: first.id,
+    })
+
+    expect(await db.sessions.where('status').anyOf('active', 'paused').count()).toBe(1)
+    expect(await db.events.where('type').equals('start').count()).toBe(1)
+  })
+
+  it('rejects a second session while another session is paused', async () => {
+    const first = await createGrazingSessionRecord({
+      herdId: 'herd_1',
+      animalCount: null,
+      notes: '',
+      position: null,
+    })
+    await pauseGrazingSessionRecord({ sessionId: first.id, position: null })
+
+    await expect(
+      createGrazingSessionRecord({
+        herdId: 'herd_2',
+        animalCount: null,
+        notes: '',
+        position: null,
+      })
+    ).rejects.toBeInstanceOf(OpenGrazingSessionExistsError)
+
+    expect(await db.sessions.where('status').anyOf('active', 'paused').count()).toBe(1)
+  })
+
+  it('serializes concurrent starts so exactly one succeeds', async () => {
+    const results = await Promise.allSettled([
+      createGrazingSessionRecord({
+        herdId: 'herd_a',
+        animalCount: null,
+        notes: '',
+        position: null,
+      }),
+      createGrazingSessionRecord({
+        herdId: 'herd_b',
+        animalCount: null,
+        notes: '',
+        position: null,
+      }),
+    ])
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1)
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1)
+    expect(await db.sessions.where('status').anyOf('active', 'paused').count()).toBe(1)
+    expect(await db.events.where('type').equals('start').count()).toBe(1)
+
+    const rejected = results.find((result) => result.status === 'rejected')
+    expect(rejected).toMatchObject({
+      status: 'rejected',
+      reason: expect.any(OpenGrazingSessionExistsError),
+    })
+  })
+
+  it('rejects resume when another open session exists in legacy data', async () => {
+    const paused = await createGrazingSessionRecord({
+      herdId: 'herd_1',
+      animalCount: null,
+      notes: '',
+      position: null,
+    })
+    await pauseGrazingSessionRecord({ sessionId: paused.id, position: null })
+
+    const timestamp = new Date().toISOString()
+    await db.sessions.add({
+      ...paused,
+      id: 'session_legacy_conflict',
+      herdId: 'herd_2',
+      status: 'active',
+      startTime: timestamp,
+      endTime: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+
+    await expect(
+      resumeGrazingSessionRecord({ sessionId: paused.id, position: null })
+    ).rejects.toBeInstanceOf(OpenGrazingSessionExistsError)
+
+    expect((await db.sessions.get(paused.id))?.status).toBe('paused')
+    expect((await listSessionEvents(paused.id)).filter((event) => event.type === 'resume')).toHaveLength(0)
   })
 })
 
@@ -390,14 +503,18 @@ describe('lifecycle metrics come from IndexedDB', () => {
   })
 })
 
-describe('idempotent lifecycle transitions', () => {
-  it('does not create a duplicate stop event when stop runs twice', async () => {
-    const session = await createGrazingSessionRecord({
+describe('strict lifecycle transition guards', () => {
+  async function startedSession() {
+    return createGrazingSessionRecord({
       herdId: 'herd_1',
       animalCount: null,
       notes: '',
       position: null,
     })
+  }
+
+  it('keeps repeated stop idempotent without changing endTime or duplicating events', async () => {
+    const session = await startedSession()
 
     await stopGrazingSessionRecord({ sessionId: session.id, position: null })
     const firstEndTime = (await db.sessions.get(session.id))?.endTime
@@ -406,38 +523,67 @@ describe('idempotent lifecycle transitions', () => {
 
     const events = await listSessionEvents(session.id)
     expect(events.filter((event) => event.type === 'stop')).toHaveLength(1)
-    // The terminal endTime must not be rewritten by the repeated stop.
     expect((await db.sessions.get(session.id))?.endTime).toBe(firstEndTime)
   })
 
-  it('does not create a duplicate pause event when pause runs twice', async () => {
-    const session = await createGrazingSessionRecord({
-      herdId: 'herd_1',
-      animalCount: null,
-      notes: '',
-      position: null,
-    })
+  it('rejects active -> active instead of silently treating resume as a no-op', async () => {
+    const session = await startedSession()
 
-    await pauseGrazingSessionRecord({ sessionId: session.id, position: null })
-    await pauseGrazingSessionRecord({ sessionId: session.id, position: null })
+    await expect(
+      resumeGrazingSessionRecord({ sessionId: session.id, position: null })
+    ).rejects.toBeInstanceOf(InvalidSessionTransitionError)
 
-    const events = await listSessionEvents(session.id)
-    expect(events.filter((event) => event.type === 'pause')).toHaveLength(1)
+    expect((await listSessionEvents(session.id)).filter((event) => event.type === 'resume')).toHaveLength(0)
   })
 
-  it('refuses to reopen a finished session', async () => {
-    const session = await createGrazingSessionRecord({
-      herdId: 'herd_1',
-      animalCount: null,
-      notes: '',
-      position: null,
-    })
+  it('rejects paused -> paused instead of silently treating pause as a no-op', async () => {
+    const session = await startedSession()
+    await pauseGrazingSessionRecord({ sessionId: session.id, position: null })
+
+    await expect(
+      pauseGrazingSessionRecord({ sessionId: session.id, position: null })
+    ).rejects.toBeInstanceOf(InvalidSessionTransitionError)
+
+    expect((await listSessionEvents(session.id)).filter((event) => event.type === 'pause')).toHaveLength(1)
+  })
+
+  it('allows paused -> finished', async () => {
+    const session = await startedSession()
+    await pauseGrazingSessionRecord({ sessionId: session.id, position: null })
+
+    await stopGrazingSessionRecord({ sessionId: session.id, position: null })
+
+    expect((await db.sessions.get(session.id))?.status).toBe('finished')
+    const events = await listSessionEvents(session.id)
+    expect(events.map((event) => event.type)).toEqual(['start', 'pause', 'stop'])
+  })
+
+  it('rejects finished -> active and finished -> paused', async () => {
+    const session = await startedSession()
     await stopGrazingSessionRecord({ sessionId: session.id, position: null })
 
     await expect(
-      resumeGrazingSessionRecord({ sessionId: session.id, position: null }),
-    ).rejects.toBeInstanceOf(SessionNotRecordingError)
+      resumeGrazingSessionRecord({ sessionId: session.id, position: null })
+    ).rejects.toBeInstanceOf(InvalidSessionTransitionError)
+    await expect(
+      pauseGrazingSessionRecord({ sessionId: session.id, position: null })
+    ).rejects.toBeInstanceOf(InvalidSessionTransitionError)
 
     expect((await db.sessions.get(session.id))?.status).toBe('finished')
+    const events = await listSessionEvents(session.id)
+    expect(events.filter((event) => event.type === 'resume')).toHaveLength(0)
+    expect(events.filter((event) => event.type === 'pause')).toHaveLength(0)
+  })
+
+  it('rolls back the status change when lifecycle event persistence fails', async () => {
+    const session = await startedSession()
+    vi.spyOn(db.events, 'add').mockRejectedValueOnce(new Error('event write failed'))
+
+    await expect(
+      pauseGrazingSessionRecord({ sessionId: session.id, position: null })
+    ).rejects.toThrow('event write failed')
+
+    expect((await db.sessions.get(session.id))?.status).toBe('active')
+    expect((await listSessionEvents(session.id)).filter((event) => event.type === 'pause')).toHaveLength(0)
   })
 })

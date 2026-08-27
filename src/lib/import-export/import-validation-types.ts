@@ -1,6 +1,7 @@
 import type {
   Animal,
   AppSettings,
+  CareMonitoringCheck,
   ConservationPlan,
   Enclosure,
   EnclosureAssignment,
@@ -18,6 +19,7 @@ export const importPayloadKeys = [
   'animals',
   'enclosures',
   'conservationPlans',
+  'careMonitoringChecks',
   'surveyAreas',
   'enclosureAssignments',
   'grazingSessions',
@@ -49,6 +51,7 @@ export type PreparedImportPayload = {
     animals: number
     enclosures: number
     conservationPlans: number
+    careMonitoringChecks: number
     surveyAreas: number
     enclosureAssignments: number
     grazingSessions: number
@@ -63,6 +66,7 @@ export type PreparedImportPayload = {
     animals: Animal[]
     enclosures: Enclosure[]
     conservationPlans: ConservationPlan[]
+    careMonitoringChecks: CareMonitoringCheck[]
     surveyAreas: SurveyArea[]
     enclosureAssignments: EnclosureAssignment[]
     grazingSessions: GrazingSession[]
@@ -77,6 +81,9 @@ export type PreparedImportPayload = {
 export type ExistingImportRefs = {
   animalEarTags: Map<string, string>
   conservationPlanByEnclosureId: Map<string, string>
+  conservationPlanEnclosureById: Map<string, string>
+  careMonitoringChecksById: Map<string, CareMonitoringCheck>
+  historicalCheckPlanIds: Set<string>
   enclosureIds: Set<string>
   herdIds: Set<string>
   sessionIds: Set<string>

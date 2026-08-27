@@ -49,6 +49,7 @@ describe('app export → import round-trip', () => {
     expect(prepared.payload.animals).toEqual(dataset.animals)
     expect(prepared.payload.enclosures).toEqual(dataset.enclosures)
     expect(prepared.payload.conservationPlans).toEqual(dataset.conservationPlans)
+    expect(prepared.payload.careMonitoringChecks).toEqual(dataset.careMonitoringChecks)
     expect(prepared.payload.surveyAreas).toEqual(dataset.surveyAreas)
     expect(prepared.payload.enclosureAssignments).toEqual(dataset.enclosureAssignments)
     expect(prepared.payload.grazingSessions).toEqual(dataset.sessions)
@@ -70,6 +71,7 @@ describe('app export → import round-trip', () => {
       animals: dataset.animals.length,
       enclosures: dataset.enclosures.length,
       conservationPlans: dataset.conservationPlans.length,
+      careMonitoringChecks: dataset.careMonitoringChecks.length,
       surveyAreas: dataset.surveyAreas.length,
       enclosureAssignments: dataset.enclosureAssignments.length,
       grazingSessions: dataset.sessions.length,
@@ -84,13 +86,27 @@ describe('app export → import round-trip', () => {
   it('still treats pre-care full exports as complete and clears new care plans on replace', () => {
     const payload = exportThenParse()
     delete payload.conservationPlans
+    delete payload.careMonitoringChecks
     const meta = metaFor(payload)
 
     expect(meta.isCompleteAppData).toBe(true)
 
     const prepared = prepareImportPayload(payload, meta, true, emptyExistingRefs())
     expect(prepared.payload.conservationPlans).toEqual([])
+    expect(prepared.payload.careMonitoringChecks).toEqual([])
     expect(prepared.clearKeys).toContain('conservationPlans')
+    expect(prepared.clearKeys).toContain('careMonitoringChecks')
+  })
+
+  it('imports older backups that contain plans but no monitoring checks', () => {
+    const payload = exportThenParse()
+    delete payload.careMonitoringChecks
+    const meta = metaFor(payload)
+
+    expect(meta.isCompleteAppData).toBe(true)
+    const prepared = prepareImportPayload(payload, meta, true, emptyExistingRefs())
+    expect(prepared.payload.conservationPlans).toHaveLength(1)
+    expect(prepared.payload.careMonitoringChecks).toEqual([])
   })
 
   it('clears every table when replacing from a complete app export', () => {
@@ -196,6 +212,62 @@ describe('app export → import round-trip', () => {
       updatedAt: '2026-06-01T08:00:00.000Z',
     })
   })
+
+  it('accepts legacy conservation plans with targetUsePercent and goals and migrates them', () => {
+    const payload: ImportPayload = {
+      conservationPlans: [
+        {
+          id: 'cp_legacy_import',
+          enclosureId: 'enclosure_draw',
+          habitatType: 'semi_dry_grassland',
+          goals: ['use_grass_herbs', 'reduce_thatch', 'avoid_nutrients'],
+          targetUsePercent: 50,
+          protectedPlants: [{ name: 'Arnika' }],
+          notes: 'Altes Format',
+          createdAt: '2026-06-01T08:00:00.000Z',
+          updatedAt: '2026-06-01T08:00:00.000Z',
+        },
+      ],
+    }
+    const presentKeys = getPresentImportPayloadKeys(payload)
+    const existingRefs = emptyExistingRefs()
+    existingRefs.enclosureIds.add('enclosure_draw')
+
+    const prepared = prepareImportPayload(
+      payload,
+      { kind: 'app-data-json', presentKeys, isCompleteAppData: false },
+      false,
+      existingRefs,
+    )
+
+    expect(prepared.payload.conservationPlans[0]).toEqual({
+      id: 'cp_legacy_import',
+      enclosureId: 'enclosure_draw',
+      habitatType: 'semi_dry_grassland',
+      vegetationUse: {
+        targetPercent: 50,
+        protectedPlants: ['Arnika'],
+        manualRemovalPlants: [],
+      },
+      litterReduction: {
+        enabled: true,
+      },
+      scrubReduction: {
+        targetPercent: null,
+        protectedWoodyPlants: [],
+        manualRemovalWoodyPlants: [],
+      },
+      openSoil: {
+        mode: 'not_desired',
+      },
+      nutrientInput: {
+        mode: 'avoid',
+      },
+      notes: 'Altes Format',
+      createdAt: '2026-06-01T08:00:00.000Z',
+      updatedAt: '2026-06-01T08:00:00.000Z',
+    })
+  })
 })
 
 describe('import validation rejects corrupted payloads', () => {
@@ -234,6 +306,43 @@ describe('import validation rejects corrupted payloads', () => {
         'ghost_enclosure'
     })
     expect(run).toThrow(/conservationPlans: enclosureId "ghost_enclosure" fehlt/)
+  })
+
+  it('rejects a monitoring check that points at a missing enclosure', () => {
+    const run = prepareCorrupted((payload) => {
+      ;(payload.careMonitoringChecks as Array<{ enclosureId: string }>)[0].enclosureId =
+        'ghost_enclosure'
+    })
+    expect(run).toThrow(/careMonitoringChecks: enclosureId "ghost_enclosure" fehlt/)
+  })
+
+  it('rejects a monitoring check that points at a missing ConservationPlan', () => {
+    const run = prepareCorrupted((payload) => {
+      ;(
+        payload.careMonitoringChecks as Array<{ conservationPlanId: string }>
+      )[0].conservationPlanId = 'ghost_plan'
+    })
+    expect(run).toThrow(/careMonitoringChecks: conservationPlanId "ghost_plan" fehlt/)
+  })
+
+  it('accepts a monitoring check without a grazingSessionId', () => {
+    const payload = exportThenParse()
+    ;(
+      payload.careMonitoringChecks as Array<{ grazingSessionId?: string | null }>
+    )[0].grazingSessionId = null
+
+    expect(() =>
+      prepareImportPayload(payload, metaFor(payload), false, emptyExistingRefs()),
+    ).not.toThrow()
+  })
+
+  it('rejects a monitoring check that points at a missing grazing session', () => {
+    const run = prepareCorrupted((payload) => {
+      ;(
+        payload.careMonitoringChecks as Array<{ grazingSessionId?: string | null }>
+      )[0].grazingSessionId = 'ghost_session'
+    })
+    expect(run).toThrow(/careMonitoringChecks: grazingSessionId "ghost_session" fehlt/)
   })
 
   it('rejects an enclosure assignment that points at a missing enclosure', () => {

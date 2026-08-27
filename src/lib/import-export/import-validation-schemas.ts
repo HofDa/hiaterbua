@@ -15,4 +15,7 @@ export {
 } from '@/lib/import-export/import-validation-session-schemas'
 export { settingsRecordSchema } from '@/lib/import-export/import-validation-settings-schema'
 
-export { conservationPlanSchema } from '@/lib/import-export/import-validation-care-schemas'
+export {
+  careMonitoringCheckSchema,
+  conservationPlanSchema,
+} from '@/lib/import-export/import-validation-care-schemas'

@@ -1,5 +1,9 @@
 import Dexie from 'dexie'
 import { assertUpdated } from '@/lib/db/assert-updated'
+import {
+  assertGrazingSessionTransition,
+  OpenGrazingSessionExistsError,
+} from '@/lib/domain/grazing-session-rules'
 import { db } from '@/lib/db/dexie'
 import {
   buildSessionMetrics,
@@ -238,6 +242,15 @@ export async function createGrazingSessionRecord(params: {
   }
 
   await db.transaction('rw', db.sessions, db.events, async () => {
+    const existingOpenSession = await db.sessions
+      .where('status')
+      .anyOf('active', 'paused')
+      .first()
+
+    if (existingOpenSession) {
+      throw new OpenGrazingSessionExistsError(existingOpenSession.id)
+    }
+
     await db.sessions.add(session)
     await logSessionEvent(session.id, 'start', position)
   })
@@ -260,14 +273,15 @@ export async function updateGrazingSessionAnimalCountRecord(params: {
 }
 
 /**
- * Loads a session for a lifecycle transition and decides whether it still needs
- * to run. Returns `null` when the session is already in the target state, so a
- * repeated pause or a double-tapped stop is an idempotent no-op instead of a
- * second pause/stop event on the timeline.
+ * Loads and validates a session for a lifecycle transition. Lifecycle commands
+ * are strict except for repeated stop: only stop is intentionally idempotent.
+ * Keeping the guard in the repository means UI state can never be the sole
+ * authority for a persisted status change.
  */
 async function loadSessionForTransition(
   sessionId: string,
-  targetStatus: SessionStatus
+  targetStatus: SessionStatus,
+  options: { allowAlreadyFinished?: boolean } = {}
 ): Promise<GrazingSession | null> {
   const session = await db.sessions.get(sessionId)
 
@@ -275,17 +289,33 @@ async function loadSessionForTransition(
     throw new Error(SESSION_NOT_FOUND_MESSAGE)
   }
 
-  if (session.status === targetStatus) {
+  if (
+    options.allowAlreadyFinished &&
+    session.status === 'finished' &&
+    targetStatus === 'finished'
+  ) {
     return null
   }
 
-  // A finished session is terminal; reopening it would leave `endTime` pointing
-  // at a stop that is no longer the last one.
-  if (session.status === 'finished') {
-    throw new SessionNotRecordingError(sessionId, session.status)
-  }
+  assertGrazingSessionTransition({
+    sessionId,
+    from: session.status,
+    to: targetStatus,
+  })
 
   return session
+}
+
+async function assertNoOtherOpenGrazingSession(sessionId: string) {
+  const openSessions = await db.sessions
+    .where('status')
+    .anyOf('active', 'paused')
+    .toArray()
+  const conflictingSession = openSessions.find((session) => session.id !== sessionId)
+
+  if (conflictingSession) {
+    throw new OpenGrazingSessionExistsError(conflictingSession.id)
+  }
 }
 
 /**
@@ -345,6 +375,8 @@ export async function resumeGrazingSessionRecord(params: {
     const session = await loadSessionForTransition(sessionId, 'active')
     if (!session) return
 
+    await assertNoOtherOpenGrazingSession(sessionId)
+
     const updatedCount = await db.sessions.update(sessionId, {
       status: 'active',
       updatedAt: timestamp,
@@ -365,7 +397,9 @@ export async function stopGrazingSessionRecord(params: {
   const endTime = nowIso()
 
   await db.transaction('rw', db.sessions, db.trackpoints, db.events, async () => {
-    const session = await loadSessionForTransition(sessionId, 'finished')
+    const session = await loadSessionForTransition(sessionId, 'finished', {
+      allowAlreadyFinished: true,
+    })
     if (!session) return
 
     const metrics = await buildPersistedSessionMetrics(session, endTime)
@@ -466,7 +500,16 @@ export async function saveEditedGrazingSessionRecord(params: {
 }
 
 export async function deleteGrazingSessionRecord(sessionId: string) {
-  await db.transaction('rw', [db.sessions, db.trackpoints, db.events], async () => {
+  await db.transaction('rw', [db.sessions, db.trackpoints, db.events, db.careMonitoringChecks], async () => {
+    const historicalCheck = await db.careMonitoringChecks
+      .where('grazingSessionId')
+      .equals(sessionId)
+      .first()
+
+    if (historicalCheck) {
+      throw new Error('Weidegang ist mit einem gespeicherten Pflegecheck verknüpft und kann nicht gelöscht werden.')
+    }
+
     await db.trackpoints.where('sessionId').equals(sessionId).delete()
     await db.events.where('sessionId').equals(sessionId).delete()
     await db.sessions.delete(sessionId)

@@ -8,6 +8,7 @@ import { APP_TITLE } from '@/lib/app-metadata'
 import { getOrCreateLocalDeviceId } from '@/lib/sync/local-metadata'
 import type {
   Animal,
+  CareMonitoringCheck,
   ConservationPlan,
   Enclosure,
   EnclosureAssignment,
@@ -26,6 +27,7 @@ type BuildAppExportArtifactsOptions = {
   animals: Animal[]
   enclosures: Enclosure[]
   conservationPlans: ConservationPlan[]
+  careMonitoringChecks: CareMonitoringCheck[]
   surveyAreas: SurveyArea[]
   enclosureAssignments: EnclosureAssignment[]
   sessions: GrazingSession[]
@@ -55,6 +57,7 @@ export function buildAppExportArtifacts({
   animals,
   enclosures,
   conservationPlans,
+  careMonitoringChecks,
   surveyAreas,
   enclosureAssignments,
   sessions,
@@ -241,6 +244,7 @@ export function buildAppExportArtifacts({
     animals,
     enclosures,
     conservationPlans,
+    careMonitoringChecks,
     surveyAreas,
     enclosureAssignments,
     grazingSessions: sessions,

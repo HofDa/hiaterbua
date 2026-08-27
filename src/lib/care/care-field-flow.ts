@@ -1,26 +1,31 @@
-import type { CareGoalId } from './care-guide'
-
 export type CareFieldQuestionId =
   | 'use'
   | 'traffic'
   | 'nutrients'
+  | 'litter'
   | 'scrub'
   | 'protected_plants'
 
 export function getCareFieldQuestionIds({
-  goals,
-  protectedPlantCount,
+  hasScrubReductionTarget,
+  hasProtectedPlants,
+  hasLitterReductionTarget,
 }: {
-  goals: readonly CareGoalId[]
-  protectedPlantCount: number
+  hasScrubReductionTarget: boolean
+  hasProtectedPlants: boolean
+  hasLitterReductionTarget?: boolean
 }): CareFieldQuestionId[] {
   const questions: CareFieldQuestionId[] = ['use', 'traffic', 'nutrients']
 
-  if (goals.includes('reduce_scrub')) {
+  if (hasLitterReductionTarget) {
+    questions.push('litter')
+  }
+
+  if (hasScrubReductionTarget) {
     questions.push('scrub')
   }
 
-  if (goals.includes('protect_plants') || protectedPlantCount > 0) {
+  if (hasProtectedPlants) {
     questions.push('protected_plants')
   }
 

@@ -1,4 +1,8 @@
 import JSZip from 'jszip'
+import {
+  areCareMonitoringChecksHistoricallyEqual,
+  validateCanonicalCareMonitoringCheck,
+} from '@/lib/care/care-monitoring-integrity'
 import { db } from '@/lib/db/dexie'
 import { buildSurveyAreasFromGeoJson } from '@/lib/import-export/file-formats'
 import {
@@ -13,6 +17,16 @@ import {
   type ImportSourceKind,
   type PreparedImportPayload,
 } from '@/lib/import-export/import-validation'
+import {
+  buildLocalChangeMetadata,
+  getRecordChangeTimestamp,
+} from '@/lib/sync/local-metadata'
+import type {
+  CareMonitoringCheck,
+  ConservationPlan,
+  Enclosure,
+  GrazingSession,
+} from '@/types/domain'
 
 export type ImportPreview = {
   sourceLabel: string
@@ -61,25 +75,32 @@ function buildImportPreviewResult(
 }
 
 async function getExistingImportRefs(): Promise<ExistingImportRefs> {
-  const [animals, conservationPlans, herdIds, enclosureIds, sessionIds, workSessionIds] = await Promise.all([
+  const [animals, conservationPlans, enclosures, sessions, monitoringChecks, herdIds, workSessionIds] = await Promise.all([
     db.animals.toArray(),
     db.conservationPlans.toArray(),
+    db.enclosures.toArray(),
+    db.sessions.toArray(),
+    db.careMonitoringChecks.toArray(),
     db.herds.toCollection().primaryKeys(),
-    db.enclosures.toCollection().primaryKeys(),
-    db.sessions.toCollection().primaryKeys(),
     db.workSessions.toCollection().primaryKeys(),
   ])
+  const activePlans = conservationPlans.filter((plan) => !plan.deletedAt)
 
   return {
     animalEarTags: new Map(
       animals.map((animal) => [animal.earTag.trim().toLowerCase(), animal.id])
     ),
     conservationPlanByEnclosureId: new Map(
-      conservationPlans.map((plan) => [plan.enclosureId, plan.id]),
+      activePlans.map((plan) => [plan.enclosureId, plan.id]),
     ),
-    enclosureIds: new Set(enclosureIds.map((id) => String(id))),
+    conservationPlanEnclosureById: new Map(
+      activePlans.map((plan) => [plan.id, plan.enclosureId]),
+    ),
+    careMonitoringChecksById: new Map(monitoringChecks.map((check) => [check.id, check])),
+    historicalCheckPlanIds: new Set(monitoringChecks.map((check) => check.conservationPlanId)),
+    enclosureIds: new Set(enclosures.filter((record) => !record.deletedAt).map((record) => record.id)),
     herdIds: new Set(herdIds.map((id) => String(id))),
-    sessionIds: new Set(sessionIds.map((id) => String(id))),
+    sessionIds: new Set(sessions.filter((record) => !record.deletedAt).map((record) => record.id)),
     workSessionIds: new Set(workSessionIds.map((id) => String(id))),
   }
 }
@@ -185,6 +206,55 @@ export async function prepareDbImportFromPreview(
   )
 }
 
+function normalizeImportedMonitoringMetadata(check: CareMonitoringCheck): CareMonitoringCheck {
+  const timestamp = getRecordChangeTimestamp(check as unknown as Record<string, unknown>)
+  const fallback = buildLocalChangeMetadata(timestamp)
+  return {
+    ...check,
+    deviceId: check.deviceId?.trim() || fallback.deviceId,
+    syncStatus: check.syncStatus ?? fallback.syncStatus,
+    lastLocalChangeAt: check.lastLocalChangeAt?.trim() || fallback.lastLocalChangeAt,
+    deletedAt: check.deletedAt ?? null,
+  }
+}
+
+function overlayById<T extends { id: string }>(current: T[], imported: T[], clear: boolean) {
+  const result = new Map<string, T>(clear ? [] : current.map((record) => [record.id, record]))
+  imported.forEach((record) => result.set(record.id, record))
+  return result
+}
+
+function assertMonitoringReferences(
+  checks: Iterable<CareMonitoringCheck>,
+  enclosures: Map<string, Enclosure>,
+  plans: Map<string, ConservationPlan>,
+  sessions: Map<string, GrazingSession>,
+) {
+  for (const check of checks) {
+    const canonicalIssue = validateCanonicalCareMonitoringCheck(check)
+    if (canonicalIssue) {
+      throw new Error(`Pflegecheck "${check.id}" ist ungültig: ${canonicalIssue}.`)
+    }
+    const enclosure = enclosures.get(check.enclosureId)
+    if (!enclosure || enclosure.deletedAt) {
+      throw new Error(`Pflegecheck "${check.id}" verweist auf einen fehlenden oder gelöschten Pferch.`)
+    }
+    const plan = plans.get(check.conservationPlanId)
+    if (!plan || plan.deletedAt) {
+      throw new Error(`Pflegecheck "${check.id}" verweist auf einen fehlenden oder gelöschten Pflegeplan.`)
+    }
+    if (plan.enclosureId !== check.enclosureId) {
+      throw new Error(`Pflegecheck "${check.id}" und Pflegeplan gehören nicht zum selben Pferch.`)
+    }
+    if (check.grazingSessionId) {
+      const session = sessions.get(check.grazingSessionId)
+      if (!session || session.deletedAt) {
+        throw new Error(`Pflegecheck "${check.id}" verweist auf einen fehlenden oder gelöschten Weidegang.`)
+      }
+    }
+  }
+}
+
 export async function importPayloadIntoDb(preparedImport: PreparedImportPayload) {
   const { clearKeys, counts, payload } = preparedImport
   await db.transaction(
@@ -194,6 +264,7 @@ export async function importPayloadIntoDb(preparedImport: PreparedImportPayload)
       db.animals,
       db.enclosures,
       db.conservationPlans,
+      db.careMonitoringChecks,
       db.surveyAreas,
       db.enclosureAssignments,
       db.sessions,
@@ -204,6 +275,74 @@ export async function importPayloadIntoDb(preparedImport: PreparedImportPayload)
       db.settings,
     ],
     async () => {
+      const clearing = new Set(clearKeys)
+      const [currentEnclosures, currentPlans, currentSessions, currentChecks] = await Promise.all([
+        db.enclosures.toArray(),
+        db.conservationPlans.toArray(),
+        db.sessions.toArray(),
+        db.careMonitoringChecks.toArray(),
+      ])
+      const importedChecks = payload.careMonitoringChecks.map(normalizeImportedMonitoringMetadata)
+      const currentChecksById = new Map(currentChecks.map((check) => [check.id, check]))
+      const newChecks: CareMonitoringCheck[] = []
+
+      for (const check of importedChecks) {
+        const canonicalIssue = validateCanonicalCareMonitoringCheck(check)
+        if (canonicalIssue) {
+          throw new Error(`Pflegecheck "${check.id}" ist ungültig: ${canonicalIssue}.`)
+        }
+        const existing = clearing.has('careMonitoringChecks')
+          ? undefined
+          : currentChecksById.get(check.id)
+        if (existing) {
+          if (!areCareMonitoringChecksHistoricallyEqual(existing, check)) {
+            throw new Error(`Pflegecheck "${check.id}" kollidiert mit abweichender Monitoringhistorie.`)
+          }
+          continue
+        }
+        newChecks.push(check)
+      }
+
+      if (!clearing.has('conservationPlans') && !clearing.has('careMonitoringChecks')) {
+        const existingPlansById = new Map(currentPlans.map((plan) => [plan.id, plan]))
+        const referencedPlanIds = new Set(currentChecks.map((check) => check.conservationPlanId))
+        for (const plan of payload.conservationPlans) {
+          const existing = existingPlansById.get(plan.id)
+          if (existing && existing.enclosureId !== plan.enclosureId && referencedPlanIds.has(plan.id)) {
+            throw new Error(
+              `Pflegeplan "${plan.id}" kann wegen vorhandener Monitoringhistorie nicht einem anderen Pferch zugeordnet werden.`,
+            )
+          }
+        }
+      }
+
+      const finalEnclosures = overlayById(
+        currentEnclosures,
+        payload.enclosures,
+        clearing.has('enclosures'),
+      )
+      const finalPlans = overlayById(
+        currentPlans,
+        payload.conservationPlans,
+        clearing.has('conservationPlans'),
+      )
+      const finalSessions = overlayById(
+        currentSessions,
+        payload.grazingSessions,
+        clearing.has('grazingSessions'),
+      )
+      const finalChecks = overlayById(
+        currentChecks,
+        clearing.has('careMonitoringChecks') ? importedChecks : newChecks,
+        clearing.has('careMonitoringChecks'),
+      )
+      assertMonitoringReferences(
+        finalChecks.values(),
+        finalEnclosures,
+        finalPlans,
+        finalSessions,
+      )
+
       if (clearKeys.length > 0) {
         const clearTableByKey = {
           workEvents: () => db.workEvents.clear(),
@@ -216,6 +355,7 @@ export async function importPayloadIntoDb(preparedImport: PreparedImportPayload)
           animals: () => db.animals.clear(),
           enclosures: () => db.enclosures.clear(),
           conservationPlans: () => db.conservationPlans.clear(),
+          careMonitoringChecks: () => db.careMonitoringChecks.clear(),
           herds: () => db.herds.clear(),
           settings: () => db.settings.clear(),
         } satisfies Record<keyof typeof counts, () => Promise<void>>
@@ -230,6 +370,10 @@ export async function importPayloadIntoDb(preparedImport: PreparedImportPayload)
       if (payload.enclosures.length > 0) await db.enclosures.bulkPut(payload.enclosures)
       if (payload.conservationPlans.length > 0) {
         await db.conservationPlans.bulkPut(payload.conservationPlans)
+      }
+      const checksToWrite = clearing.has('careMonitoringChecks') ? importedChecks : newChecks
+      if (checksToWrite.length > 0) {
+        await db.careMonitoringChecks.bulkAdd(checksToWrite)
       }
       if (payload.surveyAreas.length > 0) await db.surveyAreas.bulkPut(payload.surveyAreas)
       if (payload.enclosureAssignments.length > 0) {

@@ -5,44 +5,48 @@ describe('getCareFieldQuestionIds', () => {
   it('keeps the routine field check to the three core observations by default', () => {
     expect(
       getCareFieldQuestionIds({
-        goals: ['use_grass_herbs', 'keep_structure'],
-        protectedPlantCount: 0,
+        hasScrubReductionTarget: false,
+        hasProtectedPlants: false,
       }),
     ).toEqual(['use', 'traffic', 'nutrients'])
   })
 
-  it('adds shrub browsing only when it matters for the care plan', () => {
+  it('adds shrub browsing only when scrub reduction target is set', () => {
     expect(
       getCareFieldQuestionIds({
-        goals: ['reduce_scrub'],
-        protectedPlantCount: 0,
+        hasScrubReductionTarget: true,
+        hasProtectedPlants: false,
       }),
     ).toContain('scrub')
   })
 
-  it('adds the protected-plant question for a goal or an entered target plant', () => {
+  it('adds litter question only when litter reduction target is set', () => {
     expect(
       getCareFieldQuestionIds({
-        goals: ['protect_plants'],
-        protectedPlantCount: 0,
+        hasScrubReductionTarget: false,
+        hasProtectedPlants: false,
+        hasLitterReductionTarget: true,
       }),
-    ).toContain('protected_plants')
+    ).toContain('litter')
+  })
 
+  it('adds the protected-plant question when protected plants exist', () => {
     expect(
       getCareFieldQuestionIds({
-        goals: ['use_grass_herbs'],
-        protectedPlantCount: 1,
+        hasScrubReductionTarget: false,
+        hasProtectedPlants: true,
       }),
     ).toContain('protected_plants')
   })
 
-  it('never exceeds five observations', () => {
+  it('includes all relevant observations when all targets are enabled', () => {
     const questions = getCareFieldQuestionIds({
-      goals: ['use_grass_herbs', 'reduce_scrub', 'protect_plants', 'avoid_nutrients'],
-      protectedPlantCount: 3,
+      hasScrubReductionTarget: true,
+      hasProtectedPlants: true,
+      hasLitterReductionTarget: true,
     })
 
-    expect(questions).toHaveLength(5)
+    expect(questions).toHaveLength(6)
     expect(new Set(questions).size).toBe(questions.length)
   })
 })

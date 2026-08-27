@@ -1,6 +1,6 @@
-import type { CareGoalId, HabitatType } from '@/types/domain'
+import type { HabitatType, NutrientInputMode, OpenSoilMode, TargetPercent } from '@/types/domain'
 
-export type { CareGoalId, HabitatType } from '@/types/domain'
+export type { HabitatType, NutrientInputMode, OpenSoilMode, TargetPercent } from '@/types/domain'
 
 export const habitatOptions: { id: HabitatType; label: string; hint: string }[] = [
   {
@@ -40,41 +40,31 @@ export const habitatOptions: { id: HabitatType; label: string; hint: string }[] 
   },
 ]
 
-export const careGoalOptions: { id: CareGoalId; label: string; hint: string }[] = [
+export const targetPercentOptions: TargetPercent[] = [25, 50, 75, 100]
+
+export const openSoilOptions: { id: OpenSoilMode; label: string; hint: string }[] = [
   {
-    id: 'use_grass_herbs',
-    label: 'Gräser und Kräuter abfressen',
-    hint: 'Die niedrige Vegetation soll deutlich genutzt werden.',
+    id: 'not_desired',
+    label: 'Nicht erwünscht',
+    hint: 'Geschlossene Grasnarbe ohne offene Stellen erhalten.',
   },
   {
-    id: 'reduce_thatch',
-    label: 'Altes, verfilztes Gras reduzieren',
-    hint: 'Dichte abgestorbene oder überständige Pflanzen sollen weniger werden.',
+    id: 'punctual_desired',
+    label: 'Punktuell erwünscht',
+    hint: 'Kleine offene Bodenstellen als Keimbett für Zielarten zulassen.',
+  },
+]
+
+export const nutrientInputOptions: { id: NutrientInputMode; label: string; hint: string }[] = [
+  {
+    id: 'avoid',
+    label: 'Vermeiden',
+    hint: 'Nährstoffansammlung an Lieblingsplätzen verhindern (empfohlen bei Magerstandorten).',
   },
   {
-    id: 'reduce_scrub',
-    label: 'Junge Sträucher und Bäume zurückdrängen',
-    hint: 'Triebe und Schösslinge sollen gefressen oder geschädigt werden.',
-  },
-  {
-    id: 'keep_structure',
-    label: 'Abwechslung erhalten',
-    hint: 'Hohe, niedrige und offene Stellen sollen nebeneinander bleiben.',
-  },
-  {
-    id: 'create_open_soil',
-    label: 'Kleine offene Bodenstellen schaffen',
-    hint: 'Punktuell darf Erde sichtbar werden; keine großen kahlen Flächen.',
-  },
-  {
-    id: 'protect_plants',
-    label: 'Bestimmte Pflanzen schonen',
-    hint: 'Zielarten oder sensible Bestände dürfen nicht deutlich geschädigt werden.',
-  },
-  {
-    id: 'avoid_nutrients',
-    label: 'Nährstoffansammlung vermeiden',
-    hint: 'Kot und Urin sollen sich nicht dauerhaft auf kleinen sensiblen Stellen sammeln.',
+    id: 'desired',
+    label: 'Toleriert / erwünscht',
+    hint: 'Nährstoffeintrag ist auf dieser Fläche unkritisch oder erwünscht.',
   },
 ]
 

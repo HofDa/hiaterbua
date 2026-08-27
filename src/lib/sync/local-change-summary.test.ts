@@ -2,6 +2,7 @@ import Dexie from 'dexie'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { db } from '@/lib/db/dexie'
 import { getLocalChangeSummary } from '@/lib/sync/local-change-summary'
+import { buildSampleDataset } from '@/lib/import-export/sample-dataset.fixture'
 import type { ConservationPlan } from '@/types/domain'
 
 const CHANGED_AT = '2026-08-27T10:00:00.000Z'
@@ -22,9 +23,25 @@ describe('local change summary', () => {
       id: 'conservation_plan_backup',
       enclosureId: 'enclosure_backup',
       habitatType: 'semi_dry_grassland',
-      goals: ['keep_structure'],
-      targetUsePercent: 75,
-      protectedPlants: [],
+      vegetationUse: {
+        targetPercent: 75,
+        protectedPlants: [],
+        manualRemovalPlants: [],
+      },
+      litterReduction: {
+        enabled: false,
+      },
+      scrubReduction: {
+        targetPercent: null,
+        protectedWoodyPlants: [],
+        manualRemovalWoodyPlants: [],
+      },
+      openSoil: {
+        mode: 'not_desired',
+      },
+      nutrientInput: {
+        mode: 'avoid',
+      },
       createdAt: CHANGED_AT,
       updatedAt: CHANGED_AT,
       deletedAt: null,
@@ -39,6 +56,17 @@ describe('local change summary', () => {
       recordCount: 1,
       dirtyCount: 1,
       latestLocalChangeAt: CHANGED_AT,
+    })
+  })
+
+  it('includes dirty monitoring checks in backup-change detection', async () => {
+    const [check] = buildSampleDataset().careMonitoringChecks
+    await db.careMonitoringChecks.add(check)
+
+    await expect(getLocalChangeSummary()).resolves.toEqual({
+      recordCount: 1,
+      dirtyCount: 1,
+      latestLocalChangeAt: check.lastLocalChangeAt,
     })
   })
 })

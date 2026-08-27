@@ -153,10 +153,13 @@ export async function updateEditedEnclosureRecord(params: {
 export async function deleteEnclosureRecord(enclosureId: string): Promise<void> {
   await db.transaction(
     'rw',
-    db.enclosures,
-    db.conservationPlans,
-    db.trackpoints,
-    db.enclosureAssignments,
+    [
+      db.enclosures,
+      db.conservationPlans,
+      db.careMonitoringChecks,
+      db.trackpoints,
+      db.enclosureAssignments,
+    ],
     async () => {
       const activeAssignment = await db.enclosureAssignments
         .where('enclosureId')
@@ -166,6 +169,15 @@ export async function deleteEnclosureRecord(enclosureId: string): Promise<void> 
 
       if (activeAssignment) {
         throw new Error('Pferch ist aktuell belegt. Belegung zuerst beenden.')
+      }
+
+      const historicalCheck = await db.careMonitoringChecks
+        .where('enclosureId')
+        .equals(enclosureId)
+        .first()
+
+      if (historicalCheck) {
+        throw new Error('Pferch hat gespeicherte Pflegechecks und kann nicht gelöscht werden.')
       }
 
       await db.trackpoints.where('enclosureWalkId').equals(enclosureId).delete()

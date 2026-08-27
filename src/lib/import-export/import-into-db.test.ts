@@ -61,6 +61,9 @@ describe('export → import → database round-trip', () => {
     expect(sortById(await db.conservationPlans.toArray())).toEqual(
       sortById(dataset.conservationPlans),
     )
+    expect(sortById(await db.careMonitoringChecks.toArray())).toEqual(
+      sortById(dataset.careMonitoringChecks),
+    )
     expect(sortById(await db.surveyAreas.toArray())).toEqual(sortById(dataset.surveyAreas))
     expect(sortById(await db.enclosureAssignments.toArray())).toEqual(
       sortById(dataset.enclosureAssignments),
@@ -132,6 +135,7 @@ describe('export → import → database round-trip', () => {
           animals: 1,
           enclosures: 0,
           conservationPlans: 0,
+          careMonitoringChecks: 0,
           surveyAreas: 0,
           enclosureAssignments: 0,
           grazingSessions: 0,

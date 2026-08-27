@@ -3,6 +3,7 @@ import type {
   Animal,
   EnclosureAssignment,
 } from '@/types/domain'
+import { areCareMonitoringChecksHistoricallyEqual } from '@/lib/care/care-monitoring-integrity'
 import {
   importPayloadKeys,
   type ExistingImportRefs,
@@ -111,10 +112,19 @@ export function validateReferences(
   const availableConservationPlans = clearing.has('conservationPlans')
     ? new Map<string, string>()
     : new Map(existingRefs.conservationPlanByEnclosureId)
+  const availableConservationPlanEnclosures = clearing.has('conservationPlans')
+    ? new Map<string, string>()
+    : new Map(existingRefs.conservationPlanEnclosureById)
 
   payload.herds.forEach((herd) => availableHerdIds.add(herd.id))
-  payload.enclosures.forEach((enclosure) => availableEnclosureIds.add(enclosure.id))
-  payload.grazingSessions.forEach((session) => availableSessionIds.add(session.id))
+  payload.enclosures.forEach((enclosure) => {
+    availableEnclosureIds.delete(enclosure.id)
+    if (!enclosure.deletedAt) availableEnclosureIds.add(enclosure.id)
+  })
+  payload.grazingSessions.forEach((session) => {
+    availableSessionIds.delete(session.id)
+    if (!session.deletedAt) availableSessionIds.add(session.id)
+  })
   payload.workSessions.forEach((session) => availableWorkSessionIds.add(session.id))
 
   payload.animals.forEach((animal) => {
@@ -156,6 +166,10 @@ export function validateReferences(
   })
 
   payload.conservationPlans.forEach((plan) => {
+    const previousEnclosureId = availableConservationPlanEnclosures.get(plan.id)
+    if (previousEnclosureId) availableConservationPlans.delete(previousEnclosureId)
+    availableConservationPlanEnclosures.delete(plan.id)
+
     if (!availableEnclosureIds.has(plan.enclosureId)) {
       issues.push(
         `conservationPlans: enclosureId "${plan.enclosureId}" fehlt für Pflegeplan "${plan.id}".`
@@ -168,7 +182,55 @@ export function validateReferences(
         `conservationPlans: Pferch "${plan.enclosureId}" hat bereits Pflegeplan "${existingPlanId}".`,
       )
     }
-    availableConservationPlans.set(plan.enclosureId, plan.id)
+    if (!plan.deletedAt) {
+      availableConservationPlans.set(plan.enclosureId, plan.id)
+      availableConservationPlanEnclosures.set(plan.id, plan.enclosureId)
+    }
+
+    const existingEnclosureId = existingRefs.conservationPlanEnclosureById.get(plan.id)
+    if (
+      !clearing.has('careMonitoringChecks') &&
+      existingEnclosureId &&
+      existingEnclosureId !== plan.enclosureId &&
+      existingRefs.historicalCheckPlanIds.has(plan.id)
+    ) {
+      issues.push(
+        `conservationPlans: Pflegeplan "${plan.id}" kann wegen vorhandener Monitoringhistorie nicht einem anderen Pferch zugeordnet werden.`,
+      )
+    }
+  })
+
+  payload.careMonitoringChecks.forEach((check) => {
+    const existingCheck = clearing.has('careMonitoringChecks')
+      ? undefined
+      : existingRefs.careMonitoringChecksById.get(check.id)
+    if (existingCheck && !areCareMonitoringChecksHistoricallyEqual(existingCheck, check)) {
+      issues.push(
+        `careMonitoringChecks: Pflegecheck "${check.id}" kollidiert mit abweichender Monitoringhistorie.`,
+      )
+    }
+    if (!availableEnclosureIds.has(check.enclosureId)) {
+      issues.push(
+        `careMonitoringChecks: enclosureId "${check.enclosureId}" fehlt für Pflegecheck "${check.id}".`,
+      )
+    }
+
+    const planEnclosureId = availableConservationPlanEnclosures.get(check.conservationPlanId)
+    if (!planEnclosureId) {
+      issues.push(
+        `careMonitoringChecks: conservationPlanId "${check.conservationPlanId}" fehlt für Pflegecheck "${check.id}".`,
+      )
+    } else if (planEnclosureId !== check.enclosureId) {
+      issues.push(
+        `careMonitoringChecks: Pflegeplan "${check.conservationPlanId}" gehört nicht zu Pferch "${check.enclosureId}".`,
+      )
+    }
+
+    if (check.grazingSessionId && !availableSessionIds.has(check.grazingSessionId)) {
+      issues.push(
+        `careMonitoringChecks: grazingSessionId "${check.grazingSessionId}" fehlt für Pflegecheck "${check.id}".`,
+      )
+    }
   })
 
   payload.enclosureAssignments.forEach((assignment: EnclosureAssignment) => {

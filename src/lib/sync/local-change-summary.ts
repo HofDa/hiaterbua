@@ -6,6 +6,7 @@ const LOCAL_DATA_TABLES = [
   'animals',
   'enclosures',
   'conservationPlans',
+  'careMonitoringChecks',
   'surveyAreas',
   'enclosureAssignments',
   'sessions',
@@ -49,4 +50,3 @@ export function hasLocalChangesSinceBackup(
   if (!lastExportAt) return true
   return new Date(latestLocalChangeAt).getTime() > new Date(lastExportAt).getTime()
 }
-

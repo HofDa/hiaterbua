@@ -53,6 +53,30 @@ export type MapBaseLayer = 'south-tyrol-basemap' | 'south-tyrol-orthophoto-2023'
 
 export type SyncStatus = 'dirty' | 'synced' | 'syncing' | 'error'
 
+export type CareTraffic = 'low' | 'spotty' | 'strong'
+export type CareOpenSoil = 'none' | 'punctual' | 'too_much'
+export type CareUse = 'too_low' | 'fits' | 'too_high'
+export type CareScrub = 'too_low' | 'fits' | 'too_high' | 'not_checked'
+export type CareLitter = 'insufficient' | 'fits' | 'not_checked'
+export type CareNutrients = 'none' | 'localized' | 'strong'
+export type ProtectedPlantImpact = 'none' | 'uncertain' | 'unsure' | 'damaged'
+export type CareStatus = 'green' | 'yellow' | 'red'
+
+export type EcologicalObjective =
+  | 'vegetationUse'
+  | 'litterReduction'
+  | 'scrubReduction'
+  | 'openSoil'
+  | 'nutrientInput'
+  | 'protectedPlants'
+
+export interface CareFinding {
+  status: 'yellow' | 'red'
+  reason: string
+  objective: EcologicalObjective
+  actions: string[]
+}
+
 export type HabitatType =
   | 'dry_grassland'
   | 'semi_dry_grassland'
@@ -62,19 +86,38 @@ export type HabitatType =
   | 'wood_pasture'
   | 'other'
 
-export type CareGoalId =
-  | 'use_grass_herbs'
-  | 'reduce_thatch'
-  | 'reduce_scrub'
-  | 'keep_structure'
-  | 'create_open_soil'
-  | 'protect_plants'
-  | 'avoid_nutrients'
+export type TargetPercent = 25 | 50 | 75 | 100
 
-export type CareTargetUsePercent = 25 | 50 | 75 | 100
+export type OpenSoilMode = 'not_desired' | 'punctual_desired'
 
-export interface CarePlantReference {
-  name: string
+export type NutrientInputMode = 'avoid' | 'desired'
+
+export interface VegetationUseTarget {
+  targetPercent: TargetPercent
+  protectedPlants: string[]
+  manualRemovalPlants: string[]
+}
+
+export interface LitterReductionTarget {
+  enabled: boolean
+  note?: string
+}
+
+export interface ScrubReductionTarget {
+  targetPercent?: TargetPercent | null
+  protectedWoodyPlants: string[]
+  manualRemovalWoodyPlants: string[]
+}
+
+export interface OpenSoilTarget {
+  mode: OpenSoilMode
+  maxPercent?: number
+  note?: string
+}
+
+export interface NutrientInputTarget {
+  mode: NutrientInputMode
+  note?: string
 }
 
 export interface LocalRecordMetadata {
@@ -156,10 +199,46 @@ export interface ConservationPlan extends LocalRecordMetadata {
   id: string
   enclosureId: string
   habitatType: HabitatType
-  goals: CareGoalId[]
-  targetUsePercent: CareTargetUsePercent
-  protectedPlants: CarePlantReference[]
+  vegetationUse: VegetationUseTarget
+  litterReduction: LitterReductionTarget
+  scrubReduction: ScrubReductionTarget
+  openSoil: OpenSoilTarget
+  nutrientInput: NutrientInputTarget
   notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CareMonitoringCheck extends LocalRecordMetadata {
+  id: string
+  conservationPlanId: string
+  enclosureId: string
+  grazingSessionId?: string | null
+  observedAt: string
+  observations: {
+    vegetationUse: CareUse | null
+    litterReduction: CareLitter | null
+    scrubReduction: CareScrub | null
+    openSoil: CareOpenSoil | null
+    traffic: CareTraffic | null
+    nutrientConcentration: CareNutrients | null
+    protectedPlants: ProtectedPlantImpact | null
+  }
+  assessment: {
+    status: CareStatus
+    findings: CareFinding[]
+    actions: string[]
+  }
+  assessmentVersion: 1
+  planSnapshot: {
+    habitatType: HabitatType
+    vegetationUse: ConservationPlan['vegetationUse']
+    litterReduction: ConservationPlan['litterReduction']
+    scrubReduction: ConservationPlan['scrubReduction']
+    openSoil: ConservationPlan['openSoil']
+    nutrientInput: ConservationPlan['nutrientInput']
+  }
+  note?: string
   createdAt: string
   updatedAt: string
 }

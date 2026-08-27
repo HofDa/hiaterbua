@@ -35,32 +35,78 @@ afterAll(() => {
 })
 
 describe('conservation plan repository', () => {
-  it('creates and then updates the single plan for an enclosure', async () => {
+  it('creates and then updates the single plan with independent vegetation and scrub targets', async () => {
     const created = await saveConservationPlan({
       enclosureId: 'enclosure_care',
       habitatType: 'semi_dry_grassland',
-      goals: ['use_grass_herbs', 'protect_plants'],
-      targetUsePercent: 75,
-      protectedPlants: [{ name: ' Arnika ' }],
+      vegetationUse: {
+        targetPercent: 75,
+        protectedPlants: [' Arnika ', 'Arnika'],
+        manualRemovalPlants: ['Jakobskreuzkraut'],
+      },
+      litterReduction: {
+        enabled: true,
+        note: 'Altes Gras verfilzt',
+      },
+      scrubReduction: {
+        targetPercent: 25,
+        protectedWoodyPlants: [' Wacholder '],
+        manualRemovalWoodyPlants: ['Traubenkirsche'],
+      },
+      openSoil: {
+        mode: 'punctual_desired',
+        maxPercent: 5,
+      },
+      nutrientInput: {
+        mode: 'avoid',
+      },
+      notes: 'Initialer Plan',
     })
+
+    expect(created.vegetationUse.targetPercent).toBe(75)
+    expect(created.scrubReduction.targetPercent).toBe(25)
+    expect(created.vegetationUse.protectedPlants).toEqual(['Arnika'])
+    expect(created.scrubReduction.protectedWoodyPlants).toEqual(['Wacholder'])
 
     const updated = await saveConservationPlan({
       enclosureId: 'enclosure_care',
       habitatType: 'dry_grassland',
-      goals: ['keep_structure', 'keep_structure'],
-      targetUsePercent: 50,
-      protectedPlants: [{ name: 'Enzian' }],
+      vegetationUse: {
+        targetPercent: 50,
+        protectedPlants: ['Enzian'],
+      },
+      scrubReduction: {
+        targetPercent: 100,
+        protectedWoodyPlants: [],
+      },
+      openSoil: {
+        mode: 'not_desired',
+      },
     })
 
     expect(updated.id).toBe(created.id)
     expect(await db.conservationPlans.count()).toBe(1)
-    expect(await getConservationPlanByEnclosureId('enclosure_care')).toMatchObject({
+    const stored = await getConservationPlanByEnclosureId('enclosure_care')
+    expect(stored).toMatchObject({
       id: created.id,
       enclosureId: 'enclosure_care',
       habitatType: 'dry_grassland',
-      goals: ['keep_structure'],
-      targetUsePercent: 50,
-      protectedPlants: [{ name: 'Enzian' }],
+      vegetationUse: {
+        targetPercent: 50,
+        protectedPlants: ['Enzian'],
+        manualRemovalPlants: [],
+      },
+      scrubReduction: {
+        targetPercent: 100,
+        protectedWoodyPlants: [],
+        manualRemovalWoodyPlants: [],
+      },
+      openSoil: {
+        mode: 'not_desired',
+      },
+      nutrientInput: {
+        mode: 'avoid',
+      },
       syncStatus: 'dirty',
     })
   })
@@ -69,9 +115,9 @@ describe('conservation plan repository', () => {
     await saveConservationPlan({
       enclosureId: 'enclosure_care',
       habitatType: 'semi_dry_grassland',
-      goals: ['keep_structure'],
-      targetUsePercent: 75,
-      protectedPlants: [],
+      vegetationUse: {
+        targetPercent: 75,
+      },
     })
 
     await deleteEnclosureRecord('enclosure_care')
@@ -84,9 +130,9 @@ describe('conservation plan repository', () => {
       saveConservationPlan({
         enclosureId: 'missing',
         habitatType: 'semi_dry_grassland',
-        goals: ['use_grass_herbs'],
-        targetUsePercent: 75,
-        protectedPlants: [],
+        vegetationUse: {
+          targetPercent: 75,
+        },
       }),
     ).rejects.toThrow(/Pferch/)
   })

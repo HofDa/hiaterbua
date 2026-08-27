@@ -4,6 +4,7 @@ import type { ExistingImportRefs } from '@/lib/import-export/import-validation-t
 import type {
   Animal,
   AppSettings,
+  CareMonitoringCheck,
   ConservationPlan,
   Enclosure,
   EnclosureAssignment,
@@ -57,6 +58,7 @@ export type SampleDataset = {
   animals: Animal[]
   enclosures: Enclosure[]
   conservationPlans: ConservationPlan[]
+  careMonitoringChecks: CareMonitoringCheck[]
   surveyAreas: SurveyArea[]
   enclosureAssignments: EnclosureAssignment[]
   sessions: GrazingSession[]
@@ -159,13 +161,82 @@ export function buildSampleDataset(): SampleDataset {
       id: 'conservation_plan_1',
       enclosureId: 'enclosure_draw',
       habitatType: 'semi_dry_grassland',
-      goals: ['use_grass_herbs', 'keep_structure', 'protect_plants'],
-      targetUsePercent: 75,
-      protectedPlants: [{ name: 'Arnika' }],
+      vegetationUse: {
+        targetPercent: 75,
+        protectedPlants: ['Arnika'],
+        manualRemovalPlants: [],
+      },
+      litterReduction: {
+        enabled: false,
+      },
+      scrubReduction: {
+        targetPercent: 25,
+        protectedWoodyPlants: ['Wacholder'],
+        manualRemovalWoodyPlants: [],
+      },
+      openSoil: {
+        mode: 'punctual_desired',
+        maxPercent: 5,
+      },
+      nutrientInput: {
+        mode: 'avoid',
+      },
       notes: 'Pflegeziel Beispiel',
       createdAt: START,
       updatedAt: START,
       ...localMeta(START),
+    },
+  ]
+
+  const careMonitoringChecks: CareMonitoringCheck[] = [
+    {
+      id: 'care_monitoring_check_1',
+      conservationPlanId: 'conservation_plan_1',
+      enclosureId: 'enclosure_draw',
+      grazingSessionId: 'session_1',
+      observedAt: LATER,
+      observations: {
+        vegetationUse: 'fits',
+        litterReduction: null,
+        scrubReduction: 'fits',
+        openSoil: null,
+        traffic: 'low',
+        nutrientConcentration: 'none',
+        protectedPlants: 'none',
+      },
+      assessment: {
+        status: 'green',
+        findings: [],
+        actions: ['Beweidung wie geplant fortsetzen und später erneut kurz kontrollieren.'],
+      },
+      assessmentVersion: 1,
+      planSnapshot: {
+        habitatType: 'semi_dry_grassland',
+        vegetationUse: {
+          targetPercent: 75,
+          protectedPlants: ['Arnika'],
+          manualRemovalPlants: [],
+        },
+        litterReduction: {
+          enabled: false,
+        },
+        scrubReduction: {
+          targetPercent: 25,
+          protectedWoodyPlants: ['Wacholder'],
+          manualRemovalWoodyPlants: [],
+        },
+        openSoil: {
+          mode: 'punctual_desired',
+          maxPercent: 5,
+        },
+        nutrientInput: {
+          mode: 'avoid',
+        },
+      },
+      note: 'Kontrolle nach dem Weidegang',
+      createdAt: LATER,
+      updatedAt: LATER,
+      ...localMeta(LATER),
     },
   ]
 
@@ -353,6 +424,7 @@ export function buildSampleDataset(): SampleDataset {
     animals,
     enclosures,
     conservationPlans,
+    careMonitoringChecks,
     surveyAreas,
     enclosureAssignments,
     sessions,
@@ -369,6 +441,9 @@ export function emptyExistingRefs(): ExistingImportRefs {
   return {
     animalEarTags: new Map(),
     conservationPlanByEnclosureId: new Map(),
+    conservationPlanEnclosureById: new Map(),
+    careMonitoringChecksById: new Map(),
+    historicalCheckPlanIds: new Set(),
     enclosureIds: new Set(),
     herdIds: new Set(),
     sessionIds: new Set(),

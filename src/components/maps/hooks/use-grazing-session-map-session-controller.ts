@@ -12,6 +12,7 @@ import {
   getDefaultAnimalCount,
 } from '@/components/maps/hooks/grazing-session-map-session-controller-helpers'
 import { withSessionRecordingLock } from '@/lib/db/session-recording-lock'
+import { OpenGrazingSessionExistsError } from '@/lib/domain/grazing-session-rules'
 import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import { useGrazingSessionMapSessionRuntime } from '@/components/maps/hooks/use-grazing-session-map-session-runtime'
 import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/use-grazing-session-map-trackpoint-recorder'
@@ -160,7 +161,10 @@ export function useGrazingSessionMapSessionController({
       savingValue: true,
       idleValue: false,
       setError: setActionError,
-      errorMessage: 'Weidegang konnte nicht gestartet werden.',
+      errorMessage: (error) =>
+        error instanceof OpenGrazingSessionExistsError
+          ? error.message
+          : 'Weidegang konnte nicht gestartet werden.',
       action: async () => {
         const currentPosition = getFreshAcceptedPosition()
         const animalCount = getResolvedAnimalCount(selectedHerdId)
