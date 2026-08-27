@@ -4,6 +4,7 @@ import type { ExistingImportRefs } from '@/lib/import-export/import-validation-t
 import type {
   Animal,
   AppSettings,
+  ConservationPlan,
   Enclosure,
   EnclosureAssignment,
   GrazingSession,
@@ -55,6 +56,7 @@ export type SampleDataset = {
   herds: Herd[]
   animals: Animal[]
   enclosures: Enclosure[]
+  conservationPlans: ConservationPlan[]
   surveyAreas: SurveyArea[]
   enclosureAssignments: EnclosureAssignment[]
   sessions: GrazingSession[]
@@ -146,6 +148,21 @@ export function buildSampleDataset(): SampleDataset {
       herdId: 'herd_b',
       avgAccuracyM: 4.5,
       pointsCount: 1,
+      createdAt: START,
+      updatedAt: START,
+      ...localMeta(START),
+    },
+  ]
+
+  const conservationPlans: ConservationPlan[] = [
+    {
+      id: 'conservation_plan_1',
+      enclosureId: 'enclosure_draw',
+      habitatType: 'semi_dry_grassland',
+      goals: ['use_grass_herbs', 'keep_structure', 'protect_plants'],
+      targetUsePercent: 75,
+      protectedPlants: [{ name: 'Arnika' }],
+      notes: 'Pflegeziel Beispiel',
       createdAt: START,
       updatedAt: START,
       ...localMeta(START),
@@ -335,6 +352,7 @@ export function buildSampleDataset(): SampleDataset {
     herds,
     animals,
     enclosures,
+    conservationPlans,
     surveyAreas,
     enclosureAssignments,
     sessions,
@@ -350,6 +368,7 @@ export function buildSampleDataset(): SampleDataset {
 export function emptyExistingRefs(): ExistingImportRefs {
   return {
     animalEarTags: new Map(),
+    conservationPlanByEnclosureId: new Map(),
     enclosureIds: new Set(),
     herdIds: new Set(),
     sessionIds: new Set(),

@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import { db } from '@/lib/db/dexie'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
+import { listAllConservationPlans } from '@/lib/db/repositories/conservation-plans'
 import { listAllEnclosures } from '@/lib/db/repositories/enclosures'
 import { listAllHerds } from '@/lib/db/repositories/herds'
 import { listAllSessionEvents, listAllSessions } from '@/lib/db/repositories/sessions'
@@ -16,6 +17,7 @@ export async function buildAppExportArchive() {
     herds,
     animals,
     enclosures,
+    conservationPlans,
     surveyAreas,
     enclosureAssignments,
     sessions,
@@ -28,6 +30,7 @@ export async function buildAppExportArchive() {
     listAllHerds(),
     listAllAnimals(),
     listAllEnclosures(),
+    listAllConservationPlans(),
     db.surveyAreas.toArray(),
     db.enclosureAssignments.toArray(),
     listAllSessions(),
@@ -52,6 +55,7 @@ export async function buildAppExportArchive() {
     herds,
     animals,
     enclosures,
+    conservationPlans,
     surveyAreas,
     enclosureAssignments,
     sessions,
@@ -77,7 +81,7 @@ export async function buildAppExportArchive() {
       'gpx/grazing_sessions.gpx: Weidegänge als GPX',
       'gpx/enclosure_walks.gpx: Pferch-Walks als GPX',
       'herds/herds.json: Herden mit Tieren, Belegungen, Sitzungen und Arbeitseinsätzen',
-      'app-data.json: übrige App-Daten für Import/Archiv',
+      'app-data.json: übrige App-Daten inklusive Pflegeplänen für Import/Archiv',
       '',
       'GeoPackage ist aktuell noch nicht enthalten.',
     ].join('\n')

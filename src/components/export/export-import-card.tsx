@@ -9,6 +9,7 @@ const importPreviewCountLabels = [
   ['Herden', 'herds'],
   ['Tiere', 'animals'],
   ['Pferche', 'enclosures'],
+  ['Pflegepläne', 'conservationPlans'],
   ['Untersuchungsflächen', 'surveyAreas'],
   ['Belegungen', 'enclosureAssignments'],
   ['Weidegänge', 'grazingSessions'],

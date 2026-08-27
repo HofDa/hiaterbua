@@ -7,6 +7,7 @@ import {
 import type {
   Animal,
   AppSettings,
+  ConservationPlan,
   Enclosure,
   EnclosureAssignment,
   FieldDiagnosticEvent,
@@ -23,6 +24,7 @@ export class HirtenAppDB extends Dexie {
   herds!: Table<Herd, string>
   animals!: Table<Animal, string>
   enclosures!: Table<Enclosure, string>
+  conservationPlans!: Table<ConservationPlan, string>
   surveyAreas!: Table<SurveyArea, string>
   enclosureAssignments!: Table<EnclosureAssignment, string>
   sessions!: Table<GrazingSession, string>
@@ -190,6 +192,29 @@ export class HirtenAppDB extends Dexie {
         'id, herdId, earTag, species, isArchived, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
       enclosures:
         'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      surveyAreas: 'id, name, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      enclosureAssignments:
+        'id, enclosureId, herdId, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      sessions:
+        'id, herdId, status, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      trackpoints:
+        'id, sessionId, enclosureWalkId, seq, timestamp, accepted, [sessionId+seq], syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      events: 'id, sessionId, timestamp, type, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      workSessions:
+        'id, type, status, herdId, enclosureId, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      workEvents: 'id, workSessionId, timestamp, type, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      fieldDiagnostics: 'id, type, level, createdAt',
+      settings: 'id',
+    })
+
+    this.version(12).stores({
+      herds: 'id, name, isArchived, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      animals:
+        'id, herdId, earTag, species, isArchived, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      enclosures:
+        'id, name, method, herdId, rootEnclosureId, version, supersededAt, supersededByEnclosureId, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
+      conservationPlans:
+        'id, &enclosureId, habitatType, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
       surveyAreas: 'id, name, createdAt, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',
       enclosureAssignments:
         'id, enclosureId, herdId, startTime, endTime, updatedAt, syncStatus, lastLocalChangeAt, deletedAt, deviceId',

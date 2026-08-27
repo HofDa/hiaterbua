@@ -8,6 +8,7 @@ import { APP_TITLE } from '@/lib/app-metadata'
 import { getOrCreateLocalDeviceId } from '@/lib/sync/local-metadata'
 import type {
   Animal,
+  ConservationPlan,
   Enclosure,
   EnclosureAssignment,
   GrazingSession,
@@ -24,6 +25,7 @@ type BuildAppExportArtifactsOptions = {
   herds: Herd[]
   animals: Animal[]
   enclosures: Enclosure[]
+  conservationPlans: ConservationPlan[]
   surveyAreas: SurveyArea[]
   enclosureAssignments: EnclosureAssignment[]
   sessions: GrazingSession[]
@@ -52,6 +54,7 @@ export function buildAppExportArtifacts({
   herds,
   animals,
   enclosures,
+  conservationPlans,
   surveyAreas,
   enclosureAssignments,
   sessions,
@@ -237,6 +240,7 @@ export function buildAppExportArtifacts({
     herds,
     animals,
     enclosures,
+    conservationPlans,
     surveyAreas,
     enclosureAssignments,
     grazingSessions: sessions,

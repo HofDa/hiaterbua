@@ -48,6 +48,7 @@ describe('app export → import round-trip', () => {
     expect(prepared.payload.herds).toEqual(dataset.herds)
     expect(prepared.payload.animals).toEqual(dataset.animals)
     expect(prepared.payload.enclosures).toEqual(dataset.enclosures)
+    expect(prepared.payload.conservationPlans).toEqual(dataset.conservationPlans)
     expect(prepared.payload.surveyAreas).toEqual(dataset.surveyAreas)
     expect(prepared.payload.enclosureAssignments).toEqual(dataset.enclosureAssignments)
     expect(prepared.payload.grazingSessions).toEqual(dataset.sessions)
@@ -68,6 +69,7 @@ describe('app export → import round-trip', () => {
       herds: dataset.herds.length,
       animals: dataset.animals.length,
       enclosures: dataset.enclosures.length,
+      conservationPlans: dataset.conservationPlans.length,
       surveyAreas: dataset.surveyAreas.length,
       enclosureAssignments: dataset.enclosureAssignments.length,
       grazingSessions: dataset.sessions.length,
@@ -77,6 +79,18 @@ describe('app export → import round-trip', () => {
       workEvents: dataset.workEvents.length,
       settings: dataset.settings.length,
     })
+  })
+
+  it('still treats pre-care full exports as complete and clears new care plans on replace', () => {
+    const payload = exportThenParse()
+    delete payload.conservationPlans
+    const meta = metaFor(payload)
+
+    expect(meta.isCompleteAppData).toBe(true)
+
+    const prepared = prepareImportPayload(payload, meta, true, emptyExistingRefs())
+    expect(prepared.payload.conservationPlans).toEqual([])
+    expect(prepared.clearKeys).toContain('conservationPlans')
   })
 
   it('clears every table when replacing from a complete app export', () => {
@@ -212,6 +226,14 @@ describe('import validation rejects corrupted payloads', () => {
       ;(payload.sessionEvents as Array<{ sessionId: string }>)[0].sessionId = 'ghost_session'
     })
     expect(run).toThrow(/sessionEvents: sessionId "ghost_session" fehlt/)
+  })
+
+  it('rejects a conservation plan that points at a missing enclosure', () => {
+    const run = prepareCorrupted((payload) => {
+      ;(payload.conservationPlans as Array<{ enclosureId: string }>)[0].enclosureId =
+        'ghost_enclosure'
+    })
+    expect(run).toThrow(/conservationPlans: enclosureId "ghost_enclosure" fehlt/)
   })
 
   it('rejects an enclosure assignment that points at a missing enclosure', () => {

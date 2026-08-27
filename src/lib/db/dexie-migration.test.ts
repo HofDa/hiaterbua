@@ -113,7 +113,7 @@ describe('HirtenAppDB schema migration from v3', () => {
 
     await db.open()
 
-    expect(db.verno).toBe(11)
+    expect(db.verno).toBe(12)
     expect(await db.herds.get('herd_legacy')).toEqual({
       ...legacyHerd(),
       deletedAt: null,
@@ -128,6 +128,7 @@ describe('HirtenAppDB schema migration from v3', () => {
       syncStatus: 'dirty',
       lastLocalChangeAt: ISO,
     })
+    expect(await db.conservationPlans.count()).toBe(0)
     expect(await db.sessions.get('session_legacy')).toEqual({
       ...legacySession(),
       deletedAt: null,

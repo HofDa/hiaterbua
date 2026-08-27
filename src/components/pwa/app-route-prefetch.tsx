@@ -20,6 +20,13 @@ export function AppRoutePrefetch() {
   const router = useRouter()
 
   useEffect(() => {
+    // Production precaches these routes for offline use. In development this
+    // only asks Next to compile every page at once, which can starve an actual
+    // menu navigation and leave its RSC request aborted.
+    if (process.env.NODE_ENV !== 'production') {
+      return
+    }
+
     let cancelled = false
     let hasPrefetched = false
     let idleId: number | null = null

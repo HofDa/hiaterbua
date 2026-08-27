@@ -53,6 +53,30 @@ export type MapBaseLayer = 'south-tyrol-basemap' | 'south-tyrol-orthophoto-2023'
 
 export type SyncStatus = 'dirty' | 'synced' | 'syncing' | 'error'
 
+export type HabitatType =
+  | 'dry_grassland'
+  | 'semi_dry_grassland'
+  | 'nardus_grassland'
+  | 'productive_pasture'
+  | 'dwarf_shrub_heath'
+  | 'wood_pasture'
+  | 'other'
+
+export type CareGoalId =
+  | 'use_grass_herbs'
+  | 'reduce_thatch'
+  | 'reduce_scrub'
+  | 'keep_structure'
+  | 'create_open_soil'
+  | 'protect_plants'
+  | 'avoid_nutrients'
+
+export type CareTargetUsePercent = 25 | 50 | 75 | 100
+
+export interface CarePlantReference {
+  name: string
+}
+
 export interface LocalRecordMetadata {
   deletedAt?: string | null
   deviceId?: string | null
@@ -123,6 +147,19 @@ export interface Enclosure extends LocalRecordMetadata {
   notes?: string
   avgAccuracyM?: number | null
   pointsCount?: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+
+export interface ConservationPlan extends LocalRecordMetadata {
+  id: string
+  enclosureId: string
+  habitatType: HabitatType
+  goals: CareGoalId[]
+  targetUsePercent: CareTargetUsePercent
+  protectedPlants: CarePlantReference[]
+  notes?: string
   createdAt: string
   updatedAt: string
 }

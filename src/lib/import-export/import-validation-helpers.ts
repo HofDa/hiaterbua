@@ -108,6 +108,9 @@ export function validateReferences(
   const availableAnimalEarTags = clearing.has('animals')
     ? new Map<string, string>()
     : new Map(existingRefs.animalEarTags)
+  const availableConservationPlans = clearing.has('conservationPlans')
+    ? new Map<string, string>()
+    : new Map(existingRefs.conservationPlanByEnclosureId)
 
   payload.herds.forEach((herd) => availableHerdIds.add(herd.id))
   payload.enclosures.forEach((enclosure) => availableEnclosureIds.add(enclosure.id))
@@ -150,6 +153,22 @@ export function validateReferences(
         `enclosures: supersededByEnclosureId "${enclosure.supersededByEnclosureId}" fehlt für Pferch "${enclosure.id}".`
       )
     }
+  })
+
+  payload.conservationPlans.forEach((plan) => {
+    if (!availableEnclosureIds.has(plan.enclosureId)) {
+      issues.push(
+        `conservationPlans: enclosureId "${plan.enclosureId}" fehlt für Pflegeplan "${plan.id}".`
+      )
+    }
+
+    const existingPlanId = availableConservationPlans.get(plan.enclosureId)
+    if (existingPlanId && existingPlanId !== plan.id) {
+      issues.push(
+        `conservationPlans: Pferch "${plan.enclosureId}" hat bereits Pflegeplan "${existingPlanId}".`,
+      )
+    }
+    availableConservationPlans.set(plan.enclosureId, plan.id)
   })
 
   payload.enclosureAssignments.forEach((assignment: EnclosureAssignment) => {

@@ -61,8 +61,9 @@ function buildImportPreviewResult(
 }
 
 async function getExistingImportRefs(): Promise<ExistingImportRefs> {
-  const [animals, herdIds, enclosureIds, sessionIds, workSessionIds] = await Promise.all([
+  const [animals, conservationPlans, herdIds, enclosureIds, sessionIds, workSessionIds] = await Promise.all([
     db.animals.toArray(),
+    db.conservationPlans.toArray(),
     db.herds.toCollection().primaryKeys(),
     db.enclosures.toCollection().primaryKeys(),
     db.sessions.toCollection().primaryKeys(),
@@ -72,6 +73,9 @@ async function getExistingImportRefs(): Promise<ExistingImportRefs> {
   return {
     animalEarTags: new Map(
       animals.map((animal) => [animal.earTag.trim().toLowerCase(), animal.id])
+    ),
+    conservationPlanByEnclosureId: new Map(
+      conservationPlans.map((plan) => [plan.enclosureId, plan.id]),
     ),
     enclosureIds: new Set(enclosureIds.map((id) => String(id))),
     herdIds: new Set(herdIds.map((id) => String(id))),
@@ -189,6 +193,7 @@ export async function importPayloadIntoDb(preparedImport: PreparedImportPayload)
       db.herds,
       db.animals,
       db.enclosures,
+      db.conservationPlans,
       db.surveyAreas,
       db.enclosureAssignments,
       db.sessions,
@@ -210,6 +215,7 @@ export async function importPayloadIntoDb(preparedImport: PreparedImportPayload)
           surveyAreas: () => db.surveyAreas.clear(),
           animals: () => db.animals.clear(),
           enclosures: () => db.enclosures.clear(),
+          conservationPlans: () => db.conservationPlans.clear(),
           herds: () => db.herds.clear(),
           settings: () => db.settings.clear(),
         } satisfies Record<keyof typeof counts, () => Promise<void>>
@@ -222,6 +228,9 @@ export async function importPayloadIntoDb(preparedImport: PreparedImportPayload)
       if (payload.herds.length > 0) await db.herds.bulkPut(payload.herds)
       if (payload.animals.length > 0) await db.animals.bulkPut(payload.animals)
       if (payload.enclosures.length > 0) await db.enclosures.bulkPut(payload.enclosures)
+      if (payload.conservationPlans.length > 0) {
+        await db.conservationPlans.bulkPut(payload.conservationPlans)
+      }
       if (payload.surveyAreas.length > 0) await db.surveyAreas.bulkPut(payload.surveyAreas)
       if (payload.enclosureAssignments.length > 0) {
         await db.enclosureAssignments.bulkPut(payload.enclosureAssignments)

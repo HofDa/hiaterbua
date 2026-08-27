@@ -177,6 +177,33 @@ export function ServiceWorkerSync() {
       return
     }
 
+    if (process.env.NODE_ENV !== 'production') {
+      let isCancelled = false
+
+      // A production worker previously installed on localhost otherwise keeps
+      // controlling `next dev` and can answer with stale cached RSC payloads.
+      // Unregister it and reload once so this document also loses its controller.
+      void navigator.serviceWorker
+        .getRegistration()
+        .then(async (registration) => {
+          if (isCancelled || !registration) return
+
+          const hadController = navigator.serviceWorker.controller !== null
+          const wasUnregistered = await registration.unregister()
+
+          if (!isCancelled && hadController && wasUnregistered) {
+            window.location.reload()
+          }
+        })
+        .catch((error) => {
+          logError('ServiceWorkerSync.unregisterDevelopmentWorker', error)
+        })
+
+      return () => {
+        isCancelled = true
+      }
+    }
+
     let isCancelled = false
 
     async function registerServiceWorker() {
@@ -278,7 +305,11 @@ export function ServiceWorkerSync() {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      typeof window === 'undefined' ||
+      !('serviceWorker' in navigator)
+    ) {
       return
     }
 
@@ -301,7 +332,7 @@ export function ServiceWorkerSync() {
   }, [tileCachingEnabled])
 
   useEffect(() => {
-    if (!navigator.serviceWorker) return
+    if (process.env.NODE_ENV !== 'production' || !navigator.serviceWorker) return
 
     function handleControllerChange() {
       recordFieldDiagnostic({
@@ -346,7 +377,11 @@ export function ServiceWorkerSync() {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      typeof window === 'undefined' ||
+      !('serviceWorker' in navigator)
+    ) {
       return
     }
 

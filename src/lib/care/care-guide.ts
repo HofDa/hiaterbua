@@ -1,20 +1,6 @@
-export type HabitatType =
-  | 'dry_grassland'
-  | 'semi_dry_grassland'
-  | 'nardus_grassland'
-  | 'productive_pasture'
-  | 'dwarf_shrub_heath'
-  | 'wood_pasture'
-  | 'other'
+import type { CareGoalId, HabitatType } from '@/types/domain'
 
-export type CareGoalId =
-  | 'use_grass_herbs'
-  | 'reduce_thatch'
-  | 'reduce_scrub'
-  | 'keep_structure'
-  | 'create_open_soil'
-  | 'protect_plants'
-  | 'avoid_nutrients'
+export type { CareGoalId, HabitatType } from '@/types/domain'
 
 export const habitatOptions: { id: HabitatType; label: string; hint: string }[] = [
   {

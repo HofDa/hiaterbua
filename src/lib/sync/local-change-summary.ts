@@ -5,6 +5,7 @@ const LOCAL_DATA_TABLES = [
   'herds',
   'animals',
   'enclosures',
+  'conservationPlans',
   'surveyAreas',
   'enclosureAssignments',
   'sessions',

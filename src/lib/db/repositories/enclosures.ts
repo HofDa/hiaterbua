@@ -151,20 +151,28 @@ export async function updateEditedEnclosureRecord(params: {
 }
 
 export async function deleteEnclosureRecord(enclosureId: string): Promise<void> {
-  await db.transaction('rw', db.enclosures, db.trackpoints, db.enclosureAssignments, async () => {
-    const activeAssignment = await db.enclosureAssignments
-      .where('enclosureId')
-      .equals(enclosureId)
-      .filter((assignment) => !assignment.endTime)
-      .first()
+  await db.transaction(
+    'rw',
+    db.enclosures,
+    db.conservationPlans,
+    db.trackpoints,
+    db.enclosureAssignments,
+    async () => {
+      const activeAssignment = await db.enclosureAssignments
+        .where('enclosureId')
+        .equals(enclosureId)
+        .filter((assignment) => !assignment.endTime)
+        .first()
 
-    if (activeAssignment) {
-      throw new Error('Pferch ist aktuell belegt. Belegung zuerst beenden.')
-    }
+      if (activeAssignment) {
+        throw new Error('Pferch ist aktuell belegt. Belegung zuerst beenden.')
+      }
 
-    await db.trackpoints.where('enclosureWalkId').equals(enclosureId).delete()
-    await db.enclosures.delete(enclosureId)
-  })
+      await db.trackpoints.where('enclosureWalkId').equals(enclosureId).delete()
+      await db.conservationPlans.where('enclosureId').equals(enclosureId).delete()
+      await db.enclosures.delete(enclosureId)
+    },
+  )
 }
 
 export async function saveWalkEnclosureRecord(params: {

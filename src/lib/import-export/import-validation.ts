@@ -9,6 +9,7 @@ import {
 } from '@/lib/import-export/import-validation-helpers'
 import {
   animalSchema,
+  conservationPlanSchema,
   enclosureAssignmentSchema,
   enclosureSchema,
   grazingSessionSchema,
@@ -51,7 +52,8 @@ export function getPresentImportPayloadKeys(payload: ImportPayload) {
 }
 
 export function isCompleteAppDataPayload(presentKeys: ImportPayloadKey[]) {
-  return importPayloadKeys.every((key) => presentKeys.includes(key))
+  const requiredLegacyKeys = importPayloadKeys.filter((key) => key !== 'conservationPlans')
+  return requiredLegacyKeys.every((key) => presentKeys.includes(key))
 }
 
 export function getImportCounts(payload: ImportPayload): ImportCounts {
@@ -59,6 +61,7 @@ export function getImportCounts(payload: ImportPayload): ImportCounts {
     herds: payload.herds?.length ?? 0,
     animals: payload.animals?.length ?? 0,
     enclosures: payload.enclosures?.length ?? 0,
+    conservationPlans: payload.conservationPlans?.length ?? 0,
     surveyAreas: payload.surveyAreas?.length ?? 0,
     enclosureAssignments: payload.enclosureAssignments?.length ?? 0,
     grazingSessions: payload.grazingSessions?.length ?? 0,
@@ -83,6 +86,12 @@ export function prepareImportPayload(
     herds: parseRecords('herds', rawPayload.herds, herdSchema, issues),
     animals: parseRecords('animals', rawPayload.animals, animalSchema, issues),
     enclosures: parseRecords('enclosures', rawPayload.enclosures, enclosureSchema, issues),
+    conservationPlans: parseRecords(
+      'conservationPlans',
+      rawPayload.conservationPlans,
+      conservationPlanSchema,
+      issues,
+    ),
     surveyAreas: parseRecords('surveyAreas', rawPayload.surveyAreas, surveyAreaSchema, issues),
     enclosureAssignments: parseRecords(
       'enclosureAssignments',
@@ -122,6 +131,7 @@ export function prepareImportPayload(
     ['herds', payload.herds],
     ['animals', payload.animals],
     ['enclosures', payload.enclosures],
+    ['conservationPlans', payload.conservationPlans],
     ['surveyAreas', payload.surveyAreas],
     ['enclosureAssignments', payload.enclosureAssignments],
     ['grazingSessions', payload.grazingSessions],
@@ -134,6 +144,16 @@ export function prepareImportPayload(
   })
 
   ensureNoDuplicateAnimalEarTags(payload.animals, issues)
+
+  const carePlanEnclosureIds = new Set<string>()
+  for (const plan of payload.conservationPlans) {
+    if (carePlanEnclosureIds.has(plan.enclosureId)) {
+      issues.push(
+        `conservationPlans: mehrere Pflegepläne für enclosureId "${plan.enclosureId}" im Import.`,
+      )
+    }
+    carePlanEnclosureIds.add(plan.enclosureId)
+  }
 
   if (clearKeys.includes('settings') && payload.settings.length === 0) {
     payload.settings = [defaultAppSettings]
@@ -151,6 +171,7 @@ export function prepareImportPayload(
       herds: payload.herds.length,
       animals: payload.animals.length,
       enclosures: payload.enclosures.length,
+      conservationPlans: payload.conservationPlans.length,
       surveyAreas: payload.surveyAreas.length,
       enclosureAssignments: payload.enclosureAssignments.length,
       grazingSessions: payload.grazingSessions.length,
