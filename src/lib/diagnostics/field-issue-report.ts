@@ -2,6 +2,7 @@ import { db } from '@/lib/db/dexie'
 import { sanitizeDiagnosticDetails } from '@/lib/diagnostics/field-diagnostics'
 import { APP_NAME, APP_VERSION } from '@/lib/app-metadata'
 import { getPersistentStorageStatus, getTileCacheCount } from '@/lib/maps/tile-cache'
+import { getStorageEstimate } from '@/lib/utils/storage-health'
 import type { FieldDiagnosticEvent, FieldDiagnosticLevel } from '@/types/domain'
 
 export const FIELD_ISSUE_REPORT_TYPE = 'pastore-field-issue-report'
@@ -17,6 +18,12 @@ export type FieldIssueServiceWorkerStatus = {
   appShellCacheVersion: string | null
 }
 
+export type FieldIssueStorageUsage = {
+  usageBytes: number
+  quotaBytes: number
+  usageRatio: number
+}
+
 export type FieldIssueEnvironment = {
   userAgent: string
   language: string | null
@@ -26,6 +33,8 @@ export type FieldIssueEnvironment = {
   indexedDb: { available: boolean; error: string | null }
   persistentStorage: boolean | null
   tileCacheCount: number | null
+  // null when navigator.storage.estimate is unavailable (private mode, older WebKit).
+  storage: FieldIssueStorageUsage | null
 }
 
 // Deliberately id/aggregate-only: no names, notes, or coordinates. Aggregates
@@ -248,10 +257,12 @@ export async function collectFieldIssueReport(): Promise<FieldIssueReport> {
   const exportedAt = new Date().toISOString()
   const indexedDb = await getIndexedDbStatus()
 
-  const [serviceWorker, persistentStorage, tileCacheCount] = await Promise.all([
+  const [serviceWorker, persistentStorage, tileCacheCount, storageEstimate] = await Promise.all([
     getServiceWorkerStatus(),
     getPersistentStorageStatus().catch(() => null),
     getTileCacheCount().catch(() => null),
+    // getStorageEstimate already resolves to null on missing/rejecting API.
+    getStorageEstimate().catch(() => null),
   ])
 
   let sessions: Awaited<ReturnType<typeof getRecentSessionSummaries>> = {
@@ -287,6 +298,13 @@ export async function collectFieldIssueReport(): Promise<FieldIssueReport> {
       indexedDb,
       persistentStorage,
       tileCacheCount,
+      storage: storageEstimate
+        ? {
+            usageBytes: storageEstimate.usage,
+            quotaBytes: storageEstimate.quota,
+            usageRatio: storageEstimate.ratio,
+          }
+        : null,
     },
     activeGrazingCount: sessions.activeGrazingCount,
     activeWorkCount: sessions.activeWorkCount,
