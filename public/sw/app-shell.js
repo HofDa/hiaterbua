@@ -18,6 +18,8 @@
     const precacheUrls = Array.from(new Set([shared.OFFLINE_URL, ...(manifest.urls ?? [])]))
     const precacheUrlSet = new Set(precacheUrls)
     const precacheDataRoutePairs = Array.from(appRouteToDataRoute.entries())
+    const buildVersion = manifest.version && manifest.version !== 'dev' ? manifest.version : null
+    let lastForeignBuildUpdateCheckAt = 0
 
     async function openCacheBestEffort() {
       try {
@@ -58,6 +60,50 @@
       return undefined
     }
 
+    // This cache is pinned to one BUILD_ID, but the server moves on with every
+    // deploy. Storing a newer build's page or flight payload next to this
+    // build's chunks makes the Next router detect a build mismatch on the
+    // next tap and fall back to hard reloads that alternate between builds —
+    // the "stale Pferche/Weide" symptom. Every prerendered document and RSC
+    // payload embeds the build id, so only accept bodies carrying ours.
+    async function belongsToThisBuild(pathname, response) {
+      if (!buildVersion) return true
+      if (!appShellRoutes.has(shared.normalizePathname(pathname)) && !appDataRoutes.has(pathname)) {
+        return true
+      }
+
+      // Only documents and flight payloads carry the build id; a prerendered
+      // binary route such as /favicon.ico is build-agnostic.
+      const contentType = response.headers.get('content-type') || ''
+      if (!contentType.includes('text/html') && !contentType.includes('text/x-component')) {
+        return true
+      }
+
+      try {
+        const body = await response.clone().text()
+        if (body.includes(buildVersion)) return true
+      } catch {
+        return false
+      }
+
+      requestUpdateForForeignBuild()
+      return false
+    }
+
+    // A foreign build on the wire means a newer worker is waiting to be found.
+    // Nudge the update check now instead of waiting for the next page load.
+    function requestUpdateForForeignBuild() {
+      const now = Date.now()
+      if (now - lastForeignBuildUpdateCheckAt < 60_000) return
+      lastForeignBuildUpdateCheckAt = now
+
+      try {
+        void self.registration?.update?.().catch?.(() => undefined)
+      } catch {
+        // Best-effort only.
+      }
+    }
+
     async function cacheUrlIfMissing(cache, url) {
       const cacheKey = shared.createCacheKey(url)
       const existing = await matchCacheBestEffort(cache, cacheKey)
@@ -68,6 +114,11 @@
           signal: timeoutSignal(PRECACHE_URL_FETCH_TIMEOUT_MS),
         })
         if (!response.ok && response.type !== 'opaque' && !isErrorStatusAppPage(url)) {
+          discardResponseBody(response)
+          return false
+        }
+
+        if (!(await belongsToThisBuild(url, response))) {
           discardResponseBody(response)
           return false
         }
@@ -104,7 +155,7 @@
           )
         }
 
-        if (response.ok) {
+        if (response.ok && (await belongsToThisBuild(dataRoute, response))) {
           await putCacheBestEffort(cache, cacheKey, response)
         } else {
           discardResponseBody(response)
@@ -172,25 +223,6 @@
       }
     }
 
-    // Refresh a cached shell without ever blocking the page on it. Failures are
-    // the normal case in the field and must stay silent.
-    function revalidateNavigationInBackground(request, cache, cacheKey) {
-      if (self.navigator && self.navigator.onLine === false) {
-        return
-      }
-
-      void fetch(request)
-        .then(async (response) => {
-          if (response.ok) {
-            await putCacheBestEffort(cache, cacheKey, response)
-            return
-          }
-
-          discardResponseBody(response)
-        })
-        .catch(() => undefined)
-    }
-
     async function handleNavigationRequest(request) {
       const requestUrl = new URL(request.url)
 
@@ -207,19 +239,23 @@
 
       // A cache key only exists for a precached app-shell route, and the cache
       // name carries BUILD_ID while `activate` deletes every other cache — so a
-      // hit here always belongs to the running build. Serving it first is what
-      // makes field navigation instant instead of costing up to
-      // NAVIGATION_NETWORK_TIMEOUT_MS on every tap.
+      // hit here always belongs to the running build and is final: prerendered
+      // output never changes within a build, so there is nothing to revalidate.
+      // Serving it directly is what makes field navigation instant instead of
+      // costing up to NAVIGATION_NETWORK_TIMEOUT_MS on every tap.
       if (cacheKey) {
         const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
         if (cachedResponse) {
-          revalidateNavigationInBackground(request, cache, cacheKey)
           return cachedResponse
         }
       }
 
       const networkResponse = fetch(request).then(async (response) => {
-        if (cacheKey && response.ok) {
+        if (
+          cacheKey &&
+          response.ok &&
+          (await belongsToThisBuild(new URL(cacheKey.url).pathname, response))
+        ) {
           await putCacheBestEffort(cache, cacheKey, response)
         }
 
@@ -280,13 +316,16 @@
       if (cacheKey) {
         const cachedResponse = await matchCacheBestEffort(cache, cacheKey)
         if (cachedResponse) {
-          revalidateNavigationInBackground(request, cache, cacheKey)
           return cachedResponse
         }
       }
 
       const networkResponse = fetch(request).then(async (response) => {
-        if (cacheKey && response.ok) {
+        if (
+          cacheKey &&
+          response.ok &&
+          (await belongsToThisBuild(new URL(cacheKey.url).pathname, response))
+        ) {
           await putCacheBestEffort(cache, cacheKey, response)
         }
 
@@ -305,12 +344,13 @@
       }
     }
 
+    // Hashed Next chunks are immutable and public files are precached per
+    // build, so a cached asset is final for the lifetime of this cache.
     async function handleAppAssetRequest(request) {
       const cache = await openCacheBestEffort()
       const cachedResponse = await matchCacheBestEffort(cache, request)
 
       if (cachedResponse) {
-        void refreshAppAsset(cache, request)
         return cachedResponse
       }
 
@@ -321,17 +361,6 @@
       }
 
       return networkResponse
-    }
-
-    async function refreshAppAsset(cache, request) {
-      try {
-        const networkResponse = await fetch(request)
-        if (networkResponse.ok) {
-          await putCacheBestEffort(cache, request, networkResponse)
-        }
-      } catch {
-        // Keep the cached asset when the refresh fails.
-      }
     }
 
     function isServiceWorkerScript(pathname) {

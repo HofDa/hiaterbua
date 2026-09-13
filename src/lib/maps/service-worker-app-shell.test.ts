@@ -128,7 +128,7 @@ describe('service-worker app shell', () => {
 
     const response = await responsePromise
 
-    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).not.toHaveBeenCalled()
     await expect(response.text()).resolves.toBe('<html>cached shell</html>')
   })
 
@@ -152,7 +152,7 @@ describe('service-worker app shell', () => {
 
     const response = await responsePromise
 
-    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).not.toHaveBeenCalled()
     await expect(response.text()).resolves.toBe('cached flight payload')
   })
 
@@ -176,26 +176,42 @@ describe('service-worker app shell', () => {
     )
 
     await expect(response.text()).resolves.toBe('<html>cached shell</html>')
-    expect(resolveFetch).not.toBeNull()
+    expect(resolveFetch).toBeNull()
   })
 
-  it('refreshes the cached shell in the background after serving it', async () => {
-    const fetchMock = vi.fn(async () => new Response('<html>fresh shell</html>', { status: 200 }))
+  it('never stores another build\'s page or payload in this build\'s cache', async () => {
+    // After a deploy the server answers with the next build. Caching that next
+    // to this build's chunks makes the client router hard-reload on every tap.
+    const fetchMock = vi.fn(async () => new Response('<html>build other</html>', { status: 200, headers: { 'Content-Type': 'text/html' } }))
     const { cache, controller } = createAppShell(fetchMock)
-    await cache.put(
-      new Request('https://app.test/sessions'),
-      new Response('<html>stale shell</html>', { status: 200 })
-    )
 
-    const response = await controller.handleNavigationRequest(
+    const navigation = await controller.handleNavigationRequest(
       new Request('https://app.test/sessions')
     )
-    await expect(response.text()).resolves.toBe('<html>stale shell</html>')
+    await expect(navigation.text()).resolves.toBe('<html>build other</html>')
+    await expect(cache.match('https://app.test/sessions')).resolves.toBeUndefined()
 
-    await vi.waitFor(async () => {
-      const revalidated = await cache.match('https://app.test/sessions')
-      await expect(revalidated?.text()).resolves.toBe('<html>fresh shell</html>')
-    })
+    const data = await controller.handleAppDataRequest(
+      new Request('https://app.test/sessions?_rsc=abc')
+    )
+    await expect(data.text()).resolves.toBe('<html>build other</html>')
+    await expect(cache.match('https://app.test/sessions.rsc')).resolves.toBeUndefined()
+  })
+
+  it('stores a network page that belongs to this build', async () => {
+    const fetchMock = vi.fn(async () => new Response('<html>build test</html>', { status: 200 }))
+    const { cache, controller } = createAppShell(fetchMock)
+
+    await controller.handleNavigationRequest(new Request('https://app.test/sessions'))
+
+    await expect(cache.match('https://app.test/sessions')).resolves.toBeDefined()
+  })
+
+  it('fails the precache when the server already serves another build', async () => {
+    const fetchMock = vi.fn(async () => new Response('<html>build other</html>', { status: 200, headers: { 'Content-Type': 'text/html' } }))
+    const { controller } = createAppShell(fetchMock)
+
+    await expect(controller.precacheAppShell()).rejects.toThrow(/precache incomplete/)
   })
 
   it('redirects a legacy herd url to its canonical route without a network round trip', async () => {
@@ -241,7 +257,7 @@ describe('service-worker app shell', () => {
         throw new TypeError('Failed to fetch')
       }
 
-      return new Response('ok', { status: 200 })
+      return new Response('ok test', { status: 200 })
     })
     const { controller } = createAppShell(fetchMock)
 
@@ -249,7 +265,7 @@ describe('service-worker app shell', () => {
   })
 
   it('precaches app-shell urls and route data payloads', async () => {
-    const fetchMock = vi.fn(async () => new Response('ok', { status: 200 }))
+    const fetchMock = vi.fn(async () => new Response('ok test', { status: 200 }))
     const { cache, controller } = createAppShell(fetchMock)
 
     await controller.precacheAppShell()
@@ -263,13 +279,13 @@ describe('service-worker app shell', () => {
     const fetchMock = vi.fn(async (request: RequestInfo | URL) => {
       const url = getRequestUrl(request)
       if (url.includes('/_not-found')) {
-        return new Response('not found page', { status: 404 })
+        return new Response('not found page test', { status: 404 })
       }
       if (url.includes('/_global-error')) {
-        return new Response('error page', { status: 500 })
+        return new Response('error page test', { status: 500 })
       }
 
-      return new Response('ok', { status: 200 })
+      return new Response('ok test', { status: 200 })
     })
     const { cache, controller } = createAppShell(fetchMock, {
       version: 'test',
@@ -284,7 +300,7 @@ describe('service-worker app shell', () => {
 
   it('repairs only the missing precache entries', async () => {
     const fetchMock = vi.fn<(request: RequestInfo | URL) => Promise<Response>>(
-      async () => new Response('ok', { status: 200 })
+      async () => new Response('ok test', { status: 200 })
     )
     const { cache, controller } = createAppShell(fetchMock)
     await cache.put(new Request('https://app.test/offline.html'), new Response('cached offline'))
