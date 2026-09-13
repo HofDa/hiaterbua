@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 type AppShellController = {
   handleAppDataRequest: (request: Request) => Promise<Response>
   handleNavigationRequest: (request: Request) => Promise<Response>
+  isCacheableSameOriginAsset: (url: URL) => boolean
   precacheAppShell: () => Promise<void>
   repairAppShellCache: () => Promise<void>
 }
@@ -208,6 +209,15 @@ describe('service-worker app shell', () => {
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toContain('/herd?id=herd-1')
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('never caches the worker scripts so a new build is always visible to the update check', () => {
+    const { controller } = createAppShell(vi.fn())
+
+    for (const pathname of ['/sw.js', '/sw/worker.js', '/sw/app-shell.js', '/pwa-precache-manifest.js']) {
+      expect(controller.isCacheableSameOriginAsset(new URL(pathname, 'https://app.test'))).toBe(false)
+    }
+    expect(controller.isCacheableSameOriginAsset(new URL('/app.js', 'https://app.test'))).toBe(true)
   })
 
   it('serves a cached data payload immediately instead of racing the network', async () => {

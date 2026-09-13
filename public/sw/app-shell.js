@@ -334,6 +334,14 @@
       }
     }
 
+    function isServiceWorkerScript(pathname) {
+      return (
+        pathname === '/sw.js' ||
+        pathname === '/pwa-precache-manifest.js' ||
+        pathname.startsWith('/sw/')
+      )
+    }
+
     function getNavigationCacheKey(url) {
       const canonicalPath = getCanonicalAppPath(url)
 
@@ -427,6 +435,12 @@
         )
       },
       isCacheableSameOriginAsset(url) {
+        // The worker scripts must always come from the server, or a cached
+        // copy could mask a new build from the browser's update check.
+        if (isServiceWorkerScript(url.pathname)) {
+          return false
+        }
+
         if (url.pathname.startsWith('/_next/static/')) {
           return true
         }

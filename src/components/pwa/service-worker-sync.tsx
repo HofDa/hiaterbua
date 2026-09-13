@@ -22,6 +22,13 @@ import { logError } from '@/lib/utils/log'
 
 type BackupStatus = 'idle' | 'exporting' | 'exported' | 'error'
 
+// An installed PWA is a single long-lived document: the browser only checks
+// for a new worker on navigation, which a client-side app never triggers.
+// Poll on our own, and re-check whenever the app comes back to the foreground
+// or regains signal — that is when a shepherd would expect a new version.
+const SERVICE_WORKER_UPDATE_INTERVAL_MS = 60 * 60 * 1000
+const SERVICE_WORKER_UPDATE_MIN_GAP_MS = 60 * 1000
+
 type ServiceWorkerUpdatePromptProps = {
   isApplyingUpdate: boolean
   onApplyUpdate: () => void
@@ -205,6 +212,42 @@ export function ServiceWorkerSync() {
     }
 
     let isCancelled = false
+    let lastUpdateCheckAt = 0
+
+    function checkForServiceWorkerUpdate() {
+      const registration = registrationRef.current
+      if (isCancelled || !registration || !navigator.onLine) {
+        return
+      }
+
+      const now = Date.now()
+      if (now - lastUpdateCheckAt < SERVICE_WORKER_UPDATE_MIN_GAP_MS) {
+        return
+      }
+      lastUpdateCheckAt = now
+
+      void registration.update().catch((error) => {
+        recordFieldDiagnostic({
+          type: 'service_worker_update_error',
+          level: 'warning',
+          message: 'Service-Worker-Updateprüfung fehlgeschlagen.',
+          details: error,
+        })
+      })
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkForServiceWorkerUpdate()
+      }
+    }
+
+    window.addEventListener('online', checkForServiceWorkerUpdate)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    const updateIntervalId = window.setInterval(
+      checkForServiceWorkerUpdate,
+      SERVICE_WORKER_UPDATE_INTERVAL_MS
+    )
 
     async function registerServiceWorker() {
       try {
@@ -278,14 +321,7 @@ export function ServiceWorkerSync() {
           previousTileCachingEnabled.current = currentTileCachingEnabled
         }
 
-        void registration.update().catch((error) => {
-          recordFieldDiagnostic({
-            type: 'service_worker_update_error',
-            level: 'warning',
-            message: 'Service-Worker-Updateprüfung fehlgeschlagen.',
-            details: error,
-          })
-        })
+        checkForServiceWorkerUpdate()
       } catch (error) {
         // Service worker registration is optional for the app to function.
         recordFieldDiagnostic({
@@ -301,6 +337,9 @@ export function ServiceWorkerSync() {
 
     return () => {
       isCancelled = true
+      window.removeEventListener('online', checkForServiceWorkerUpdate)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.clearInterval(updateIntervalId)
     }
   }, [])
 

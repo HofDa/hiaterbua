@@ -50,7 +50,7 @@ npm run lint
 npm run build
 ```
 
-`npm run build` nutzt bewusst Webpack und erzeugt dabei auch das PWA-Precache-Manifest.
+`npm run build` nutzt bewusst Webpack und erzeugt dabei auch das PWA-Precache-Manifest sowie den Service Worker `public/sw.js` (generiert aus `public/sw/worker.js`, nicht eingecheckt).
 
 ## Vercel Deployment
 

@@ -3,12 +3,16 @@ importScripts('/sw/shared.js', '/sw/app-shell.js', '/sw/tile-cache.js')
 const swScope = self.__PASTORE_SW__
 const shared = swScope.shared
 
-self.__PWA_PRECACHE_MANIFEST = shared.DEFAULT_PRECACHE_MANIFEST
-
-try {
-  importScripts('/pwa-precache-manifest.js')
-} catch {
-  self.__PWA_PRECACHE_MANIFEST = shared.DEFAULT_PRECACHE_MANIFEST
+// `npm run pwa:precache` emits /sw.js from this file with the build's precache
+// manifest inlined ahead of it. Inlining is what makes the registered script's
+// bytes change on every deploy, so browsers reliably detect the new version —
+// an update check does not have to notice a changed importScripts() target.
+if (!self.__PWA_PRECACHE_MANIFEST) {
+  try {
+    importScripts('/pwa-precache-manifest.js')
+  } catch {
+    self.__PWA_PRECACHE_MANIFEST = shared.DEFAULT_PRECACHE_MANIFEST
+  }
 }
 
 const appShell = swScope.createAppShell(

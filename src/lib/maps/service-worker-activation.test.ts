@@ -59,7 +59,7 @@ describe('service-worker activation', () => {
       })
     })
 
-    vm.runInContext(readPublicScript('/sw.js'), context, { filename: 'public/sw.js' })
+    vm.runInContext(readPublicScript('/sw/worker.js'), context, { filename: 'public/sw/worker.js' })
 
     const activateHandler = handlers.get('activate')
     if (!activateHandler) {
