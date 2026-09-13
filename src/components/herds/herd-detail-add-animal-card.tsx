@@ -41,7 +41,7 @@ export function HerdDetailAddAnimalCard({
             Neues Tier wird direkt dieser Herde zugeordnet.
           </p>
         </div>
-        <div className="rounded-full border border-border bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink-strong">
+        <div className="min-w-0 max-w-full break-words rounded-[1.25rem] border border-border bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink-strong">
           Herde: {herdName}
         </div>
       </div>

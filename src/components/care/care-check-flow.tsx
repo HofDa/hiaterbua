@@ -9,7 +9,6 @@ import {
   ClipboardCheck,
   ExternalLink,
   HelpCircle,
-  Info,
   Leaf,
   Pencil,
   Search,
@@ -1015,13 +1014,6 @@ export function CareCheckFlow() {
           </div>
         </div>
       </Card>
-
-      <Alert variant="info" className="text-sm">
-        <Info className="h-4 w-4" />
-        <div className="pl-1">
-          <strong>Offline gespeichert:</strong> Pflegepläne und abgeschlossene Pflegechecks werden dauerhaft auf diesem Gerät gespeichert und sind Teil des vollständigen App-Backups.
-        </div>
-      </Alert>
 
       <Card variant="panel" className="p-4 md:p-5">
         {view !== 'area' ? (

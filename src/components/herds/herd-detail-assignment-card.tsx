@@ -127,7 +127,7 @@ export function HerdDetailAssignmentCard({
                     onClick={() => onSelectedEnclosureIdChange(enclosure.id)}
                     aria-pressed={isSelected}
                     className={cn(
-                      'rounded-[1rem] px-3 py-2 text-left text-sm font-semibold transition',
+                      'max-w-full min-w-0 break-words rounded-[1rem] px-3 py-2 text-left text-sm font-semibold transition',
                       isSelected
                         ? 'border border-border-strong bg-surface-muted text-ink'
                         : 'border border-transparent bg-surface-raised text-ink hover:border-border',

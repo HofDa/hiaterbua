@@ -1,6 +1,6 @@
 'use client'
 
-import { Briefcase, Home, Map, MapPin, Users, type LucideIcon } from 'lucide-react'
+import { Briefcase, Home, Leaf, Map, MapPin, Users, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
@@ -18,6 +18,7 @@ const mobileNavItems: MobileNavItem[] = [
   { href: '/work', label: 'Arbeit', icon: Briefcase },
   { href: '/sessions', label: 'Weide', icon: Map },
   { href: '/enclosures', label: 'Pferche', icon: MapPin },
+  { href: '/care', label: 'Pflege', icon: Leaf },
   { href: '/herds', label: 'Herde', icon: Users },
 ]
 
@@ -33,7 +34,7 @@ export function BottomNav() {
       {/* Flat native-style tab bar: the active tab gets an icon pill, inactive
           tabs stay flat — no bordered boxes, so the bar can sit lower and read
           as chrome rather than content. Height feeds --app-bottom-nav-height. */}
-      <div className="mx-auto grid max-w-md grid-cols-5 px-2 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pt-1">
+      <div className="mx-auto grid max-w-md grid-cols-6 px-1 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pt-1">
         {mobileNavItems.map((item) => {
           const active = isNavItemActive(pathname, item.href)
           const Icon = item.icon
@@ -48,7 +49,7 @@ export function BottomNav() {
             >
               <span
                 className={cn(
-                  'flex h-7 w-12 shrink-0 items-center justify-center rounded-full border border-transparent transition-colors',
+                  'flex h-7 w-11 shrink-0 items-center justify-center rounded-full border border-transparent transition-colors',
                   active ? 'app-chrome-active' : 'text-chrome-muted',
                 )}
               >

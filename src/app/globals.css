@@ -202,6 +202,11 @@ body {
   position: relative;
   min-height: 100dvh;
   font-family: var(--font-sans);
+  /* Field data is free text (herd, enclosure and area names, notes). A single
+     long word must wrap inside its card instead of bleeding past the edge on
+     a narrow phone. `break-word` (not `anywhere`) keeps intrinsic widths, so
+     short labels and buttons never break mid-word. */
+  overflow-wrap: break-word;
 }
 
 @media (prefers-reduced-motion: no-preference) {

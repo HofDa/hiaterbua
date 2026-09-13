@@ -33,9 +33,9 @@ export function HerdDetailAnimalList({
   return (
     <>
       <section className="app-panel-sm p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">3. Tiere in {herdName}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 flex-1 basis-56">
+            <h2 className="break-words text-lg font-semibold">3. Tiere in {herdName}</h2>
             <p className="mt-1 text-sm text-ink-muted">
               Alle angezeigten Tiere gehören zu dieser Herde.
             </p>
@@ -43,7 +43,7 @@ export function HerdDetailAnimalList({
 
           <button
             onClick={onToggleShowArchived}
-            className="app-surface-row px-4 py-3 text-sm font-semibold text-ink-strong"
+            className="app-surface-row shrink-0 px-4 py-3 text-sm font-semibold text-ink-strong"
           >
             {showArchived ? 'Nur aktive anzeigen' : 'Archivierte anzeigen'}
           </button>

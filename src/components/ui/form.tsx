@@ -118,7 +118,7 @@ export function ToggleButton({ className, pressed, children, ...props }: ToggleB
       type="button"
       aria-pressed={pressed}
       className={cn(
-        'min-h-[4.25rem] rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors',
+        'min-h-[4.25rem] min-w-0 break-words rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors',
         pressed
           ? 'border-border-strong bg-accent text-ink'
           : 'border-border bg-surface-raised text-ink',
