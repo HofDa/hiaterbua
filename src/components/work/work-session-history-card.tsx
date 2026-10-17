@@ -148,14 +148,6 @@ export function WorkSessionHistoryCard({
                     >
                       {editingSessionId === session.id ? 'Abbrechen' : 'Bearbeiten'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => void onDeleteWorkSession(session)}
-                      disabled={isSaving}
-                      className="rounded-full border border-error-border bg-error-surface px-3 py-2 text-xs font-semibold text-error-ink disabled:opacity-50"
-                    >
-                      Löschen
-                    </button>
                   </div>
                 </div>
               </div>
@@ -187,6 +179,20 @@ export function WorkSessionHistoryCard({
                   onSave={() => onSaveEditedSession(session.id)}
                   onCancel={onCancelEditingSession}
                 />
+              ) : null}
+
+              {/* Delete only from the edit view, not next to "Bearbeiten" in every row. */}
+              {editingSessionId === session.id ? (
+                <div className="mt-4 border-t border-border pt-4">
+                  <button
+                    type="button"
+                    onClick={() => void onDeleteWorkSession(session)}
+                    disabled={isSaving}
+                    className="min-h-12 w-full rounded-[1.1rem] border-2 border-error-border bg-surface-raised px-4 py-3 text-sm font-semibold text-error-ink transition-colors hover:bg-error-surface disabled:opacity-50"
+                  >
+                    Eintrag löschen
+                  </button>
+                </div>
               ) : null}
             </article>
           ))}

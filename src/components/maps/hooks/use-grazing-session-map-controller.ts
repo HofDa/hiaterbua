@@ -18,6 +18,7 @@ type UseGrazingSessionMapControllerOptions = {
   safeSelectedTrackpoints: TrackPoint[]
   safeHerds: Herd[]
   animalsByHerdId: Map<string, Animal[]>
+  lastAnimalCountByHerdId: ReadonlyMap<string, number>
   acceptedPositionRef: MutableRefObject<PositionData | null>
   selection: GrazingSessionMapState['selection']
   session: GrazingSessionMapState['session']
@@ -33,6 +34,7 @@ export function useGrazingSessionMapController({
   safeSelectedTrackpoints,
   safeHerds,
   animalsByHerdId,
+  lastAnimalCountByHerdId,
   acceptedPositionRef,
   selection,
   session,
@@ -44,6 +46,7 @@ export function useGrazingSessionMapController({
     safeCurrentTrackpoints,
     safeHerds,
     animalsByHerdId,
+    lastAnimalCountByHerdId,
     acceptedPositionRef,
     selection,
     session,

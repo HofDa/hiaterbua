@@ -1275,7 +1275,7 @@ export function CareCheckFlow() {
                   value={litterReductionNote}
                   onChange={(e) => setLitterReductionNote(e.target.value)}
                   placeholder="Hinweis zu altem Gras / Filz (optional)"
-                  className="min-h-12 w-full rounded-xl border border-border bg-surface-muted px-3 text-sm text-ink-strong outline-none focus:ring-2 focus:ring-ring"
+                  className="min-h-12 w-full rounded-xl border border-border bg-surface-muted px-3 text-base text-ink-strong outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
@@ -1422,7 +1422,7 @@ export function CareCheckFlow() {
                   value={openSoilNote}
                   onChange={(e) => setOpenSoilNote(e.target.value)}
                   placeholder="Hinweis zu offenen Stellen (optional)"
-                  className="min-h-12 w-full rounded-xl border border-border bg-surface-muted px-3 text-sm text-ink-strong outline-none focus:ring-2 focus:ring-ring"
+                  className="min-h-12 w-full rounded-xl border border-border bg-surface-muted px-3 text-base text-ink-strong outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
@@ -1499,7 +1499,7 @@ export function CareCheckFlow() {
                   value={nutrientInputNote}
                   onChange={(e) => setNutrientInputNote(e.target.value)}
                   placeholder="Hinweis zum Ruhe- und Tränkeverhalten (optional)"
-                  className="min-h-12 w-full rounded-xl border border-border bg-surface-muted px-3 text-sm text-ink-strong outline-none focus:ring-2 focus:ring-ring"
+                  className="min-h-12 w-full rounded-xl border border-border bg-surface-muted px-3 text-base text-ink-strong outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>

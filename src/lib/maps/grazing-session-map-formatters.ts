@@ -6,6 +6,16 @@ export function formatDistance(distanceM: number) {
   return `${Math.round(distanceM)} m`
 }
 
+/** A duration in words for summaries: "1 h 32 min", "12 min", "< 1 min". */
+export function formatDurationWords(totalSeconds: number) {
+  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60)
+  if (totalMinutes < 1) return '< 1 min'
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours === 0) return `${minutes} min`
+  return minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`
+}
+
 export function formatDuration(totalSeconds: number) {
   const safeSeconds = Math.max(0, Math.round(totalSeconds))
   const hours = Math.floor(safeSeconds / 3600)

@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { useStableHandles } from '@/components/maps/hooks/use-stable-handles'
+import { requestGrazingHistoryView } from '@/components/maps/grazing-history-view-event'
 import {
   usePublishedHandles,
   usePublishedSlice,
@@ -143,6 +144,7 @@ export function useGrazingSessionMapPublish({
     currentMetrics: data.currentMetrics,
     currentDurationRunningSince: data.currentDurationRunningSince,
     safeCurrentSessionEvents: data.safeCurrentSessionEvents,
+    lastStoppedSession: session.lastStoppedSession,
   }
   const managementHandles = useStableHandles<GrazingManagementHandles>({
     onSelectedHerdIdChange: controller.changeSelectedHerdId,
@@ -154,6 +156,24 @@ export function useGrazingSessionMapPublish({
     onStopSession: controller.stopSession,
     onEventNoteChange: session.setEventNote,
     onAddSessionMarkerEvent: controller.addSessionMarkerEvent,
+    onUndoStop: controller.undoStop,
+    onDismissStopSummary: controller.dismissStopSummary,
+    onShowStoppedSessionInHistory: () => {
+      const stopped = session.lastStoppedSession
+      if (!stopped) return
+      selection.setSelectedSessionId(stopped.sessionId)
+      history.setIsHistoryExpanded(true)
+      history.setExpandedHistorySessionId(stopped.sessionId)
+      const dayKey = data.safeRecentSessions
+        .find((recent) => recent.id === stopped.sessionId)
+        ?.startTime.slice(0, 10)
+      if (dayKey) {
+        history.setExpandedHistoryDays((current) =>
+          current.includes(dayKey) ? current : [...current, dayKey]
+        )
+      }
+      requestGrazingHistoryView()
+    },
   })
   usePublishedSlice(
     useGrazingSessionMapStore((store) => store.setManagement),

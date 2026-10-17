@@ -25,6 +25,7 @@ import {
   buildWorkRecoverableSession,
   getCurrentRecoverableSession,
   getLiveRecoverableDurationS,
+  getRecoverableSessionKey,
   pruneRecoveryMetadata,
   readRecoveryMetadata,
   SESSION_RECOVERY_METADATA_KEY,
@@ -35,6 +36,7 @@ import {
   type RecoveryMetadata,
 } from '@/lib/session-recovery/session-recovery-state'
 import { getWorkLabel } from '@/lib/work/work-session-helpers'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { FormButton } from '@/components/ui/form'
 import { cn } from '@/lib/utils/cn'
 
@@ -70,10 +72,48 @@ function getRecoveredSessionStorageKey(sessionKey: string) {
   return `${SESSION_RECOVERY_RECOVERED_KEY_PREFIX}${sessionKey}`
 }
 
+const DISMISSED_KEY_PREFIX = 'pastore:session-recovery-dismissed:'
+
+function readDismissedSessionKey(sessionKey: string) {
+  try {
+    return window.sessionStorage.getItem(`${DISMISSED_KEY_PREFIX}${sessionKey}`) !== null
+  } catch {
+    return false
+  }
+}
+
+function writeDismissedSessionKey(sessionKey: string) {
+  try {
+    window.sessionStorage.setItem(`${DISMISSED_KEY_PREFIX}${sessionKey}`, new Date().toISOString())
+  } catch {
+    // Private mode or blocked storage: the dismissal still holds in memory.
+  }
+}
+
+/**
+ * Keys of the sessions that were already open when this page loaded — the only
+ * ones that were actually *recovered*. A session started in this page lifetime
+ * is healthy and must not raise the recovery card or log a recovery event.
+ */
+async function loadSessionKeysOpenAtStart() {
+  const [grazingSessions, workSessions] = await Promise.all([
+    listUnfinishedSessions(),
+    listUnfinishedWorkSessions(),
+  ])
+  return new Set([
+    ...grazingSessions.map((session) => getRecoverableSessionKey('grazing', session.id)),
+    ...workSessions.map((session) => getRecoverableSessionKey('work', session.id)),
+  ])
+}
+
 export function SessionRecoveryManager() {
   const router = useRouter()
+  const confirm = useConfirm()
   const [nowMs, setNowMs] = useState(() => Date.now())
-  const [dismissedSessionKey, setDismissedSessionKey] = useState<string | null>(null)
+  const [dismissedSessionKeys, setDismissedSessionKeys] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
+  const [keysOpenAtStart, setKeysOpenAtStart] = useState<ReadonlySet<string> | null>(null)
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -108,11 +148,37 @@ export function SessionRecoveryManager() {
     ]
   }, [])
   const safeActiveSessions = useMemo(() => activeSessions ?? [], [activeSessions])
-  const visibleSession = getCurrentRecoverableSession(
-    safeActiveSessions.filter((session) => session.key !== dismissedSessionKey)
-  )
+  const visibleSession = keysOpenAtStart
+    ? getCurrentRecoverableSession(
+        safeActiveSessions.filter(
+          (session) =>
+            keysOpenAtStart.has(session.key) &&
+            !dismissedSessionKeys.has(session.key) &&
+            !readDismissedSessionKey(session.key)
+        )
+      )
+    : null
   const activeSessionsRef = useRef<RecoverableSession[]>([])
   const runtimeLoggedEventsRef = useRef(new Set<string>())
+
+  useEffect(() => {
+    let cancelled = false
+    void loadSessionKeysOpenAtStart()
+      .then((keys) => {
+        if (!cancelled) setKeysOpenAtStart(keys)
+      })
+      .catch(() => {
+        if (!cancelled) setKeysOpenAtStart(new Set())
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const dismissSession = useCallback((sessionKey: string) => {
+    writeDismissedSessionKey(sessionKey)
+    setDismissedSessionKeys((current) => new Set(current).add(sessionKey))
+  }, [])
 
   useTransientFieldOperation(
     'session-recovery-active',
@@ -154,7 +220,6 @@ export function SessionRecoveryManager() {
 
   useEffect(() => {
     if (safeActiveSessions.length === 0) {
-      setDismissedSessionKey(null)
       writeStoredMetadata({})
       return
     }
@@ -177,7 +242,8 @@ export function SessionRecoveryManager() {
         })
       }
 
-      if (typeof window !== 'undefined') {
+      // Only sessions that were open when the page loaded were recovered.
+      if (typeof window !== 'undefined' && keysOpenAtStart?.has(session.key)) {
         const recoveredKey = getRecoveredSessionStorageKey(session.key)
         if (!window.sessionStorage.getItem(recoveredKey)) {
           window.sessionStorage.setItem(recoveredKey, nowIso)
@@ -199,7 +265,7 @@ export function SessionRecoveryManager() {
     })
 
     writeStoredMetadata(metadata)
-  }, [logRecoveryEventOnce, safeActiveSessions])
+  }, [keysOpenAtStart, logRecoveryEventOnce, safeActiveSessions])
 
   // The tick only drives the live duration of the visible recovery card, and
   // only an active session's duration moves. Without this gate the manager
@@ -322,7 +388,7 @@ export function SessionRecoveryManager() {
         }
       }
 
-      setDismissedSessionKey(session.key)
+      dismissSession(session.key)
       router.push(session.href)
     } catch {
       setActionError('Sitzung konnte nicht weitergeführt werden.')
@@ -334,7 +400,7 @@ export function SessionRecoveryManager() {
   async function pauseSession(session: RecoverableSession) {
     if (session.status === 'paused') {
       setActionMessage('Sitzung ist bereits pausiert.')
-      setDismissedSessionKey(session.key)
+      dismissSession(session.key)
       return
     }
 
@@ -361,7 +427,7 @@ export function SessionRecoveryManager() {
       }
 
       setActionMessage('Pause eingetragen.')
-      setDismissedSessionKey(session.key)
+      dismissSession(session.key)
     } catch {
       setActionError('Pause konnte nicht eingetragen werden.')
     } finally {
@@ -370,6 +436,18 @@ export function SessionRecoveryManager() {
   }
 
   async function finishSession(session: RecoverableSession) {
+    const confirmed = await confirm({
+      title: `${getSessionTypeLabel(session.kind)} beenden?`,
+      description:
+        session.kind === 'grazing'
+          ? 'Die GPS-Aufzeichnung wird abgeschlossen und gespeichert. Danach zeichnet dieser Weidegang nicht mehr auf.'
+          : 'Der Arbeitseinsatz wird abgeschlossen und gespeichert.',
+      confirmLabel: 'Beenden',
+      cancelLabel: 'Weiterlaufen lassen',
+      destructive: true,
+    })
+    if (!confirmed) return
+
     setActionError('')
     setActionMessage('')
     setIsSaving(true)
@@ -390,7 +468,7 @@ export function SessionRecoveryManager() {
       }
 
       setActionMessage('Sitzung beendet.')
-      setDismissedSessionKey(session.key)
+      dismissSession(session.key)
     } catch {
       setActionError('Sitzung konnte nicht beendet werden.')
     } finally {

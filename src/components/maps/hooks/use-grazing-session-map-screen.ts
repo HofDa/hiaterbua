@@ -224,6 +224,7 @@ export function useGrazingSessionMapScreen() {
     safeSelectedTrackpoints: data.safeSelectedTrackpoints,
     safeHerds: data.safeHerds,
     animalsByHerdId: data.animalsByHerdId,
+    lastAnimalCountByHerdId: data.lastAnimalCountByHerdId,
     acceptedPositionRef: refs.acceptedPositionRef,
     selection,
     session,

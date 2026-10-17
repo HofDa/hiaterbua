@@ -55,18 +55,9 @@ export function HerdDetailHeaderCard({
             </CardTitle>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <FormButton type="button" onClick={onBack} variant="secondary">
-              Zurück
-            </FormButton>
-            <FormButton
-              type="button"
-              onClick={() => void onDelete()}
-              variant="danger"
-            >
-              Herde löschen
-            </FormButton>
-          </div>
+          <FormButton type="button" onClick={onBack} variant="secondary">
+            Zurück
+          </FormButton>
         </div>
       </CardHeader>
 
@@ -133,6 +124,14 @@ export function HerdDetailHeaderCard({
         {metaError ? (
           <ErrorAlert className="mt-3">{metaError}</ErrorAlert>
         ) : null}
+
+        {/* Deliberately far from "Zurück": deleting a herd is irreversible
+            (it still asks to confirm). */}
+        <div className="mt-8 border-t border-border pt-4">
+          <FormButton type="button" onClick={() => void onDelete()} variant="danger">
+            Herde löschen
+          </FormButton>
+        </div>
       </CardContent>
     </Card>
   )

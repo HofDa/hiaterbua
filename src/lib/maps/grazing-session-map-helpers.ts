@@ -15,6 +15,7 @@ export {
   formatDateTimeInputValue,
   formatDistance,
   formatDuration,
+  formatDurationWords,
   getSessionEventLabel,
   parseDateTimeInputValue,
 } from '@/lib/maps/grazing-session-map-formatters'

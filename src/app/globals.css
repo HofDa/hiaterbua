@@ -357,11 +357,16 @@ a {
   box-shadow: var(--shadow-map-control);
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+/* In the base layer on purpose: unlayered, this reset outranked every
+   Tailwind text-size/weight utility on buttons and inputs, so all buttons
+   rendered at the inherited regular weight regardless of their classes. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 button,

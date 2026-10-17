@@ -17,7 +17,6 @@ type HerdDetailAnimalListProps = {
   onToggleShowArchived: () => void
   onStartEdit: (animal: Animal) => void
   onSetAnimalArchived: (animalId: string, isArchived: boolean) => void | Promise<void>
-  onDeleteAnimal: (animal: Animal) => void | Promise<void>
 }
 
 export function HerdDetailAnimalList({
@@ -28,7 +27,6 @@ export function HerdDetailAnimalList({
   onToggleShowArchived,
   onStartEdit,
   onSetAnimalArchived,
-  onDeleteAnimal,
 }: HerdDetailAnimalListProps) {
   return (
     <>
@@ -99,13 +97,6 @@ export function HerdDetailAnimalList({
                           {animal.isArchived ? 'Reaktivieren' : 'Archivieren'}
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => void onDeleteAnimal(animal)}
-                          className="rounded-[1rem] border border-error-border bg-error-surface px-3 py-2 text-sm font-semibold text-error-ink shadow-sm"
-                        >
-                          Löschen
-                        </button>
                       </div>
                     </div>
                   </article>

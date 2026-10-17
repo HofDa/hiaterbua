@@ -492,6 +492,65 @@ export async function stopGrazingSessionRecord(params: {
   })
 }
 
+/** How long after a stop "Rückgängig" may still reopen the session. */
+export const UNDO_STOP_WINDOW_MS = 60_000
+
+export class UndoStopUnavailableError extends Error {
+  constructor(message = 'Der Weidegang kann nicht mehr fortgesetzt werden.') {
+    super(message)
+    this.name = 'UndoStopUnavailableError'
+  }
+}
+
+/**
+ * Reopens a session that was stopped moments ago by mistake ("Rückgängig").
+ *
+ * A deliberate exception to the finished-is-final transition rule, narrowly
+ * scoped: only the exact stop identified by `stoppedAt` (its endTime), only
+ * within {@link UNDO_STOP_WINDOW_MS}, and only while no other session is open.
+ * The stop event is removed and a resume event logged, so the record reads as
+ * one continuous walk with a short recording gap.
+ */
+export async function undoStopGrazingSessionRecord(params: {
+  sessionId: string
+  stoppedAt: string
+  now?: string
+}) {
+  const { sessionId, stoppedAt } = params
+  const timestamp = params.now ?? nowIso()
+
+  await db.transaction('rw', db.sessions, db.events, async () => {
+    const session = await db.sessions.get(sessionId)
+    if (!session) throw new Error(SESSION_NOT_FOUND_MESSAGE)
+
+    if (session.status !== 'finished' || session.endTime !== stoppedAt) {
+      throw new UndoStopUnavailableError()
+    }
+    if (Date.parse(timestamp) - Date.parse(stoppedAt) > UNDO_STOP_WINDOW_MS) {
+      throw new UndoStopUnavailableError('Rückgängig ist nur kurz nach dem Beenden möglich.')
+    }
+
+    await assertNoOtherOpenGrazingSession(sessionId)
+
+    const stopEvents = await db.events
+      .where('sessionId')
+      .equals(sessionId)
+      .filter((event) => event.type === 'stop' && event.timestamp >= stoppedAt)
+      .primaryKeys()
+    if (stopEvents.length > 0) await db.events.bulkDelete(stopEvents)
+
+    const updatedCount = await db.sessions.update(sessionId, {
+      status: 'active',
+      endTime: null,
+      updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
+    })
+    assertUpdated(updatedCount, SESSION_NOT_FOUND_MESSAGE)
+
+    await logSessionEvent(sessionId, 'resume', null)
+  })
+}
+
 export async function addGrazingSessionEventRecord(params: {
   sessionId: string
   type: SessionEventType

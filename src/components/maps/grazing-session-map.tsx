@@ -12,6 +12,7 @@ import {
 } from '@/components/maps/mobile-map-ui'
 import { useGrazingSessionMapScreen } from '@/components/maps/hooks/use-grazing-session-map-screen'
 import { LiveDuration } from '@/components/maps/live-duration'
+import { GRAZING_SHOW_HISTORY_EVENT } from '@/components/maps/grazing-history-view-event'
 import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 import {
   formatDistance,
@@ -60,6 +61,21 @@ export function GrazingSessionMap() {
 
     resizeMap()
   }, [isMapExpanded, resizeMap])
+
+  useEffect(() => {
+    function showHistory() {
+      setMobileSection('history')
+      window.requestAnimationFrame(() => {
+        const target = window.matchMedia('(min-width: 1024px)').matches
+          ? document.getElementById('grazing-history-desktop')
+          : document.getElementById('grazing-history-mobile')
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
+
+    window.addEventListener(GRAZING_SHOW_HISTORY_EVENT, showHistory)
+    return () => window.removeEventListener(GRAZING_SHOW_HISTORY_EVENT, showHistory)
+  }, [])
 
   return (
     <section className="space-y-4">
@@ -130,7 +146,10 @@ export function GrazingSessionMap() {
             <div className={mobileSection === 'manage' ? 'block' : 'hidden'}>
               <GrazingSessionManagementPanel />
             </div>
-            <div className={mobileSection === 'history' ? 'block' : 'hidden'}>
+            <div
+              id="grazing-history-mobile"
+              className={cn('scroll-mt-4', mobileSection === 'history' ? 'block' : 'hidden')}
+            >
               <GrazingSessionHistoryPanel />
             </div>
           </div>
@@ -138,7 +157,9 @@ export function GrazingSessionMap() {
 
         <div className="hidden space-y-4 lg:block">
           <GrazingSessionManagementPanel />
-          <GrazingSessionHistoryPanel />
+          <div id="grazing-history-desktop" className="scroll-mt-4">
+            <GrazingSessionHistoryPanel />
+          </div>
         </div>
       </div>
     </section>

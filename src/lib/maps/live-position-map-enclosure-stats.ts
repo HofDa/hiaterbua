@@ -12,10 +12,17 @@ import type {
   Herd,
 } from '@/types/domain'
 
+/**
+ * A herd's size: the larger of its registered (non-archived) animals and its
+ * estimate. The estimate is the size of the whole flock, of which often only a
+ * few animals are registered individually — so 1 registered animal in a flock
+ * estimated at 42 is a herd of 42, not 1.
+ */
 export function getEffectiveHerdCount(herd: Herd | undefined, animals: Animal[]) {
   const activeAnimalsCount = animals.filter((animal) => !animal.isArchived).length
-  if (activeAnimalsCount > 0) return activeAnimalsCount
-  return herd?.fallbackCount ?? null
+  const estimate = herd?.fallbackCount ?? null
+  if (estimate === null) return activeAnimalsCount > 0 ? activeAnimalsCount : null
+  return Math.max(activeAnimalsCount, estimate)
 }
 
 export function buildHerdsById(herds: Herd[]) {

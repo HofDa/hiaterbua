@@ -19,7 +19,19 @@ type GrazingSessionSelectionState = {
   selectedSessionId: string | null
 }
 
+/** The session the user just stopped, for the "gespeichert" summary and undo. */
+export type LastStoppedSession = {
+  sessionId: string
+  /** The stop's endTime; identifies exactly this stop for undo. */
+  stoppedAt: string
+  herdName: string
+  durationS: number
+  distanceM: number
+  animalCount: number | null
+}
+
 type GrazingSessionCurrentState = {
+  lastStoppedSession: LastStoppedSession | null
   selectedHerdId: string
   sessionAnimalCount: number | null
   sessionNotes: string
@@ -60,6 +72,7 @@ const initialSelectionState: GrazingSessionSelectionState = {
 
 function createInitialSessionState(): GrazingSessionCurrentState {
   return {
+    lastStoppedSession: null,
     selectedHerdId: '',
     sessionAnimalCount: null,
     sessionNotes: '',
@@ -136,6 +149,7 @@ export function useGrazingSessionMapState() {
       createStateSliceSetterFactory<GrazingSessionCurrentState>(dispatchSession)
 
     return {
+      setLastStoppedSession: setSession('lastStoppedSession'),
       setSelectedHerdId: setSession('selectedHerdId'),
       setSessionAnimalCount: setSession('sessionAnimalCount'),
       setSessionNotes: setSession('sessionNotes'),

@@ -19,6 +19,7 @@ type UseGrazingSessionMapSessionRuntimeOptions = {
   safeCurrentTrackpoints: TrackPoint[]
   safeHerds: Herd[]
   animalsByHerdId: Map<string, Animal[]>
+  lastAnimalCountByHerdId: ReadonlyMap<string, number>
   selectedHerdId: string
   setSelectedHerdId: Dispatch<SetStateAction<string>>
   setSessionAnimalCount: Dispatch<SetStateAction<number | null>>
@@ -34,6 +35,7 @@ export function useGrazingSessionMapSessionRuntime({
   safeCurrentTrackpoints,
   safeHerds,
   animalsByHerdId,
+  lastAnimalCountByHerdId,
   selectedHerdId,
   setSelectedHerdId,
   setSessionAnimalCount,
@@ -71,6 +73,7 @@ export function useGrazingSessionMapSessionRuntime({
       activeSession,
       safeHerds,
       animalsByHerdId,
+      lastAnimalCountByHerdId,
       setCurrentSessionId,
       setCurrentSessionStatus,
       setSelectedHerdId,
@@ -80,6 +83,7 @@ export function useGrazingSessionMapSessionRuntime({
   }, [
     activeSession,
     animalsByHerdId,
+    lastAnimalCountByHerdId,
     safeHerds,
     setCurrentSessionId,
     setCurrentSessionStatus,
@@ -98,6 +102,7 @@ export function useGrazingSessionMapSessionRuntime({
       selectedHerdId,
       safeHerds,
       animalsByHerdId,
+      lastAnimalCountByHerdId,
       setCurrentSessionId,
       setCurrentSessionStatus,
       setSessionAnimalCount,
@@ -107,6 +112,7 @@ export function useGrazingSessionMapSessionRuntime({
   }, [
     activeSession,
     animalsByHerdId,
+    lastAnimalCountByHerdId,
     safeHerds,
     selectedHerdId,
     setCurrentSessionId,

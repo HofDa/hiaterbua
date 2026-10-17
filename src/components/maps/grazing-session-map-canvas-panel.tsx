@@ -8,7 +8,6 @@ import {
   ControlsIcon,
   PauseIcon,
   PlayIcon,
-  StopIcon,
   TrackpointsIcon,
 } from '@/components/maps/map-toolbar-icons'
 import { MapMenuToggleButton, MapTopControls } from '@/components/maps/map-top-controls'
@@ -297,15 +296,8 @@ export function GrazingSessionMapCanvasPanel({
             >
               <PauseIcon />
             </MobileMapToolbarButton>
-            <MobileMapToolbarButton
-              aria-label="Weidegang beenden"
-              title="Weidegang beenden"
-              onClick={() => void onStopSession()}
-              disabled={isSaving || (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')}
-              label="Stop"
-            >
-              <StopIcon />
-            </MobileMapToolbarButton>
+            {/* No Stop here: on mobile the one Stop lives in the Weidegang panel
+                below the map, away from Start/Pause (and it asks to confirm). */}
           </MobileMapToolbar>
         </div>
       ) : null}

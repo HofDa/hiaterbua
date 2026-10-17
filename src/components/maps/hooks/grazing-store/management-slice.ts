@@ -11,6 +11,7 @@ import type {
   SessionStatus,
 } from '@/types/domain'
 import type { GrazingSessionMapStore } from './types'
+import type { LastStoppedSession } from '@/components/maps/hooks/use-grazing-session-map-state'
 
 /** Values the management panel renders. Pushed from the screen hook (shallow-guarded). */
 export type GrazingManagementSlice = {
@@ -29,6 +30,7 @@ export type GrazingManagementSlice = {
   /** Start of the active session whose clock is running, else null. */
   currentDurationRunningSince: string | null
   safeCurrentSessionEvents: SessionEvent[]
+  lastStoppedSession: LastStoppedSession | null
 }
 
 /** Management panel callbacks. Stabilized via `useStableHandles`, so this object is set once. */
@@ -42,6 +44,9 @@ export type GrazingManagementHandles = {
   onStopSession: () => void | Promise<void>
   onEventNoteChange: (value: string) => void
   onAddSessionMarkerEvent: (type: SessionEventType, comment?: string) => void | Promise<void>
+  onUndoStop: () => void | Promise<void>
+  onDismissStopSummary: () => void
+  onShowStoppedSessionInHistory: () => void
 }
 
 const noop = () => {}
@@ -61,6 +66,7 @@ const initialManagementSlice: GrazingManagementSlice = {
   currentMetrics: null,
   currentDurationRunningSince: null,
   safeCurrentSessionEvents: [],
+  lastStoppedSession: null,
 }
 
 const initialManagementHandles: GrazingManagementHandles = {
@@ -73,6 +79,9 @@ const initialManagementHandles: GrazingManagementHandles = {
   onStopSession: noop,
   onEventNoteChange: noop,
   onAddSessionMarkerEvent: noop,
+  onUndoStop: noop,
+  onDismissStopSummary: noop,
+  onShowStoppedSessionInHistory: noop,
 }
 
 export type ManagementSlice = {

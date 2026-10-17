@@ -19,6 +19,7 @@ type HerdDetailAnimalEditCardProps = {
   onNotesChange: (value: string) => void
   onSubmit: (event: React.FormEvent) => void | Promise<void>
   onCancel: () => void
+  onDelete: () => void | Promise<void>
 }
 
 export function HerdDetailAnimalEditCard({
@@ -34,6 +35,7 @@ export function HerdDetailAnimalEditCard({
   onNotesChange,
   onSubmit,
   onCancel,
+  onDelete,
 }: HerdDetailAnimalEditCardProps) {
   return (
     <Card>
@@ -75,6 +77,13 @@ export function HerdDetailAnimalEditCard({
             Abbrechen
           </FormButton>
         </form>
+
+        {/* Lives in the edit card, not in every list row next to "Bearbeiten". */}
+        <div className="mt-6 border-t border-border pt-4">
+          <FormButton type="button" onClick={() => void onDelete()} variant="danger">
+            Tier löschen
+          </FormButton>
+        </div>
       </CardContent>
     </Card>
   )

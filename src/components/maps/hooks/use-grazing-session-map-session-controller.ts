@@ -2,9 +2,11 @@ import type { MutableRefObject } from 'react'
 import {
   addGrazingSessionEventRecord,
   createGrazingSessionRecord,
+  getGrazingSession,
   pauseGrazingSessionRecord,
   resumeGrazingSessionRecord,
   stopGrazingSessionRecord,
+  undoStopGrazingSessionRecord,
   updateGrazingSessionAnimalCountRecord,
 } from '@/lib/db/repositories/sessions'
 import {
@@ -16,7 +18,14 @@ import { OpenGrazingSessionExistsError } from '@/lib/domain/grazing-session-rule
 import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import { useGrazingSessionMapSessionRuntime } from '@/components/maps/hooks/use-grazing-session-map-session-runtime'
 import { useGrazingSessionMapTrackpointRecorder } from '@/components/maps/hooks/use-grazing-session-map-trackpoint-recorder'
-import { getSessionEventLabel } from '@/lib/maps/grazing-session-map-helpers'
+import {
+  formatDistance,
+  formatDurationWords,
+  getDurationSeconds,
+  getSessionEventLabel,
+} from '@/lib/maps/grazing-session-map-helpers'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { nowIso } from '@/lib/utils/time'
 import { getFreshPosition } from '@/lib/maps/map-core'
 import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
@@ -36,6 +45,7 @@ type UseGrazingSessionMapSessionControllerOptions = {
   safeCurrentTrackpoints: TrackPoint[]
   safeHerds: Herd[]
   animalsByHerdId: Map<string, Animal[]>
+  lastAnimalCountByHerdId: ReadonlyMap<string, number>
   acceptedPositionRef: MutableRefObject<PositionData | null>
   selection: GrazingSessionMapState['selection']
   session: GrazingSessionMapState['session']
@@ -46,11 +56,13 @@ export function useGrazingSessionMapSessionController({
   safeCurrentTrackpoints,
   safeHerds,
   animalsByHerdId,
+  lastAnimalCountByHerdId,
   acceptedPositionRef,
   selection,
   session,
 }: UseGrazingSessionMapSessionControllerOptions) {
   const {
+    setLastStoppedSession,
     selectedHerdId,
     sessionAnimalCount,
     sessionNotes,
@@ -66,12 +78,14 @@ export function useGrazingSessionMapSessionController({
     setEventStatus,
   } = session
   const { setSelectedSessionId } = selection
+  const confirm = useConfirm()
 
   const runtimeRefs = useGrazingSessionMapSessionRuntime({
     activeSession,
     safeCurrentTrackpoints,
     safeHerds,
     animalsByHerdId,
+    lastAnimalCountByHerdId,
     selectedHerdId,
     setSelectedHerdId,
     setSessionAnimalCount,
@@ -128,7 +142,7 @@ export function useGrazingSessionMapSessionController({
   }
 
   function getResolvedAnimalCount(herdId: string) {
-    return sessionAnimalCount ?? getDefaultAnimalCount(herdId, safeHerds, animalsByHerdId)
+    return sessionAnimalCount ?? getDefaultAnimalCount(herdId, safeHerds, animalsByHerdId, lastAnimalCountByHerdId)
   }
 
   function getFreshAcceptedPosition() {
@@ -138,7 +152,9 @@ export function useGrazingSessionMapSessionController({
   function changeSelectedHerdId(nextHerdId: string) {
     setSelectedHerdId(nextHerdId)
     setSessionAnimalCount(
-      nextHerdId ? getDefaultAnimalCount(nextHerdId, safeHerds, animalsByHerdId) : null
+      nextHerdId
+        ? getDefaultAnimalCount(nextHerdId, safeHerds, animalsByHerdId, lastAnimalCountByHerdId)
+        : null
     )
     setActionError('')
   }
@@ -189,6 +205,7 @@ export function useGrazingSessionMapSessionController({
         setCurrentSessionStatus('active')
         setSessionAnimalCount(animalCount)
         setSelectedSessionId(null)
+        setLastStoppedSession(null)
 
         // Glance-free confirmation that recording started — the user often has
         // the phone pocketed and gloves on at this moment.
@@ -263,9 +280,42 @@ export function useGrazingSessionMapSessionController({
     })
   }
 
+  /** What the stop confirmation shows: herd · duration · distance · animals. */
+  function describeSessionForStop() {
+    if (!activeSession) return undefined
+
+    const herdName = safeHerds.find((herd) => herd.id === activeSession.herdId)?.name
+    const durationS =
+      activeSession.status === 'active'
+        ? getDurationSeconds(activeSession.startTime, nowIso())
+        : activeSession.durationS
+    return [
+      herdName ?? 'Weidegang',
+      formatDurationWords(durationS),
+      formatDistance(activeSession.distanceM),
+      activeSession.animalCount !== null ? `${activeSession.animalCount} Tiere` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ')
+  }
+
   async function stopSession() {
     const sessionId = runtimeRefs.currentSessionIdRef.current
     if (!sessionId) return
+
+    // Ending a recording is final, and the Stop button sits within thumb reach
+    // of Pause — a pocket tap or a glove slip must not end the track.
+    const summary = describeSessionForStop()
+    const confirmed = await confirm({
+      title: 'Weidegang beenden?',
+      description: summary
+        ? `${summary}. Die GPS-Aufzeichnung wird abgeschlossen und gespeichert.`
+        : 'Die GPS-Aufzeichnung wird abgeschlossen und gespeichert.',
+      confirmLabel: 'Beenden',
+      cancelLabel: 'Weiter aufzeichnen',
+      destructive: true,
+    })
+    if (!confirmed || runtimeRefs.currentSessionIdRef.current !== sessionId) return
 
     await runSavingAction({
       setSaving: setIsSaving,
@@ -288,6 +338,20 @@ export function useGrazingSessionMapSessionController({
           details: { trackpointCount: runtimeRefs.currentTrackpointsRef.current.length },
         })
 
+        // Closure for the walk: what was saved, with a short window to undo a
+        // mistaken stop.
+        const stopped = await getGrazingSession(sessionId)
+        if (stopped?.endTime) {
+          setLastStoppedSession({
+            sessionId,
+            stoppedAt: stopped.endTime,
+            herdName: safeHerds.find((herd) => herd.id === stopped.herdId)?.name ?? 'Weidegang',
+            durationS: stopped.durationS,
+            distanceM: stopped.distanceM,
+            animalCount: stopped.animalCount ?? null,
+          })
+        }
+
         // Runtime state is cleared only now — after the flush and the stop
         // transaction both succeeded.
         setSelectedSessionId(sessionId)
@@ -296,6 +360,7 @@ export function useGrazingSessionMapSessionController({
           selectedHerdId,
           safeHerds,
           animalsByHerdId,
+          lastAnimalCountByHerdId,
           setCurrentSessionId,
           setCurrentSessionStatus,
           setSessionAnimalCount,
@@ -303,6 +368,40 @@ export function useGrazingSessionMapSessionController({
           setEventStatus,
           setSessionNotes,
         })
+        triggerHaptic('success')
+      },
+    })
+  }
+
+  /** Reopens the session stopped moments ago ("Rückgängig"). */
+  async function undoStop() {
+    const lastStopped = session.lastStoppedSession
+    if (!lastStopped) return
+
+    await runSavingAction({
+      setSaving: setIsSaving,
+      savingValue: true,
+      idleValue: false,
+      setError: setActionError,
+      errorMessage: (error) =>
+        error instanceof Error && error.message
+          ? error.message
+          : 'Weidegang konnte nicht fortgesetzt werden.',
+      action: async () => {
+        await withSessionRecordingLock(lastStopped.sessionId, () =>
+          undoStopGrazingSessionRecord({
+            sessionId: lastStopped.sessionId,
+            stoppedAt: lastStopped.stoppedAt,
+          })
+        )
+        recordFieldDiagnostic({
+          type: 'grazing_session_stop_undone',
+          message: 'Beenden rückgängig gemacht – Weidegang läuft weiter.',
+          activeGrazingSessionId: lastStopped.sessionId,
+          activeRecordingId: lastStopped.sessionId,
+        })
+        setLastStoppedSession(null)
+        setSelectedSessionId(null)
         triggerHaptic('success')
       },
     })
@@ -384,6 +483,8 @@ export function useGrazingSessionMapSessionController({
     pauseSession,
     resumeSession,
     stopSession,
+    undoStop,
+    dismissStopSummary: () => setLastStoppedSession(null),
     adjustSessionAnimalCount,
     addSessionMarkerEvent,
   }

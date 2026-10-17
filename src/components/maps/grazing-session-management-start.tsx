@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { FormField, FormLabel, FormTextarea } from '@/components/ui/form'
 import {
-  FlowCountCard,
   FlowEmptyState,
   FlowOptionGrid,
   FlowPrimaryAction,
@@ -11,6 +10,7 @@ import {
   FlowStepperButton,
   FlowStepHeader,
 } from '@/components/ui/mobile-flow'
+import { CountStepper } from '@/components/ui/count-stepper'
 import { MetaLabel } from '@/components/ui/typography'
 import type { Herd, SessionStatus } from '@/types/domain'
 
@@ -145,19 +145,11 @@ export function GrazingSessionMobileStartFlow({
             }}
           />
 
-          <div className="grid grid-cols-2 gap-3">
-            <FlowCountCard label="Tiere" value={animalCount} />
-
-            <FlowStepperButton
-              onClick={() => void onAdjustAnimalCount(-1)}
-              disabled={animalCount <= 0}
-            >
-              −
-            </FlowStepperButton>
-            <FlowStepperButton onClick={() => void onAdjustAnimalCount(1)}>
-              +
-            </FlowStepperButton>
-          </div>
+          <CountStepper
+            label="Tiere"
+            value={animalCount}
+            onChange={(next) => void onAdjustAnimalCount(next - animalCount)}
+          />
 
           <FlowPrimaryAction
             onClick={() => void onStartSession()}
@@ -218,14 +210,18 @@ export function GrazingSessionMobileControls({
     isSaving ||
     (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')
 
+  // Kept apart from Pause/Fortsetzen and styled as destructive: the two used
+  // to sit side by side at equal weight, one glove slip from ending the track.
+  // stopSession also asks for confirmation.
   const stopButton = (
-    <FlowStepperButton
+    <button
+      type="button"
       onClick={() => void onStopSession()}
       disabled={stopDisabled}
-      className="text-base disabled:opacity-50"
+      className="mt-2 flex min-h-12 w-full items-center justify-center rounded-[1.1rem] border-2 border-error-border bg-surface-raised px-4 py-3 text-base font-semibold text-error-ink transition-colors hover:bg-error-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50"
     >
-      Stop
-    </FlowStepperButton>
+      Weidegang beenden
+    </button>
   )
 
   return (
@@ -240,11 +236,11 @@ export function GrazingSessionMobileControls({
       ) : null}
 
       {currentSessionStatus === 'active' ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div>
           <FlowStepperButton
             onClick={() => void onPauseSession()}
             disabled={isSaving}
-            className="text-base disabled:opacity-50"
+            className="w-full text-base disabled:opacity-50"
           >
             Pause
           </FlowStepperButton>
@@ -253,14 +249,10 @@ export function GrazingSessionMobileControls({
       ) : null}
 
       {currentSessionStatus === 'paused' ? (
-        <div className="grid grid-cols-2 gap-3">
-          <FlowStepperButton
-            onClick={() => void onResumeSession()}
-            disabled={isSaving}
-            className="text-base disabled:opacity-50"
-          >
+        <div>
+          <FlowPrimaryAction onClick={() => void onResumeSession()} disabled={isSaving}>
             Fortsetzen
-          </FlowStepperButton>
+          </FlowPrimaryAction>
           {stopButton}
         </div>
       ) : null}

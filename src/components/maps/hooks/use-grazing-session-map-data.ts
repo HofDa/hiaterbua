@@ -135,6 +135,17 @@ export function useGrazingSessionMapData({
     [selectedSessionEvents]
   )
   const animalsByHerdId = useMemo(() => buildAnimalsByHerdId(safeAnimals), [safeAnimals])
+  // Newest finished session first, so the first count seen per herd is the
+  // last one recorded.
+  const lastAnimalCountByHerdId = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const session of finishedSessions ?? []) {
+      if (!counts.has(session.herdId) && typeof session.animalCount === 'number' && session.animalCount > 0) {
+        counts.set(session.herdId, session.animalCount)
+      }
+    }
+    return counts as ReadonlyMap<string, number>
+  }, [finishedSessions])
   const activeSession = useMemo(
     () => selectCurrentSession(safeRecentSessions),
     [safeRecentSessions]
@@ -248,6 +259,7 @@ export function useGrazingSessionMapData({
     safeHerds,
     safeAnimals,
     animalsByHerdId,
+    lastAnimalCountByHerdId,
     safeSurveyAreas,
     safeRecentSessions,
     safeCurrentTrackpoints,

@@ -210,9 +210,22 @@ export function GrazingSessionMapDesktopManagementOverlay({
               >
                 −
               </button>
-              <div className="min-w-0 flex-1 text-center">
-                <div className="text-sm font-semibold text-ink-strong">{animalCount}</div>
-              </div>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={9999}
+                aria-label="Tiere im Weidegang"
+                value={animalCount}
+                disabled={!hasSelectedHerd}
+                onChange={(event) => {
+                  const next = Number.parseInt(event.target.value, 10)
+                  if (Number.isFinite(next) && next >= 0) {
+                    void onAdjustAnimalCount(Math.min(9999, next) - animalCount)
+                  }
+                }}
+                className="min-w-0 flex-1 bg-transparent text-center text-sm font-semibold tabular-nums text-ink-strong focus-visible:outline-none"
+              />
               <button
                 type="button"
                 onClick={() => void onAdjustAnimalCount(1)}

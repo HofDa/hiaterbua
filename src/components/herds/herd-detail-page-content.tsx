@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-enclosure-stats'
 import { speciesOptions } from '@/components/herds/animal-form-fields'
 import { HerdDetailAddAnimalCard } from '@/components/herds/herd-detail-add-animal-card'
 import { HerdDetailAnimalEditCard } from '@/components/herds/herd-detail-animal-edit-card'
@@ -37,8 +38,7 @@ export function HerdDetailPageContent({
   onDeleted,
 }: HerdDetailPageContentProps) {
   const activeAnimalsCount = animals.filter((animal) => !animal.isArchived).length
-  const effectiveHerdCount =
-    activeAnimalsCount > 0 ? activeAnimalsCount : (herd.fallbackCount ?? null)
+  const effectiveHerdCount = getEffectiveHerdCount(herd, animals)
 
   const animalController = useHerdDetailAnimalController({
     herdId,
@@ -166,6 +166,10 @@ export function HerdDetailPageContent({
           onNotesChange={animalController.setEditNotes}
           onSubmit={animalController.saveEdit}
           onCancel={animalController.cancelEdit}
+          onDelete={async () => {
+            const animal = animals.find((current) => current.id === animalController.editingAnimalId)
+            if (animal) await animalController.deleteAnimal(animal)
+          }}
         />
       ) : null}
 
@@ -177,7 +181,6 @@ export function HerdDetailPageContent({
         onToggleShowArchived={() => animalController.setShowArchived((current) => !current)}
         onStartEdit={animalController.startEdit}
         onSetAnimalArchived={animalController.setAnimalArchived}
-        onDeleteAnimal={animalController.deleteAnimal}
       />
     </div>
   )

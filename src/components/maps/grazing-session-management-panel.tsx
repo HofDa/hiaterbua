@@ -8,6 +8,7 @@ import {
   GrazingSessionMobileControls,
 } from '@/components/maps/grazing-session-management-panel-sections'
 import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
+import { GrazingSessionStopSummary } from '@/components/maps/grazing-session-stop-summary'
 
 export function GrazingSessionManagementPanel() {
   const {
@@ -25,6 +26,7 @@ export function GrazingSessionManagementPanel() {
     currentMetrics,
     currentDurationRunningSince,
     safeCurrentSessionEvents,
+    lastStoppedSession,
   } = useGrazingSessionMapStore((state) => state.management)
   const {
     onSelectedHerdIdChange,
@@ -34,11 +36,26 @@ export function GrazingSessionManagementPanel() {
     onPauseSession,
     onResumeSession,
     onStopSession,
+    onUndoStop,
+    onDismissStopSummary,
+    onShowStoppedSessionInHistory,
     onEventNoteChange,
     onAddSessionMarkerEvent,
   } = useGrazingSessionMapStore((state) => state.managementHandles)
   const panelContent = (
     <>
+      {currentSessionStatus === null && lastStoppedSession ? (
+        <div className="mb-4">
+          <GrazingSessionStopSummary
+            stopped={lastStoppedSession}
+            isSaving={isSaving}
+            onUndo={onUndoStop}
+            onShowInHistory={onShowStoppedSessionInHistory}
+            onDismiss={onDismissStopSummary}
+          />
+        </div>
+      ) : null}
+
       {currentSessionStatus === null ? (
         <GrazingSessionMobileStartFlow
           safeHerds={safeHerds}

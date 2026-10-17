@@ -15,6 +15,8 @@ import {
   resumeGrazingSessionRecord,
   saveEditedGrazingSessionRecord,
   stopGrazingSessionRecord,
+  undoStopGrazingSessionRecord,
+  UndoStopUnavailableError,
 } from '@/lib/db/repositories/sessions'
 import type { GpsTrackPosition } from '@/lib/maps/position-types'
 
@@ -585,5 +587,59 @@ describe('strict lifecycle transition guards', () => {
 
     expect((await db.sessions.get(session.id))?.status).toBe('active')
     expect((await listSessionEvents(session.id)).filter((event) => event.type === 'pause')).toHaveLength(0)
+  })
+})
+
+describe('undoStopGrazingSessionRecord', () => {
+  async function startAndStop() {
+    const session = await createGrazingSessionRecord({
+      herdId: 'herd_1',
+      animalCount: 40,
+      notes: '',
+      position: position(),
+    })
+    await stopGrazingSessionRecord({ sessionId: session.id, position: null })
+    const stopped = await db.sessions.get(session.id)
+    return { sessionId: session.id, stoppedAt: stopped!.endTime! }
+  }
+
+  it('reopens the just-stopped session and replaces the stop event with a resume', async () => {
+    const { sessionId, stoppedAt } = await startAndStop()
+
+    await undoStopGrazingSessionRecord({ sessionId, stoppedAt })
+
+    const reopened = await db.sessions.get(sessionId)
+    expect(reopened?.status).toBe('active')
+    expect(reopened?.endTime).toBeNull()
+    const types = (await listSessionEvents(sessionId)).map((event) => event.type)
+    expect(types).not.toContain('stop')
+    expect(types.at(-1)).toBe('resume')
+  })
+
+  it('refuses after the undo window', async () => {
+    const { sessionId, stoppedAt } = await startAndStop()
+    const late = new Date(Date.parse(stoppedAt) + 5 * 60_000).toISOString()
+
+    await expect(
+      undoStopGrazingSessionRecord({ sessionId, stoppedAt, now: late })
+    ).rejects.toBeInstanceOf(UndoStopUnavailableError)
+    expect((await db.sessions.get(sessionId))?.status).toBe('finished')
+  })
+
+  it('refuses when another session has been opened meanwhile', async () => {
+    const { sessionId, stoppedAt } = await startAndStop()
+    await createGrazingSessionRecord({ herdId: 'herd_2', animalCount: null, notes: '', position: null })
+
+    await expect(undoStopGrazingSessionRecord({ sessionId, stoppedAt })).rejects.toBeInstanceOf(
+      OpenGrazingSessionExistsError
+    )
+  })
+
+  it('refuses for a stop it does not identify', async () => {
+    const { sessionId } = await startAndStop()
+
+    await expect(
+      undoStopGrazingSessionRecord({ sessionId, stoppedAt: '2000-01-01T00:00:00.000Z' })
+    ).rejects.toBeInstanceOf(UndoStopUnavailableError)
   })
 })

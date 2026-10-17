@@ -4,15 +4,14 @@ import { useState, type ChangeEvent } from 'react'
 import { ErrorAlert } from '@/components/ui/alert'
 import { FormField, FormLabel, FormTextarea } from '@/components/ui/form'
 import {
-  FlowCountCard,
   FlowEmptyState,
   FlowOptionGrid,
   FlowPrimaryAction,
   FlowSecondaryAction,
   FlowSelectableTile,
-  FlowStepperButton,
   FlowStepHeader,
 } from '@/components/ui/mobile-flow'
+import { CountStepper } from '@/components/ui/count-stepper'
 import { getAssignableHerds } from '@/lib/maps/live-position-map-helpers'
 import type { Enclosure, EnclosureAssignment, Herd } from '@/types/domain'
 
@@ -82,19 +81,11 @@ export function LivePositionMobileAssignmentFlow({
             ))}
           </FlowOptionGrid>
 
-          <div className="grid grid-cols-2 gap-3">
-            <FlowCountCard label="Tiere" value={animalCount} />
-
-            <FlowStepperButton
-              onClick={() => onAssignmentCountChange(String(Math.max(0, animalCount - 1)))}
-              disabled={animalCount <= 0}
-            >
-              -
-            </FlowStepperButton>
-            <FlowStepperButton onClick={() => onAssignmentCountChange(String(animalCount + 1))}>
-              +
-            </FlowStepperButton>
-          </div>
+          <CountStepper
+            label="Tiere"
+            value={animalCount}
+            onChange={(next) => onAssignmentCountChange(String(next))}
+          />
 
           <FlowPrimaryAction
             onClick={() => onAssignHerdToEnclosure(enclosure)}

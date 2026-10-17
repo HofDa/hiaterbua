@@ -31,6 +31,7 @@ type ActiveSessionRuntimeStateOptions = BaseRuntimeStateOptions & {
   activeSession: GrazingSession
   safeHerds: Herd[]
   animalsByHerdId: Map<string, Animal[]>
+  lastAnimalCountByHerdId?: ReadonlyMap<string, number>
   setSelectedHerdId: Dispatch<SetStateAction<string>>
   setSessionAnimalCount: Dispatch<SetStateAction<number | null>>
   setSessionNotes: Dispatch<SetStateAction<string>>
@@ -40,18 +41,28 @@ type ClearRuntimeStateOptions = BaseRuntimeStateOptions & {
   selectedHerdId: string
   safeHerds: Herd[]
   animalsByHerdId: Map<string, Animal[]>
+  lastAnimalCountByHerdId?: ReadonlyMap<string, number>
   setSessionAnimalCount: Dispatch<SetStateAction<number | null>>
   setEventNote: Dispatch<SetStateAction<string>>
   setEventStatus: Dispatch<SetStateAction<string>>
   setSessionNotes?: Dispatch<SetStateAction<string>>
 }
 
+/**
+ * The animal count a new Weidegang starts with: the count last recorded for
+ * this herd (flocks change slowly, and re-entering 40 by "+" taps is not an
+ * option in the field), else the herd's effective size.
+ */
 export function getDefaultAnimalCount(
   herdId: string,
   safeHerds: Herd[],
-  animalsByHerdId: Map<string, Animal[]>
+  animalsByHerdId: Map<string, Animal[]>,
+  lastAnimalCountByHerdId?: ReadonlyMap<string, number>
 ) {
   if (!herdId) return 0
+
+  const lastCount = lastAnimalCountByHerdId?.get(herdId)
+  if (lastCount !== undefined) return lastCount
 
   const herd = safeHerds.find((currentHerd) => currentHerd.id === herdId)
   return Math.max(0, getEffectiveHerdCount(herd, animalsByHerdId.get(herdId) ?? []) ?? 0)
@@ -77,6 +88,7 @@ export function applyActiveSessionToRuntimeState({
   activeSession,
   safeHerds,
   animalsByHerdId,
+  lastAnimalCountByHerdId,
   setCurrentSessionId,
   setCurrentSessionStatus,
   setSelectedHerdId,
@@ -90,7 +102,12 @@ export function applyActiveSessionToRuntimeState({
   setSelectedHerdId(activeSession.herdId)
   setSessionAnimalCount(
     activeSession.animalCount ??
-      getDefaultAnimalCount(activeSession.herdId, safeHerds, animalsByHerdId)
+      getDefaultAnimalCount(
+        activeSession.herdId,
+        safeHerds,
+        animalsByHerdId,
+        lastAnimalCountByHerdId
+      )
   )
   setSessionNotes(activeSession.notes ?? '')
 }
@@ -100,6 +117,7 @@ export function clearRuntimeSessionState({
   selectedHerdId,
   safeHerds,
   animalsByHerdId,
+  lastAnimalCountByHerdId,
   setCurrentSessionId,
   setCurrentSessionStatus,
   setSessionAnimalCount,
@@ -115,7 +133,9 @@ export function clearRuntimeSessionState({
   setCurrentSessionId(null)
   setCurrentSessionStatus(null)
   setSessionAnimalCount(
-    selectedHerdId ? getDefaultAnimalCount(selectedHerdId, safeHerds, animalsByHerdId) : null
+    selectedHerdId
+      ? getDefaultAnimalCount(selectedHerdId, safeHerds, animalsByHerdId, lastAnimalCountByHerdId)
+      : null
   )
   setEventNote('')
   setEventStatus('')
