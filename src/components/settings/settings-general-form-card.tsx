@@ -14,6 +14,7 @@ import { FormField, FormLabel, FormSelect, FormInput, FormButton } from '@/compo
 import { StatusAlert } from '@/components/ui/alert'
 import { gpsPresets, getGpsTuning, matchGpsPreset } from '@/lib/settings/gps-presets'
 import { cn } from '@/lib/utils/cn'
+import { idleChoiceClassName, selectedChoiceClassName } from '@/components/ui/mobile-flow'
 
 type SettingsGeneralFormCardProps = {
   draft: AppSettings
@@ -99,10 +100,8 @@ export function SettingsGeneralFormCard({
                       setDraft((current) => ({ ...current, ...getGpsTuning(preset) }))
                     }
                     className={cn(
-                      'min-h-11 rounded-full border-2 px-4 py-2 text-sm font-semibold transition-colors',
-                      active
-                        ? 'border-border-ink bg-primary text-primary-foreground'
-                        : 'border-border bg-surface-raised text-ink hover:bg-surface-hover',
+                      'min-h-11 rounded-full px-4 py-2 text-sm transition-colors',
+                      active ? selectedChoiceClassName : idleChoiceClassName,
                     )}
                   >
                     {preset.label}

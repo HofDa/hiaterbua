@@ -3,6 +3,7 @@ import {
   addGrazingSessionEventRecord,
   createGrazingSessionRecord,
   getGrazingSession,
+  listFinishedSessionsByRecent,
   pauseGrazingSessionRecord,
   resumeGrazingSessionRecord,
   stopGrazingSessionRecord,
@@ -188,8 +189,20 @@ export function useGrazingSessionMapSessionController({
           : 'Weidegang konnte nicht gestartet werden.',
       action: async () => {
         const currentPosition = getFreshAcceptedPosition()
+        // One-tap start may fire before the history query has loaded, so read
+        // the herd's last recorded count straight from the database — it is
+        // the number Start promised ("40 Tiere (zuletzt)").
+        const lastRecordedCount = herdIdOverride
+          ? (await listFinishedSessionsByRecent()).find(
+              (session) =>
+                session.herdId === herdIdOverride &&
+                typeof session.animalCount === 'number' &&
+                session.animalCount > 0
+            )?.animalCount
+          : undefined
         const animalCount = herdIdOverride
-          ? getDefaultAnimalCount(herdIdOverride, safeHerds, animalsByHerdId, lastAnimalCountByHerdId)
+          ? lastRecordedCount ??
+            getDefaultAnimalCount(herdIdOverride, safeHerds, animalsByHerdId, lastAnimalCountByHerdId)
           : getResolvedAnimalCount(herdId)
         if (herdIdOverride) setSelectedHerdId(herdIdOverride)
         const session = await createGrazingSessionRecord({

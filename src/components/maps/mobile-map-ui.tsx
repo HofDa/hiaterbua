@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
+import { idleChoiceClassName, selectedChoiceClassName } from '@/components/ui/mobile-flow'
 
 type FloatingPanelProps = {
   children: ReactNode
@@ -78,11 +79,10 @@ export function MobileMapSegmentButton({
   return (
     <button
       type={type}
+      aria-pressed={active}
       className={cn(
-        'rounded-2xl px-3 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        active
-          ? 'border border-border-strong bg-surface-muted text-ink'
-          : 'border border-border bg-surface-raised text-ink-strong',
+        'min-h-11 rounded-2xl px-3 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+        active ? selectedChoiceClassName : idleChoiceClassName,
         className,
       )}
       {...props}

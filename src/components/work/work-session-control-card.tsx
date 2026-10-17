@@ -7,6 +7,7 @@ import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
 import { SavedSummaryCard } from '@/components/ui/saved-summary-card'
 import type { LastFinishedWork } from '@/components/work/hooks/use-work-page-controller/use-work-page-session-actions'
 import { formatDurationWords } from '@/lib/maps/grazing-session-map-helpers'
+import { getWorkLabel } from '@/lib/work/work-session-helpers'
 import type { WorkActivityId, Enclosure, Herd, WorkSession, WorkStatus, WorkType } from '@/types/domain'
 import type { WorkPickerSectionId, WorkSelection } from '@/lib/work/work-session-helpers'
 
@@ -29,6 +30,8 @@ type WorkSessionControlCardProps = {
   error: string
   statusMessage: string
   lastFinishedWork: LastFinishedWork | null
+  lastWorkForRepeat: WorkSession | null
+  onStartLikeLast: (last: WorkSession) => void | Promise<void>
   onUndoFinishWork: () => void | Promise<void>
   onDismissFinishedWork: () => void
   onStartWorkSession: (event: React.FormEvent<HTMLFormElement>) => void | Promise<void>
@@ -60,6 +63,8 @@ export function WorkSessionControlCard({
   error,
   statusMessage,
   lastFinishedWork,
+  lastWorkForRepeat,
+  onStartLikeLast,
   onUndoFinishWork,
   onDismissFinishedWork,
   onStartWorkSession,
@@ -118,6 +123,14 @@ export function WorkSessionControlCard({
         ) : (
           <WorkNewSessionForm
             isSaving={isSaving}
+            repeat={
+              lastWorkForRepeat
+                ? {
+                    label: getWorkLabel(lastWorkForRepeat),
+                    onStart: () => onStartLikeLast(lastWorkForRepeat),
+                  }
+                : null
+            }
             workPickerSectionId={workPickerSectionId}
             workType={workType}
             workActivityId={workActivityId}

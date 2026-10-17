@@ -187,15 +187,6 @@ export default function HerdsPage() {
       ) : null}
 
       <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold tracking-[-0.02em]">Herden</h2>
-          {herds ? (
-            <div className="rounded-full border border-border bg-surface-raised px-3 py-1 text-sm font-semibold text-ink-strong">
-              {herds.length}
-            </div>
-          ) : null}
-        </div>
-
 
         {!herds ? (
           <div className="app-panel-sm p-5">Lade Daten …</div>

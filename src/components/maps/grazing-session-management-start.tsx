@@ -42,11 +42,13 @@ export function GrazingSessionActiveSummary({
   safeHerds,
   selectedHerdId,
   selectedAnimalCount,
+  lastAnimalCount,
   onAdjustAnimalCount,
 }: {
   safeHerds: Herd[]
   selectedHerdId: string
   selectedAnimalCount: number | null
+  lastAnimalCount: number | null
   onAdjustAnimalCount: (delta: number) => void | Promise<void>
 }) {
   const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
@@ -64,6 +66,9 @@ export function GrazingSessionActiveSummary({
             {' · '}
             {count} {count === 1 ? 'Tier' : 'Tiere'}
           </span>
+          {lastAnimalCount !== null && lastAnimalCount === count ? (
+            <span className="block text-sm font-medium text-ink-muted">wie beim letzten Weidegang</span>
+          ) : null}
         </p>
         <button
           type="button"
@@ -163,10 +168,9 @@ export function GrazingSessionMobileStartFlow({
             <FlowEmptyState>Noch keine Herde angelegt.</FlowEmptyState>
           ) : (
             <FlowOptionGrid layout="single">
-              {safeHerds.map((herd) => {
-                return (
+              {safeHerds.map((herd) => (
+                <div key={herd.id} className="flex items-stretch gap-2">
                   <FlowSelectableTile
-                    key={herd.id}
                     onClick={() => {
                       setHasStartedFlow(true)
                       onSelectedHerdIdChange(herd.id)
@@ -174,20 +178,28 @@ export function GrazingSessionMobileStartFlow({
                       setInternalStep('setup')
                     }}
                     idleClassName="border-border bg-surface-raised text-ink-strong"
-                    className="min-h-16 rounded-[1.35rem]"
+                    className="min-h-16 flex-1 rounded-[1.35rem]"
+                    aria-label={`${herd.name}: Tierzahl wählen und starten`}
                   >
                     <span className="flex items-center justify-between gap-3">
                       <span className="min-w-0 text-base leading-snug [overflow-wrap:anywhere]">
                         {herd.name}
                       </span>
-                      <ChevronRight
-                        aria-hidden="true"
-                        className="h-5 w-5 shrink-0 text-ink-muted"
-                      />
+                      <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted" />
                     </span>
                   </FlowSelectableTile>
-                )
-              })}
+                  {/* Same one-tap start as on Start, with the usual count. */}
+                  <button
+                    type="button"
+                    onClick={() => void onStartSession(herd.id)}
+                    disabled={isSaving}
+                    aria-label={`Weidegang mit ${herd.name} sofort starten`}
+                    className="min-h-16 shrink-0 rounded-[1.35rem] border-2 border-primary bg-primary px-4 text-base font-bold text-primary-foreground disabled:opacity-60"
+                  >
+                    Starten
+                  </button>
+                </div>
+              ))}
             </FlowOptionGrid>
           )}
         </>

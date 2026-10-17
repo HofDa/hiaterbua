@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import type { AppSettings } from '@/types/domain'
+import toast from 'react-hot-toast'
 import { useSettingsStorageState } from '@/components/settings/hooks/use-settings-storage-state'
 import { useSettingsTileCacheState } from '@/components/settings/hooks/use-settings-tile-cache-state'
 import {
@@ -101,6 +102,10 @@ export function useSettingsPagePreferences() {
       // number field to 1) must not overwrite what the user is entering.
       if (applyNormalized) setDraft(nextSettings)
       setSaving(false)
+      if (!applyNormalized && storedInDb && !syncWarning) {
+        // Auto-saves confirm briefly where the eye is, not at the card's end.
+        toast.success('Gespeichert', { duration: 1500, position: 'top-center' })
+      }
       setStatus(
         `${storedInDb
           ? 'Einstellungen gespeichert.'

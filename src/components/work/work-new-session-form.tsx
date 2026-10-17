@@ -76,6 +76,8 @@ function ReminderClockIcon({ minutes }: { minutes: string }) {
 
 type WorkNewSessionFormProps = {
   isSaving: boolean
+  /** One-tap "Wie zuletzt": the last finished kind of work. */
+  repeat: { label: string; onStart: () => void | Promise<void> } | null
   workPickerSectionId: WorkPickerSectionId
   workType: WorkType
   workActivityId: WorkActivityId | null
@@ -96,6 +98,7 @@ type WorkNewSessionFormProps = {
 
 export function WorkNewSessionForm({
   isSaving,
+  repeat,
   workPickerSectionId,
   workType,
   workActivityId,
@@ -282,6 +285,22 @@ export function WorkNewSessionForm({
             explanation of what each category covers. */}
         {mobileStep === 'section' ? (
           <div className="grid gap-2.5">
+            {repeat ? (
+              <button
+                type="button"
+                onClick={() => void repeat.onStart()}
+                disabled={isSaving}
+                className="flex min-h-16 w-full items-center justify-between gap-3 rounded-[1.35rem] border-2 border-primary bg-primary px-4 py-3 text-left text-primary-foreground disabled:opacity-60"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold opacity-90">Wie zuletzt</span>
+                  <span className="block text-base font-bold leading-snug [overflow-wrap:anywhere]">
+                    {repeat.label}
+                  </span>
+                </span>
+                <span className="shrink-0 text-base font-bold">Starten</span>
+              </button>
+            ) : null}
             {workPickerSections.map((section) => (
               <ToggleButton
                 key={section.id}
@@ -320,7 +339,6 @@ export function WorkNewSessionForm({
               {activeSection.options.map((option) => (
                 <ToggleButton
                   key={option.id}
-                  pressed={option.id === selectedOptionId}
                   onClick={() => {
                     setHasStartedFlow(true)
                     onWorkSelectionChange(getWorkSelectionForOption(workPickerSectionId, option.id))

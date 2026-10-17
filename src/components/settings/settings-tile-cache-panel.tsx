@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
-import { cn } from '@/lib/utils/cn'
+import { formatDecimal } from '@/lib/utils/format'
 import type { SettingsStorageMode } from '@/components/settings/settings-options'
 import { ChevronDown } from 'lucide-react'
 
@@ -37,19 +37,6 @@ export function SettingsTileCachePanel({
   onEnablePersistentStorage,
   onClearTileCache,
 }: SettingsTileCachePanelProps) {
-  const storageBadgeClass = cn(
-    'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
-    hasStoredTiles
-      ? 'border-success-border bg-success-surface text-success-ink'
-      : 'border-border bg-surface-raised text-ink-soft',
-  )
-  const persistenceBadgeClass = cn(
-    'rounded-full border px-3 py-1 text-xs font-semibold shadow-sm',
-    persistentStorageGranted
-      ? 'border-success-border bg-success-surface text-success-ink'
-      : 'border-border bg-surface-raised text-ink-soft',
-  )
-
   return (
     <Card className="border-border bg-surface-raised p-4">
       <CardContent className="p-0">
@@ -59,53 +46,28 @@ export function SettingsTileCachePanel({
           aria-expanded={isOpen}
           className="flex w-full items-start justify-between gap-3 text-left"
         >
-          <div>
-            <div className="text-sm font-semibold text-ink">Offline-Karten</div>
+          {/* One status line instead of three look-alike chips and a counter
+              squeezed into a narrow column. */}
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-ink">Gesicherte Karten</div>
             <div className="mt-1 text-sm font-medium text-ink-soft">
-              {tileCacheSupported
-                ? hasStoredTiles
-                  ? `${tileCacheCount} Kartenausschnitte liegen auf diesem Gerät und sind offline nutzbar.`
-                  : tileCachingEnabled
-                    ? 'Eingeschaltet: Angesehene Kartenausschnitte werden auf dem Gerät gespeichert und sind ohne Netz verfügbar.'
-                    : 'Ausgeschaltet: Neue Kartenausschnitte werden nicht gespeichert. Bereits gespeicherte können gelöscht werden.'
-                : 'Dieser Browser stellt die Cache-API nicht bereit.'}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className={storageBadgeClass}>
-                {tileCacheLoading
+              {!tileCacheSupported
+                ? 'Dieser Browser kann keine Karten offline sichern.'
+                : tileCacheLoading
                   ? 'Wird geprüft …'
                   : hasStoredTiles
-                    ? `${tileCacheCount} Kartenausschnitte gespeichert`
-                    : 'Noch keine Karte gespeichert'}
-              </span>
-              <span className={storageBadgeClass}>
-                {hasStoredTiles ? 'Offline nutzbar' : 'Offline noch nicht vorbereitet'}
-              </span>
-              <span className={persistenceBadgeClass}>
-                {persistentStorageGranted === null
-                  ? 'Schutz unbekannt'
-                  : persistentStorageGranted
-                    ? 'Vor Löschen geschützt'
-                    : 'Nicht vor Löschen geschützt'}
-              </span>
-            </div>
-            <div className="mt-1 text-xs font-medium text-ink-muted">
-              Das Gerät darf die gespeicherten Daten bei Platzmangel{' '}
-              {persistentStorageGranted === null
-                ? 'vielleicht löschen'
+                    ? `${formatDecimal(tileCacheCount ?? 0)} Kartenausschnitte gesichert – offline nutzbar`
+                    : tileCachingEnabled
+                      ? 'Noch keine Karte gesichert. Angesehene Karten werden ab jetzt gesichert.'
+                      : 'Noch keine Karte gesichert.'}
+              {persistentStorageGranted === false && hasStoredTiles
+                ? ' · Gerät darf sie bei Platzmangel löschen'
                 : persistentStorageGranted
-                  ? 'nicht löschen'
-                  : 'löschen – bitte Schutz anfragen'}
+                  ? ' · vor Löschen geschützt'
+                  : ''}
             </div>
           </div>
-          <div className="shrink-0 text-right">
-            <div className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-semibold text-ink-muted">
-              {tileCacheLoading
-                ? 'prüft ...'
-                : tileCacheCount === null
-                  ? 'unbekannt'
-                  : `${tileCacheCount} Ausschnitte`}
-            </div>
+          <div className="shrink-0 pt-0.5">
             <ChevronDown
               aria-hidden="true"
               className={isOpen ? 'ml-auto mt-1 h-5 w-5 rotate-180 text-ink transition-transform' : 'ml-auto mt-1 h-5 w-5 text-ink transition-transform'}

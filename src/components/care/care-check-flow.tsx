@@ -1726,7 +1726,7 @@ export function CareCheckFlow() {
                 >
                   <span
                     className={cn(
-                      'h-2.5 w-full rounded-full',
+                      'h-4 w-full rounded-full',
                       index === displayQuestionIndex
                         ? 'bg-primary ring-2 ring-primary ring-offset-2'
                         : fieldAnswers[questionId] !== null
@@ -1838,7 +1838,7 @@ export function CareCheckFlow() {
                   },
                 ]}
                 savedAt={checkSavedAt}
-                undoLabel="Rückgängig – Antworten korrigieren"
+                undoLabel="Rückgängig"
                 onUndo={undoSavedCheck}
                 onDismiss={() => setIsSavedCardDismissed(true)}
               />

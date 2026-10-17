@@ -80,6 +80,7 @@ export function GrazingSessionMap() {
 
   return (
     <section className="space-y-4">
+      <h1 className="sr-only">Weidegang</h1>
       {/* GPS/live-status only matters while actually mapping. On mobile the map is
           collapsed by default, so show this only once the map is opened (or when
           GPS needs attention); desktop always shows it. */}

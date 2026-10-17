@@ -131,6 +131,40 @@ export function useWorkPageSessionActions({
     }
   }
 
+  /** "Wie zuletzt": start the same kind of work as the last finished one. */
+  async function startLikeLast(last: WorkSession) {
+    setLastFinishedWork(null)
+    setIsSaving(true)
+    setError('')
+    setStatusMessage('')
+    try {
+      const session = await createWorkSessionRecord({
+        type: last.type,
+        activityId: last.activityId ?? null,
+        herdId: last.herdId ?? null,
+        enclosureId: last.enclosureId ?? null,
+        reminderIntervalMin: last.reminderIntervalMin ?? 0,
+        notes: '',
+      })
+      recordFieldDiagnostic({
+        type: 'work_session_started',
+        message: 'Arbeitseinsatz gestartet (wie zuletzt).',
+        activeWorkSessionId: session.id,
+        details: { workType: last.type, activityId: last.activityId ?? null },
+      })
+      setActiveReminderMessage('')
+      triggerHaptic('success')
+    } catch (currentError) {
+      setError(
+        currentError instanceof Error
+          ? currentError.message
+          : 'Arbeitseinsatz konnte nicht gestartet werden.'
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function updateWorkSessionStatus(nextStatus: WorkStatus) {
     if (!activeSession) return
 
@@ -267,6 +301,7 @@ export function useWorkPageSessionActions({
     updateWorkSessionStatus,
     deleteWorkSession,
     lastFinishedWork,
+    startLikeLast,
     undoFinishWorkSession,
     dismissFinishedWork: () => setLastFinishedWork(null),
   }

@@ -23,7 +23,7 @@ import {
 } from '@/lib/diagnostics/ui-blocker-detector'
 import { downloadBlob } from '@/lib/import-export/file-formats'
 import { buttonVariants } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription } from '@/components/ui/card'
 import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
 import { cn } from '@/lib/utils/cn'
 import type { FieldDiagnosticEvent } from '@/types/domain'
@@ -53,6 +53,8 @@ export default function DiagnosticsPage() {
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [debugFieldDiagnostics, setDebugFieldDiagnostics] = useState(false)
+  // The log can hold hundreds of entries; show the newest first, in pages.
+  const [visibleCount, setVisibleCount] = useState(20)
   const diagnostics = useLiveQuery(
     () => listFieldDiagnosticsByRecent(),
     []
@@ -150,7 +152,7 @@ export default function DiagnosticsPage() {
       <section className="app-panel p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <CardTitle className="text-2xl">Feld-Diagnose</CardTitle>
+            <h1 className="text-2xl font-bold leading-tight tracking-tight">Feld-Diagnose</h1>
             <CardDescription className="mt-2 max-w-2xl">
               Ein Protokoll, was die App im Feld erlebt hat (GPS, Speichern, Verbindung).
               Hilft beim Melden eines Fehlers. Bleibt auf diesem Gerät.
@@ -246,7 +248,7 @@ export default function DiagnosticsPage() {
             </p>
           ) : (
             <div className="space-y-2">
-              {safeDiagnostics.map((event) => {
+              {safeDiagnostics.slice(0, visibleCount).map((event) => {
                 const details = formatDetails(event.details)
 
                 return (
@@ -300,6 +302,15 @@ export default function DiagnosticsPage() {
                   </article>
                 )
               })}
+              {safeDiagnostics.length > visibleCount ? (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((count) => count + 20)}
+                  className="min-h-11 w-full rounded-[1rem] border-2 border-border-strong bg-surface-raised px-4 text-sm font-semibold text-ink-strong"
+                >
+                  Ältere anzeigen ({safeDiagnostics.length - visibleCount} weitere)
+                </button>
+              ) : null}
             </div>
           )}
         </CardContent>

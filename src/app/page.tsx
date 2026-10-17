@@ -7,6 +7,8 @@ import {
   Map as MapIcon,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { getTileCacheCount, TILE_CACHE_CHANGED_EVENT } from '@/lib/maps/tile-cache'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Card, CardContent, CardDescription } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
@@ -44,6 +46,8 @@ type HerdStatus = {
   id: string
   name: string
   count: number | null
+  /** True when `count` is the last Weidegang's count (what a one-tap start uses). */
+  countIsLast: boolean
   enclosureName: string | null
   since: string | null
 }
@@ -67,6 +71,15 @@ export default function HomePage() {
         .map((assignment) => [assignment.herdId, assignment])
     )
     const animalsByHerd = buildAnimalsByHerdId(animals)
+    // Newest finished session per herd: the count a one-tap start will use.
+    const lastCountByHerd = new Map<string, number>()
+    for (const session of [...sessions]
+      .filter((current) => current.status === 'finished')
+      .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))) {
+      if (!lastCountByHerd.has(session.herdId) && typeof session.animalCount === 'number' && session.animalCount > 0) {
+        lastCountByHerd.set(session.herdId, session.animalCount)
+      }
+    }
     const herdStatuses: HerdStatus[] = herds
       .filter((herd) => !herd.isArchived)
       .sort((a, b) => a.name.localeCompare(b.name, 'de'))
@@ -75,7 +88,8 @@ export default function HomePage() {
         return {
           id: herd.id,
           name: herd.name,
-          count: getEffectiveHerdCount(herd, animalsByHerd.get(herd.id) ?? []),
+          count: lastCountByHerd.get(herd.id) ?? getEffectiveHerdCount(herd, animalsByHerd.get(herd.id) ?? []),
+          countIsLast: lastCountByHerd.has(herd.id),
           enclosureName: assignment ? (enclosureNames.get(assignment.enclosureId) ?? 'Pferch') : null,
           since: assignment?.startTime ?? null,
         }
@@ -97,6 +111,23 @@ export default function HomePage() {
   }, [])
 
   const settings = useLiveQuery(() => getAppSettings(), [])
+  // The map card is a to-do: once a map is saved offline it goes away.
+  const [tileCount, setTileCount] = useState<number | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    const refresh = () => {
+      void getTileCacheCount().then((count) => {
+        if (!cancelled) setTileCount(count)
+      })
+    }
+    refresh()
+    window.addEventListener(TILE_CACHE_CHANGED_EVENT, refresh)
+    return () => {
+      cancelled = true
+      window.removeEventListener(TILE_CACHE_CHANGED_EVENT, refresh)
+    }
+  }, [])
+
   const secureArea = useSecureAreaPrefetch({
     baseLayer: settings?.mapBaseLayer ?? defaultAppSettings.mapBaseLayer,
     tileCachingEnabled: settings?.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
@@ -104,6 +135,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4">
+      <h1 className="sr-only">Start</h1>
       <BackupReminder />
 
       <ContinueRecordingCard />
@@ -117,7 +149,7 @@ export default function HomePage() {
           </h2>
           <Link
             href="/enclosures"
-            className="inline-flex min-h-11 items-center text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
+            className="inline-flex min-h-11 items-center rounded-full border-2 border-border-strong px-4 text-sm font-semibold text-ink-strong"
           >
             Pferche
           </Link>
@@ -150,7 +182,9 @@ export default function HomePage() {
                       {herd.enclosureName
                         ? [herd.enclosureName, formatSince(herd.since)].filter(Boolean).join(' · ')
                         : 'In keinem Pferch'}
-                      {herd.count !== null ? ` · ${herd.count} ${herd.count === 1 ? 'Tier' : 'Tiere'}` : ''}
+                      {herd.count !== null
+                        ? ` · ${herd.count} ${herd.count === 1 ? 'Tier' : 'Tiere'}${herd.countIsLast ? ' (zuletzt)' : ''}`
+                        : ''}
                     </span>
                   </span>
                 </Link>
@@ -159,7 +193,7 @@ export default function HomePage() {
                   <Link
                     href={`/sessions?herd=${encodeURIComponent(herd.id)}&start=1`}
                     onClick={() => triggerHaptic('light')}
-                    aria-label={`Weidegang mit ${herd.name} starten`}
+                    aria-label={`Weidegang mit ${herd.name}${herd.count !== null ? ` und ${herd.count} Tieren` : ''} starten`}
                     className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border-2 border-primary px-3 text-sm font-bold text-ink-strong"
                   >
                     <MapIcon aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
@@ -177,7 +211,10 @@ export default function HomePage() {
       {/* Not during a recording: then the field work leads, not preparation. */}
       {dashboardData &&
       dashboardData.activeSessionsCount === 0 &&
-      dashboardData.activeWorkSessionsCount === 0 ? (
+      dashboardData.activeWorkSessionsCount === 0 &&
+      (secureArea.status !== 'idle' ||
+        !(settings?.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled) ||
+        tileCount === 0) ? (
         <Card>
           <CardContent className="flex flex-col gap-2.5 py-3.5">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">

@@ -60,6 +60,9 @@ export function showUndoToast(message: string, onUndo: () => void | Promise<void
       id: `undo-${startedAt}`,
       duration: UNDO_TOAST_MS,
       className: UNDO_TOAST_CLASS,
+      // Top, under the header: at the bottom it covered the Pferch card it
+      // refers to.
+      position: 'top-center',
       style: {
         border: '2px solid var(--success-border)',
         background: 'var(--success-surface)',

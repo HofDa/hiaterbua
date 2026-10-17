@@ -45,9 +45,9 @@ export function SavedSummaryCard({
     <section
       role="status"
       aria-live="polite"
-      className="rounded-[1.35rem] border-2 border-success-ink bg-success-surface p-4 text-ink-strong"
+      className="relative rounded-[1.35rem] border-2 border-success-ink bg-success-surface p-4 text-ink-strong"
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 pr-10">
         <CheckCircle2 aria-hidden="true" className="mt-0.5 h-7 w-7 shrink-0 text-success-ink" strokeWidth={2.4} />
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-bold leading-tight">{title}</h3>
@@ -59,7 +59,7 @@ export function SavedSummaryCard({
           type="button"
           onClick={onDismiss}
           aria-label="Hinweis schließen"
-          className="-mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.4} />
         </button>

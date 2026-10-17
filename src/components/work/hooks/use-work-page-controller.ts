@@ -42,6 +42,13 @@ export function useWorkPageController({ sessions }: UseWorkPageControllerOptions
     () => selectCurrentSession(sessions),
     [sessions]
   )
+  const lastWorkForRepeat = useMemo(
+    () =>
+      sessions
+        .filter((session) => session.status === 'finished')
+        .sort((a, b) => ((a.endTime ?? a.updatedAt) < (b.endTime ?? b.updatedAt) ? 1 : -1))[0] ?? null,
+    [sessions]
+  )
 
   const {
     nextReminderMs,
@@ -91,6 +98,7 @@ export function useWorkPageController({ sessions }: UseWorkPageControllerOptions
     updateWorkSessionStatus,
     deleteWorkSession,
     lastFinishedWork,
+    startLikeLast,
     undoFinishWorkSession,
     dismissFinishedWork,
   } =
@@ -157,6 +165,8 @@ export function useWorkPageController({ sessions }: UseWorkPageControllerOptions
     lastFinishedWork,
     undoFinishWorkSession,
     dismissFinishedWork,
+    lastWorkForRepeat,
+    startLikeLast,
     startEditingSession,
     cancelEditingSession,
     saveEditedSession,

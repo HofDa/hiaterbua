@@ -97,6 +97,15 @@ function renderSelectableTileContent(children: ReactNode) {
   return children
 }
 
+/**
+ * The one "selected" look for every segmented tab, filter and preset in the
+ * app (choice tiles add a check badge on top). Four different selected styles
+ * — grey fill, yellow, dark green, pills — made state hard to read in sun.
+ */
+export const selectedChoiceClassName =
+  'border-2 border-primary bg-accent font-bold text-ink-strong shadow-[inset_0_0_0_1px_var(--brand-dark)]'
+export const idleChoiceClassName = 'border border-border bg-surface-raised font-semibold text-ink'
+
 // Selected = green 3px edge + check badge, not a beige tint: tint alone
 // vanished in direct sun, and the same tint also meant "preselected" and
 // "last tapped" across the app.

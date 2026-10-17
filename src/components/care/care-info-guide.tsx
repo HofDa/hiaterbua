@@ -1,6 +1,6 @@
 'use client'
 
-import { ExternalLink, Footprints, Leaf, Sprout } from 'lucide-react'
+import { ExternalLink, Footprints, Leaf, Sprout, ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { simpleTerms } from '@/lib/care/care-guide'
 
@@ -13,11 +13,9 @@ function InfoDetails({
 }) {
   return (
     <details className="group rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3">
-      <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-ink-strong [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-ink-strong [&::-webkit-details-marker]:hidden">
         <span>{title}</span>
-        <span aria-hidden="true" className="text-ink-muted transition-transform group-open:rotate-180">
-          ⌄
-        </span>
+        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted transition-transform group-open:rotate-180" />
       </summary>
       <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-muted">{children}</div>
     </details>
@@ -92,7 +90,7 @@ export function CareInfoGuide() {
         </div>
       </InfoDetails>
 
-      <p className="flex items-center gap-1.5 px-3 text-xs leading-relaxed text-ink-muted">
+      <p className="flex items-center gap-1.5 px-4 text-xs leading-relaxed text-ink-muted">
         <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
         Pflanzenlinks im Pflegecheck öffnen eine externe Bild-/Arthilfe und brauchen Netz.
       </p>

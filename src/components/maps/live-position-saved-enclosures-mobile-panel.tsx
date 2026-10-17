@@ -19,6 +19,7 @@ import type {
   EnclosureAssignment,
   Herd,
 } from '@/types/domain'
+import { idleChoiceClassName, selectedChoiceClassName } from '@/components/ui/mobile-flow'
 
 const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
@@ -103,11 +104,9 @@ export function LivePositionSavedEnclosuresMobilePanel({
               onClick={() => onEnclosureListFilterChange(filterOption.id)}
               aria-pressed={enclosureListFilter === filterOption.id}
               className={cn(
-                'min-h-11 rounded-2xl px-3 py-2.5 text-sm font-semibold',
+                'min-h-11 rounded-2xl px-3 py-2.5 text-sm',
                 focusRing,
-                enclosureListFilter === filterOption.id
-                  ? 'border-2 border-primary bg-accent text-ink-strong'
-                  : 'border border-border bg-surface-raised text-ink',
+                enclosureListFilter === filterOption.id ? selectedChoiceClassName : idleChoiceClassName,
               )}
             >
               {filterOption.label}

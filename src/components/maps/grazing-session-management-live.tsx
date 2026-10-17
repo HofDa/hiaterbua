@@ -60,10 +60,9 @@ export function GrazingSessionEventCapturePanel({
             onClick={() => void onAddSessionMarkerEvent(eventButton.type)}
             disabled={isEventSaving}
             className={cn(
-              'rounded-[1.05rem] px-3 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50',
-              eventButton.type === 'disturbance'
-                ? 'border border-error-border bg-error-surface text-error-ink'
-                : 'border border-border bg-surface-raised text-ink',
+              // All events look the same: a red "Störung" next to the red
+              // "Weidegang beenden" read as another end/danger action.
+              'min-h-12 rounded-[1.05rem] border border-border bg-surface-raised px-3 py-3 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50',
             )}
           >
             {eventButton.label}

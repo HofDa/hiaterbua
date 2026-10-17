@@ -84,6 +84,8 @@ export function WorkPageContent({
     lastFinishedWork,
     undoFinishWorkSession,
     dismissFinishedWork,
+    lastWorkForRepeat,
+    startLikeLast,
     startEditingSession,
     cancelEditingSession,
     saveEditedSession,
@@ -121,6 +123,8 @@ export function WorkPageContent({
           error={error}
           statusMessage={statusMessage}
           lastFinishedWork={lastFinishedWork}
+          lastWorkForRepeat={lastWorkForRepeat}
+          onStartLikeLast={startLikeLast}
           onUndoFinishWork={undoFinishWorkSession}
           onDismissFinishedWork={dismissFinishedWork}
           onStartWorkSession={startWorkSession}

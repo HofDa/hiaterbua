@@ -85,9 +85,6 @@ export function SurveyAreasPanel({
                   <div className="mt-1 text-xs text-ink-muted">
                     {formatArea(selectedSurveyArea.areaM2)}
                   </div>
-                  <div className="mt-1 text-xs text-ink-muted break-all font-mono">
-                    ID: {selectedSurveyArea.id}
-                  </div>
                 </div>
               ) : null}
 
@@ -109,11 +106,8 @@ export function SurveyAreasPanel({
                       <div className="mt-1 text-[11px] text-ink-muted">
                         {formatArea(surveyArea.areaM2)}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-ink-muted [overflow-wrap:anywhere]">
+                      <div className="mt-0.5 text-xs text-ink-muted [overflow-wrap:anywhere]">
                         {formatUpdatedAt(surveyArea.updatedAt)}
-                      </div>
-                      <div className="mt-1 text-[10px] font-mono text-ink-soft break-all">
-                        ID: {surveyArea.id}
                       </div>
                     </div>
                     <FormButton
