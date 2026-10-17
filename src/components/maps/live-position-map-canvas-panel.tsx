@@ -121,7 +121,7 @@ export function LivePositionMapCanvasPanel({
       {showMapFallback ? (
         <MapFallbackPanel
           title="Karte momentan nicht verfügbar"
-          detail="Tiles oder Kartenmodul konnten nicht geladen werden. Pferch- und GPS-Aktionen bleiben lokal nutzbar."
+          detail="Die Karte konnte nicht geladen werden. Pferch- und GPS-Aktionen bleiben lokal nutzbar."
           position={position}
           statusLabel={fallbackStatusLabel}
         >

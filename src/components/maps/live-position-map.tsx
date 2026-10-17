@@ -11,6 +11,7 @@ import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-positi
 import type { MobilePanel } from '@/components/maps/live-position-map-types'
 import { cn } from '@/lib/utils/cn'
 import type { Enclosure } from '@/types/domain'
+import { pluralize } from '@/lib/utils/format'
 
 export function LivePositionMap() {
   // The frequent field task is assigning/unassigning herds (the "Pferche" tab),
@@ -27,7 +28,7 @@ export function LivePositionMap() {
   } = useLivePositionMapScreen()
 
   const mobileMapSummary = filteredEnclosuresCount
-    ? `${filteredEnclosuresCount} Pferche in Reichweite`
+    ? `${pluralize(filteredEnclosuresCount, 'Pferch', 'Pferche')} in Reichweite`
     : 'Noch keine Pferche sichtbar'
 
   // GPS problems are actionable even when the map is closed, so the status card

@@ -136,9 +136,9 @@ export function useSettingsTileCacheState({
       const cleared = await withTimeout(clearTileCacheStorage())
       if (cleared) {
         setTileCacheCount(0)
-        setStatus('Tile-Cache geleert.')
+        setStatus('Offline-Karten gelöscht.')
       } else {
-        setStatus('Tile-Cache konnte auf diesem Gerät nicht vollständig geleert werden.')
+        setStatus('Offline-Karten konnten auf diesem Gerät nicht vollständig gelöscht werden.')
       }
     } finally {
       setTileCacheClearing(false)

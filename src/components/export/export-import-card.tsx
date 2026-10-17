@@ -53,17 +53,21 @@ export function ExportImportCard({
       </CardHeader>
       <CardContent>
         <p className="mt-2 text-sm font-medium text-ink-soft">
-          Importiert `app-data.json`, Teil-JSON-Exporte wie Herden oder Arbeit, den gesamten
-          ZIP-Export oder ein separates GeoJSON für Untersuchungsflächen.
+          Eine Sicherung (ZIP) wiederherstellen, einzelne exportierte Herden oder Arbeitseinsätze
+          einlesen oder Untersuchungsflächen als GeoJSON hinzufügen.
         </p>
 
-        <label className="mt-4 block rounded-2xl border-2 border-dashed border-border bg-surface-raised px-4 py-4 text-sm text-ink">
-          <div className="font-medium text-ink">Datei wählen</div>
-          <div className="mt-1 font-medium text-ink-soft">{selectedFileLabel}</div>
+        {/* The native file input showed the browser's English "Choose file";
+            it stays in the label for the picker but is visually replaced. */}
+        <label className="mt-4 block cursor-pointer rounded-2xl border-2 border-dashed border-border bg-surface-raised px-4 py-4 text-sm text-ink focus-within:ring-2 focus-within:ring-ring">
+          <span className="inline-flex min-h-11 items-center rounded-[1rem] border-2 border-border-strong bg-surface-muted px-4 font-semibold text-ink-strong">
+            Datei auswählen
+          </span>
+          <span className="mt-2 block font-medium text-ink-soft">{selectedFileLabel}</span>
           <input
             type="file"
             accept=".zip,.json,.geojson,application/json,application/geo+json,application/zip"
-            className="mt-3 block w-full text-sm"
+            className="sr-only"
             onChange={(event) => {
               void onFileSelection(event.target.files?.[0] ?? null)
           }}
@@ -118,16 +122,16 @@ export function ExportImportCard({
           checked={replaceExisting}
           onChange={(event) => onReplaceExistingChange(event.target.checked)}
           disabled={!!importPreview && !canReplaceExisting}
-          className="mt-1 h-4 w-4 rounded border-border-soft"
+          className="mt-0.5"
         />
         <span>
           <span className="block font-medium text-ink">Vorhandene Daten vorher löschen</span>
           <span className="block font-medium text-ink-soft">
-            Ohne Haken werden Datensätze anhand ihrer `id` ergänzt oder überschrieben.
+            Ohne Haken werden neue Einträge ergänzt und gleiche Einträge aktualisiert.
           </span>
           {importPreview && !canReplaceExisting && (
             <span className="mt-1 block font-medium text-warning-ink">
-              Für diese Datei ist `Ersetzen` gesperrt, weil nur Teilmengen importiert werden.
+              Bei dieser Datei nicht möglich, weil sie nur einen Teil der Daten enthält.
             </span>
           )}
         </span>

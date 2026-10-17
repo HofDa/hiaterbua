@@ -1,8 +1,9 @@
 import type { SessionEventType } from '@/lib/maps/grazing-session-map-helper-types'
+import { formatDecimal } from '@/lib/utils/format'
 
 export function formatDistance(distanceM: number) {
   if (!Number.isFinite(distanceM) || distanceM <= 0) return '0 m'
-  if (distanceM >= 1000) return `${(distanceM / 1000).toFixed(2)} km`
+  if (distanceM >= 1000) return `${formatDecimal(distanceM / 1000, 2)} km`
   return `${Math.round(distanceM)} m`
 }
 

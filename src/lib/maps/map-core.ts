@@ -1,5 +1,6 @@
 import type * as GeoJSON from 'geojson'
 import type { SurveyArea, TrackPoint } from '@/types/domain'
+import { formatDecimal } from '@/lib/utils/format'
 
 export type GpsState = 'idle' | 'requesting' | 'tracking' | 'unsupported' | 'denied' | 'error'
 
@@ -29,7 +30,7 @@ export function formatAccuracy(accuracy: number | null | undefined) {
 
 export function formatArea(areaM2: number) {
   if (!Number.isFinite(areaM2) || areaM2 <= 0) return '0 m² · 0,00 ha'
-  return `${Math.round(areaM2)} m² · ${(areaM2 / 10_000).toFixed(2)} ha`
+  return `${formatDecimal(Math.round(areaM2))} m² · ${formatDecimal(areaM2 / 10_000, 2)} ha`
 }
 
 export function formatTimestamp(timestamp: number) {

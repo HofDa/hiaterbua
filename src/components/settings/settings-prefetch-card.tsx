@@ -244,7 +244,7 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
             variant="primary"
             className="rounded-[1.25rem]"
           >
-            {state.prefetching ? 'Lädt Tiles ...' : 'Ausschnitt vorladen'}
+            {state.prefetching ? 'Lädt Karte …' : 'Ausschnitt vorladen'}
           </FormButton>
           {state.canCancelPrefetch ? (
             <FormButton

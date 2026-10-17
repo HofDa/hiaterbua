@@ -165,7 +165,7 @@ export function useMapKernel({
   async function prefetchVisibleMapArea() {
     const currentSettings = settings ?? defaultAppSettings
     if (!currentSettings.tileCachingEnabled) {
-      setPrefetchStatus('Tile-Caching ist deaktiviert.')
+      setPrefetchStatus('Offline-Karten sind ausgeschaltet.')
       return
     }
 

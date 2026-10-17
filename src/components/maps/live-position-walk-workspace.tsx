@@ -7,6 +7,7 @@ import { FormField, FormLabel, FormInput, FormTextarea, FormButton } from '@/com
 import { ErrorAlert } from '@/components/ui/alert'
 import { cn } from '@/lib/utils/cn'
 import type { PositionData } from '@/components/maps/live-position-map-types'
+import { pluralize } from '@/lib/utils/format'
 
 type LivePositionWalkWorkspaceProps = {
   isDrawing: boolean
@@ -166,7 +167,7 @@ export function LivePositionWalkWorkspace({
           >
             <div>
               <h3 className="text-sm font-medium text-ink">Aufgenommene Weidegaenge</h3>
-              <p className="mt-1 text-xs text-ink-soft">{walkPoints.length} Punkte gespeichert</p>
+              <p className="mt-1 text-xs text-ink-soft">{pluralize(walkPoints.length, 'Punkt', 'Punkte')} gespeichert</p>
             </div>
             <span className="text-base text-ink">{isWalkPointsOpen ? '−' : '+'}</span>
           </button>

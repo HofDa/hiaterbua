@@ -60,23 +60,23 @@ export function SettingsTileCachePanel({
           className="flex w-full items-start justify-between gap-3 text-left"
         >
           <div>
-            <div className="text-sm font-medium text-ink">Tile-Cache</div>
+            <div className="text-sm font-semibold text-ink">Offline-Karten</div>
             <div className="mt-1 text-sm font-medium text-ink-soft">
               {tileCacheSupported
                 ? hasStoredTiles
                   ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
                   : tileCachingEnabled
-                    ? 'Tile-Caching ist aktiv. Neu geladene Tiles werden lokal auf dem Gerät gespeichert.'
-                    : 'Caching ist ausgeschaltet. Bereits geladene Tiles können geleert werden.'
+                    ? 'Eingeschaltet: Angesehene Kartenausschnitte werden auf dem Gerät gespeichert und sind ohne Netz verfügbar.'
+                    : 'Ausgeschaltet: Neue Kartenausschnitte werden nicht gespeichert. Bereits gespeicherte können gelöscht werden.'
                 : 'Dieser Browser stellt die Cache-API nicht bereit.'}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className={storageBadgeClass}>
                 {tileCacheLoading
-                  ? 'Tiles werden geprüft'
+                  ? 'Wird geprüft …'
                   : hasStoredTiles
                     ? `${tileCacheCount} Tiles auf Gerät`
-                    : 'Keine Tiles auf Gerät'}
+                    : 'Noch keine Karte gespeichert'}
               </span>
               <span className={storageBadgeClass}>
                 {hasStoredTiles ? 'Offline nutzbar' : 'Offline noch nicht vorbereitet'}

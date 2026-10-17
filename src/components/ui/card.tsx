@@ -26,7 +26,9 @@ export function CardHeader({
   className,
   ...props
 }: ComponentProps<'div'>) {
-  return <div className={cn('flex flex-col space-y-1.5 p-6', className)} {...props} />
+  // The Card already pads its content; sub-parts only add vertical rhythm
+  // (p-6 here used to stack onto the Card's p-5 and indent everything).
+  return <div className={cn('flex flex-col space-y-1.5 pb-3', className)} {...props} />
 }
 
 export function CardTitle({
@@ -52,12 +54,12 @@ export function CardContent({
   className,
   ...props
 }: ComponentProps<'div'>) {
-  return <div className={cn('p-6 pt-0', className)} {...props} />
+  return <div className={cn(className)} {...props} />
 }
 
 export function CardFooter({
   className,
   ...props
 }: ComponentProps<'div'>) {
-  return <div className={cn('flex items-center p-6 pt-0', className)} {...props} />
+  return <div className={cn('flex items-center pt-4', className)} {...props} />
 }

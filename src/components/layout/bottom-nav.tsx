@@ -16,10 +16,10 @@ type MobileNavItem = {
 const mobileNavItems: MobileNavItem[] = [
   { href: '/', label: 'Start', icon: Home },
   { href: '/work', label: 'Arbeit', icon: Briefcase },
-  { href: '/sessions', label: 'Weide', icon: Map },
+  { href: '/sessions', label: 'Weidegang', icon: Map },
   { href: '/enclosures', label: 'Pferche', icon: MapPin },
   { href: '/care', label: 'Pflege', icon: Leaf },
-  { href: '/herds', label: 'Herde', icon: Users },
+  { href: '/herds', label: 'Herden', icon: Users },
 ]
 
 export function BottomNav() {
@@ -45,7 +45,7 @@ export function BottomNav() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               onClick={() => triggerHaptic('light')}
-              className="flex h-14 min-w-0 flex-col items-center justify-center gap-1 px-1 text-center transition-colors"
+              className="flex h-14 min-w-0 flex-col items-center justify-center gap-1 px-0 text-center transition-colors"
             >
               <span
                 className={cn(
@@ -57,7 +57,7 @@ export function BottomNav() {
               </span>
               <span
                 className={cn(
-                  'max-w-full truncate text-xs font-semibold leading-none',
+                  'max-w-full truncate text-xs font-semibold leading-none tracking-[-0.01em]',
                   active ? 'text-white' : 'text-chrome-muted',
                 )}
               >

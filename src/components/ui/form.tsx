@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { Loader2 } from 'lucide-react'
+import { FlowSelectableTile } from '@/components/ui/mobile-flow'
 
 // ---------------------------------------------------------------------------
 // Form-aware primitive wrappers
@@ -110,25 +111,16 @@ export function FormButton({
 // ---------------------------------------------------------------------------
 
 type ToggleButtonProps = ComponentProps<'button'> & {
-  pressed: boolean
+  /** Omit for navigation tiles; see FlowSelectableTile. */
+  pressed?: boolean
 }
 
-export function ToggleButton({ className, pressed, children, ...props }: ToggleButtonProps) {
+/** Same look and selected state as FlowSelectableTile (one selection language). */
+export function ToggleButton({ children, ...props }: ToggleButtonProps) {
   return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      className={cn(
-        'min-h-[4.25rem] min-w-0 break-words rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors',
-        pressed
-          ? 'border-border-strong bg-accent text-ink'
-          : 'border-border bg-surface-raised text-ink',
-        className,
-      )}
-      {...props}
-    >
+    <FlowSelectableTile {...props}>
       <span className="block hyphens-auto break-words">{children}</span>
-    </button>
+    </FlowSelectableTile>
   )
 }
 

@@ -11,6 +11,7 @@ import {
 import { GrazingSessionSurveyAreasPanel } from '@/components/maps/grazing-session-survey-areas-panel'
 import { CollapseChevron } from '@/components/ui/collapse-chevron'
 import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
+import { pluralize } from '@/lib/utils/format'
 
 export function GrazingSessionHistoryPanel() {
   const {
@@ -51,7 +52,7 @@ export function GrazingSessionHistoryPanel() {
     onDeleteSession,
   } = useGrazingSessionMapStore((state) => state.historyHandles)
   const summary = selectedSession
-    ? `${safeRecentSessions.length} Weidegänge · Fokus aktiv`
+    ? `${pluralize(safeRecentSessions.length, 'Weidegang', 'Weidegänge')} · Fokus aktiv`
     : `${safeRecentSessions.length} gespeicherte Weidegänge`
 
   const historyFocusDetails = (

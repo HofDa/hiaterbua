@@ -19,7 +19,7 @@ export function getOfflineMapReadinessProblem({
   if (!tileCachingEnabled) {
     return {
       tone: 'warning',
-      text: 'Tile-Cache ist aus - Karten bleiben nicht offline verfügbar.',
+      text: 'Offline-Karten sind aus – ohne Netz gibt es keine Karte.',
       action: { href: '/settings', label: 'Aktivieren' },
     }
   }

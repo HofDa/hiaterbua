@@ -7,6 +7,7 @@ import {
 } from '@/lib/maps/grazing-session-map-helpers'
 import { MetaLabel } from '@/components/ui/typography'
 import type { GrazingSession, SessionEvent, TrackPoint } from '@/types/domain'
+import { pluralize } from '@/lib/utils/format'
 
 export function GrazingSessionHistoryFocusSummary({
   selectedSession,
@@ -25,9 +26,9 @@ export function GrazingSessionHistoryFocusSummary({
     <div className="mt-4 rounded-2xl border border-success-border bg-success-surface px-4 py-3 text-sm text-success-ink">
       Fokus: <span className="font-medium">{formatDateTime(selectedSession.startTime)}</span> ·{' '}
       {formatDistance(selectedMetrics.distanceM)} · {formatDuration(selectedMetrics.durationS)} ·{' '}
-      {safeSelectedTrackpoints.length} Punkte
+      {pluralize(safeSelectedTrackpoints.length, 'Punkt', 'Punkte')}
       {typeof selectedSession.animalCount === 'number'
-        ? ` · ${selectedSession.animalCount} Tiere`
+        ? ` · ${pluralize(selectedSession.animalCount, 'Tier', 'Tiere')}`
         : ''}
     </div>
   )

@@ -36,7 +36,7 @@ type UseLivePositionMapWalkControllerOptions = {
 
 function buildWalkRecordingErrorMessage(error: unknown) {
   if (isQuotaExceededError(error)) {
-    return 'Speicher voll – GPS-Punkte können nicht gespeichert werden. Bitte Speicher freigeben (z. B. Tile-Cache leeren).'
+    return 'Speicher voll – GPS-Punkte können nicht gespeichert werden. Bitte Speicher freigeben (z. B. Offline-Karten in den Einstellungen leeren).'
   }
 
   return 'GPS-Punkt konnte nicht gespeichert werden. Der nächste akzeptierte Standort wird erneut versucht.'

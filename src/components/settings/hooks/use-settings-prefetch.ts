@@ -68,7 +68,7 @@ export function useSettingsPrefetch(options: {
 
   async function runPrefetchJob(urls: string[], successMessage: string) {
     if (urls.length === 0) {
-      setPrefetchError('Keine Tiles für diesen Ausschnitt ermittelt.')
+      setPrefetchError('Für diesen Ausschnitt gibt es keine Kartendaten.')
       return
     }
 
@@ -154,7 +154,7 @@ export function useSettingsPrefetch(options: {
     resetPrefetchFeedback()
 
     if (!tileCachingEnabled) {
-      setPrefetchError('Bitte zuerst Tile-Caching aktivieren und speichern.')
+      setPrefetchError('Bitte zuerst „Offline-Karten speichern“ einschalten und die Einstellungen speichern.')
       return
     }
 
@@ -193,7 +193,7 @@ export function useSettingsPrefetch(options: {
     try {
       await runPrefetchJob(urls, 'Kartenausschnitt gesichert')
     } catch {
-      setPrefetchError('Vorladen ist fehlgeschlagen. Netzverbindung und Tile-Caching prüfen.')
+      setPrefetchError('Vorladen ist fehlgeschlagen. Netzverbindung und Offline-Karten-Einstellung prüfen.')
     } finally {
       prefetchAbortControllerRef.current = null
       setPrefetching(false)
@@ -204,7 +204,7 @@ export function useSettingsPrefetch(options: {
     resetPrefetchFeedback()
 
     if (!tileCachingEnabled) {
-      setPrefetchError('Bitte zuerst Tile-Caching aktivieren und speichern.')
+      setPrefetchError('Bitte zuerst „Offline-Karten speichern“ einschalten und die Einstellungen speichern.')
       return
     }
 
@@ -232,7 +232,7 @@ export function useSettingsPrefetch(options: {
     resetPrefetchFeedback()
 
     if (!tileCachingEnabled) {
-      setPrefetchError('Bitte zuerst Tile-Caching aktivieren und speichern.')
+      setPrefetchError('Bitte zuerst „Offline-Karten speichern“ einschalten und die Einstellungen speichern.')
       return
     }
 

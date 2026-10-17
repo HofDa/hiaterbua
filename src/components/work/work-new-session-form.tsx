@@ -285,7 +285,6 @@ export function WorkNewSessionForm({
             {workPickerSections.map((section) => (
               <ToggleButton
                 key={section.id}
-                pressed={section.id === workPickerSectionId}
                 onClick={() => {
                   setHasStartedFlow(true)
                   onWorkPickerSectionChange(section.id)

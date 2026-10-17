@@ -1,8 +1,9 @@
+import { formatDateTimeShort, formatSpan } from '@/lib/utils/format'
 import { nowIso } from '@/lib/utils/time'
 
 export function formatDateTime(value: string | null | undefined) {
   if (!value) return 'unbekannt'
-  return new Date(value).toLocaleString('de-DE')
+  return formatDateTimeShort(value)
 }
 
 export function formatDurationFromIso(startTime: string | null | undefined, endTime?: string | null) {
@@ -15,12 +16,7 @@ export function formatDurationFromIso(startTime: string | null | undefined, endT
     return 'unbekannt'
   }
 
-  const totalMinutes = Math.round((endMs - startMs) / 1000 / 60)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  if (hours <= 0) return `${minutes} min`
-  return `${hours} h ${String(minutes).padStart(2, '0')} min`
+  return formatSpan((endMs - startMs) / 1000 / 60)
 }
 
 export function safeString(value: string | null | undefined) {

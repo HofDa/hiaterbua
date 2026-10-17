@@ -8,6 +8,7 @@ import {
 import { metaLabelClassName } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 import type { GrazingSession, Herd } from '@/types/domain'
+import { pluralize } from '@/lib/utils/format'
 
 type GrazingSessionHistoryGroupsProps = {
   groupedSessionHistory: GroupedSessionHistory[]
@@ -66,7 +67,7 @@ function GrazingSessionHistorySessionCard({
               : session.status === 'paused'
                 ? 'pausiert'
                 : 'aktiv'}
-            {typeof session.animalCount === 'number' ? ` · ${session.animalCount} Tiere` : ''}
+            {typeof session.animalCount === 'number' ? ` · ${pluralize(session.animalCount, 'Tier', 'Tiere')}` : ''}
           </div>
         </div>
         <div className="shrink-0 text-right">
@@ -160,7 +161,7 @@ export function GrazingSessionHistoryGroups({
                   {group.label}
                 </h3>
                 <div className="mt-1 text-xs font-medium text-ink-muted">
-                  {group.sessions.length} Weidegänge
+                  {pluralize(group.sessions.length, 'Weidegang', 'Weidegänge')}
                 </div>
               </div>
               <span className="text-sm font-semibold text-ink">

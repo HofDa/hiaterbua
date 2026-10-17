@@ -49,7 +49,7 @@ export function useSecureAreaPrefetch({
 
       if (urls.length === 0) {
         setStatus('error')
-        setMessage('Für diesen Standort konnten keine Tiles ermittelt werden.')
+        setMessage('Für diesen Standort gibt es keine Kartenausschnitte.')
         return
       }
 
@@ -70,7 +70,7 @@ export function useSecureAreaPrefetch({
 
       // prefetchTileUrls dispatches TILE_CACHE_CHANGED_EVENT, which the status
       // strip listens for to refresh its tile count — no need to read it here.
-      const prefix = cacheJustEnabled ? 'Tile-Cache aktiviert. ' : ''
+      const prefix = cacheJustEnabled ? 'Offline-Karten eingeschaltet. ' : ''
 
       if (result.cancelled) {
         setStatus('idle')
@@ -91,7 +91,7 @@ export function useSecureAreaPrefetch({
       }
 
       setStatus('error')
-      setMessage('Keine Tiles gesichert. Netzverbindung prüfen.')
+      setMessage('Keine Karte gesichert. Netzverbindung prüfen.')
     } catch {
       setStatus('error')
       setMessage('Sicherung fehlgeschlagen. Netzverbindung prüfen.')

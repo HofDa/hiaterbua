@@ -18,6 +18,7 @@ import {
   formatDistance,
 } from '@/lib/maps/grazing-session-map-helpers'
 import { cn } from '@/lib/utils/cn'
+import { pluralize } from '@/lib/utils/format'
 
 type GrazingMobileSection = 'manage' | 'history'
 
@@ -43,7 +44,7 @@ export function GrazingSessionMap() {
   )
   const mobileMapSummary = currentSessionStatus ? (
     <>
-      {safeCurrentTrackpointsLength} Punkte · {formatDistance(currentDistanceM)} ·{' '}
+      {pluralize(safeCurrentTrackpointsLength, 'Punkt', 'Punkte')} · {formatDistance(currentDistanceM)} ·{' '}
       <LiveDuration runningSince={currentDurationRunningSince} fallbackS={currentDurationS} />
     </>
   ) : (

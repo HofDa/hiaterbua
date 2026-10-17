@@ -8,6 +8,7 @@ import { FormField, FormLabel, FormInput, FormButton } from '@/components/ui/for
 import { Alert, ErrorAlert } from '@/components/ui/alert'
 import { MetaLabel } from '@/components/ui/typography'
 import type { GrazingSession } from '@/types/domain'
+import { pluralize } from '@/lib/utils/format'
 
 export function GrazingSessionHistoryEditingSummary({
   editingSessionId,
@@ -25,7 +26,7 @@ export function GrazingSessionHistoryEditingSummary({
   return (
     <Alert variant="info" className="mt-4 text-sm text-ink">
       Bearbeitung aktiv: {formatDistance(editMetrics.distanceM)} ·{' '}
-      {formatDuration(editMetrics.durationS)} · {editTrackpointsLength} Punkte
+      {formatDuration(editMetrics.durationS)} · {pluralize(editTrackpointsLength, 'Punkt', 'Punkte')}
     </Alert>
   )
 }

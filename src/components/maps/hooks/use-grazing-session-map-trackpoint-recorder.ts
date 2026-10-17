@@ -29,7 +29,7 @@ function getRecordingErrorKind(error: unknown): RecordingErrorKind {
 
 function buildRecordingErrorMessage(kind: RecordingErrorKind, pendingCount: number) {
   if (kind === 'quota') {
-    return 'Speicher voll – Trackpunkte können nicht gespeichert werden. Bitte Speicher freigeben (z. B. Tile-Cache leeren).'
+    return 'Speicher voll – Trackpunkte können nicht gespeichert werden. Bitte Speicher freigeben (z. B. Offline-Karten in den Einstellungen leeren).'
   }
 
   return `Trackpunkt konnte nicht gespeichert werden (${pendingCount} ausstehend). Wird automatisch erneut versucht.`

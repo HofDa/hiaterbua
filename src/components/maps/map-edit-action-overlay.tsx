@@ -3,6 +3,7 @@
 import type { ButtonHTMLAttributes } from 'react'
 import { MobileMapFloatingCard } from '@/components/maps/mobile-map-ui'
 import { cn } from '@/lib/utils/cn'
+import { pluralize } from '@/lib/utils/format'
 
 type MapEditActionOverlayProps = {
   title: string
@@ -100,7 +101,7 @@ export function MapEditActionOverlay({
             </div>
           </div>
           <div className="shrink-0 rounded-full border border-border bg-surface-raised px-2 py-1 text-[11px] font-medium text-ink sm:px-3 sm:text-xs">
-            {pointCount} Punkte
+            {pluralize(pointCount, 'Punkt', 'Punkte')}
           </div>
         </div>
 

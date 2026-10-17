@@ -67,7 +67,7 @@ export function useSettingsPagePreferences() {
     try {
       await syncAfterSettingsSave(nextSettings.tileCachingEnabled)
     } catch {
-      syncWarning = ' Tile-Cache konnte nicht vollständig synchronisiert werden.'
+      syncWarning = ' Offline-Karten konnten nicht vollständig abgeglichen werden.'
     } finally {
       setDraft(nextSettings)
       setSaving(false)

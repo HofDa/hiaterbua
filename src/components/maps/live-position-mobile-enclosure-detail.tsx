@@ -8,6 +8,7 @@ import {
 import { formatArea } from '@/lib/maps/map-core'
 import { cn } from '@/lib/utils/cn'
 import type { Animal, Enclosure, EnclosureAssignment, Herd } from '@/types/domain'
+import { pluralize } from '@/lib/utils/format'
 
 const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
@@ -43,7 +44,7 @@ export function LivePositionMobileEnclosureDetail({
   return (
     <div className="border-t border-border-soft px-3.5 py-3 text-sm">
       <div className="text-ink-muted">
-        {formatArea(enclosure.areaM2)} · {enclosure.pointsCount ?? 0} Punkte
+        {formatArea(enclosure.areaM2)} · {pluralize(enclosure.pointsCount ?? 0, 'Punkt', 'Punkte')}
       </div>
       {enclosure.notes ? <div className="mt-1 text-ink-muted">{enclosure.notes}</div> : null}
 

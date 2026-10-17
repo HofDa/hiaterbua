@@ -45,7 +45,7 @@ export const workPickerSections: WorkPickerSection[] = [
   {
     id: 'guided_herd_management',
     label: 'Herdenlenkung',
-    description: 'Gelenkte Weideführung',
+    description: 'Führen, Hüten, Sammeln',
     options: [
       {
         id: 'guided_access_to_grazing_animals',
@@ -76,7 +76,7 @@ export const workPickerSections: WorkPickerSection[] = [
   {
     id: 'guided_infrastructure',
     label: 'Infrastruktur',
-    description: 'Gelenkter Weidegang',
+    description: 'Zäune und Material',
     options: [
       {
         id: 'guided_fence_work',
@@ -101,7 +101,7 @@ export const workPickerSections: WorkPickerSection[] = [
   {
     id: 'guided_animal_care',
     label: 'Tierbetreuung',
-    description: 'Versorgung und Kontrolle',
+    description: 'Wasser, Versorgung, Kontrolle',
     options: [
       {
         id: 'guided_water_supply',
@@ -138,7 +138,7 @@ export const workPickerSections: WorkPickerSection[] = [
   {
     id: 'guided_pasture_care',
     label: 'Weidepflege',
-    description: 'Gelenkter Weidegang',
+    description: 'Entbuschen, Entfilzen, Nachweide',
     options: [
       {
         id: 'guided_brush_clearing_with_grazers',

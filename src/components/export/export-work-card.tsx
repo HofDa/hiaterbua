@@ -3,6 +3,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { FormButton } from '@/components/ui/form'
 import { Alert, LoadingAlert } from '@/components/ui/alert'
+import { pluralize } from '@/lib/utils/format'
 
 type ExportWorkCardProps = {
   workSessionCount: number | null
@@ -33,7 +34,7 @@ export function ExportWorkCard({
           </div>
           {!isLoading ? (
             <div className="rounded-full border border-border bg-accent px-3 py-1 text-xs font-semibold text-ink-strong">
-              {(workSessionCount ?? 0)} Einsätze
+              {pluralize(workSessionCount ?? 0, 'Einsatz', 'Einsätze')}
             </div>
           ) : null}
         </div>

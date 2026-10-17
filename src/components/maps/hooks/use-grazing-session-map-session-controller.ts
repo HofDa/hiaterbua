@@ -39,6 +39,7 @@ import type {
   SessionEventType,
   TrackPoint,
 } from '@/types/domain'
+import { pluralize } from '@/lib/utils/format'
 
 type UseGrazingSessionMapSessionControllerOptions = {
   activeSession: GrazingSession | null
@@ -293,7 +294,7 @@ export function useGrazingSessionMapSessionController({
       herdName ?? 'Weidegang',
       formatDurationWords(durationS),
       formatDistance(activeSession.distanceM),
-      activeSession.animalCount !== null ? `${activeSession.animalCount} Tiere` : null,
+      activeSession.animalCount != null ? pluralize(activeSession.animalCount, 'Tier', 'Tiere') : null,
     ]
       .filter(Boolean)
       .join(' · ')

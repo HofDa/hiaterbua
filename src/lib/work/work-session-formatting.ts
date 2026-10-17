@@ -1,3 +1,4 @@
+import { formatDateTimeShort } from '@/lib/utils/format'
 import type { WorkSession, WorkStatus } from '@/types/domain'
 
 export function getWorkStatusLabel(status: WorkStatus | null | undefined) {
@@ -9,7 +10,7 @@ export function getWorkStatusLabel(status: WorkStatus | null | undefined) {
 
 export function formatDateTime(value: string | null | undefined) {
   if (!value) return 'unbekannt'
-  return new Date(value).toLocaleString('de-DE')
+  return formatDateTimeShort(value)
 }
 
 function padDateTimeInputPart(value: number) {

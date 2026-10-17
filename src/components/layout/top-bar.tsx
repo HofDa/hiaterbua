@@ -13,7 +13,7 @@ export function TopBar() {
   const pathname = usePathname()
   const activeItem = navItems.find((item) => isNavItemActive(pathname, item.href))
   const utilityActions = [
-    { href: '/export', label: 'Im-/Export', icon: Download },
+    { href: '/export', label: 'Sichern & Importieren', icon: Download },
     { href: '/settings', label: 'Einstellungen', icon: Settings },
   ]
 

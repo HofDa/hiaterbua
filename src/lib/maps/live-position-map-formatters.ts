@@ -1,3 +1,4 @@
+import { formatDateTimeShort, formatSpan } from '@/lib/utils/format'
 import { formatTimestamp } from '@/lib/maps/map-core'
 import { nowIso } from '@/lib/utils/time'
 
@@ -7,7 +8,7 @@ export function formatPointTimestamp(timestamp: number) {
 
 export function formatDateTime(value: string | null | undefined) {
   if (!value) return 'unbekannt'
-  return new Date(value).toLocaleString('de-DE')
+  return formatDateTimeShort(value)
 }
 
 export function formatDate(value: string | null | undefined) {
@@ -44,12 +45,7 @@ export function formatDurationFromIso(startTime: string | null | undefined, endT
     return 'unbekannt'
   }
 
-  const totalMinutes = Math.round((endMs - startMs) / 1000 / 60)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  if (hours <= 0) return `${minutes} min`
-  return `${hours} h ${String(minutes).padStart(2, '0')} min`
+  return formatSpan((endMs - startMs) / 1000 / 60)
 }
 
 export function getDurationSecondsFromIso(

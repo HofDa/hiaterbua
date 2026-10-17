@@ -8,6 +8,7 @@ import {
 import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 import type { Enclosure } from '@/types/domain'
+import { formatDateTimeShort } from '@/lib/utils/format'
 
 function SidebarStat({ label, value }: { label: string; value: string }) {
   return (
@@ -72,7 +73,7 @@ export function LivePositionSavedEnclosureTrackSummarySection({
         Start:{' '}
         <span className="font-medium text-ink">
           {selectedTrackSummary.firstTimestamp
-            ? new Date(selectedTrackSummary.firstTimestamp).toLocaleString('de-DE')
+            ? formatDateTimeShort(selectedTrackSummary.firstTimestamp)
             : 'unbekannt'}
         </span>
       </div>
@@ -80,7 +81,7 @@ export function LivePositionSavedEnclosureTrackSummarySection({
         Ende:{' '}
         <span className="font-medium text-ink">
           {selectedTrackSummary.lastTimestamp
-            ? new Date(selectedTrackSummary.lastTimestamp).toLocaleString('de-DE')
+            ? formatDateTimeShort(selectedTrackSummary.lastTimestamp)
             : 'unbekannt'}
         </span>
       </div>

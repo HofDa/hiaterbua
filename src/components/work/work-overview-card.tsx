@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react'
 import {
-  formatDuration,
   getLiveDurationS,
   getWorkPickerSectionId,
   workPickerSections,
@@ -10,6 +9,7 @@ import {
 import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 import type { WorkSession } from '@/types/domain'
+import { formatSpan, pluralize } from '@/lib/utils/format'
 
 type WorkOverviewCardProps = {
   sessions: WorkSession[]
@@ -103,15 +103,18 @@ export function WorkOverviewCard({ sessions, nowMs }: WorkOverviewCardProps) {
         <h2 className="text-lg font-semibold tracking-[-0.02em]">Auswertung</h2>
         <div className="rounded-full border border-border-soft bg-surface-warm px-3 py-1 text-xs font-semibold text-ink">
           {sessions.length} {sessions.length === 1 ? 'Einsatz' : 'Einsätze'} · Gesamt{' '}
-          {formatDuration(sectionStats.totalDurationS)}
+          {formatSpan(sectionStats.totalDurationS / 60)}
         </div>
       </div>
 
-      <div className="mt-3 rounded-[1.3rem] border border-border bg-surface-raised px-4 py-4 shadow-sm">
+      {/* No inner card: the panel is the card. */}
+      <div className="mt-3">
         {hasChartData ? (
           <>
             <div>
-              <div className="mx-auto w-fit">
+              {/* A donut only says something with two or more categories. */}
+              {sectionStats.chartItems.length > 1 ? (
+              <div className="mx-auto mb-4 w-fit">
                 <div
                   className="relative h-40 w-40 rounded-full border border-chart-border shadow-sm sm:h-44 sm:w-44"
                   style={{ backgroundImage: pieGradient }}
@@ -123,14 +126,15 @@ export function WorkOverviewCard({ sessions, nowMs }: WorkOverviewCardProps) {
                         Gesamt
                       </MetaLabel>
                       <div className="mt-1 text-sm font-semibold text-ink">
-                        {formatDuration(sectionStats.totalDurationS)}
+                        {formatSpan(sectionStats.totalDurationS / 60)}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+              ) : null}
 
-              <div className="mt-4 space-y-2.5">
+              <div className="space-y-2.5">
                 {sectionStats.chartItems.map((item) => {
                   const colors = overviewColors[item.id]
                   const sharePercent = Math.round(item.share * 100)
@@ -150,7 +154,7 @@ export function WorkOverviewCard({ sessions, nowMs }: WorkOverviewCardProps) {
                             <div className="truncate text-sm font-medium text-ink">
                               {item.label}
                             </div>
-                            <div className="text-xs text-ink-muted">{item.count} Einsätze</div>
+                            <div className="text-xs text-ink-muted">{pluralize(item.count, 'Einsatz', 'Einsätze')}</div>
                           </div>
                         </div>
 
@@ -164,7 +168,7 @@ export function WorkOverviewCard({ sessions, nowMs }: WorkOverviewCardProps) {
                               colors.badgeClass,
                             )}
                           >
-                            {formatDuration(item.durationS)}
+                            {formatSpan(item.durationS / 60)}
                           </div>
                         </div>
                       </div>

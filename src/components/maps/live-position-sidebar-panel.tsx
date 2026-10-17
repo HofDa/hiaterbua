@@ -6,6 +6,7 @@ import { LivePositionSurveyAreasPanel } from '@/components/maps/live-position-su
 import { useLivePositionMapStore } from '@/components/maps/hooks/use-live-position-map-store'
 import { cn } from '@/lib/utils/cn'
 import type { Enclosure } from '@/types/domain'
+import { pluralize } from '@/lib/utils/format'
 
 export type LivePositionSidebarPanelProps = {
   onFocusEnclosure: (enclosure: Enclosure) => void
@@ -207,7 +208,7 @@ export function LivePositionSidebarPanel({
         <div className="min-w-0 border-b border-border pb-4">
           <h2 className="text-lg font-semibold text-ink-strong">Pferche & Flächen</h2>
           <p className="mt-1 text-sm text-ink-muted">
-            {safeSurveyAreas.length} Flächen · {filteredEnclosures.length} Pferche
+            {pluralize(safeSurveyAreas.length, 'Fläche', 'Flächen')} · {pluralize(filteredEnclosures.length, 'Pferch', 'Pferche')}
           </p>
         </div>
 

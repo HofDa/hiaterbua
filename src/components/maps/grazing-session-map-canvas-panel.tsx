@@ -192,7 +192,7 @@ export function GrazingSessionMapCanvasPanel({
       {showMapFallback ? (
         <MapFallbackPanel
           title="Karte momentan nicht verfügbar"
-          detail="Tiles oder Kartenmodul konnten nicht geladen werden. Weidegang und Ereignisse bleiben lokal nutzbar."
+          detail="Die Karte konnte nicht geladen werden. Weidegang und Ereignisse bleiben lokal nutzbar."
           position={position}
           statusLabel={sessionStatusLabel}
         >

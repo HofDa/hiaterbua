@@ -54,7 +54,7 @@ type HerdStatus = {
 const utilityLinks = [
   {
     href: '/export',
-    label: 'Im-/Export',
+    label: 'Sichern & Importieren',
     icon: Download,
   },
   {
@@ -172,7 +172,9 @@ export default function HomePage() {
                       <span className="block text-xl font-bold tabular-nums text-ink-strong">
                         {herd.count}
                       </span>
-                      <span className="block text-xs font-semibold text-ink-muted">Tiere</span>
+                      <span className="block text-xs font-semibold text-ink-muted">
+                        {herd.count === 1 ? 'Tier' : 'Tiere'}
+                      </span>
                     </span>
                   ) : null}
                   <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted" />

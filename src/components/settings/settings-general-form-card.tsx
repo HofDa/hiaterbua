@@ -1,6 +1,7 @@
 'use client'
 
 import type { Dispatch, FormEventHandler, SetStateAction } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { settingsMapOptions } from '@/components/settings/settings-options'
 import {
   SettingsTileCachePanel,
@@ -114,7 +115,19 @@ export function SettingsGeneralFormCard({
             </p>
           </FormField>
 
-          <div className="grid gap-4 sm:grid-cols-4">
+          {/* Raw thresholds are for fine-tuning; the profile above covers the
+              everyday choice. Each field says what it does in practice. */}
+          <details className="group rounded-[1.1rem] border border-border-soft px-4 py-2">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-ink-strong [&::-webkit-details-marker]:hidden">
+              GPS-Feinabstimmung
+              <ChevronDown aria-hidden="true" className="h-5 w-5 text-ink-muted transition-transform group-open:rotate-180" />
+            </summary>
+            <ul className="mb-3 mt-1 space-y-1 text-xs font-medium text-ink-muted">
+              <li><span className="font-semibold text-ink">Genauigkeit:</span> Punkte, die ungenauer sind, werden verworfen.</li>
+              <li><span className="font-semibold text-ink">Zeit / Distanz:</span> ein neuer Punkt frühestens nach so vielen Sekunden bzw. Metern.</li>
+              <li><span className="font-semibold text-ink">Max. Tempo:</span> Sprünge, die schneller wären, gelten als GPS-Fehler.</li>
+            </ul>
+          <div className="grid gap-4 pb-2 sm:grid-cols-4">
             <FormField>
               <FormLabel>GPS-Genauigkeit (m)</FormLabel>
               <FormInput
@@ -177,6 +190,8 @@ export function SettingsGeneralFormCard({
             </FormField>
           </div>
 
+          </details>
+
           <FormField>
             <FormLabel>Darstellung</FormLabel>
             <FormSelect
@@ -225,7 +240,7 @@ export function SettingsGeneralFormCard({
                 }))
               }
             />
-            <span className="text-sm font-medium">Kachel-Caching aktivieren</span>
+            <span className="text-sm font-semibold">Offline-Karten speichern</span>
           </label>
 
           <SettingsTileCachePanel {...tileCachePanel} tileCachingEnabled={draft.tileCachingEnabled} />
