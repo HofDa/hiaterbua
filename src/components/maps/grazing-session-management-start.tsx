@@ -13,6 +13,31 @@ import { CountStepper } from '@/components/ui/count-stepper'
 import { RecordingControls } from '@/components/ui/recording-controls'
 import type { Herd, SessionStatus } from '@/types/domain'
 
+type HerdStartIntent = { herdId: string; start: boolean; started: boolean; at: number }
+let herdStartIntent: HerdStartIntent | null = null
+
+/**
+ * Reads `?herd=…&start=1` once, removes it from the URL right away, and keeps
+ * it briefly so every mounted copy of the panel sees the same intent.
+ */
+function takeHerdStartIntent(): HerdStartIntent | null {
+  const url = new URL(window.location.href)
+  const herdId = url.searchParams.get('herd')
+  if (herdId) {
+    herdStartIntent = {
+      herdId,
+      start: url.searchParams.get('start') === '1',
+      started: false,
+      at: Date.now(),
+    }
+    url.searchParams.delete('herd')
+    url.searchParams.delete('start')
+    window.history.replaceState(window.history.state, '', url.pathname + url.search)
+  }
+  if (herdStartIntent && Date.now() - herdStartIntent.at > 5000) herdStartIntent = null
+  return herdStartIntent
+}
+
 export function GrazingSessionActiveSummary({
   safeHerds,
   selectedHerdId,
@@ -92,26 +117,23 @@ export function GrazingSessionMobileStartFlow({
   const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
 
   // Coming from Start's "Starten" on a herd row: start right away with that
-  // herd's default count (editable on the running screen), then drop the
-  // parameter. `?herd=` alone only preselects and opens the count step.
-  const autoStartedRef = useRef(false)
+  // herd's default count (editable on the running screen). `?herd=` alone only
+  // preselects and opens the count step. The panel is mounted twice (phone and
+  // desktop layout), so the intent is read once into module state, the URL is
+  // cleared at once, and the start itself can only fire one time.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const herdId = params.get('herd')
-    if (!herdId || !safeHerds.some((herd) => herd.id === herdId)) return
-    const shouldStart = params.get('start') === '1'
+    const intent = takeHerdStartIntent()
+    if (!intent || !safeHerds.some((herd) => herd.id === intent.herdId)) return
     const timer = window.setTimeout(() => {
-      if (shouldStart && !autoStartedRef.current) {
-        autoStartedRef.current = true
-        void onStartSession(herdId)
+      if (intent.start) {
+        if (!intent.started) {
+          intent.started = true
+          void onStartSession(intent.herdId)
+        }
       } else {
-        onSelectedHerdIdChange(herdId)
+        onSelectedHerdIdChange(intent.herdId)
         setInternalStep('setup')
       }
-      const url = new URL(window.location.href)
-      url.searchParams.delete('herd')
-      url.searchParams.delete('start')
-      window.history.replaceState(window.history.state, '', url.pathname + url.search)
     }, 0)
     return () => window.clearTimeout(timer)
   }, [safeHerds, onSelectedHerdIdChange, onStartSession])
