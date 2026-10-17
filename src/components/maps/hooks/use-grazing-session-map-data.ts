@@ -1,13 +1,14 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { getAppSettings } from '@/lib/db/repositories/settings'
 import { listSurveyAreas } from '@/lib/db/repositories/survey-areas'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
 import { listHerdsByName } from '@/lib/db/repositories/herds'
 import {
+  listFinishedSessionsByRecent,
   listSessionEvents,
-  listSessionTrackpoints,
-  listSessionsByRecent,
+  listUnfinishedSessions,
+  loadSessionTrackpointsIncremental,
 } from '@/lib/db/repositories/sessions'
 import { buildSurveyAreaFeatureCollection } from '@/lib/maps/map-core'
 import { buildAnimalsByHerdId } from '@/lib/maps/live-position-map-helpers'
@@ -25,6 +26,19 @@ import {
   parseDateTimeInputValue,
   type EditableTrackPoint,
 } from '@/lib/maps/grazing-session-map-helpers'
+import type { GrazingSession, TrackPoint } from '@/types/domain'
+
+/** Same order as listing all sessions by `updatedAt`, newest first. */
+function mergeSessionsByRecent(
+  openSessions: GrazingSession[],
+  finishedSessions: GrazingSession[]
+): GrazingSession[] {
+  if (openSessions.length === 0) return finishedSessions
+
+  return [...openSessions, ...finishedSessions].sort((a, b) =>
+    a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0
+  )
+}
 
 type UseGrazingSessionMapDataArgs = {
   currentSessionId: string | null
@@ -52,19 +66,42 @@ export function useGrazingSessionMapData({
     []
   )
   const settings = useLiveQuery(() => getAppSettings(), [])
-  const recentSessions = useLiveQuery(
-    () => listSessionsByRecent(),
-    []
+  // Finished and open sessions are queried apart so the per-fix update of the
+  // open session does not reload the whole history (see
+  // listFinishedSessionsByRecent).
+  const finishedSessions = useLiveQuery(() => listFinishedSessionsByRecent(), [])
+  const openSessions = useLiveQuery(() => listUnfinishedSessions(), [])
+  const recentSessions = useMemo(
+    () =>
+      finishedSessions && openSessions
+        ? mergeSessionsByRecent(openSessions, finishedSessions)
+        : undefined,
+    [finishedSessions, openSessions]
   )
+
+  // Track caches: each GPS fix then reads only the new tail, not the whole
+  // track (see loadSessionTrackpointsIncremental).
+  const currentTrackpointsCacheRef = useRef<TrackPoint[] | null>(null)
+  const selectedTrackpointsCacheRef = useRef<TrackPoint[] | null>(null)
 
   const currentTrackpoints = useLiveQuery(async () => {
     if (!currentSessionId) return []
-    return listSessionTrackpoints(currentSessionId)
+    const next = await loadSessionTrackpointsIncremental(
+      currentSessionId,
+      currentTrackpointsCacheRef.current
+    )
+    currentTrackpointsCacheRef.current = next
+    return next
   }, [currentSessionId])
 
   const selectedTrackpoints = useLiveQuery(async () => {
     if (!selectedSessionId) return []
-    return listSessionTrackpoints(selectedSessionId)
+    const next = await loadSessionTrackpointsIncremental(
+      selectedSessionId,
+      selectedTrackpointsCacheRef.current
+    )
+    selectedTrackpointsCacheRef.current = next
+    return next
   }, [selectedSessionId])
 
   const currentSessionEvents = useLiveQuery(async () => {

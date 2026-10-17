@@ -84,7 +84,10 @@ export function useGrazingSessionMapTrackpointRecorder({
         // screen — a late point for a previous session must not rewrite them.
         if (pending.sessionId !== currentSessionIdRef.current) return
 
-        currentTrackpointsRef.current.push(result.trackPoint)
+        // Replace rather than push: the array is shared with the live track
+        // query's cache, and mutating it in place would hide the new point
+        // from that query's append-only check.
+        currentTrackpointsRef.current = [...currentTrackpointsRef.current, result.trackPoint]
         currentSeqRef.current = result.nextSeq
         currentLastTimestampRef.current = result.lastTimestamp
       },

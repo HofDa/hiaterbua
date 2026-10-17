@@ -9,7 +9,7 @@ import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import {
   appendSessionTrackpoint,
-  listSessionTrackpoints,
+  getLastSessionTrackpoint,
   listUnfinishedSessions,
 } from '@/lib/db/repositories/sessions'
 import { getAppSettings } from '@/lib/db/repositories/settings'
@@ -113,8 +113,7 @@ function BackgroundTrackRecorder({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     let cancelled = false
 
-    void listSessionTrackpoints(sessionId).then((trackpoints) => {
-      const last = trackpoints.at(-1)
+    void getLastSessionTrackpoint(sessionId).then((last) => {
       if (cancelled || !last || acceptedPositionRef.current) return
 
       const timestamp = Date.parse(last.timestamp)

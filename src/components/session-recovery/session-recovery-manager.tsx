@@ -201,13 +201,20 @@ export function SessionRecoveryManager() {
     writeStoredMetadata(metadata)
   }, [logRecoveryEventOnce, safeActiveSessions])
 
+  // The tick only drives the live duration of the visible recovery card, and
+  // only an active session's duration moves. Without this gate the manager
+  // re-rendered every second for the lifetime of the app.
+  const tickNeeded = visibleSession?.status === 'active'
   useEffect(() => {
+    if (!tickNeeded) return
+
+    setNowMs(Date.now())
     const intervalId = window.setInterval(() => {
       setNowMs(Date.now())
     }, 1000)
 
     return () => window.clearInterval(intervalId)
-  }, [])
+  }, [tickNeeded])
 
   const markLifecycleForActiveSessions = useCallback(
     (

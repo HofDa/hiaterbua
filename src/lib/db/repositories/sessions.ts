@@ -60,9 +60,79 @@ export function listSessionsByRecent(): Promise<GrazingSession[]> {
   return db.sessions.orderBy('updatedAt').reverse().toArray()
 }
 
+/**
+ * Finished grazing sessions, most recently updated first. Kept apart from the
+ * open session on purpose: a live query over this range is not invalidated by
+ * the distance/duration update every recorded GPS point writes to the open
+ * session, so the history list is not reloaded once per fix.
+ */
+export function listFinishedSessionsByRecent(): Promise<GrazingSession[]> {
+  return db.sessions.where('status').equals('finished').reverse().sortBy('updatedAt')
+}
+
 /** A session's trackpoints in recorded order. */
 export function listSessionTrackpoints(sessionId: string): Promise<TrackPoint[]> {
   return db.trackpoints.where('sessionId').equals(sessionId).sortBy('seq')
+}
+
+/** The most recent stored trackpoint of a session, without reading the track. */
+export function getLastSessionTrackpoint(sessionId: string): Promise<TrackPoint | undefined> {
+  return db.trackpoints
+    .where('[sessionId+seq]')
+    .between([sessionId, Dexie.minKey], [sessionId, Dexie.maxKey])
+    .last()
+}
+
+function isSameStoredTrackpoint(a: TrackPoint, b: TrackPoint) {
+  return (
+    a.id === b.id &&
+    a.seq === b.seq &&
+    a.updatedAt === b.updatedAt &&
+    a.timestamp === b.timestamp &&
+    a.lat === b.lat &&
+    a.lon === b.lon
+  )
+}
+
+/**
+ * A session's trackpoints, reusing `previous` (an earlier result for the same
+ * session) when the stored track has only grown at the end — the normal case
+ * while recording. Re-reading the whole track on every GPS fix made each point
+ * cost O(track length): ~4000 rows per fix late in a long day.
+ *
+ * Only the tail from the last known point on is read, plus an index count. If
+ * the last known point changed, or the count shows rows were removed or
+ * inserted elsewhere (session edit, delete, import), it falls back to a full
+ * read. Returns `previous` itself when nothing changed, so memoized consumers
+ * do not recompute.
+ */
+export async function loadSessionTrackpointsIncremental(
+  sessionId: string,
+  previous: readonly TrackPoint[] | null
+): Promise<TrackPoint[]> {
+  const lastKnown = previous?.at(-1)
+  if (!previous || !lastKnown || lastKnown.sessionId !== sessionId) {
+    return listSessionTrackpoints(sessionId)
+  }
+
+  const [count, tail] = await Promise.all([
+    db.trackpoints.where('sessionId').equals(sessionId).count(),
+    db.trackpoints
+      .where('[sessionId+seq]')
+      .between([sessionId, lastKnown.seq], [sessionId, Dexie.maxKey], true, true)
+      .toArray(),
+  ])
+
+  const isAppendOnly =
+    tail.length > 0 &&
+    isSameStoredTrackpoint(tail[0], lastKnown) &&
+    count === previous.length + tail.length - 1
+
+  if (!isAppendOnly) {
+    return listSessionTrackpoints(sessionId)
+  }
+
+  return tail.length === 1 ? (previous as TrackPoint[]) : previous.concat(tail.slice(1))
 }
 
 /** A session's events in chronological (oldest-first) order. */
