@@ -11,6 +11,7 @@ import {
   saveEditedGrazingSessionRecord,
   stopGrazingSessionRecord,
 } from '@/lib/db/repositories/sessions'
+import { buildSessionMetrics } from '@/lib/maps/grazing-session-map-helpers'
 import type { GpsTrackPosition } from '@/lib/maps/position-types'
 
 const START_MS = Date.parse('2026-06-01T08:00:00.000Z')
@@ -169,5 +170,41 @@ describe('listFinishedSessionsByRecent live query', () => {
     expect(latest).toContain(open.id)
 
     subscription.unsubscribe()
+  })
+})
+
+describe('per-fix session metrics', () => {
+  it('match a full recompute from the stored track, including signal gaps', async () => {
+    const session = await startSession()
+    let timestamp = START_MS
+
+    for (let index = 0; index < 400; index += 1) {
+      // Every 50th fix arrives after a long signal gap, which must not count
+      // as moving time or distance.
+      timestamp += index % 50 === 49 ? 15 * 60_000 : 4_000
+      await appendSessionTrackpoint({
+        sessionId: session.id,
+        lastTimestamp: null,
+        nextPosition: {
+          latitude: 46.5 + Math.sin(index) * 1e-4 + index * 1e-6,
+          longitude: 11 + Math.cos(index) * 1e-4,
+          accuracy: 3 + (index % 7),
+          speed: null,
+          heading: null,
+          timestamp,
+        },
+      })
+    }
+
+    const stored = await db.sessions.get(session.id)
+    const recomputed = buildSessionMetrics(
+      await listSessionTrackpoints(session.id),
+      stored!.startTime,
+      stored!.updatedAt
+    )
+
+    expect(stored!.distanceM).toBeCloseTo(recomputed.distanceM, 6)
+    expect(stored!.movingTimeS).toBe(recomputed.movingTimeS)
+    expect(stored!.avgAccuracyM).toBeCloseTo(recomputed.avgAccuracyM!, 6)
   })
 })

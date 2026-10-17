@@ -27,7 +27,6 @@ type UseGrazingSessionMapSessionRuntimeOptions = {
   setCurrentSessionStatus: Dispatch<SetStateAction<SessionStatus | null>>
   setEventNote: Dispatch<SetStateAction<string>>
   setEventStatus: Dispatch<SetStateAction<string>>
-  setLiveDurationTick: Dispatch<SetStateAction<number>>
 }
 
 export function useGrazingSessionMapSessionRuntime({
@@ -43,7 +42,6 @@ export function useGrazingSessionMapSessionRuntime({
   setCurrentSessionStatus,
   setEventNote,
   setEventStatus,
-  setLiveDurationTick,
 }: UseGrazingSessionMapSessionRuntimeOptions): GrazingSessionRuntimeRefs {
   const currentSessionIdRef = useRef<string | null>(null)
   const currentSessionStatusRef = useRef<SessionStatus | null>(null)
@@ -60,18 +58,6 @@ export function useGrazingSessionMapSessionRuntime({
     }),
     []
   )
-
-  useEffect(() => {
-    if (activeSession?.status !== 'active') return
-
-    const intervalId = window.setInterval(() => {
-      setLiveDurationTick(Date.now())
-    }, 1000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [activeSession?.status, setLiveDurationTick])
 
   useEffect(() => {
     syncTrackpointsToRuntime(runtimeRefs, safeCurrentTrackpoints)

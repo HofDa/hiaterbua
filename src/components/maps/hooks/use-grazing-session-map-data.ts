@@ -47,7 +47,6 @@ type UseGrazingSessionMapDataArgs = {
   editTrackpoints: EditableTrackPoint[]
   editStartTime: string
   editEndTime: string
-  liveDurationTick: number
 }
 
 export function useGrazingSessionMapData({
@@ -57,7 +56,6 @@ export function useGrazingSessionMapData({
   editTrackpoints,
   editStartTime,
   editEndTime,
-  liveDurationTick,
 }: UseGrazingSessionMapDataArgs) {
   const herds = useLiveQuery(() => listHerdsByName(), [])
   const animals = useLiveQuery(() => listAllAnimals(), [])
@@ -191,18 +189,20 @@ export function useGrazingSessionMapData({
     [safeCurrentSessionEvents, safeSelectedSessionEvents]
   )
 
+  // The running clock of an active session is not part of these metrics: it
+  // ticks in the <LiveDuration> labels from `currentDurationRunningSince`, so
+  // the whole screen no longer re-renders once per second. `durationS` here is
+  // the stored value and only the fallback for a session that is not running.
   const currentMetrics = useMemo(() => {
     if (!currentSession) return null
 
     const effectiveEndTime =
-      currentSession.status === 'active'
-        ? new Date(liveDurationTick).toISOString()
-        : currentSession.status === 'finished'
-          ? currentSession.endTime
-          : currentSession.updatedAt
+      currentSession.status === 'finished' ? currentSession.endTime : currentSession.updatedAt
 
     return buildSessionMetricsFromRecord(currentSession, effectiveEndTime ?? undefined)
-  }, [currentSession, liveDurationTick])
+  }, [currentSession])
+  const currentDurationRunningSince =
+    currentSession?.status === 'active' ? currentSession.startTime : null
 
   const selectedMetrics = useMemo(
     () =>
@@ -263,6 +263,7 @@ export function useGrazingSessionMapData({
     surveyAreaFeatureCollection,
     sessionEventFeatureCollection,
     currentMetrics,
+    currentDurationRunningSince,
     selectedMetrics,
     sessionHistoryStats,
     groupedSessionHistory,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useActiveRecordingSnapshot } from '@/components/layout/use-active-recording'
+import { useActiveRecording } from '@/components/layout/use-active-recording'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { getAppSettings } from '@/lib/db/repositories/settings'
 
@@ -12,7 +12,7 @@ import { getAppSettings } from '@/lib/db/repositories/settings'
  * settings it holds the screen whenever the app is open.
  */
 export function ScreenWakeKeeper() {
-  const { recording } = useActiveRecordingSnapshot()
+  const recording = useActiveRecording()
   const keepScreenAwake = useLiveQuery(async () => (await getAppSettings())?.keepScreenAwake, [])
 
   useWakeLock(recording?.status === 'active' || keepScreenAwake === 'always')

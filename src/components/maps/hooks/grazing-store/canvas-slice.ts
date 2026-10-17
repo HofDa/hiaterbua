@@ -20,6 +20,8 @@ export type GrazingCanvasSlice = {
   safeCurrentTrackpointsLength: number
   currentDistanceM: number
   currentDurationS: number
+  /** Start of the active session whose clock is running, else null. */
+  currentDurationRunningSince: string | null
   safeHerds: Herd[]
   selectedHerdId: string
   selectedAnimalCount: number | null
@@ -79,6 +81,7 @@ const initialCanvasSlice: GrazingCanvasSlice = {
   safeCurrentTrackpointsLength: 0,
   currentDistanceM: 0,
   currentDurationS: 0,
+  currentDurationRunningSince: null,
   safeHerds: [],
   selectedHerdId: '',
   selectedAnimalCount: null,

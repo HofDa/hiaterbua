@@ -1,10 +1,10 @@
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, ReactNode } from 'react'
+import { LiveDuration } from '@/components/maps/live-duration'
 import { FormButton, FormLabel, FormTextarea } from '@/components/ui/form'
 import { MetaLabel } from '@/components/ui/typography'
 import {
   formatDateTime,
   formatDistance,
-  formatDuration,
   getSessionEventLabel,
   type SessionMetrics,
 } from '@/lib/maps/grazing-session-map-helpers'
@@ -12,7 +12,7 @@ import { formatAccuracy } from '@/lib/maps/map-core'
 import { cn } from '@/lib/utils/cn'
 import type { SessionEvent, SessionEventType } from '@/types/domain'
 
-function MetricItem({ label, value }: { label: string; value: string | number }) {
+function MetricItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-0 app-surface-row px-4 py-3">
       <div className="text-xs leading-tight text-ink-muted">{label}</div>
@@ -137,15 +137,25 @@ export function GrazingSessionEventCapturePanel({
 export function GrazingSessionMetricsGrid({
   safeCurrentTrackpointsLength,
   currentMetrics,
+  currentDurationRunningSince,
 }: {
   safeCurrentTrackpointsLength: number
   currentMetrics: SessionMetrics | null
+  currentDurationRunningSince: string | null
 }) {
   return (
     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
       <MetricItem label="Punkte" value={safeCurrentTrackpointsLength} />
       <MetricItem label="Distanz" value={formatDistance(currentMetrics?.distanceM ?? 0)} />
-      <MetricItem label="Dauer" value={formatDuration(currentMetrics?.durationS ?? 0)} />
+      <MetricItem
+        label="Dauer"
+        value={
+          <LiveDuration
+            runningSince={currentDurationRunningSince}
+            fallbackS={currentMetrics?.durationS ?? 0}
+          />
+        }
+      />
       <MetricItem
         label="Mittlere Genauigkeit"
         value={formatAccuracy(currentMetrics?.avgAccuracyM)}

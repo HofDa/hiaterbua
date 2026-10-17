@@ -3,7 +3,6 @@
 import { formatAccuracy } from '@/lib/maps/map-core'
 import {
   formatDistance,
-  formatDuration,
   type SessionMetrics,
 } from '@/lib/maps/grazing-session-map-helpers'
 import {
@@ -17,6 +16,7 @@ import {
   MobileMapToolbarButton,
   MobileMapToolbarStat,
 } from '@/components/maps/mobile-map-toolbar'
+import { LiveDuration } from '@/components/maps/live-duration'
 import { MobileMapFloatingCard } from '@/components/maps/mobile-map-ui'
 import { FormSelect, FormInput } from '@/components/ui/form'
 import { StatusAlert, ErrorAlert } from '@/components/ui/alert'
@@ -48,6 +48,7 @@ type GrazingSessionMapDesktopManagementOverlayProps = {
   actionError: string
   safeCurrentTrackpointsLength: number
   currentMetrics: SessionMetrics | null
+  currentDurationRunningSince: string | null
   safeCurrentSessionEvents: SessionEvent[]
   onSelectedHerdIdChange: (value: string) => void
   onAdjustAnimalCount: (delta: number) => void | Promise<void>
@@ -73,6 +74,7 @@ export function GrazingSessionMapDesktopManagementOverlay({
   actionError,
   safeCurrentTrackpointsLength,
   currentMetrics,
+  currentDurationRunningSince,
   safeCurrentSessionEvents,
   onSelectedHerdIdChange,
   onAdjustAnimalCount,
@@ -110,7 +112,12 @@ export function GrazingSessionMapDesktopManagementOverlay({
                 </span>
               </span>
             </MobileMapToolbarStat>
-            <MobileMapToolbarStat>{formatDuration(currentMetrics?.durationS ?? 0)}</MobileMapToolbarStat>
+            <MobileMapToolbarStat>
+              <LiveDuration
+                runningSince={currentDurationRunningSince}
+                fallbackS={currentMetrics?.durationS ?? 0}
+              />
+            </MobileMapToolbarStat>
             <MobileMapToolbarStat>
               {formatAccuracy(currentMetrics?.avgAccuracyM)}
             </MobileMapToolbarStat>

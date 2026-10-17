@@ -23,6 +23,7 @@ export function GrazingSessionManagementPanel() {
     actionError,
     safeCurrentTrackpointsLength,
     currentMetrics,
+    currentDurationRunningSince,
     safeCurrentSessionEvents,
   } = useGrazingSessionMapStore((state) => state.management)
   const {
@@ -82,6 +83,7 @@ export function GrazingSessionManagementPanel() {
         <GrazingSessionMetricsGrid
           safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
           currentMetrics={currentMetrics}
+          currentDurationRunningSince={currentDurationRunningSince}
         />
       ) : null}
 

@@ -11,10 +11,10 @@ import {
   MobileMapSegmentedControl,
 } from '@/components/maps/mobile-map-ui'
 import { useGrazingSessionMapScreen } from '@/components/maps/hooks/use-grazing-session-map-screen'
+import { LiveDuration } from '@/components/maps/live-duration'
 import { useGrazingSessionMapStore } from '@/components/maps/hooks/use-grazing-session-map-store'
 import {
   formatDistance,
-  formatDuration,
 } from '@/lib/maps/grazing-session-map-helpers'
 import { cn } from '@/lib/utils/cn'
 
@@ -32,6 +32,7 @@ export function GrazingSessionMap() {
     safeCurrentTrackpointsLength,
     currentDistanceM,
     currentDurationS,
+    currentDurationRunningSince,
   } = useGrazingSessionMapScreen()
 
   // Zeroed metrics before a session starts read like something is broken;
@@ -39,11 +40,14 @@ export function GrazingSessionMap() {
   const currentSessionStatus = useGrazingSessionMapStore(
     (state) => state.management.currentSessionStatus,
   )
-  const mobileMapSummary = currentSessionStatus
-    ? `${safeCurrentTrackpointsLength} Punkte · ${formatDistance(
-        currentDistanceM
-      )} · ${formatDuration(currentDurationS)}`
-    : 'Route und Pferche ansehen'
+  const mobileMapSummary = currentSessionStatus ? (
+    <>
+      {safeCurrentTrackpointsLength} Punkte · {formatDistance(currentDistanceM)} ·{' '}
+      <LiveDuration runningSince={currentDurationRunningSince} fallbackS={currentDurationS} />
+    </>
+  ) : (
+    'Route und Pferche ansehen'
+  )
 
   // GPS problems are actionable even when the map is closed, so the status card
   // (which carries the "Standort aktivieren" retry) must stay reachable on mobile.

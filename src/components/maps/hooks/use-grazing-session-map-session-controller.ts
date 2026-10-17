@@ -64,7 +64,6 @@ export function useGrazingSessionMapSessionController({
     setIsEventSaving,
     setEventNote,
     setEventStatus,
-    setLiveDurationTick,
   } = session
   const { setSelectedSessionId } = selection
 
@@ -81,7 +80,6 @@ export function useGrazingSessionMapSessionController({
     setCurrentSessionStatus,
     setEventNote,
     setEventStatus,
-    setLiveDurationTick,
   })
   const {
     appendSessionPoint,

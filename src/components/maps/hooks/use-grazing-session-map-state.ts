@@ -30,7 +30,6 @@ type GrazingSessionCurrentState = {
   isEventSaving: boolean
   eventNote: string
   eventStatus: string
-  liveDurationTick: number
 }
 
 type GrazingSessionEditState = {
@@ -71,7 +70,6 @@ function createInitialSessionState(): GrazingSessionCurrentState {
     isEventSaving: false,
     eventNote: '',
     eventStatus: '',
-    liveDurationTick: Date.now(),
   }
 }
 
@@ -148,7 +146,6 @@ export function useGrazingSessionMapState() {
       setIsEventSaving: setSession('isEventSaving'),
       setEventNote: setSession('eventNote'),
       setEventStatus: setSession('eventStatus'),
-      setLiveDurationTick: setSession('liveDurationTick'),
     }
   }, [dispatchSession])
 

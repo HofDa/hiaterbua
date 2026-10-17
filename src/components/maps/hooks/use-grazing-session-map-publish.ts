@@ -66,6 +66,7 @@ export function useGrazingSessionMapPublish({
     safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
     currentDistanceM: data.currentMetrics?.distanceM ?? 0,
     currentDurationS: data.currentMetrics?.durationS ?? 0,
+    currentDurationRunningSince: data.currentDurationRunningSince,
     safeHerds: data.safeHerds,
     selectedHerdId: session.selectedHerdId,
     selectedAnimalCount: session.sessionAnimalCount,
@@ -140,6 +141,7 @@ export function useGrazingSessionMapPublish({
     actionError: session.actionError,
     safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
     currentMetrics: data.currentMetrics,
+    currentDurationRunningSince: data.currentDurationRunningSince,
     safeCurrentSessionEvents: data.safeCurrentSessionEvents,
   }
   const managementHandles = useStableHandles<GrazingManagementHandles>({

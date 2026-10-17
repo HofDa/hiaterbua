@@ -1,14 +1,8 @@
 'use client'
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-  createContext,
-  createElement,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react'
+import { createContext, createElement, useContext, type ReactNode } from 'react'
+import { useNowTick } from '@/hooks/use-now-tick'
 import { getHerd } from '@/lib/db/repositories/herds'
 import { listUnfinishedSessions } from '@/lib/db/repositories/sessions'
 import { listUnfinishedWorkSessions } from '@/lib/db/repositories/work-sessions'
@@ -37,7 +31,12 @@ type ActiveRecordingSnapshot = {
   nowMs: number
 }
 
-const ActiveRecordingContext = createContext<ActiveRecordingSnapshot | null>(null)
+// Holds only the recording (undefined while loading). The per-second clock is
+// not in the context: it ticks in each consumer via useNowTick, so a running
+// timer re-renders the labels that show it, not every consumer of the context.
+const ActiveRecordingContext = createContext<{ recording: ActiveRecording | null | undefined } | null>(
+  null
+)
 
 function useActiveRecordingQuery(): ActiveRecording | null | undefined {
   return useLiveQuery<ActiveRecording | null>(async () => {
@@ -80,27 +79,24 @@ function useActiveRecordingQuery(): ActiveRecording | null | undefined {
 
 export function ActiveRecordingProvider({ children }: { children: ReactNode }) {
   const recording = useActiveRecordingQuery()
-  const [nowMs, setNowMs] = useState(() => Date.now())
-  const isActive = recording?.status === 'active'
-  const startTime = recording?.startTime
-
-  useEffect(() => {
-    if (!isActive) return
-
-    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1000)
-    return () => window.clearInterval(intervalId)
-  }, [isActive, startTime])
-
-  return createElement(ActiveRecordingContext.Provider, { value: { recording, nowMs } }, children)
+  return createElement(ActiveRecordingContext.Provider, { value: { recording } }, children)
 }
 
-export function useActiveRecordingSnapshot(): ActiveRecordingSnapshot {
-  const snapshot = useContext(ActiveRecordingContext)
-  if (!snapshot) {
-    throw new Error('useActiveRecordingSnapshot must be used within ActiveRecordingProvider.')
+/** The current recording, without a running clock. */
+export function useActiveRecording(): ActiveRecording | null | undefined {
+  const value = useContext(ActiveRecordingContext)
+  if (!value) {
+    throw new Error('useActiveRecording must be used within ActiveRecordingProvider.')
   }
 
-  return snapshot
+  return value.recording
+}
+
+/** The current recording plus a clock that ticks every second while it is active. */
+export function useActiveRecordingSnapshot(): ActiveRecordingSnapshot {
+  const recording = useActiveRecording()
+  const nowMs = useNowTick(recording?.status === 'active')
+  return { recording, nowMs }
 }
 
 /**

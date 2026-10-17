@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, type Ref } from 'react'
-import { formatDistance, formatDuration } from '@/lib/maps/grazing-session-map-helpers'
+import { formatDistance } from '@/lib/maps/grazing-session-map-helpers'
+import { LiveDuration } from '@/components/maps/live-duration'
 import { GrazingSessionMapDesktopManagementOverlay } from '@/components/maps/grazing-session-map-desktop-management-overlay'
 import {
   ControlsIcon,
@@ -36,6 +37,7 @@ export function GrazingSessionMapCanvasPanel({
     safeCurrentTrackpointsLength,
     currentDistanceM,
     currentDurationS,
+    currentDurationRunningSince,
     safeHerds,
     selectedHerdId,
     selectedAnimalCount,
@@ -110,6 +112,7 @@ export function GrazingSessionMapCanvasPanel({
       actionError={actionError}
       safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
       currentMetrics={currentMetrics}
+      currentDurationRunningSince={currentDurationRunningSince}
       safeCurrentSessionEvents={safeCurrentSessionEvents}
       onSelectedHerdIdChange={onSelectedHerdIdChange}
       onAdjustAnimalCount={onAdjustAnimalCount}
@@ -262,7 +265,12 @@ export function GrazingSessionMapCanvasPanel({
                     </span>
                   </span>
                 </MobileMapToolbarStat>
-                <MobileMapToolbarStat>{formatDuration(currentDurationS)}</MobileMapToolbarStat>
+                <MobileMapToolbarStat>
+                  <LiveDuration
+                    runningSince={currentDurationRunningSince}
+                    fallbackS={currentDurationS}
+                  />
+                </MobileMapToolbarStat>
               </>
             }
           >

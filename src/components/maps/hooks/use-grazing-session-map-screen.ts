@@ -29,7 +29,6 @@ export function useGrazingSessionMapScreen() {
     editTrackpoints: edit.editTrackpoints,
     editStartTime: edit.editStartTime,
     editEndTime: edit.editEndTime,
-    liveDurationTick: session.liveDurationTick,
   })
 
   const effectiveSettings = data.settings ?? defaultAppSettings
@@ -276,5 +275,6 @@ export function useGrazingSessionMapScreen() {
     safeCurrentTrackpointsLength: data.safeCurrentTrackpoints.length,
     currentDistanceM: data.currentMetrics?.distanceM ?? 0,
     currentDurationS: data.currentMetrics?.durationS ?? 0,
+    currentDurationRunningSince: data.currentDurationRunningSince,
   }
 }

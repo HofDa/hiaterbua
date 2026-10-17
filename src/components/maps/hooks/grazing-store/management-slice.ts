@@ -26,6 +26,8 @@ export type GrazingManagementSlice = {
   actionError: string
   safeCurrentTrackpointsLength: number
   currentMetrics: SessionMetrics | null
+  /** Start of the active session whose clock is running, else null. */
+  currentDurationRunningSince: string | null
   safeCurrentSessionEvents: SessionEvent[]
 }
 
@@ -57,6 +59,7 @@ const initialManagementSlice: GrazingManagementSlice = {
   actionError: '',
   safeCurrentTrackpointsLength: 0,
   currentMetrics: null,
+  currentDurationRunningSince: null,
   safeCurrentSessionEvents: [],
 }
 
