@@ -44,8 +44,10 @@ type StatusAlertProps = ComponentProps<'div'> & {
   icon?: ReactNode
 }
 
-const statusTitles: Record<'success' | 'warning' | 'info', string> = {
-  success: 'Erfolg',
+// No generic "Erfolg" heading: a success message already says what happened
+// ("Pause eingetragen."), so it is shown on its own, in bold.
+const statusTitles: Record<'success' | 'warning' | 'info', string | null> = {
+  success: null,
   warning: 'Warnung',
   info: 'Info',
 }
@@ -63,8 +65,10 @@ export function StatusAlert({
   return (
     <Alert variant={variant} className={className} {...props}>
       {icon ?? <DefaultIcon className="h-4 w-4" />}
-      <AlertTitle>{statusTitles[variant]}</AlertTitle>
-      <AlertDescription>{children}</AlertDescription>
+      {statusTitles[variant] ? <AlertTitle>{statusTitles[variant]}</AlertTitle> : null}
+      <AlertDescription className={statusTitles[variant] ? undefined : 'font-semibold'}>
+        {children}
+      </AlertDescription>
     </Alert>
   )
 }

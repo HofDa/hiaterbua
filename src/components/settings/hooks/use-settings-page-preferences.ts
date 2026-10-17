@@ -1,4 +1,5 @@
-import { useEffect, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
+import { useEffect, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
+import type { AppSettings } from '@/types/domain'
 import { useSettingsStorageState } from '@/components/settings/hooks/use-settings-storage-state'
 import { useSettingsTileCacheState } from '@/components/settings/hooks/use-settings-tile-cache-state'
 import {
@@ -55,12 +56,39 @@ export function useSettingsPagePreferences() {
     setBrowserNotificationPermission(getBrowserNotificationPermission())
   }, [])
 
+  // Settings apply as they change, like every other screen of the app; an
+  // explicit "Speichern" lost changes when people left the page.
+  const lastSavedKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!settingsReady) return
+    const next = normalizeSettingsValue(draft)
+    const key = JSON.stringify(next)
+    if (lastSavedKeyRef.current === null) {
+      lastSavedKeyRef.current = key
+      return
+    }
+    if (key === lastSavedKeyRef.current) return
+
+    const timer = window.setTimeout(() => {
+      lastSavedKeyRef.current = key
+      void persistAndSync(next, false)
+    }, 700)
+    return () => window.clearTimeout(timer)
+    // persistAndSync is recreated each render; draft/ready drive the save.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, settingsReady])
+
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const nextSettings = normalizeSettingsValue(draft)
+    lastSavedKeyRef.current = JSON.stringify(nextSettings)
+    await persistAndSync(nextSettings, true)
+  }
+
+  async function persistAndSync(nextSettings: AppSettings, applyNormalized: boolean) {
     setSaving(true)
     setStatus('')
 
-    const nextSettings = normalizeSettingsValue(draft)
     const { storedInDb } = await persistSettings(nextSettings)
     let syncWarning = ''
 
@@ -69,7 +97,9 @@ export function useSettingsPagePreferences() {
     } catch {
       syncWarning = ' Offline-Karten konnten nicht vollständig abgeglichen werden.'
     } finally {
-      setDraft(nextSettings)
+      // Only on an explicit submit: while typing, normalizing (e.g. an empty
+      // number field to 1) must not overwrite what the user is entering.
+      if (applyNormalized) setDraft(nextSettings)
       setSaving(false)
       setStatus(
         `${storedInDb

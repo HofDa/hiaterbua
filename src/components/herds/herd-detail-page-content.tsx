@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { usePageTitle } from '@/components/layout/page-title-store'
 import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-enclosure-stats'
 import { speciesOptions } from '@/components/herds/animal-form-fields'
 import { HerdDetailAddAnimalCard } from '@/components/herds/herd-detail-add-animal-card'
@@ -37,6 +38,7 @@ export function HerdDetailPageContent({
   onBack,
   onDeleted,
 }: HerdDetailPageContentProps) {
+  usePageTitle(herd.name)
   const activeAnimalsCount = animals.filter((animal) => !animal.isArchived).length
   const effectiveHerdCount = getEffectiveHerdCount(herd, animals)
 

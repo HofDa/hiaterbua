@@ -101,7 +101,7 @@ export function CountStepper({
         <button
           type="button"
           onClick={() => step(-10)}
-          disabled={disabled || value <= 0}
+          disabled={disabled || value < 10}
           aria-label={`${label} um 10 verringern`}
           className={stepButtonClassName}
         >
@@ -128,7 +128,7 @@ export function CountStepper({
         <button
           type="button"
           onClick={() => step(10)}
-          disabled={disabled || value >= max}
+          disabled={disabled || value > max - 10}
           aria-label={`${label} um 10 erhöhen`}
           className={stepButtonClassName}
         >

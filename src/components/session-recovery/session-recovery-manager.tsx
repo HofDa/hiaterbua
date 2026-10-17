@@ -500,9 +500,35 @@ export function SessionRecoveryManager() {
 
   // The full card belongs on Start and on the session's own screen; other
   // screens show the tinted recording bar (see RecordingStatusBar).
-  const showFullCard =
-    pathname === '/' || Boolean(pathname?.startsWith(visibleSession.href))
-  if (!showFullCard) return null
+  const isOwnScreen = Boolean(pathname?.startsWith(visibleSession.href))
+  if (pathname !== '/' && !isOwnScreen) return null
+
+  // On the session's own screen the live panel already has Pause/Beenden;
+  // the recovery only needs to say what happened, in one line.
+  if (isOwnScreen) {
+    return (
+      <div className="mx-auto max-w-6xl px-3 pt-3 md:px-4 xl:max-w-[88rem]">
+        <div
+          role="status"
+          className="flex items-center gap-3 rounded-[1.1rem] border-2 border-primary bg-surface px-4 py-2 text-ink-strong"
+        >
+          <RotateCcw aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" strokeWidth={2.6} />
+          <p className="min-w-0 flex-1 text-sm font-semibold">
+            {visibleSession.status === 'active'
+              ? 'Nach Neustart fortgesetzt · nichts verloren'
+              : 'Nach Neustart wiederhergestellt · pausiert'}
+          </p>
+          <button
+            type="button"
+            onClick={() => dismissSession(visibleSession.key)}
+            className="min-h-11 shrink-0 rounded-full border-2 border-border-strong px-4 text-sm font-semibold"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const metadata = readStoredMetadata()[visibleSession.key]
   const liveDurationS = getLiveRecoverableDurationS(visibleSession, nowMs)
@@ -548,7 +574,11 @@ export function SessionRecoveryManager() {
             variant="primary"
             className="min-h-14 text-base"
           >
-            {isActive ? 'Weiter aufzeichnen' : 'Fortsetzen'}
+            {isActive
+              ? visibleSession.kind === 'grazing'
+                ? 'Zum Weidegang'
+                : 'Zum Arbeitseinsatz'
+              : 'Fortsetzen'}
           </FormButton>
           <div className="grid grid-cols-2 gap-2">
             <FormButton

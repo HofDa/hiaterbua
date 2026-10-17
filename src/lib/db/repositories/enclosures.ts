@@ -72,9 +72,10 @@ export async function assignHerdToEnclosureRecord(params: {
   herdId: string
   count: number | null
   notes: string
-}): Promise<void> {
+}): Promise<string> {
   const { enclosure, herdId, count, notes } = params
   const timestamp = nowIso()
+  const assignmentId = createId('enclosure_assignment')
 
   await db.transaction('rw', db.enclosureAssignments, db.enclosures, async () => {
     const activeAssignments = selectActiveAssignments(await db.enclosureAssignments.toArray())
@@ -89,7 +90,7 @@ export async function assignHerdToEnclosureRecord(params: {
     }
 
     await db.enclosureAssignments.add({
-      id: createId('enclosure_assignment'),
+      id: assignmentId,
       enclosureId: enclosure.id,
       herdId,
       count,
@@ -103,6 +104,41 @@ export async function assignHerdToEnclosureRecord(params: {
 
     await db.enclosures.update(enclosure.id, {
       herdId,
+      updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
+    })
+  })
+
+  return assignmentId
+}
+
+/** How long after assigning a herd "Rückgängig" may remove the assignment. */
+export const UNDO_ASSIGNMENT_WINDOW_MS = 60_000
+
+/**
+ * Takes back an assignment made moments ago by mistake: removes it (it never
+ * really started) and restores the enclosure's previous herd. Only while the
+ * assignment is still open and within the undo window.
+ */
+export async function undoEnclosureAssignmentRecord(params: {
+  assignmentId: string
+  previousEnclosureHerdId: string | null
+  now?: string
+}): Promise<void> {
+  const timestamp = params.now ?? nowIso()
+
+  await db.transaction('rw', db.enclosureAssignments, db.enclosures, async () => {
+    const assignment = await db.enclosureAssignments.get(params.assignmentId)
+    if (!assignment || assignment.endTime) {
+      throw new Error('Die Zuweisung kann nicht mehr zurückgenommen werden.')
+    }
+    if (Date.parse(timestamp) - Date.parse(assignment.createdAt) > UNDO_ASSIGNMENT_WINDOW_MS) {
+      throw new Error('Rückgängig ist nur kurz nach dem Zuweisen möglich.')
+    }
+
+    await db.enclosureAssignments.delete(assignment.id)
+    await db.enclosures.update(assignment.enclosureId, {
+      herdId: params.previousEnclosureHerdId,
       updatedAt: timestamp,
       ...buildLocalChangePatch(timestamp),
     })

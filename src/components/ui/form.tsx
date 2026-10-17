@@ -75,7 +75,7 @@ type FormButtonProps = ComponentProps<'button'> & {
 const formButtonVariants: Record<FormButtonVariant, string> = {
   // Filled dark green: reserved for the one main action of a step.
   primary:
-    'border-primary bg-primary text-primary-foreground app-shadow-action hover:bg-chrome-strong disabled:border-border-soft disabled:bg-surface-disabled-strong disabled:text-ink-soft disabled:opacity-100',
+    'border-primary bg-primary text-primary-foreground app-shadow-action hover:bg-chrome-strong disabled:border-dashed disabled:border-border-soft disabled:bg-surface-disabled-strong disabled:text-ink-muted disabled:shadow-none disabled:opacity-100',
   secondary:
     'border-border bg-surface-raised text-ink-strong',
   danger:

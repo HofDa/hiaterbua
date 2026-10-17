@@ -154,7 +154,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
                 <div
                   key={enclosure.id}
                   className={cn(
-                    'rounded-[1.1rem] border border-border bg-surface-raised',
+                    'rounded-[1.1rem] border border-border-soft bg-surface-raised',
                     isSelected && 'border-2 border-primary',
                   )}
                 >

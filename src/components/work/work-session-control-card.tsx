@@ -4,6 +4,9 @@ import { WorkActiveSessionPanel } from '@/components/work/work-active-session-pa
 import { WorkNewSessionForm } from '@/components/work/work-new-session-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
+import { SavedSummaryCard } from '@/components/ui/saved-summary-card'
+import type { LastFinishedWork } from '@/components/work/hooks/use-work-page-controller/use-work-page-session-actions'
+import { formatSpan } from '@/lib/utils/format'
 import type { WorkActivityId, Enclosure, Herd, WorkSession, WorkStatus, WorkType } from '@/types/domain'
 import type { WorkPickerSectionId, WorkSelection } from '@/lib/work/work-session-helpers'
 
@@ -25,6 +28,9 @@ type WorkSessionControlCardProps = {
   notes: string
   error: string
   statusMessage: string
+  lastFinishedWork: LastFinishedWork | null
+  onUndoFinishWork: () => void | Promise<void>
+  onDismissFinishedWork: () => void
   onStartWorkSession: (event: React.FormEvent<HTMLFormElement>) => void | Promise<void>
   onUpdateWorkSessionStatus: (status: WorkStatus) => void | Promise<void>
   onWorkPickerSectionChange: (value: WorkPickerSectionId) => void
@@ -53,6 +59,9 @@ export function WorkSessionControlCard({
   notes,
   error,
   statusMessage,
+  lastFinishedWork,
+  onUndoFinishWork,
+  onDismissFinishedWork,
   onStartWorkSession,
   onUpdateWorkSessionStatus,
   onWorkPickerSectionChange,
@@ -73,6 +82,28 @@ export function WorkSessionControlCard({
       </CardHeader>
 
       <CardContent className="p-0">
+        {!activeSession && lastFinishedWork ? (
+          <div className="mb-4">
+            <SavedSummaryCard
+              title="Arbeitseinsatz gespeichert"
+              subtitle={lastFinishedWork.label}
+              stats={[
+                { label: 'Dauer', value: formatSpan(lastFinishedWork.durationS / 60) },
+                {
+                  label: 'Herde',
+                  value: lastFinishedWork.herdId
+                    ? (herdsById.get(lastFinishedWork.herdId)?.name ?? '–')
+                    : '–',
+                },
+              ]}
+              savedAt={lastFinishedWork.finishedAt}
+              undoLabel="Rückgängig – weiterlaufen lassen"
+              isBusy={isSaving}
+              onUndo={onUndoFinishWork}
+              onDismiss={onDismissFinishedWork}
+            />
+          </div>
+        ) : null}
         {activeSession ? (
           <WorkActiveSessionPanel
             activeSession={activeSession}

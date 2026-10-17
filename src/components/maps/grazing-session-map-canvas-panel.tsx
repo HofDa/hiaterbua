@@ -3,7 +3,6 @@
 import { useState, type Ref } from 'react'
 import { formatDistance } from '@/lib/maps/grazing-session-map-helpers'
 import { LiveDuration } from '@/components/maps/live-duration'
-import { GrazingSessionMapDesktopManagementOverlay } from '@/components/maps/grazing-session-map-desktop-management-overlay'
 import {
   ControlsIcon,
   PauseIcon,
@@ -37,19 +36,11 @@ export function GrazingSessionMapCanvasPanel({
     currentDistanceM,
     currentDurationS,
     currentDurationRunningSince,
-    safeHerds,
-    selectedHerdId,
-    selectedAnimalCount,
-    sessionNotes,
     currentSessionStatus,
     isSaving,
     isEventSaving,
     hasHerds,
     eventNote,
-    eventStatus,
-    actionError,
-    currentMetrics,
-    safeCurrentSessionEvents,
     position,
     isBaseLayerMenuOpen,
     baseLayer,
@@ -65,14 +56,9 @@ export function GrazingSessionMapCanvasPanel({
     editTrackpointsLength,
   } = useGrazingSessionMapStore((state) => state.canvas)
   const {
-    onSelectedHerdIdChange,
-    onAdjustAnimalCount,
-    onSessionNotesChange,
     onStartOrResumeSession,
     onPauseSession,
-    onResumeSession,
     onStopSession,
-    onEventNoteChange,
     onAddSessionMarkerEvent,
     onCenterMap,
     onToggleBaseLayerMenu,
@@ -87,9 +73,6 @@ export function GrazingSessionMapCanvasPanel({
     onCancelEditSession,
   } = useGrazingSessionMapStore((state) => state.canvasHandles)
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
-  // Open by default: on desktop this overlay is the only way to start a
-  // Weidegang, and hidden behind a toggle there was no visible start path.
-  const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(true)
   const showMapFallback = !mapReady && mapLoadState !== 'loading'
   const sessionStatusLabel =
     currentSessionStatus === 'active'
@@ -99,33 +82,6 @@ export function GrazingSessionMapCanvasPanel({
         : 'kein Weidegang aktiv'
 
   const hasMobileToolbar = !editingSessionId
-  const managementOverlay = !editingSessionId ? (
-    <GrazingSessionMapDesktopManagementOverlay
-      safeHerds={safeHerds}
-      selectedHerdId={selectedHerdId}
-      selectedAnimalCount={selectedAnimalCount}
-      sessionNotes={sessionNotes}
-      currentSessionStatus={currentSessionStatus}
-      isSaving={isSaving}
-      isEventSaving={isEventSaving}
-      eventNote={eventNote}
-      eventStatus={eventStatus}
-      actionError={actionError}
-      safeCurrentTrackpointsLength={safeCurrentTrackpointsLength}
-      currentMetrics={currentMetrics}
-      currentDurationRunningSince={currentDurationRunningSince}
-      safeCurrentSessionEvents={safeCurrentSessionEvents}
-      onSelectedHerdIdChange={onSelectedHerdIdChange}
-      onAdjustAnimalCount={onAdjustAnimalCount}
-      onSessionNotesChange={onSessionNotesChange}
-      onStartSession={onStartOrResumeSession}
-      onPauseSession={onPauseSession}
-      onResumeSession={onResumeSession}
-      onStopSession={onStopSession}
-      onEventNoteChange={onEventNoteChange}
-      onAddSessionMarkerEvent={onAddSessionMarkerEvent}
-    />
-  ) : null
   const mapTopControls = (
     <MapTopControls
       positionAvailable={Boolean(position)}
@@ -141,25 +97,6 @@ export function GrazingSessionMapCanvasPanel({
       onPrefetchVisibleMapArea={onPrefetchVisibleMapArea}
       onCancelPrefetchVisibleMapArea={onCancelPrefetchVisibleMapArea}
       mapWarning={mapWarning}
-      extraControls={
-        <button
-          type="button"
-          aria-label={
-            isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
-          }
-          aria-expanded={isDesktopToolbarOpen}
-          onClick={() => setIsDesktopToolbarOpen((current) => !current)}
-          className={cn(
-            'hidden items-center justify-center app-map-icon-button transition-colors lg:flex',
-            isDesktopToolbarOpen ? 'text-ink-strong' : 'text-ink-muted',
-          )}
-          title={
-            isDesktopToolbarOpen ? 'Werkzeugleiste ausblenden' : 'Werkzeugleiste einblenden'
-          }
-        >
-          <ControlsIcon />
-        </button>
-      }
       extraMenuItems={
         <MapMenuToggleButton
           active={showSessionEventsOnMap}
@@ -303,7 +240,6 @@ export function GrazingSessionMapCanvasPanel({
           </MobileMapToolbar>
         </div>
       ) : null}
-      {isDesktopToolbarOpen ? managementOverlay : null}
       <div className="hidden lg:block">{mapTopControls}</div>
       <div className="lg:hidden">{mapTopControls}</div>
       {editingSessionId ? (

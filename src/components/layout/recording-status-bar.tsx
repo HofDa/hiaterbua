@@ -20,7 +20,12 @@ export function RecordingStatusBar() {
   const { recording, nowMs } = useActiveRecordingSnapshot()
   // On Start the "Aufnahme läuft" card already leads the page; a second copy
   // of the same recording right below it is noise.
-  const isHome = usePathname() === '/'
+  // Hidden where the recording already leads the page: on Start (its card)
+  // and on the recording's own screen (its live panel) — there the bar only
+  // repeated the same session with a third set of controls.
+  const pathname = usePathname()
+  const isOwnScreen = recording != null && Boolean(pathname?.startsWith(recording.href))
+  const isHome = pathname === '/' || isOwnScreen
   const isRecording = recording != null && !isHome
   const pendingRecoveryKey = useRecoveryNoticeStore((state) => state.pendingSessionKey)
 

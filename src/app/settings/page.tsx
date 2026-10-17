@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { SettingsPageHeader } from '@/components/settings/settings-page-header'
 import { SettingsGeneralFormCard } from '@/components/settings/settings-general-form-card'
 import { SettingsPrefetchCard } from '@/components/settings/settings-prefetch-card'
@@ -56,6 +58,17 @@ export default function SettingsPage() {
         state={prefetchState}
         actions={prefetchActions}
       />
+
+      <Link
+        href="/settings/diagnostics"
+        className="flex min-h-12 items-center justify-between gap-3 rounded-[1.1rem] border-2 border-border-strong bg-surface-raised px-4 text-base font-semibold text-ink-strong"
+      >
+        <span>
+          Feld-Diagnose
+          <span className="block text-sm font-medium text-ink-muted">Für Fehlerberichte</span>
+        </span>
+        <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0" />
+      </Link>
     </div>
   )
 }

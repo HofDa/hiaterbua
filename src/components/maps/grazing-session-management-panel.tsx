@@ -45,18 +45,6 @@ export function GrazingSessionManagementPanel() {
   } = useGrazingSessionMapStore((state) => state.managementHandles)
   const panelContent = (
     <>
-      {currentSessionStatus === null && lastStoppedSession ? (
-        <div className="mb-4">
-          <GrazingSessionStopSummary
-            stopped={lastStoppedSession}
-            isSaving={isSaving}
-            onUndo={onUndoStop}
-            onShowInHistory={onShowStoppedSessionInHistory}
-            onDismiss={onDismissStopSummary}
-          />
-        </div>
-      ) : null}
-
       {currentSessionStatus === null ? (
         <GrazingSessionMobileStartFlow
           safeHerds={safeHerds}
@@ -122,9 +110,22 @@ export function GrazingSessionManagementPanel() {
   return (
     <div
       data-grazing-session-management-card="true"
-      className="app-panel p-5 lg:hidden"
+      className="app-panel p-5"
     >
-      <h2 className="text-lg font-semibold">
+      {/* The summary closes the walk that just ended, so it sits above the
+          "Weidegang starten" heading of the next one. */}
+      {currentSessionStatus === null && lastStoppedSession ? (
+        <div className="mb-5">
+          <GrazingSessionStopSummary
+            stopped={lastStoppedSession}
+            isSaving={isSaving}
+            onUndo={onUndoStop}
+            onShowInHistory={onShowStoppedSessionInHistory}
+            onDismiss={onDismissStopSummary}
+          />
+        </div>
+      ) : null}
+      <h2 className="text-lg font-bold">
         {currentSessionStatus === null
           ? 'Weidegang starten'
           : currentSessionStatus === 'paused'

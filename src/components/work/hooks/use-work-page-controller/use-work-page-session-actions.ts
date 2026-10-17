@@ -1,9 +1,11 @@
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import {
   createWorkSessionRecord,
   deleteWorkSessionRecord,
+  getWorkSession,
+  reopenFinishedWorkSessionRecord,
   updateWorkSessionStatusRecord,
 } from '@/lib/db/repositories/work-sessions'
 import { recordFieldDiagnostic } from '@/lib/diagnostics/field-diagnostics'
@@ -11,6 +13,16 @@ import { getBrowserNotificationPermission } from '@/lib/notifications/browser-no
 import { getWorkSessionStartedStatusMessage } from '@/lib/work/work-session-notifications'
 import { getWorkLabel } from '@/lib/work/work-session-helpers'
 import type { WorkActivityId, WorkSession, WorkStatus, WorkType } from '@/types/domain'
+
+/** The Arbeitseinsatz just ended, for the shared "saved + undo" card. */
+export type LastFinishedWork = {
+  sessionId: string
+  finishedAt: string
+  previousStatus: 'active' | 'paused'
+  label: string
+  durationS: number
+  herdId: string | null
+}
 
 type UseWorkPageSessionActionsOptions = {
   activeSession: WorkSession | null
@@ -56,8 +68,10 @@ export function useWorkPageSessionActions({
   setIsSaving,
 }: UseWorkPageSessionActionsOptions) {
   const confirm = useConfirm()
+  const [lastFinishedWork, setLastFinishedWork] = useState<LastFinishedWork | null>(null)
 
   async function startWorkSession(event: FormEvent<HTMLFormElement>) {
+    setLastFinishedWork(null)
     event.preventDefault()
 
     if (activeSession) {
@@ -139,6 +153,17 @@ export function useWorkPageSessionActions({
     try {
       await updateWorkSessionStatusRecord(activeSession, nextStatus)
       if (nextStatus === 'finished') {
+        const finished = await getWorkSession(activeSession.id)
+        if (finished?.endTime) {
+          setLastFinishedWork({
+            sessionId: finished.id,
+            finishedAt: finished.endTime,
+            previousStatus: activeSession.status === 'paused' ? 'paused' : 'active',
+            label: getWorkLabel(finished),
+            durationS: finished.durationS,
+            herdId: finished.herdId ?? null,
+          })
+        }
         recordFieldDiagnostic({
           type: 'work_session_stopped',
           message: 'Arbeitseinsatz beendet.',
@@ -147,7 +172,8 @@ export function useWorkPageSessionActions({
         })
       }
 
-      setStatusMessage(getStatusUpdateMessage(nextStatus))
+      // Ending gets the summary card; pause/resume only a short line.
+      setStatusMessage(nextStatus === 'finished' ? '' : getStatusUpdateMessage(nextStatus))
       triggerHaptic(nextStatus === 'finished' ? 'success' : 'medium')
 
       if (nextStatus !== 'active') {
@@ -169,6 +195,29 @@ export function useWorkPageSessionActions({
         currentError instanceof Error
           ? currentError.message
           : 'Status konnte nicht aktualisiert werden.'
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function undoFinishWorkSession() {
+    if (!lastFinishedWork) return
+    setIsSaving(true)
+    setError('')
+    try {
+      await reopenFinishedWorkSessionRecord({
+        sessionId: lastFinishedWork.sessionId,
+        finishedAt: lastFinishedWork.finishedAt,
+        previousStatus: lastFinishedWork.previousStatus,
+      })
+      setLastFinishedWork(null)
+      triggerHaptic('success')
+    } catch (currentError) {
+      setError(
+        currentError instanceof Error
+          ? currentError.message
+          : 'Arbeitseinsatz konnte nicht fortgesetzt werden.'
       )
     } finally {
       setIsSaving(false)
@@ -217,5 +266,8 @@ export function useWorkPageSessionActions({
     startWorkSession,
     updateWorkSessionStatus,
     deleteWorkSession,
+    lastFinishedWork,
+    undoFinishWorkSession,
+    dismissFinishedWork: () => setLastFinishedWork(null),
   }
 }

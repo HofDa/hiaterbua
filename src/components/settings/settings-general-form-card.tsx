@@ -267,10 +267,10 @@ export function SettingsGeneralFormCard({
 
           {status && <StatusAlert className="mt-3">{status}</StatusAlert>}
 
-          <div className="flex gap-3">
-            <FormButton type="submit" disabled={saving} variant="primary">
-              {saving ? 'Speichert ...' : 'Einstellungen speichern'}
-            </FormButton>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-medium text-ink-muted" aria-live="polite">
+              {saving ? 'Speichert …' : 'Änderungen werden automatisch gespeichert.'}
+            </p>
             <FormButton type="button" onClick={onResetSettings} variant="secondary">
               Standardwerte
             </FormButton>

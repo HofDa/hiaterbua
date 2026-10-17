@@ -2,12 +2,9 @@
 
 import {
   ChevronDown,
-  ChevronRight,
-  Download,
   DownloadCloud,
   Loader2,
   Map as MapIcon,
-  Settings,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -51,18 +48,6 @@ type HerdStatus = {
   since: string | null
 }
 
-const utilityLinks = [
-  {
-    href: '/export',
-    label: 'Sichern & Importieren',
-    icon: Download,
-  },
-  {
-    href: '/settings',
-    label: 'Einstellungen',
-    icon: Settings,
-  },
-]
 
 export default function HomePage() {
   const dashboardData = useLiveQuery(async () => {
@@ -151,11 +136,11 @@ export default function HomePage() {
         ) : (
           <ul className="mt-3 divide-y divide-border-soft">
             {(dashboardData?.herdStatuses ?? []).map((herd) => (
-              <li key={herd.id}>
+              <li key={herd.id} className="flex items-center gap-2">
                 <Link
                   href={`/herd?id=${encodeURIComponent(herd.id)}`}
                   onClick={() => triggerHaptic('light')}
-                  className="flex min-h-16 items-center gap-3 py-3"
+                  className="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-3"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block text-lg font-bold leading-tight text-ink-strong [overflow-wrap:anywhere]">
@@ -165,20 +150,22 @@ export default function HomePage() {
                       {herd.enclosureName
                         ? [herd.enclosureName, formatSince(herd.since)].filter(Boolean).join(' · ')
                         : 'In keinem Pferch'}
+                      {herd.count !== null ? ` · ${herd.count} ${herd.count === 1 ? 'Tier' : 'Tiere'}` : ''}
                     </span>
                   </span>
-                  {herd.count !== null ? (
-                    <span className="shrink-0 text-right">
-                      <span className="block text-xl font-bold tabular-nums text-ink-strong">
-                        {herd.count}
-                      </span>
-                      <span className="block text-xs font-semibold text-ink-muted">
-                        {herd.count === 1 ? 'Tier' : 'Tiere'}
-                      </span>
-                    </span>
-                  ) : null}
-                  <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted" />
                 </Link>
+                {/* Start right here: the herd is already known on this screen. */}
+                {dashboardData?.activeSessionsCount === 0 ? (
+                  <Link
+                    href={`/sessions?herd=${encodeURIComponent(herd.id)}`}
+                    onClick={() => triggerHaptic('light')}
+                    aria-label={`Weidegang mit ${herd.name} starten`}
+                    className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border-2 border-primary px-3 text-sm font-bold text-ink-strong"
+                  >
+                    <MapIcon aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
+                    Starten
+                  </Link>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -195,22 +182,6 @@ export default function HomePage() {
           </Link>
         ) : null}
 
-        <div className="mt-4 hidden flex-wrap gap-2 md:flex">
-          {utilityLinks.map((link) => {
-            const Icon = link.icon
-
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(buttonVariants({ variant: 'secondary' }), 'gap-2 rounded-full')}
-              >
-                <Icon aria-hidden="true" className="h-4 w-4" />
-                {link.label}
-              </Link>
-            )
-          })}
-        </div>
       </section>
 
       <Card>

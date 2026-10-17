@@ -232,7 +232,7 @@ export function FlowPrimaryAction({
       type={type}
       className={cn(
         // The one filled, dark-green action per step — the next thing to do.
-        'w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-primary bg-primary px-4 py-4 text-lg font-bold text-primary-foreground app-shadow-action-strong transition-colors hover:bg-chrome-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:border-border-soft disabled:bg-surface-disabled-strong disabled:text-ink-soft',
+        'w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-primary bg-primary px-4 py-4 text-lg font-bold text-primary-foreground app-shadow-action-strong transition-colors hover:bg-chrome-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:border-dashed disabled:border-border-soft disabled:bg-surface-disabled-strong disabled:font-semibold disabled:text-ink-muted disabled:shadow-none',
         className,
       )}
       {...props}

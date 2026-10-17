@@ -79,7 +79,14 @@ export function useWorkPageController({ sessions }: UseWorkPageControllerOptions
     setActiveReminderMessage,
   })
 
-  const { startWorkSession, updateWorkSessionStatus, deleteWorkSession } =
+  const {
+    startWorkSession,
+    updateWorkSessionStatus,
+    deleteWorkSession,
+    lastFinishedWork,
+    undoFinishWorkSession,
+    dismissFinishedWork,
+  } =
     useWorkPageSessionActions({
       activeSession,
       editingSessionId,
@@ -140,6 +147,9 @@ export function useWorkPageController({ sessions }: UseWorkPageControllerOptions
     applyEditWorkSelection,
     startWorkSession,
     updateWorkSessionStatus,
+    lastFinishedWork,
+    undoFinishWorkSession,
+    dismissFinishedWork,
     startEditingSession,
     cancelEditingSession,
     saveEditedSession,

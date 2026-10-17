@@ -8,10 +8,12 @@ import { APP_NAME } from '@/lib/app-metadata'
 import { cn } from '@/lib/utils/cn'
 import { isNavItemActive } from './nav-active'
 import { navItems } from './nav-items'
+import { usePageTitleOverride } from './page-title-store'
 
 export function TopBar() {
   const pathname = usePathname()
   const activeItem = navItems.find((item) => isNavItemActive(pathname, item.href))
+  const titleOverride = usePageTitleOverride()
   const utilityActions = [
     { href: '/export', label: 'Sichern & Importieren', icon: Download },
     { href: '/settings', label: 'Einstellungen', icon: Settings },
@@ -23,7 +25,7 @@ export function TopBar() {
         {/* Installed standalone use means the user already knows which app is
             open — on mobile the page title is the header, not the app name. */}
         <p className="min-w-0 truncate text-lg font-semibold text-white md:hidden">
-          {activeItem?.label ?? APP_NAME}
+          {titleOverride ?? activeItem?.label ?? APP_NAME}
         </p>
         <div className="hidden min-w-0 shrink md:block">
           <p className="truncate text-lg font-semibold text-white">{APP_NAME}</p>

@@ -120,6 +120,53 @@ export async function updateWorkSessionStatusRecord(
   })
 }
 
+/** How long after ending an Arbeitseinsatz "Rückgängig" may reopen it. */
+export const UNDO_WORK_FINISH_WINDOW_MS = 60_000
+
+/**
+ * Reopens a work session ended moments ago by mistake, in the status it had
+ * before (paused, or active again from now). Only the exact end identified
+ * by `finishedAt` and only within the undo window; the stop event is removed.
+ */
+export async function reopenFinishedWorkSessionRecord(params: {
+  sessionId: string
+  finishedAt: string
+  previousStatus: 'active' | 'paused'
+  now?: string
+}): Promise<void> {
+  const { sessionId, finishedAt, previousStatus } = params
+  const timestamp = params.now ?? nowIso()
+
+  await db.transaction('rw', db.workSessions, db.workEvents, async () => {
+    const session = await db.workSessions.get(sessionId)
+    if (!session) throw new Error('Arbeitseinsatz wurde nicht gefunden.')
+    if (session.status !== 'finished' || session.endTime !== finishedAt) {
+      throw new Error('Der Arbeitseinsatz kann nicht mehr fortgesetzt werden.')
+    }
+    if (Date.parse(timestamp) - Date.parse(finishedAt) > UNDO_WORK_FINISH_WINDOW_MS) {
+      throw new Error('Rückgängig ist nur kurz nach dem Beenden möglich.')
+    }
+
+    const stopEvents = await db.workEvents
+      .where('workSessionId')
+      .equals(sessionId)
+      .filter((event) => event.type === 'stop' && event.timestamp >= finishedAt)
+      .primaryKeys()
+    if (stopEvents.length > 0) await db.workEvents.bulkDelete(stopEvents)
+
+    const updatedCount = await db.workSessions.update(sessionId, {
+      status: previousStatus,
+      endTime: null,
+      activeSince: previousStatus === 'active' ? timestamp : null,
+      updatedAt: timestamp,
+      ...buildLocalChangePatch(timestamp),
+    })
+    assertUpdated(updatedCount, 'Arbeitseinsatz wurde nicht gefunden.')
+
+    if (previousStatus === 'active') await addWorkEvent(sessionId, 'resume')
+  })
+}
+
 /** Persist edited work-session fields and log an edit note. Throws when missing. */
 export async function saveEditedWorkSessionRecord(
   sessionId: string,

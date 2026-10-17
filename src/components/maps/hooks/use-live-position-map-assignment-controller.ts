@@ -3,7 +3,9 @@ import { runSavingAction } from '@/components/maps/hooks/run-saving-action'
 import {
   assignHerdToEnclosureRecord,
   endEnclosureAssignmentRecord,
+  undoEnclosureAssignmentRecord,
 } from '@/lib/db/repositories/enclosures'
+import { showUndoToast } from '@/components/ui/undo-toast'
 import { getDefaultAssignmentValues } from '@/lib/maps/live-position-actions'
 import {
   getAssignableHerds,
@@ -124,7 +126,8 @@ export function useLivePositionMapAssignmentController({
       errorMessage: (error) =>
         error instanceof Error ? error.message : 'Zuweisung konnte nicht gespeichert werden.',
       action: async () => {
-        await assignHerdToEnclosureRecord({
+        const previousEnclosureHerdId = enclosure.herdId ?? null
+        const assignmentId = await assignHerdToEnclosureRecord({
           enclosure,
           herdId: herd.id,
           count: parsedCount,
@@ -133,6 +136,16 @@ export function useLivePositionMapAssignmentController({
 
         resetAssignmentState()
         setSelectedEnclosureId(enclosure.id)
+        // Assigning used to commit silently; say what happened and allow undo.
+        showUndoToast(`${herd.name} → ${enclosure.name}`, async () => {
+          try {
+            await undoEnclosureAssignmentRecord({ assignmentId, previousEnclosureHerdId })
+          } catch (error) {
+            setAssignmentError(
+              error instanceof Error ? error.message : 'Zuweisung konnte nicht zurückgenommen werden.'
+            )
+          }
+        })
       },
     })
   }

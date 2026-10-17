@@ -81,6 +81,9 @@ export function WorkPageContent({
     applyEditWorkSelection,
     startWorkSession,
     updateWorkSessionStatus,
+    lastFinishedWork,
+    undoFinishWorkSession,
+    dismissFinishedWork,
     startEditingSession,
     cancelEditingSession,
     saveEditedSession,
@@ -117,6 +120,9 @@ export function WorkPageContent({
           notes={notes}
           error={error}
           statusMessage={statusMessage}
+          lastFinishedWork={lastFinishedWork}
+          onUndoFinishWork={undoFinishWorkSession}
+          onDismissFinishedWork={dismissFinishedWork}
           onStartWorkSession={startWorkSession}
           onUpdateWorkSessionStatus={updateWorkSessionStatus}
           onWorkPickerSectionChange={setWorkPickerSectionId}

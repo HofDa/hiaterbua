@@ -92,7 +92,7 @@ export function CareInfoGuide() {
         </div>
       </InfoDetails>
 
-      <p className="flex items-center gap-1.5 px-1 text-xs leading-relaxed text-ink-muted">
+      <p className="flex items-center gap-1.5 px-3 text-xs leading-relaxed text-ink-muted">
         <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
         Pflanzenlinks im Pflegecheck öffnen eine externe Bild-/Arthilfe und brauchen Netz.
       </p>

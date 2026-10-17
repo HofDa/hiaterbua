@@ -18,7 +18,6 @@ import {
 } from '@/lib/diagnostics/field-issue-report'
 import {
   DEBUG_FIELD_DIAGNOSTICS_CHANGED_EVENT,
-  DEBUG_FIELD_DIAGNOSTICS_STORAGE_KEY,
   isDebugFieldDiagnosticsEnabled,
   setDebugFieldDiagnosticsEnabled,
 } from '@/lib/diagnostics/ui-blocker-detector'
@@ -153,8 +152,8 @@ export default function DiagnosticsPage() {
           <div>
             <CardTitle className="text-2xl">Feld-Diagnose</CardTitle>
             <CardDescription className="mt-2 max-w-2xl">
-              Lokale Debug-Ereignisse für fehlgeschlagene Feldtests. Diese Daten bleiben auf
-              diesem Gerät und funktionieren offline.
+              Ein Protokoll, was die App im Feld erlebt hat (GPS, Speichern, Verbindung).
+              Hilft beim Melden eines Fehlers. Bleibt auf diesem Gerät.
             </CardDescription>
           </div>
           <Link
@@ -213,11 +212,11 @@ export default function DiagnosticsPage() {
           />
           <span className="min-w-0">
             <span className="block text-sm font-semibold text-ink-strong">
-              UI-Blocker-Erkennung bei aktiver Feldarbeit
+              Verdeckte Bedienelemente erkennen
             </span>
             <span className="mt-1 block text-sm font-medium text-ink-muted">
-              Lokale Debug-Einstellung <code>{DEBUG_FIELD_DIAGNOSTICS_STORAGE_KEY}</code>.
-              Aktiviert auch automatisch in Entwicklung oder mit <code>?debugField=1</code>.
+              Meldet, wenn während einer Aufzeichnung etwas die Bedienung überdeckt.
+              Nur einschalten, wenn ihr einem Fehler nachgeht.
             </span>
           </span>
         </label>

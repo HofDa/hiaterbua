@@ -9,12 +9,11 @@ import {
   ClipboardCheck,
   ExternalLink,
   HelpCircle,
-  Leaf,
   Pencil,
   Search,
 } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/alert'
-import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import {
   FlowOptionGrid,
   FlowPrimaryAction,
@@ -45,11 +44,13 @@ import {
 } from '@/lib/care/care-guide'
 import {
   getConservationPlanByEnclosureId,
+  listAllConservationPlans,
   saveConservationPlan,
 } from '@/lib/db/repositories/conservation-plans'
 import {
   createCareMonitoringCheck,
   deleteCareMonitoringCheck,
+  listCareMonitoringChecksForEnclosure,
 } from '@/lib/db/repositories/care-monitoring-checks'
 import { listActiveEnclosuresByName } from '@/lib/db/repositories/enclosures'
 import { cn } from '@/lib/utils/cn'
@@ -648,6 +649,18 @@ export function CareCheckFlow() {
   const [isCheckSaved, setIsCheckSaved] = useState(false)
   // Id of the check saved from the current answers; a correction replaces it.
   const [savedCheckId, setSavedCheckId] = useState<string | null>(null)
+  const [checkDiscarded, setCheckDiscarded] = useState(false)
+  // One question per screen: index into fieldQuestionIds; length = all done.
+  const [questionIndex, setQuestionIndex] = useState(0)
+  const enclosuresWithPlan = useLiveQuery(
+    async () => new Set((await listAllConservationPlans()).map((plan) => plan.enclosureId)),
+    [],
+  )
+  const lastCheck = useLiveQuery(
+    async () => (enclosureId ? (await listCareMonitoringChecksForEnclosure(enclosureId))[0] ?? null : null),
+    [enclosureId],
+    null,
+  )
 
   // 5 separate ecological areas
   const [habitatType, setHabitatType] = useState<HabitatType>('semi_dry_grassland')
@@ -765,25 +778,46 @@ export function CareCheckFlow() {
   const answeredCount = fieldQuestionIds.filter((questionId) => fieldAnswers[questionId] !== null).length
 
   /**
-   * Records an answer and brings the next unanswered question into view (or
-   * the result button once all are answered), so after each tap — or after an
-   * interruption — the next thing to do is on screen.
+   * Records an answer and, after a short beat to show the selection, moves on
+   * to the next open question — one question per screen, so an interruption
+   * never costs the shepherd their place in a long scroll.
    */
   function answerAndAdvance<T>(questionId: CareFieldQuestionId, setValue: (value: T) => void) {
     return (value: T) => {
       setValue(value)
       const answered = { ...fieldAnswers, [questionId]: value as unknown as string }
       const currentIndex = fieldQuestionIds.indexOf(questionId)
-      const next =
+      const nextId =
         fieldQuestionIds.slice(currentIndex + 1).find((id) => answered[id] === null) ??
         fieldQuestionIds.find((id) => answered[id] === null)
       window.setTimeout(() => {
-        document
-          .getElementById(next ? `care-q-${next}` : 'care-submit')
-          ?.scrollIntoView({ behavior: 'smooth', block: next ? 'start' : 'center' })
-      }, 180)
+        setQuestionIndex(nextId ? fieldQuestionIds.indexOf(nextId) : fieldQuestionIds.length)
+        document.getElementById('care-check-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 260)
     }
   }
+
+  /** "Alles wie beim letzten Mal": take the previous check's answers. */
+  function applyLastCheck() {
+    if (!lastCheck) return
+    haptic('light')
+    const o = lastCheck.observations
+    setUse(o.vegetationUse)
+    setTraffic(o.traffic)
+    setNutrients(o.nutrientConcentration)
+    setLitter(o.litterReduction)
+    setScrub(o.scrubReduction)
+    setProtectedPlantImpact(o.protectedPlants)
+    setQuestionIndex(fieldQuestionIds.length)
+  }
+
+  const firstOpenQuestionIndex = fieldQuestionIds.findIndex((id) => fieldAnswers[id] === null)
+  // "Done" only when every question really has an answer (e.g. after taking
+  // the last check's answers, a question new to this plan stays open).
+  const displayQuestionIndex =
+    questionIndex >= fieldQuestionIds.length && firstOpenQuestionIndex !== -1
+      ? firstOpenQuestionIndex
+      : Math.min(questionIndex, fieldQuestionIds.length)
 
   const isCheckComplete =
     use !== null &&
@@ -839,6 +873,7 @@ export function CareCheckFlow() {
     setCheckSaveError('')
     setIsCheckSaved(false)
     setSavedCheckId(null)
+    setQuestionIndex(0)
   }, [])
 
   const resetPlanDraft = useCallback(() => {
@@ -899,6 +934,17 @@ export function CareCheckFlow() {
       resetPlanDraft()
     }
   }, [enclosureId, resetPlanDraft, storedPlan])
+
+  const openArea = (id: string, hasPlan: boolean) => {
+    selectArea(id)
+    if (hasPlan) {
+      resetObservations()
+      setView('check')
+    } else {
+      setView('overview')
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const selectArea = (id: string) => {
     haptic('light')
@@ -1036,6 +1082,7 @@ export function CareCheckFlow() {
         },
       })
       haptic('medium')
+      setCheckDiscarded(false)
       setSavedCheckId(saved.id)
       setIsCheckSaved(true)
     } catch (error) {
@@ -1054,6 +1101,7 @@ export function CareCheckFlow() {
       await deleteCareMonitoringCheck(savedCheckId)
       setSavedCheckId(null)
       setIsCheckSaved(false)
+      setCheckDiscarded(true)
       setView('check')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
@@ -1063,23 +1111,7 @@ export function CareCheckFlow() {
 
   return (
     <div className="space-y-4">
-      {/* The intro is for choosing an area; repeated above every question and
-          result it only pushed the content down. */}
-      {view === 'area' || view === 'overview' ? (
-      <Card variant="panel" className="p-4 md:p-5">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-success-border bg-success-surface text-success-ink">
-            <Leaf aria-hidden="true" className="h-6 w-6" />
-          </span>
-          <div>
-            <CardTitle className="text-xl md:text-2xl">Pflegecheck</CardTitle>
-            <CardDescription className="mt-1 max-w-2xl leading-relaxed">
-              Pflegeziele einmal festlegen. Draußen bleiben danach wenige einfache Beobachtungen ohne Fachchinesisch.
-            </CardDescription>
-          </div>
-        </div>
-      </Card>
-      ) : null}
+      <h1 className="sr-only">Pflegecheck</h1>
 
       <Card variant="panel" className="p-4 md:p-5">
         {view !== 'area' ? (
@@ -1108,34 +1140,34 @@ export function CareCheckFlow() {
               title="Welche Fläche kontrollierst du?"
               hint="Wähle den Pferch. Der Pflegeplan gehört immer zu genau dieser Fläche."
             />
+            {/* A tap goes straight on: to the check when the Pferch has a
+                plan, to the plan setup when not (was: pick, "Fläche öffnen",
+                then "Pflegecheck starten"). */}
             <FlowOptionGrid layout="single">
-              {(enclosures ?? []).map((enclosure) => (
-                <FlowSelectableTile
-                  key={enclosure.id}
-                  pressed={enclosureId === enclosure.id}
-                  onClick={() => selectArea(enclosure.id)}
-                >
-                  <span className="block text-base font-semibold">{enclosure.name}</span>
-                  <span className="mt-1 block text-xs font-medium text-ink-muted">
-                    {enclosure.areaHa.toLocaleString('de-DE', { maximumFractionDigits: 2 })} ha
-                  </span>
-                </FlowSelectableTile>
-              ))}
+              {(enclosures ?? []).map((enclosure) => {
+                const hasPlan = enclosuresWithPlan?.has(enclosure.id) ?? false
+                return (
+                  <FlowSelectableTile key={enclosure.id} onClick={() => openArea(enclosure.id, hasPlan)}>
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block text-base font-semibold">{enclosure.name}</span>
+                        <span className="mt-1 block text-sm font-medium text-ink-muted">
+                          {hasPlan ? 'Pflegecheck starten' : 'Noch kein Pflegeplan – einrichten'}
+                          {' · '}
+                          {enclosure.areaHa.toLocaleString('de-DE', { maximumFractionDigits: 2 })} ha
+                        </span>
+                      </span>
+                      <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-muted" />
+                    </span>
+                  </FlowSelectableTile>
+                )
+              })}
             </FlowOptionGrid>
             {(enclosures?.length ?? 0) === 0 ? (
               <p className="rounded-xl border border-dashed border-border px-4 py-3 text-sm text-ink-muted">
                 Noch kein Pferch gespeichert. Lege zuerst einen Pferch an, damit der Pflegeplan eindeutig einer Fläche zugeordnet und gesichert werden kann.
               </p>
             ) : null}
-            <FlowPrimaryAction
-              onClick={() => {
-                haptic('light')
-                setView('overview')
-              }}
-              disabled={(enclosures?.length ?? 0) === 0 || !enclosureId}
-            >
-              Fläche öffnen <ArrowRight aria-hidden="true" className="ml-2 inline h-5 w-5" />
-            </FlowPrimaryAction>
           </div>
         ) : null}
 
@@ -1616,50 +1648,68 @@ export function CareCheckFlow() {
         ) : null}
 
         {view === 'check' ? (
-          <div className="space-y-6">
-            <CarePlanFocusCard
-              habitatType={habitatType}
-              vegTargetPercent={vegTargetPercent}
-              protectedPlants={protectedPlants}
-              manualRemovalPlants={manualRemovalPlants}
-              litterReductionEnabled={litterReductionEnabled}
-              scrubTargetPercent={scrubTargetPercent}
-              protectedWoodyPlants={protectedWoodyPlants}
-              manualRemovalWoodyPlants={manualRemovalWoodyPlants}
-              openSoilMode={openSoilMode}
-              nutrientInputMode={nutrientInputMode}
-            />
-
-            <div>
-              <h2 className="text-xl font-bold text-ink-strong">Jetzt nur hinschauen</h2>
-              <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-                Keine Fachbegriffe und keine Planung mehr. Beantworte nur, was du draußen auf der Fläche siehst.
-              </p>
-              {/* Where am I? After an interruption the long page used to give
-                  no clue which question was next. */}
-              <div className="mt-3" aria-live="polite">
-                <div className="text-sm font-semibold text-ink-strong">
-                  {answeredCount} von {fieldQuestionIds.length} beantwortet
-                </div>
-                <div className="mt-1.5 flex gap-1.5" aria-hidden="true">
-                  {fieldQuestionIds.map((questionId) => (
-                    <span
-                      key={questionId}
-                      className={cn(
-                        'h-2 flex-1 rounded-full',
-                        fieldAnswers[questionId] !== null ? 'bg-primary' : 'bg-surface-disabled-strong',
-                      )}
-                    />
-                  ))}
-                </div>
+          <div id="care-check-top" className="scroll-mt-24 space-y-5">
+            {/* The plan goals are reference, not the task: one tap away. */}
+            <details className="group rounded-[1.1rem] border border-border-soft bg-surface-raised px-4 py-1">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-ink-strong [&::-webkit-details-marker]:hidden">
+                Heute wichtig auf dieser Fläche
+                <ChevronDown aria-hidden="true" className="h-5 w-5 text-ink-muted transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="pb-3">
+                <CarePlanFocusCard
+                  habitatType={habitatType}
+                  vegTargetPercent={vegTargetPercent}
+                  protectedPlants={protectedPlants}
+                  manualRemovalPlants={manualRemovalPlants}
+                  litterReductionEnabled={litterReductionEnabled}
+                  scrubTargetPercent={scrubTargetPercent}
+                  protectedWoodyPlants={protectedWoodyPlants}
+                  manualRemovalWoodyPlants={manualRemovalWoodyPlants}
+                  openSoilMode={openSoilMode}
+                  nutrientInputMode={nutrientInputMode}
+                />
               </div>
-            </div>
+            </details>
 
-            {fieldQuestionIds.map((questionId, index) => (
-              <div key={questionId} id={`care-q-${questionId}`} className="scroll-mt-28">
+            {checkDiscarded ? (
+              <p
+                role="status"
+                className="rounded-[1.1rem] border-2 border-warning-border bg-warning-surface px-4 py-3 text-sm font-semibold text-warning-ink"
+              >
+                Pflegecheck verworfen. Deine Antworten sind noch da – korrigieren oder neu speichern.
+              </p>
+            ) : null}
+
+            {/* Progress: one dot per question, tappable to jump back. */}
+            <nav aria-label="Fragen" className="flex gap-2">
+              {fieldQuestionIds.map((questionId, index) => (
+                <button
+                  key={questionId}
+                  type="button"
+                  onClick={() => setQuestionIndex(index)}
+                  aria-label={`Frage ${index + 1}${fieldAnswers[questionId] !== null ? ' (beantwortet)' : ''}`}
+                  aria-current={index === displayQuestionIndex ? 'step' : undefined}
+                  className="flex min-h-11 flex-1 items-center"
+                >
+                  <span
+                    className={cn(
+                      'h-2.5 w-full rounded-full',
+                      index === displayQuestionIndex
+                        ? 'bg-primary ring-2 ring-primary ring-offset-2'
+                        : fieldAnswers[questionId] !== null
+                          ? 'bg-primary'
+                          : 'bg-surface-disabled-strong',
+                    )}
+                  />
+                </button>
+              ))}
+            </nav>
+
+            {displayQuestionIndex < fieldQuestionIds.length ? (
+              <>
                 <QuestionBlock
-                  number={index + 1}
-                  questionId={questionId}
+                  number={displayQuestionIndex + 1}
+                  questionId={fieldQuestionIds[displayQuestionIndex]}
                   vegTargetPercent={vegTargetPercent}
                   scrubTargetPercent={scrubTargetPercent}
                   use={use}
@@ -1675,8 +1725,30 @@ export function CareCheckFlow() {
                   protectedPlantImpact={protectedPlantImpact}
                   setProtectedPlantImpact={answerAndAdvance('protected_plants', setProtectedPlantImpact)}
                 />
+                <div className="flex flex-wrap gap-2">
+                  {displayQuestionIndex > 0 ? (
+                    <FlowSecondaryAction
+                      className="w-auto flex-1"
+                      onClick={() => setQuestionIndex(displayQuestionIndex - 1)}
+                    >
+                      Vorherige Frage
+                    </FlowSecondaryAction>
+                  ) : null}
+                  {displayQuestionIndex === 0 && answeredCount === 0 && lastCheck ? (
+                    <FlowSecondaryAction className="w-auto flex-1" onClick={applyLastCheck}>
+                      Alles wie beim letzten Mal
+                    </FlowSecondaryAction>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <div className="rounded-[1.1rem] border border-border-soft bg-surface-raised p-4">
+                <h3 className="text-lg font-bold text-ink-strong">Alle Fragen beantwortet</h3>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Tippe auf einen Punkt oben, um eine Antwort zu ändern.
+                </p>
               </div>
-            ))}
+            )}
 
             {allProtectedPlants.length > 0 ? (
               <div className="rounded-[1.2rem] border border-border bg-surface-raised p-4">
@@ -1699,6 +1771,7 @@ export function CareCheckFlow() {
               </div>
             ) : null}
 
+{isCheckComplete ? (
             <FlowPrimaryAction
               id="care-submit"
               onClick={() => {
@@ -1713,6 +1786,7 @@ export function CareCheckFlow() {
                 ? 'Ergebnis anzeigen und speichern'
                 : `Noch ${fieldQuestionIds.length - answeredCount} ${fieldQuestionIds.length - answeredCount === 1 ? 'Frage' : 'Fragen'} offen`}
             </FlowPrimaryAction>
+            ) : null}
           </div>
         ) : null}
 

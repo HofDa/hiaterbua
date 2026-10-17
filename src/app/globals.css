@@ -89,6 +89,11 @@
   /* Height of the fixed "recording in progress" bar; set to a real value by
      RecordingStatusBar only while a session is active, 0 otherwise. */
   --app-recording-bar-height: 0rem;
+  /* Containers vs controls: panels carry this edge, controls keep the ink
+     border. In high contrast panels go quiet so only pressable things are
+     outlined in black. */
+  --panel-border: var(--border-ink);
+  --panel-border-width: 2px;
   --radius: 0.75rem;
   --radius-panel: 1.9rem;
   --radius-panel-sm: 1.75rem;
@@ -107,16 +112,19 @@
 /* "Hoher Kontrast": for direct sunlight. Pure white surfaces, black ink and
    borders, no tints or soft depth; the green chrome stays. */
 :root[data-theme="contrast"] {
-  --background: #ffffff;
-  --background-strong: #ffffff;
-  --background-soft: #ffffff;
+  /* Light grey page, white panels: separation by tint, not by outline. */
+  --background: #ebebeb;
+  --background-strong: #ebebeb;
+  --background-soft: #ebebeb;
+  --panel-border: #c4c4c4;
+  --panel-border-width: 1px;
   --surface: #ffffff;
   --surface-strong: #ffffff;
   --surface-muted: #f0f0f0;
   --surface-warm: #f5f5f5;
   --surface-hover: #ebebeb;
   --border-default: #000000;
-  --border-soft: #4a4a4a;
+  --border-soft: #a3a3a3;
   --border-strong: #000000;
   --border-ink: #000000;
   --text-main: #000000;
@@ -127,6 +135,8 @@
   --accent: #ffe08a;
   --surface-control-start: #ffffff;
   --surface-control-end: #ffffff;
+  --surface-disabled: #f2f2f2;
+  --surface-disabled-strong: #f2f2f2;
   --success-surface: #e7f4ea;
   --success-border: #14532d;
   --success-ink: #14532d;
@@ -318,21 +328,21 @@ body::before {
 }
 
 .app-panel {
-  border: 2px solid var(--border-ink);
+  border: var(--panel-border-width) solid var(--panel-border);
   border-radius: var(--radius-panel);
   background: var(--surface);
   box-shadow: var(--shadow-panel);
 }
 
 .app-panel-sm {
-  border: 2px solid var(--border-ink);
+  border: var(--panel-border-width) solid var(--panel-border);
   border-radius: var(--radius-panel-sm);
   background: var(--surface);
   box-shadow: var(--shadow-panel);
 }
 
 .app-floating-panel {
-  border: 2px solid var(--border-ink);
+  border: var(--panel-border-width) solid var(--panel-border);
   border-radius: var(--radius-panel-sm);
   background: var(--surface-glass);
   box-shadow: var(--shadow-panel-floating);
@@ -373,7 +383,7 @@ body::before {
 }
 
 .app-surface-row {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-control);
   background: var(--surface-strong);
   box-shadow: var(--shadow-surface-row);

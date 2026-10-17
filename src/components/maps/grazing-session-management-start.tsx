@@ -26,7 +26,7 @@ export function GrazingSessionActiveSummary({
 
   // Read-only facts as plain text, not boxes that look like buttons.
   return (
-    <p className="text-lg font-bold leading-snug text-ink-strong lg:hidden [overflow-wrap:anywhere]">
+    <p className="text-lg font-bold leading-snug text-ink-strong [overflow-wrap:anywhere]">
       {selectedHerd?.name ?? 'Herde nicht gewählt'}
       <span className="font-semibold text-ink-muted">
         {' · '}
@@ -67,6 +67,21 @@ export function GrazingSessionMobileStartFlow({
   const animalCount = selectedAnimalCount ?? 0
   const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
 
+  // Coming from Start's "Starten" on a herd row: preselect that herd and go
+  // straight to the count step, then drop the parameter from the URL.
+  useEffect(() => {
+    const herdId = new URLSearchParams(window.location.search).get('herd')
+    if (!herdId || !safeHerds.some((herd) => herd.id === herdId)) return
+    const timer = window.setTimeout(() => {
+      onSelectedHerdIdChange(herdId)
+      setInternalStep('setup')
+      const url = new URL(window.location.href)
+      url.searchParams.delete('herd')
+      window.history.replaceState(window.history.state, '', url.pathname + url.search)
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [safeHerds, onSelectedHerdIdChange])
+
   useEffect(() => {
     if (!hasStartedFlow || typeof window === 'undefined') return
     if (!window.matchMedia('(max-width: 1023px)').matches) return
@@ -85,7 +100,7 @@ export function GrazingSessionMobileStartFlow({
   }, [hasStartedFlow, isDetailsOpen, mobileStep])
 
   return (
-    <div ref={flowRef} className="space-y-4 lg:hidden">
+    <div ref={flowRef} className="space-y-4">
       {mobileStep === 'herd' ? (
         <>
           {safeHerds.length === 0 ? (
@@ -196,7 +211,7 @@ export function GrazingSessionMobileControls({
   onStopSession: () => void | Promise<void>
 }) {
   return (
-    <div className="mt-4 space-y-3 lg:hidden">
+    <div className="mt-4 space-y-3">
       {currentSessionStatus === null ? (
         <FlowPrimaryAction
           onClick={() => void onStartSession()}

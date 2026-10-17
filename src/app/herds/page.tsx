@@ -16,6 +16,7 @@ import { metaLabelClassName } from '@/components/ui/typography'
 import { assertUpdated } from '@/lib/db/assert-updated'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
 import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-enclosure-stats'
+import { pluralize } from '@/lib/utils/format'
 import {
   createHerdRecord,
   listHerdsByRecent,
@@ -23,12 +24,13 @@ import {
 } from '@/lib/db/repositories/herds'
 import type { Species } from '@/types/domain'
 
-const speciesLabels: Record<Species, string> = {
-  cattle: 'Rinder',
-  sheep: 'Schafe',
-  goats: 'Ziegen',
-  horses: 'Pferde',
-  other: 'Andere',
+// [singular, plural]: "1 Schaf", "12 Schafe".
+const speciesLabels: Record<Species, [string, string]> = {
+  cattle: ['Rind', 'Rinder'],
+  sheep: ['Schaf', 'Schafe'],
+  goats: ['Ziege', 'Ziegen'],
+  horses: ['Pferd', 'Pferde'],
+  other: ['anderes Tier', 'andere Tiere'],
 }
 
 function describeHerdCount(registered: number, estimate: number | null) {
@@ -56,7 +58,7 @@ export default function HerdsPage() {
             (animal) => animal.species === species
           ).length
 
-          return count > 0 ? `${count} ${label}` : null
+          return count > 0 ? pluralize(count, label[0], label[1]) : null
         })
         .filter(Boolean) as string[]
 
@@ -118,9 +120,10 @@ export default function HerdsPage() {
 
   return (
     <div className="space-y-5">
-      <section className="app-panel p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-[-0.02em]">Herden</h1>
+      {/* The top bar already titles the page; the h1 is for screen readers. */}
+      <section>
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <h1 className="sr-only">Herden</h1>
           <FormButton
             type="button"
             onClick={() => setIsCreateOpen((current) => !current)}
