@@ -50,7 +50,7 @@ export function MobileMapToolbarButton({
 }: MobileMapToolbarButtonProps) {
   const variantClass =
     variant === 'primary'
-      ? 'border-border-strong bg-surface-muted text-ink disabled:bg-surface-disabled-strong disabled:text-ink-soft'
+      ? 'border-primary bg-primary text-primary-foreground disabled:border-border-soft disabled:bg-surface-disabled-strong disabled:text-ink-soft'
       : 'border-border bg-surface-raised text-ink-strong disabled:bg-surface-disabled disabled:text-ink-soft'
 
   return (

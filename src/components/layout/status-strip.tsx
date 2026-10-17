@@ -1,7 +1,7 @@
 'use client'
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { getAppSettings } from '@/lib/db/repositories/settings'
@@ -24,6 +24,25 @@ function subscribeToHydration() {
   return () => {}
 }
 
+const SNOOZE_KEY_PREFIX = 'pastore:status-strip-snoozed:'
+const SNOOZE_MS = 24 * 60 * 60 * 1000
+
+function readSnoozedUntil(problemText: string) {
+  try {
+    return Number(window.localStorage.getItem(`${SNOOZE_KEY_PREFIX}${problemText}`) ?? 0)
+  } catch {
+    return 0
+  }
+}
+
+function writeSnoozedUntil(problemText: string, until: number) {
+  try {
+    window.localStorage.setItem(`${SNOOZE_KEY_PREFIX}${problemText}`, String(until))
+  } catch {
+    // Storage blocked: the snooze holds for this page view only.
+  }
+}
+
 // The strip stays invisible while the app is field-ready. It only surfaces the
 // two preparedness problems the shepherd must fix before losing signal (no
 // offline maps, tile cache disabled) plus the one-time install prompt; plain
@@ -34,6 +53,8 @@ export function StatusStrip() {
   const [installPromptEvent, setInstallPromptEvent] =
     useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalling, setIsInstalling] = useState(false)
+  // Bumped on snooze so the strip re-reads the stored snooze immediately.
+  const [snoozeVersion, setSnoozeVersion] = useState(0)
   const settings = useLiveQuery(() => getAppSettings(), [])
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
@@ -153,7 +174,22 @@ export function StatusStrip() {
     tileCacheCount,
   })
 
-  if (!problem && !installPromptEvent) return null
+  // A warning can be put away for a day — it took ~100px of every screen.
+  // An error (offline with no maps) cannot be snoozed.
+  const isSnoozed =
+    isHydrated &&
+    snoozeVersion >= 0 &&
+    problem?.tone === 'warning' &&
+    readSnoozedUntil(problem.text) > Date.now()
+  const visibleProblem = isSnoozed ? null : problem
+
+  function snoozeProblem() {
+    if (!problem) return
+    writeSnoozedUntil(problem.text, Date.now() + SNOOZE_MS)
+    setSnoozeVersion((current) => current + 1)
+  }
+
+  if (!visibleProblem && !installPromptEvent) return null
 
   return (
     <div className="border-b border-chrome-border bg-chrome-status text-white app-chrome-status">
@@ -161,23 +197,33 @@ export function StatusStrip() {
         role="status"
         className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 text-xs md:px-4 md:text-sm xl:max-w-[88rem]"
       >
-        {problem ? (
+        {visibleProblem ? (
           <span className="flex min-w-0 flex-1 items-center gap-2 font-semibold">
             <AlertTriangle
               aria-hidden="true"
               className={cn(
                 'h-4 w-4 shrink-0',
-                problem.tone === 'error' ? 'text-error-border' : 'text-warning-border',
+                visibleProblem.tone === 'error' ? 'text-error-border' : 'text-warning-border',
               )}
             />
-            <span className="min-w-0">{problem.text}</span>
-            {problem.action ? (
+            <span className="min-w-0">{visibleProblem.text}</span>
+            {visibleProblem.action ? (
               <Link
-                href={problem.action.href}
-                className="shrink-0 rounded-full border px-3 py-1 font-semibold app-chrome-control"
+                href={visibleProblem.action.href}
+                className="inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 font-semibold app-chrome-control"
               >
-                {problem.action.label}
+                {visibleProblem.action.label}
               </Link>
+            ) : null}
+            {visibleProblem.tone === 'warning' ? (
+              <button
+                type="button"
+                onClick={snoozeProblem}
+                aria-label="Hinweis für 24 Stunden ausblenden"
+                className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-chrome-muted transition-colors hover:text-white"
+              >
+                <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.4} />
+              </button>
             ) : null}
           </span>
         ) : null}
@@ -187,8 +233,8 @@ export function StatusStrip() {
             onClick={() => void handleInstallApp()}
             disabled={isInstalling}
             className={cn(
-              'shrink-0 rounded-full border px-3 py-1 font-semibold app-chrome-control disabled:opacity-50',
-              !problem && 'ml-auto',
+              'inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 font-semibold app-chrome-control disabled:opacity-50',
+              !visibleProblem && 'ml-auto',
             )}
           >
             {isInstalling ? 'Installiert ...' : 'App installieren'}

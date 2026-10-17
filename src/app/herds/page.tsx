@@ -132,12 +132,7 @@ export default function HerdsPage() {
     <div className="space-y-5">
       <section className="app-panel p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <MetaLabel tracking="wide">
-              Herde
-            </MetaLabel>
-            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">Bestehende Herde öffnen</h1>
-          </div>
+          <h1 className="text-2xl font-bold tracking-[-0.02em]">Herden</h1>
           <FormButton
             type="button"
             onClick={() => setIsCreateOpen((current) => !current)}
@@ -249,7 +244,7 @@ export default function HerdsPage() {
                   type="button"
                   variant="secondary"
                   onClick={() => toggleArchive(herd.id, !herd.isArchived)}
-                  className="rounded-full border border-border-soft bg-surface-muted px-3 py-2 text-sm font-semibold text-ink-strong shadow-sm"
+                  className="min-h-11 rounded-full border border-border-soft bg-surface-muted px-4 py-2 text-sm font-semibold text-ink-strong shadow-sm"
                 >
                   {herd.isArchived ? 'Aktivieren' : 'Archivieren'}
                 </FormButton>

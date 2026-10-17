@@ -57,7 +57,7 @@ export function BottomNav() {
               </span>
               <span
                 className={cn(
-                  'max-w-full truncate text-[0.68rem] font-semibold leading-none',
+                  'max-w-full truncate text-xs font-semibold leading-none',
                   active ? 'text-white' : 'text-chrome-muted',
                 )}
               >

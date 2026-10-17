@@ -144,7 +144,7 @@ export function WorkSessionHistoryCard({
                           ? onCancelEditingSession()
                           : onStartEditingSession(session)
                       }
-                      className="rounded-full border border-border bg-surface-muted px-3 py-2 text-xs font-semibold text-ink-strong"
+                      className="min-h-11 rounded-full border border-border bg-surface-muted px-4 py-2 text-sm font-semibold text-ink-strong"
                     >
                       {editingSessionId === session.id ? 'Abbrechen' : 'Bearbeiten'}
                     </button>

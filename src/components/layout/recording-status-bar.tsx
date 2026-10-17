@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { ChevronRight, CircleDot, Pause } from 'lucide-react'
 import { formatDistance, formatDuration } from '@/lib/maps/grazing-session-map-helpers'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
@@ -15,7 +16,10 @@ const RECORDING_BAR_HEIGHT = '3.25rem'
 
 export function RecordingStatusBar() {
   const { recording, nowMs } = useActiveRecordingSnapshot()
-  const isRecording = recording != null
+  // On Start the "Aufnahme läuft" card already leads the page; a second copy
+  // of the same recording right below it is noise.
+  const isHome = usePathname() === '/'
+  const isRecording = recording != null && !isHome
 
   // Reserve space above the bottom nav so fixed banners and page content clear
   // the bar (see the --app-recording-bar-height consumers).
@@ -30,7 +34,7 @@ export function RecordingStatusBar() {
     }
   }, [isRecording])
 
-  if (!recording) return null
+  if (!recording || isHome) return null
 
   const elapsedS = getRecordingElapsedS(recording, nowMs)
 

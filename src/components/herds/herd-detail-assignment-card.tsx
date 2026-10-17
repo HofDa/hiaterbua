@@ -108,8 +108,8 @@ export function HerdDetailAssignmentCard({
             className="mt-3"
           >
             {endingAssignmentId === activeAssignment.id
-              ? 'Weist aus ...'
-              : 'Aus aktuellem Pferch ausweisen'}
+              ? 'Zieht ab …'
+              : 'Aus dem Pferch abziehen'}
           </FormButton>
         </Card>
       ) : (

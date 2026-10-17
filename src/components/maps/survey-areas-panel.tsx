@@ -39,10 +39,12 @@ export function SurveyAreasPanel({
         onClick={() => setIsMobileExpanded((current) => !current)}
         aria-expanded={isMobileExpanded}
         variant="secondary"
-        className="flex w-full min-w-0 items-start justify-between gap-3 overflow-hidden rounded-[1rem] px-3 py-3 text-left lg:hidden"
+        // Borderless: the surrounding app-panel is the card; a bordered button
+        // inside it read as a card nested in a card.
+        className="flex w-full min-w-0 items-start justify-between gap-3 overflow-hidden rounded-[1rem] border-transparent bg-transparent px-1 py-1 text-left shadow-none lg:hidden"
       >
         <div className="min-w-0 flex-1 overflow-hidden">
-          <h2 className="text-base font-semibold text-ink-strong">Untersuchungsflächen</h2>
+          <h2 className="text-lg font-bold text-ink-strong">Untersuchungsflächen</h2>
           {selectedSurveyArea ? (
             <div className="mt-1 min-w-0 text-xs text-ink-muted">
               <div className="font-medium text-ink-soft">Fokus</div>
@@ -50,14 +52,11 @@ export function SurveyAreasPanel({
             </div>
           ) : (
             <div className="mt-1 text-xs text-ink-muted">
-              {safeSurveyAreas.length} importierte Flächen
+              {safeSurveyAreas.length === 1 ? '1 importierte Fläche' : `${safeSurveyAreas.length} importierte Flächen`}
             </div>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2 self-center">
-          <span className="rounded-full border border-border bg-surface-raised px-2 py-1 text-[11px] font-semibold text-ink">
-            {safeSurveyAreas.length}
-          </span>
           <CollapseChevron open={isMobileExpanded} />
         </div>
       </FormButton>

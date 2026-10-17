@@ -24,6 +24,17 @@ export function createRasterMap(maplibre: MapLibreModule, container: HTMLElement
     center: fallbackCenter,
     zoom: 11,
     attributionControl: false,
+    // German labels for the built-in controls (screen readers and tooltips).
+    locale: {
+      'NavigationControl.ZoomIn': 'Hineinzoomen',
+      'NavigationControl.ZoomOut': 'Herauszoomen',
+      'NavigationControl.ResetBearing': 'Karte nach Norden ausrichten',
+      'AttributionControl.ToggleAttribution': 'Kartenquellen anzeigen',
+      'AttributionControl.MapFeedback': 'Feedback zur Karte',
+      'ScrollZoomBlocker.CtrlMessage': 'Strg + Scrollen zum Zoomen',
+      'ScrollZoomBlocker.CmdMessage': '⌘ + Scrollen zum Zoomen',
+      'TouchPanBlocker.Message': 'Mit zwei Fingern verschieben',
+    },
   })
 
   map.addControl(new maplibre.NavigationControl(), 'top-right')
@@ -34,6 +45,14 @@ export function createRasterMap(maplibre: MapLibreModule, container: HTMLElement
     new maplibre.AttributionControl({ compact: true }),
     'bottom-right'
   )
+  // MapLibre opens the compact attribution expanded on load, where it covered
+  // ~20% of the small mobile map; start collapsed (the ⓘ still opens it).
+  map.once('load', () => {
+    container
+      .querySelector('.maplibregl-ctrl-attrib.maplibregl-compact-show')
+      ?.classList.remove('maplibregl-compact-show')
+    container.querySelector('.maplibregl-ctrl-attrib')?.removeAttribute('open')
+  })
 
   return map
 }

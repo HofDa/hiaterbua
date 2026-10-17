@@ -434,7 +434,7 @@ function QuestionBlock({
           title={`${number}. Wie stark wurde abgefressen?`}
           hint={`Ziel: ungefähr ${vegTargetPercent} % der Gras- und Kräuterfläche deutlich nutzen.`}
         />
-        <FlowOptionGrid>
+        <FlowOptionGrid layout="single">
           <ObservationChoice
             value="too_low"
             current={use}
@@ -468,7 +468,7 @@ function QuestionBlock({
           title={`${number}. Wie sieht der Boden aus?`}
           hint="Achte auf Hufspuren, sichtbare offene Erde, Schlamm und Hangrutschungen."
         />
-        <FlowOptionGrid>
+        <FlowOptionGrid layout="single">
           <ObservationChoice
             value="low"
             current={traffic}
@@ -502,7 +502,7 @@ function QuestionBlock({
           title={`${number}. Sammeln sich die Tiere stark an einer Stelle?`}
           hint="Zum Beispiel bei Tränke, Salz, Schatten, Tor oder Nachtlager."
         />
-        <FlowOptionGrid>
+        <FlowOptionGrid layout="single">
           <ObservationChoice
             value="none"
             current={nutrients}
@@ -536,7 +536,7 @@ function QuestionBlock({
           title={`${number}. Wird altes und verfilztes Gras reduziert?`}
           hint="Achte auf überständiges Altgras, dicke Streuauflage und niedergetretenen Filz."
         />
-        <FlowOptionGrid>
+        <FlowOptionGrid layout="single">
           <ObservationChoice
             value="insufficient"
             current={litter}
@@ -567,7 +567,7 @@ function QuestionBlock({
               : undefined
           }
         />
-        <FlowOptionGrid>
+        <FlowOptionGrid layout="single">
           <ObservationChoice
             value="too_low"
             current={scrub}
@@ -600,7 +600,7 @@ function QuestionBlock({
         title={`${number}. Werden wichtige Pflanzen oder Gehölze geschädigt?`}
         hint="Bei Unsicherheit lieber „Unsicher“ wählen und die Art nachsehen."
       />
-      <FlowOptionGrid>
+      <FlowOptionGrid layout="single">
         <ObservationChoice
           value="none"
           current={protectedPlantImpact}
@@ -748,6 +748,37 @@ export function CareCheckFlow() {
       vegTargetPercent,
     ],
   )
+
+  const fieldAnswers: Record<CareFieldQuestionId, string | null> = {
+    use,
+    traffic,
+    nutrients,
+    litter,
+    scrub,
+    protected_plants: protectedPlantImpact,
+  }
+  const answeredCount = fieldQuestionIds.filter((questionId) => fieldAnswers[questionId] !== null).length
+
+  /**
+   * Records an answer and brings the next unanswered question into view (or
+   * the result button once all are answered), so after each tap — or after an
+   * interruption — the next thing to do is on screen.
+   */
+  function answerAndAdvance<T>(questionId: CareFieldQuestionId, setValue: (value: T) => void) {
+    return (value: T) => {
+      setValue(value)
+      const answered = { ...fieldAnswers, [questionId]: value as unknown as string }
+      const currentIndex = fieldQuestionIds.indexOf(questionId)
+      const next =
+        fieldQuestionIds.slice(currentIndex + 1).find((id) => answered[id] === null) ??
+        fieldQuestionIds.find((id) => answered[id] === null)
+      window.setTimeout(() => {
+        document
+          .getElementById(next ? `care-q-${next}` : 'care-submit')
+          ?.scrollIntoView({ behavior: 'smooth', block: next ? 'start' : 'center' })
+      }, 180)
+    }
+  }
 
   const isCheckComplete =
     use !== null &&
@@ -1565,32 +1596,51 @@ export function CareCheckFlow() {
             />
 
             <div>
-              <h2 className="text-xl font-semibold text-ink-strong">Jetzt nur hinschauen</h2>
+              <h2 className="text-xl font-bold text-ink-strong">Jetzt nur hinschauen</h2>
               <p className="mt-1 text-sm leading-relaxed text-ink-muted">
                 Keine Fachbegriffe und keine Planung mehr. Beantworte nur, was du draußen auf der Fläche siehst.
               </p>
+              {/* Where am I? After an interruption the long page used to give
+                  no clue which question was next. */}
+              <div className="mt-3" aria-live="polite">
+                <div className="text-sm font-semibold text-ink-strong">
+                  {answeredCount} von {fieldQuestionIds.length} beantwortet
+                </div>
+                <div className="mt-1.5 flex gap-1.5" aria-hidden="true">
+                  {fieldQuestionIds.map((questionId) => (
+                    <span
+                      key={questionId}
+                      className={cn(
+                        'h-2 flex-1 rounded-full',
+                        fieldAnswers[questionId] !== null ? 'bg-primary' : 'bg-surface-disabled-strong',
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
 
             {fieldQuestionIds.map((questionId, index) => (
-              <QuestionBlock
-                key={questionId}
-                number={index + 1}
-                questionId={questionId}
-                vegTargetPercent={vegTargetPercent}
-                scrubTargetPercent={scrubTargetPercent}
-                use={use}
-                setUse={setUse}
-                traffic={traffic}
-                setTraffic={setTraffic}
-                nutrients={nutrients}
-                setNutrients={setNutrients}
-                litter={litter}
-                setLitter={setLitter}
-                scrub={scrub}
-                setScrub={setScrub}
-                protectedPlantImpact={protectedPlantImpact}
-                setProtectedPlantImpact={setProtectedPlantImpact}
-              />
+              <div key={questionId} id={`care-q-${questionId}`} className="scroll-mt-28">
+                <QuestionBlock
+                  number={index + 1}
+                  questionId={questionId}
+                  vegTargetPercent={vegTargetPercent}
+                  scrubTargetPercent={scrubTargetPercent}
+                  use={use}
+                  setUse={answerAndAdvance('use', setUse)}
+                  traffic={traffic}
+                  setTraffic={answerAndAdvance('traffic', setTraffic)}
+                  nutrients={nutrients}
+                  setNutrients={answerAndAdvance('nutrients', setNutrients)}
+                  litter={litter}
+                  setLitter={answerAndAdvance('litter', setLitter)}
+                  scrub={scrub}
+                  setScrub={answerAndAdvance('scrub', setScrub)}
+                  protectedPlantImpact={protectedPlantImpact}
+                  setProtectedPlantImpact={answerAndAdvance('protected_plants', setProtectedPlantImpact)}
+                />
+              </div>
             ))}
 
             {allProtectedPlants.length > 0 ? (
@@ -1615,6 +1665,7 @@ export function CareCheckFlow() {
             ) : null}
 
             <FlowPrimaryAction
+              id="care-submit"
               onClick={() => {
                 haptic('medium')
                 setView('result')

@@ -154,10 +154,12 @@ export function LivePositionSavedEnclosuresMobilePanel({
                   key={enclosure.id}
                   className={cn(
                     'rounded-[1.1rem] border border-border bg-surface-raised',
-                    isSelected && 'border-border-strong bg-accent',
+                    isSelected && 'border-2 border-primary',
                   )}
                 >
-                  <div className="flex items-center gap-3 px-3.5 py-2.5">
+                  {/* Name on top, action below: the side-by-side layout cut the
+                      Pferch name ("Gezeichnete…") to keep the button whole. */}
+                  <div className="flex flex-col gap-2 px-3.5 py-3">
                     <button
                       type="button"
                       onClick={() => {
@@ -171,18 +173,18 @@ export function LivePositionSavedEnclosuresMobilePanel({
                       }}
                       aria-expanded={isSelected}
                       className={cn(
-                        'flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg py-1 text-left',
+                        'flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-lg text-left',
                         focusRing,
                       )}
                     >
                       <span className="min-w-0">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-ink">
+                        <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="text-base font-bold leading-snug text-ink-strong [overflow-wrap:anywhere]">
                             {enclosure.name}
                           </span>
                           <span
                             className={cn(
-                              'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                              'shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold',
                               isActive
                                 ? 'border border-success-border bg-success-surface text-success-ink'
                                 : 'border border-border text-ink-soft',
@@ -191,7 +193,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
                             {isActive ? 'aktiv' : 'frei'}
                           </span>
                         </span>
-                        <span className="mt-0.5 block truncate text-xs text-ink-muted">
+                        <span className="mt-0.5 block text-sm text-ink-muted">
                           {rowSubtitle}
                         </span>
                       </span>
@@ -203,25 +205,25 @@ export function LivePositionSavedEnclosuresMobilePanel({
                         onClick={() => activeAssignment && onEndEnclosureAssignment(activeAssignment)}
                         disabled={endingAssignmentId === activeAssignment?.id}
                         className={cn(
-                          'inline-flex shrink-0 items-center justify-center rounded-full border border-warning-border bg-warning-surface px-3.5 py-2 text-xs font-semibold text-warning-ink disabled:opacity-50',
+                          'inline-flex min-h-11 w-full items-center justify-center rounded-[1rem] border-2 border-border-strong bg-surface-raised px-4 text-sm font-semibold text-ink-strong disabled:opacity-50',
                           focusRing,
                         )}
                       >
-                        {endingAssignmentId === activeAssignment?.id ? 'Weist aus ...' : 'Ausweisen'}
+                        {endingAssignmentId === activeAssignment?.id ? 'Zieht ab …' : 'Herde abziehen'}
                       </button>
                     ) : hasAssignableHerds ? (
                       <button
                         type="button"
                         onClick={() => onOpenAssignmentEditor(enclosure)}
                         className={cn(
-                          'inline-flex shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface-muted px-3.5 py-2 text-xs font-semibold text-ink',
+                          'inline-flex min-h-11 w-full items-center justify-center rounded-[1rem] border-2 border-primary bg-surface-raised px-4 text-sm font-semibold text-ink-strong',
                           focusRing,
                         )}
                       >
-                        Zuweisen
+                        Herde zuweisen
                       </button>
                     ) : (
-                      <span className="shrink-0 whitespace-nowrap text-xs font-medium text-ink-muted">
+                      <span className="text-sm font-medium text-ink-muted">
                         Keine freie Herde
                       </span>
                     )}

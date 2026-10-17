@@ -273,8 +273,18 @@ body::before {
   opacity: 0.45;
 }
 
-a {
-  color: inherit;
+/* Element defaults live in the base layer so Tailwind utilities can override
+   them (an unlayered `a { color: inherit }` beat every text-* class on links). */
+@layer base {
+  a {
+    color: inherit;
+  }
+
+  input,
+  select,
+  textarea {
+    color: var(--text-main);
+  }
 }
 
 .bg-chrome-shell {
@@ -416,6 +426,15 @@ a {
   textarea {
     font: inherit;
   }
+
+  /* Native checkboxes default to 13px; size them for gloves and tint them. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    accent-color: var(--brand-dark);
+  }
 }
 
 button,
@@ -441,12 +460,6 @@ samp {
   font-family: var(--font-mono);
 }
 
-input,
-select,
-textarea {
-  color: var(--text-main);
-}
-
 ::placeholder {
   color: var(--text-placeholder);
   opacity: 1;
@@ -464,12 +477,22 @@ textarea {
   overflow: hidden;
   border: 2px solid rgba(18, 16, 12, 0.28);
   border-radius: 1rem;
-  box-shadow: 0 12px 28px rgba(23, 20, 18, 0.18);
+  box-shadow: var(--shadow-map-control);
 }
 
 .maplibregl-ctrl button {
   background: var(--surface-strong);
   color: var(--chrome-control-ink);
+}
+
+/* Gloved-finger targets: MapLibre's default controls are 29px. */
+.maplibregl-ctrl-group button {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  background-size: 1.6rem;
 }
 
 /* The expanded attribution grows leftward from the bottom-right corner; cap it

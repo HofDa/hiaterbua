@@ -84,7 +84,7 @@ export function HerdDetailAnimalList({
                         <button
                           type="button"
                           onClick={() => onStartEdit(animal)}
-                          className="rounded-[1rem] border border-border bg-surface-raised px-3 py-2 text-sm font-semibold text-ink-strong shadow-sm"
+                          className="min-h-11 rounded-[1rem] border border-border bg-surface-raised px-3 py-2 text-sm font-semibold text-ink-strong shadow-sm"
                         >
                           Bearbeiten
                         </button>
@@ -92,7 +92,7 @@ export function HerdDetailAnimalList({
                         <button
                           type="button"
                           onClick={() => void onSetAnimalArchived(animal.id, !animal.isArchived)}
-                          className="rounded-[1rem] border border-border bg-surface-raised px-3 py-2 text-sm font-semibold text-ink-strong shadow-sm"
+                          className="min-h-11 rounded-[1rem] border border-border bg-surface-raised px-3 py-2 text-sm font-semibold text-ink-strong shadow-sm"
                         >
                           {animal.isArchived ? 'Reaktivieren' : 'Archivieren'}
                         </button>

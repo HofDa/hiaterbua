@@ -40,7 +40,7 @@ function ExpandToggle({
     <button
       type="button"
       onClick={onToggle}
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-border-strong bg-surface-muted text-base font-semibold text-ink sm:h-10 sm:w-10 sm:text-lg"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-border-strong bg-surface-muted text-lg font-semibold text-ink"
       aria-expanded={isExpanded}
       aria-label={isExpanded ? 'Benutzerkarte einklappen' : 'Benutzerkarte aufklappen'}
     >

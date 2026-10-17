@@ -26,9 +26,7 @@ type WorkActivityPickerProps = {
   onSelectionChange: (selection: WorkSelection) => void
 }
 
-const workSectionSelectedClass = 'border-border-ink bg-accent text-ink'
-const workSectionIdleClass = 'border-border bg-surface-raised text-ink-soft'
-const workOptionSelectedClass = 'border-border-ink bg-accent text-ink'
+const workSectionIdleClass = 'border-border bg-surface-raised text-ink-strong'
 const workOptionIdleClass = 'border-border bg-surface-raised text-ink'
 
 export function WorkActivityPicker({
@@ -49,8 +47,6 @@ export function WorkActivityPicker({
         {mobileStep === 'section' ? (
           <FlowOptionGrid layout="single">
             {workPickerSections.map((section) => {
-              const isActive = section.id === sectionId
-
               return (
                 <FlowSelectableTile
                   key={section.id}
@@ -59,8 +55,6 @@ export function WorkActivityPicker({
                     onSelectionChange(getDefaultWorkSelectionForSection(section.id))
                     setMobileStep('option')
                   }}
-                  pressed={isActive}
-                  selectedClassName={workSectionSelectedClass}
                   idleClassName={workSectionIdleClass}
                   className="rounded-[1.35rem] text-base leading-normal"
                 >
@@ -88,7 +82,6 @@ export function WorkActivityPicker({
                     key={option.id}
                     onClick={() => onSelectionChange(getWorkSelectionForOption(sectionId, option.id))}
                     pressed={isActive}
-                    selectedClassName={workOptionSelectedClass}
                     idleClassName={workOptionIdleClass}
                     className="min-h-[4.5rem] px-4 py-4 text-base leading-normal"
                   >
@@ -114,7 +107,6 @@ export function WorkActivityPicker({
                   onSelectionChange(getDefaultWorkSelectionForSection(section.id))
                 }}
                 pressed={isActive}
-                selectedClassName={workSectionSelectedClass}
                 idleClassName={workSectionIdleClass}
                 className="rounded-[1.35rem] text-base leading-normal"
               >
@@ -138,7 +130,6 @@ export function WorkActivityPicker({
                 key={option.id}
                 onClick={() => onSelectionChange(getWorkSelectionForOption(sectionId, option.id))}
                 pressed={isActive}
-                selectedClassName={workOptionSelectedClass}
                 idleClassName={workOptionIdleClass}
                 className="min-h-[4.5rem] px-4 py-4 text-base leading-normal"
               >

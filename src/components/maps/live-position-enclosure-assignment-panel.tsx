@@ -130,7 +130,7 @@ export function LivePositionEnclosureAssignmentPanel({
           disabled={endingAssignmentId === activeAssignment.id}
           className="w-full rounded-2xl border border-border bg-surface-raised px-4 py-3 text-sm font-medium text-ink disabled:opacity-50"
         >
-          {endingAssignmentId === activeAssignment.id ? 'Weist aus ...' : 'Herde ausweisen'}
+          {endingAssignmentId === activeAssignment.id ? 'Zieht ab …' : 'Herde abziehen'}
         </button>
       ) : assignmentEditorEnclosureId === enclosure.id ? (
         <div className="min-w-0 overflow-hidden rounded-2xl bg-surface-raised px-4 py-4">

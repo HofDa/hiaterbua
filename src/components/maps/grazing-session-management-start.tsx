@@ -102,8 +102,6 @@ export function GrazingSessionMobileStartFlow({
           ) : (
             <FlowOptionGrid layout="single">
               {safeHerds.map((herd) => {
-                const isSelected = selectedHerdId === herd.id
-
                 return (
                   <FlowSelectableTile
                     key={herd.id}
@@ -113,7 +111,6 @@ export function GrazingSessionMobileStartFlow({
                       setIsDetailsOpen(false)
                       setInternalStep('setup')
                     }}
-                    pressed={isSelected}
                     idleClassName="border-border bg-surface-raised text-ink-strong"
                     className="min-h-16 rounded-[1.35rem]"
                   >

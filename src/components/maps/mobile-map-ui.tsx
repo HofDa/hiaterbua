@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { X } from 'lucide-react'
 import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
 
@@ -110,10 +111,10 @@ export function MobileMapOverlaySheet({ children, onClose, title }: OverlaySheet
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-raised text-lg text-ink"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-raised text-ink"
             aria-label="Menü schließen"
           >
-            ×
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.4} />
           </button>
         </div>
         <div className="max-h-[calc(100vh-7rem)] overflow-y-auto px-3 py-3">

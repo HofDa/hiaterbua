@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { MetaLabel } from '@/components/ui/typography'
 
@@ -78,7 +79,12 @@ export function FlowOptionGrid({
 }
 
 type FlowSelectableTileProps = ComponentProps<'button'> & {
-  pressed: boolean
+  /**
+   * Selection state for choice tiles. Omit for navigation tiles (a list whose
+   * tap moves to the next step): they carry no selected look, so the last
+   * tapped row is never mistaken for a choice.
+   */
+  pressed?: boolean
   selectedClassName?: string
   idleClassName?: string
 }
@@ -91,27 +97,44 @@ function renderSelectableTileContent(children: ReactNode) {
   return children
 }
 
+// Selected = green 3px edge + check badge, not a beige tint: tint alone
+// vanished in direct sun, and the same tint also meant "preselected" and
+// "last tapped" across the app.
+const selectedTileClassName =
+  'border-primary bg-accent text-ink-strong shadow-[inset_0_0_0_1px_var(--brand-dark)]'
+
 export function FlowSelectableTile({
   pressed,
-  selectedClassName = 'border-border-strong bg-accent text-ink',
+  selectedClassName = selectedTileClassName,
   idleClassName = 'border-border bg-surface-raised text-ink',
   className,
   children,
   type = 'button',
   ...props
 }: FlowSelectableTileProps) {
+  const isChoice = pressed !== undefined
+
   return (
     <button
       {...props}
       type={type}
       aria-pressed={pressed}
       className={cn(
-        'min-h-[4.25rem] min-w-0 break-words rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50',
+        'relative min-h-[4.25rem] min-w-0 break-words rounded-[1.25rem] border-2 px-4 py-3.5 text-left text-sm font-semibold leading-tight whitespace-normal app-shadow-action transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50',
+        isChoice && 'pr-12',
         pressed ? selectedClassName : idleClassName,
         className,
       )}
     >
       {renderSelectableTileContent(children)}
+      {pressed ? (
+        <span
+          aria-hidden="true"
+          className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground"
+        >
+          <Check className="h-4 w-4" strokeWidth={3} />
+        </span>
+      ) : null}
     </button>
   )
 }
@@ -208,7 +231,8 @@ export function FlowPrimaryAction({
     <button
       type={type}
       className={cn(
-        'w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-border-strong bg-surface-control-gradient px-4 py-4 text-lg font-semibold text-ink app-shadow-action-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50',
+        // The one filled, dark-green action per step — the next thing to do.
+        'w-full min-h-[4.75rem] rounded-[1.35rem] border-2 border-primary bg-primary px-4 py-4 text-lg font-bold text-primary-foreground app-shadow-action-strong transition-colors hover:bg-chrome-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:border-border-soft disabled:bg-surface-disabled-strong disabled:text-ink-soft',
         className,
       )}
       {...props}
