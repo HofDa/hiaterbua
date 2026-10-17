@@ -32,6 +32,7 @@ export function formatSince(startTime: string | null | undefined) {
   const hours = Math.floor(totalMinutes / 60)
   if (hours >= 1) return `seit ${hours} Std.`
 
+  if (totalMinutes < 1) return 'gerade eben'
   return `seit ${totalMinutes} min`
 }
 

@@ -1,10 +1,14 @@
-import { Card } from './card'
-
+/**
+ * A read-only value: plain label over value, no border. Boxed values read as
+ * buttons next to the app's outlined controls.
+ */
 export function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <Card className="rounded-[1.1rem] border-border bg-surface-raised px-4 py-3 shadow-sm">
-      <div className="text-sm text-ink-muted">{label}</div>
-      <div className="mt-1 font-semibold text-ink-strong">{value}</div>
-    </Card>
+    <div className="min-w-0">
+      <div className="text-sm font-medium text-ink-muted">{label}</div>
+      <div className="mt-0.5 text-lg font-bold tabular-nums text-ink-strong [overflow-wrap:anywhere]">
+        {value}
+      </div>
+    </div>
   )
 }

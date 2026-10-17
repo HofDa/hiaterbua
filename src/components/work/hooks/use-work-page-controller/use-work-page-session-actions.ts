@@ -120,6 +120,18 @@ export function useWorkPageSessionActions({
   async function updateWorkSessionStatus(nextStatus: WorkStatus) {
     if (!activeSession) return
 
+    // Same safeguard as ending a Weidegang: final, and right below Pause.
+    if (nextStatus === 'finished') {
+      const confirmed = await confirm({
+        title: 'Arbeitseinsatz beenden?',
+        description: 'Der Einsatz wird abgeschlossen und gespeichert.',
+        confirmLabel: 'Beenden',
+        cancelLabel: 'Weiterlaufen lassen',
+        destructive: true,
+      })
+      if (!confirmed) return
+    }
+
     setIsSaving(true)
     setError('')
     setStatusMessage('')

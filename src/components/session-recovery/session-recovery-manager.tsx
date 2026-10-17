@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useRecoveryNoticeStore } from '@/lib/session-recovery/recovery-notice-store'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getHerdsByIds } from '@/lib/db/repositories/herds'
 import { withSessionRecordingLock } from '@/lib/db/session-recording-lock'
@@ -36,6 +37,7 @@ import {
   type RecoveryMetadata,
 } from '@/lib/session-recovery/session-recovery-state'
 import { getWorkLabel } from '@/lib/work/work-session-helpers'
+import { RotateCcw } from 'lucide-react'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { FormButton } from '@/components/ui/form'
 import { cn } from '@/lib/utils/cn'
@@ -58,10 +60,6 @@ function formatDateTime(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
-}
-
-function getStatusLabel(status: RecoverableSession['status']) {
-  return status === 'active' ? 'läuft' : 'pausiert'
 }
 
 function getSessionTypeLabel(kind: RecoverableSession['kind']) {
@@ -108,6 +106,8 @@ async function loadSessionKeysOpenAtStart() {
 
 export function SessionRecoveryManager() {
   const router = useRouter()
+  const pathname = usePathname()
+  const setPendingSessionKey = useRecoveryNoticeStore((state) => state.setPendingSessionKey)
   const confirm = useConfirm()
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [dismissedSessionKeys, setDismissedSessionKeys] = useState<ReadonlySet<string>>(
@@ -179,6 +179,11 @@ export function SessionRecoveryManager() {
     writeDismissedSessionKey(sessionKey)
     setDismissedSessionKeys((current) => new Set(current).add(sessionKey))
   }, [])
+
+  const visibleSessionKey = visibleSession?.key ?? null
+  useEffect(() => {
+    setPendingSessionKey(visibleSessionKey)
+  }, [setPendingSessionKey, visibleSessionKey])
 
   useTransientFieldOperation(
     'session-recovery-active',
@@ -493,41 +498,39 @@ export function SessionRecoveryManager() {
     ) : null
   }
 
+  // The full card belongs on Start and on the session's own screen; other
+  // screens show the tinted recording bar (see RecordingStatusBar).
+  const showFullCard =
+    pathname === '/' || Boolean(pathname?.startsWith(visibleSession.href))
+  if (!showFullCard) return null
+
   const metadata = readStoredMetadata()[visibleSession.key]
   const liveDurationS = getLiveRecoverableDurationS(visibleSession, nowMs)
   const lastLocalSaveAt = metadata?.lastLocalSaveAt ?? visibleSession.updatedAt
-  const interruptionStatus = [
-    metadata?.wasOffline ? 'Offline-Unterbrechung erkannt' : 'keine Offline-Unterbrechung',
-    metadata?.wasBackgrounded ? 'App war im Hintergrund' : 'keine Hintergrundphase erkannt',
-  ]
+  const isActive = visibleSession.status === 'active'
+  const statusLine = isActive
+    ? `${getSessionTypeLabel(visibleSession.kind)} läuft weiter – nichts verloren. Zuletzt gespeichert: ${formatDateTime(lastLocalSaveAt)}.`
+    : `${getSessionTypeLabel(visibleSession.kind)} ist pausiert. Zuletzt gespeichert: ${formatDateTime(lastLocalSaveAt)}.`
 
   return (
     <section className="mx-auto max-w-6xl px-3 pt-3 md:px-4 xl:max-w-[88rem]">
-      <div className="rounded-[1.2rem] border-2 border-border-ink bg-surface p-4 text-ink-strong shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="rounded-[1.35rem] border-2 border-primary bg-surface p-4 text-ink-strong">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <RotateCcw aria-hidden="true" className="h-5 w-5" strokeWidth={2.6} />
+          </span>
           <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              Sitzung wiederhergestellt
-            </div>
-            <h2 className="mt-1 text-lg font-semibold">
-              {getSessionTypeLabel(visibleSession.kind)} {getStatusLabel(visibleSession.status)}
-            </h2>
-            <p className="mt-1 text-sm font-medium text-ink-muted">
-              {visibleSession.label}
+            <h2 className="text-lg font-bold leading-tight">App wurde neu geöffnet</h2>
+            <p className="mt-0.5 text-base font-semibold text-ink [overflow-wrap:anywhere]">
+              {visibleSession.label} · <span className="tabular-nums">{formatDuration(liveDurationS)}</span>
             </p>
-          </div>
-
-          <div className="grid gap-2 text-sm font-medium text-ink-muted sm:grid-cols-2 lg:min-w-[28rem]">
-            <div>Start: {formatDateTime(visibleSession.startTime)}</div>
-            <div>Dauer: {formatDuration(liveDurationS)}</div>
-            <div>Letzte lokale Speicherung: {formatDateTime(lastLocalSaveAt)}</div>
-            <div>{interruptionStatus.join(' · ')}</div>
+            <p className="mt-1 text-sm font-medium text-ink-muted">{statusLine}</p>
           </div>
         </div>
 
         {metadata?.longInactivityDetectedAt ? (
-          <p className="mt-3 rounded-[1rem] border border-warning-border bg-warning-surface px-3 py-2 text-sm font-semibold text-warning-ink">
-            Längere Inaktivität erkannt. Bitte prüfe kurz, ob die Sitzung noch stimmt.
+          <p className="mt-3 rounded-[1rem] border-2 border-warning-border bg-warning-surface px-3 py-2 text-sm font-semibold text-warning-ink">
+            Die App war länger zu. Bitte prüfe kurz, ob die Aufzeichnung noch stimmt.
           </p>
         ) : null}
 
@@ -537,34 +540,36 @@ export function SessionRecoveryManager() {
           </p>
         ) : null}
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <div className="mt-4 grid gap-2">
           <FormButton
             type="button"
             onClick={() => void continueSession(visibleSession)}
             disabled={isSaving}
             variant="primary"
-            className="min-h-[3.5rem]"
+            className="min-h-14 text-base"
           >
-            Weiterführen
+            {isActive ? 'Weiter aufzeichnen' : 'Fortsetzen'}
           </FormButton>
-          <FormButton
-            type="button"
-            onClick={() => void pauseSession(visibleSession)}
-            disabled={isSaving || visibleSession.status === 'paused'}
-            variant="secondary"
-            className="min-h-[3.5rem]"
-          >
-            Pause eintragen
-          </FormButton>
-          <FormButton
-            type="button"
-            onClick={() => void finishSession(visibleSession)}
-            disabled={isSaving}
-            variant="danger"
-            className="min-h-[3.5rem]"
-          >
-            Beenden
-          </FormButton>
+          <div className="grid grid-cols-2 gap-2">
+            <FormButton
+              type="button"
+              onClick={() => void pauseSession(visibleSession)}
+              disabled={isSaving || !isActive}
+              variant="secondary"
+              className="min-h-12"
+            >
+              Pause
+            </FormButton>
+            <FormButton
+              type="button"
+              onClick={() => void finishSession(visibleSession)}
+              disabled={isSaving}
+              variant="danger"
+              className="min-h-12 border-2 bg-surface-raised"
+            >
+              Beenden
+            </FormButton>
+          </div>
         </div>
       </div>
     </section>

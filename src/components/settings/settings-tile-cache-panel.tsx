@@ -5,6 +5,7 @@ import { FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
 import { cn } from '@/lib/utils/cn'
 import type { SettingsStorageMode } from '@/components/settings/settings-options'
+import { ChevronDown } from 'lucide-react'
 
 export type SettingsTileCachePanelProps = {
   tileCachingEnabled: boolean
@@ -64,7 +65,7 @@ export function SettingsTileCachePanel({
             <div className="mt-1 text-sm font-medium text-ink-soft">
               {tileCacheSupported
                 ? hasStoredTiles
-                  ? `${tileCacheCount} Tiles liegen auf diesem Gerät und sind offline nutzbar.`
+                  ? `${tileCacheCount} Kartenausschnitte liegen auf diesem Gerät und sind offline nutzbar.`
                   : tileCachingEnabled
                     ? 'Eingeschaltet: Angesehene Kartenausschnitte werden auf dem Gerät gespeichert und sind ohne Netz verfügbar.'
                     : 'Ausgeschaltet: Neue Kartenausschnitte werden nicht gespeichert. Bereits gespeicherte können gelöscht werden.'
@@ -75,7 +76,7 @@ export function SettingsTileCachePanel({
                 {tileCacheLoading
                   ? 'Wird geprüft …'
                   : hasStoredTiles
-                    ? `${tileCacheCount} Tiles auf Gerät`
+                    ? `${tileCacheCount} Kartenausschnitte gespeichert`
                     : 'Noch keine Karte gespeichert'}
               </span>
               <span className={storageBadgeClass}>
@@ -83,22 +84,22 @@ export function SettingsTileCachePanel({
               </span>
               <span className={persistenceBadgeClass}>
                 {persistentStorageGranted === null
-                  ? 'Persistenz unbekannt'
+                  ? 'Schutz unbekannt'
                   : persistentStorageGranted
-                    ? 'Persistenter Speicher aktiv'
-                    : 'Speicher nicht zugesichert'}
+                    ? 'Vor Löschen geschützt'
+                    : 'Nicht vor Löschen geschützt'}
               </span>
             </div>
             <div className="mt-2 text-xs font-medium text-ink-muted">
               Speichermodus: {settingsStorageMode === 'db' ? 'App-Datenbank' : 'iOS-Fallback'}
             </div>
             <div className="mt-1 text-xs font-medium text-ink-muted">
-              Persistenter Speicher:{' '}
+              Das Gerät darf die gespeicherten Daten bei Platzmangel{' '}
               {persistentStorageGranted === null
-                ? 'unbekannt'
+                ? 'vielleicht löschen'
                 : persistentStorageGranted
-                  ? 'aktiv'
-                  : 'nicht zugesichert'}
+                  ? 'nicht löschen'
+                  : 'löschen – bitte Schutz anfragen'}
             </div>
           </div>
           <div className="shrink-0 text-right">
@@ -107,9 +108,12 @@ export function SettingsTileCachePanel({
                 ? 'prüft ...'
                 : tileCacheCount === null
                   ? 'unbekannt'
-                  : `${tileCacheCount} Tiles`}
+                  : `${tileCacheCount} Ausschnitte`}
             </div>
-            <div className="mt-1 text-base text-ink">{isOpen ? '−' : '+'}</div>
+            <ChevronDown
+              aria-hidden="true"
+              className={isOpen ? 'ml-auto mt-1 h-5 w-5 rotate-180 text-ink transition-transform' : 'ml-auto mt-1 h-5 w-5 text-ink transition-transform'}
+            />
           </div>
         </button>
 
@@ -122,7 +126,7 @@ export function SettingsTileCachePanel({
                 variant="secondary"
                 className="py-3 text-sm"
               >
-                {persistentStorageLoading ? 'Fragt an ...' : 'Persistenten Speicher anfragen'}
+                {persistentStorageLoading ? 'Fragt an …' : 'Vor Löschen schützen'}
               </FormButton>
               <FormButton
                 onClick={() => void onClearTileCache()}
@@ -134,7 +138,7 @@ export function SettingsTileCachePanel({
               </FormButton>
             </div>
             <Alert variant="info" className="mt-2 text-xs">
-              Die Anzeige ist eine grobe Anzahl lokal gespeicherter Kartentiles.
+              Die Anzeige ist eine grobe Anzahl lokal gespeicherter Kartenausschnitte.
             </Alert>
           </>
         ) : null}

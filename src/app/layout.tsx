@@ -53,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="de" className={GeistSans.variable} suppressHydrationWarning>
+    <html lang="de" className={GeistSans.variable} data-theme="contrast" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
         <div className="min-h-screen text-ink-strong">
           <FieldDiagnosticsRuntime />

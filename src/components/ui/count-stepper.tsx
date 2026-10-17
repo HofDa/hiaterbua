@@ -10,6 +10,8 @@ type CountStepperProps = {
   onChange: (next: number) => void
   max?: number
   disabled?: boolean
+  /** Short note under the number, e.g. where the preset came from. */
+  hint?: string
   className?: string
 }
 
@@ -27,6 +29,7 @@ export function CountStepper({
   onChange,
   max = 9999,
   disabled = false,
+  hint,
   className,
 }: CountStepperProps) {
   const [draft, setDraft] = useState<string | null>(null)
@@ -91,6 +94,7 @@ export function CountStepper({
             {value}
           </button>
         )}
+        {hint ? <p className="mt-1 text-sm font-medium text-ink-muted">{hint}</p> : null}
       </div>
 
       <div className="grid grid-cols-4 gap-2">

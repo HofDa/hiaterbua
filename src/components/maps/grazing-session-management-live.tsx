@@ -14,9 +14,9 @@ import type { SessionEvent, SessionEventType } from '@/types/domain'
 
 function MetricItem({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="min-w-0 app-surface-row px-4 py-3">
-      <div className="text-xs leading-tight text-ink-muted">{label}</div>
-      <div className="mt-1 font-medium text-ink">{value}</div>
+    <div className="min-w-0">
+      <div className="text-sm font-medium leading-tight text-ink-muted">{label}</div>
+      <div className="mt-0.5 text-lg font-bold tabular-nums text-ink-strong">{value}</div>
     </div>
   )
 }

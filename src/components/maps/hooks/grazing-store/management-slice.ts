@@ -31,6 +31,8 @@ export type GrazingManagementSlice = {
   currentDurationRunningSince: string | null
   safeCurrentSessionEvents: SessionEvent[]
   lastStoppedSession: LastStoppedSession | null
+  /** Count recorded on the selected herd's last Weidegang, if any. */
+  lastAnimalCountForSelectedHerd: number | null
 }
 
 /** Management panel callbacks. Stabilized via `useStableHandles`, so this object is set once. */
@@ -67,6 +69,7 @@ const initialManagementSlice: GrazingManagementSlice = {
   currentDurationRunningSince: null,
   safeCurrentSessionEvents: [],
   lastStoppedSession: null,
+  lastAnimalCountForSelectedHerd: null,
 }
 
 const initialManagementHandles: GrazingManagementHandles = {

@@ -87,7 +87,9 @@ export function GrazingSessionMapCanvasPanel({
     onCancelEditSession,
   } = useGrazingSessionMapStore((state) => state.canvasHandles)
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(true)
-  const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(false)
+  // Open by default: on desktop this overlay is the only way to start a
+  // Weidegang, and hidden behind a toggle there was no visible start path.
+  const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(true)
   const showMapFallback = !mapReady && mapLoadState !== 'loading'
   const sessionStatusLabel =
     currentSessionStatus === 'active'

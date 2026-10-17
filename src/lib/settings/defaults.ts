@@ -10,7 +10,8 @@ export const defaultAppSettings: AppSettings = {
   gpsMinDistanceM: 5,
   gpsMaxSpeedMps: 7,
   tileCachingEnabled: false,
-  theme: 'system',
+  // Sun-proof by default: every user works outdoors. 'light' is the opt-out.
+  theme: 'contrast',
   keepScreenAwake: 'recording',
 }
 

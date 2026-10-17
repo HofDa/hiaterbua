@@ -4,18 +4,24 @@ import { useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getAppSettings } from '@/lib/db/repositories/settings'
 
-/** Applies the "Design" setting: data-theme="contrast" switches the palette. */
+/**
+ * Applies the "Darstellung" setting. High contrast is the default and is
+ * already set on <html> by the server, so there is no flash; only an explicit
+ * "Standard" ('light') choice removes it. The legacy 'system' value was the
+ * old untouched default, so those users move to high contrast once.
+ */
 export function ThemeApplier() {
-  const theme = useLiveQuery(async () => (await getAppSettings())?.theme, [])
+  const settings = useLiveQuery(() => getAppSettings(), [])
 
   useEffect(() => {
+    if (settings === undefined) return
     const root = document.documentElement
-    if (theme === 'contrast') {
-      root.dataset.theme = 'contrast'
-    } else {
+    if (settings?.theme === 'light') {
       delete root.dataset.theme
+    } else {
+      root.dataset.theme = 'contrast'
     }
-  }, [theme])
+  }, [settings])
 
   return null
 }

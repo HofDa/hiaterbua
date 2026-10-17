@@ -352,7 +352,8 @@ export interface AppSettings {
   gpsMinDistanceM: number
   gpsMaxSpeedMps: number
   tileCachingEnabled: boolean
-  // 'system' is legacy and behaves like 'light'; 'contrast' is for sunlight.
+  // 'contrast' (sun-proof) is the default; 'light' is the parchment opt-out.
+  // 'system' is legacy (the old untouched default) and shows as 'contrast'.
   theme: 'system' | 'light' | 'contrast'
   // When the screen is kept awake: only while a recording runs (default), or
   // whenever the app is open ("Immer an") for field days on a mounted phone.

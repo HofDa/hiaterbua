@@ -195,16 +195,16 @@ export function SettingsGeneralFormCard({
           <FormField>
             <FormLabel>Darstellung</FormLabel>
             <FormSelect
-              value={draft.theme === 'contrast' ? 'contrast' : 'light'}
+              value={draft.theme === 'light' ? 'light' : 'contrast'}
               onChange={(event) =>
                 setDraft((current) => ({
                   ...current,
-                  theme: event.target.value === 'contrast' ? 'contrast' : 'light',
+                  theme: event.target.value === 'light' ? 'light' : 'contrast',
                 }))
               }
             >
-              <option value="light">Standard</option>
               <option value="contrast">Hoher Kontrast (für Sonne)</option>
+              <option value="light">Pergament (weicher)</option>
             </FormSelect>
           </FormField>
 

@@ -145,6 +145,7 @@ export function useGrazingSessionMapPublish({
     currentDurationRunningSince: data.currentDurationRunningSince,
     safeCurrentSessionEvents: data.safeCurrentSessionEvents,
     lastStoppedSession: session.lastStoppedSession,
+    lastAnimalCountForSelectedHerd: data.lastAnimalCountByHerdId.get(session.selectedHerdId) ?? null,
   }
   const managementHandles = useStableHandles<GrazingManagementHandles>({
     onSelectedHerdIdChange: controller.changeSelectedHerdId,

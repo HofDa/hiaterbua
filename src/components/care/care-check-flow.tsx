@@ -13,7 +13,7 @@ import {
   Pencil,
   Search,
 } from 'lucide-react'
-import { Alert, ErrorAlert } from '@/components/ui/alert'
+import { ErrorAlert } from '@/components/ui/alert'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import {
   FlowOptionGrid,
@@ -47,7 +47,10 @@ import {
   getConservationPlanByEnclosureId,
   saveConservationPlan,
 } from '@/lib/db/repositories/conservation-plans'
-import { createCareMonitoringCheck } from '@/lib/db/repositories/care-monitoring-checks'
+import {
+  createCareMonitoringCheck,
+  deleteCareMonitoringCheck,
+} from '@/lib/db/repositories/care-monitoring-checks'
 import { listActiveEnclosuresByName } from '@/lib/db/repositories/enclosures'
 import { cn } from '@/lib/utils/cn'
 import { CareInfoGuide } from './care-info-guide'
@@ -643,6 +646,8 @@ export function CareCheckFlow() {
   const [isSavingCheck, setIsSavingCheck] = useState(false)
   const [checkSaveError, setCheckSaveError] = useState('')
   const [isCheckSaved, setIsCheckSaved] = useState(false)
+  // Id of the check saved from the current answers; a correction replaces it.
+  const [savedCheckId, setSavedCheckId] = useState<string | null>(null)
 
   // 5 separate ecological areas
   const [habitatType, setHabitatType] = useState<HabitatType>('semi_dry_grassland')
@@ -833,6 +838,7 @@ export function CareCheckFlow() {
     setLitter(null)
     setCheckSaveError('')
     setIsCheckSaved(false)
+    setSavedCheckId(null)
   }, [])
 
   const resetPlanDraft = useCallback(() => {
@@ -997,8 +1003,13 @@ export function CareCheckFlow() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  /**
+   * Saves the check as soon as the result is shown. A coloured result looks
+   * finished, and shepherds get interrupted — an observation must not depend
+   * on a second "Speichern" tap. A correction replaces the earlier save.
+   */
   const saveCheck = async () => {
-    if (!storedPlan || !result || !isCheckComplete || isSavingCheck || isCheckSaved) {
+    if (!storedPlan || !isCheckComplete || isSavingCheck) {
       return
     }
 
@@ -1006,7 +1017,12 @@ export function CareCheckFlow() {
     setCheckSaveError('')
 
     try {
-      await createCareMonitoringCheck({
+      if (savedCheckId) {
+        await deleteCareMonitoringCheck(savedCheckId)
+        setSavedCheckId(null)
+        setIsCheckSaved(false)
+      }
+      const saved = await createCareMonitoringCheck({
         conservationPlanId: storedPlan.id,
         enclosureId: storedPlan.enclosureId,
         observations: {
@@ -1020,6 +1036,7 @@ export function CareCheckFlow() {
         },
       })
       haptic('medium')
+      setSavedCheckId(saved.id)
       setIsCheckSaved(true)
     } catch (error) {
       setCheckSaveError(
@@ -1030,8 +1047,25 @@ export function CareCheckFlow() {
     }
   }
 
+  /** "Rückgängig": removes the just-saved check and returns to the answers. */
+  const undoSavedCheck = async () => {
+    if (!savedCheckId) return
+    try {
+      await deleteCareMonitoringCheck(savedCheckId)
+      setSavedCheckId(null)
+      setIsCheckSaved(false)
+      setView('check')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch {
+      setCheckSaveError('Pflegecheck konnte nicht zurückgenommen werden.')
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* The intro is for choosing an area; repeated above every question and
+          result it only pushed the content down. */}
+      {view === 'area' || view === 'overview' ? (
       <Card variant="panel" className="p-4 md:p-5">
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-success-border bg-success-surface text-success-ink">
@@ -1045,6 +1079,7 @@ export function CareCheckFlow() {
           </div>
         </div>
       </Card>
+      ) : null}
 
       <Card variant="panel" className="p-4 md:p-5">
         {view !== 'area' ? (
@@ -1670,10 +1705,13 @@ export function CareCheckFlow() {
                 haptic('medium')
                 setView('result')
                 window.scrollTo({ top: 0, behavior: 'smooth' })
+                void saveCheck()
               }}
-              disabled={!isCheckComplete}
+              disabled={!isCheckComplete || isSavingCheck}
             >
-              {isCheckComplete ? 'Ampel anzeigen' : 'Bitte alle Fragen beantworten'}
+              {isCheckComplete
+                ? 'Ergebnis anzeigen und speichern'
+                : `Noch ${fieldQuestionIds.length - answeredCount} ${fieldQuestionIds.length - answeredCount === 1 ? 'Frage' : 'Fragen'} offen`}
             </FlowPrimaryAction>
           </div>
         ) : null}
@@ -1683,43 +1721,41 @@ export function CareCheckFlow() {
             <ResultPanel result={result} />
 
             {isCheckSaved ? (
-              <Alert variant="success" className="text-sm">
-                <Check className="h-4 w-4" />
-                <div className="pl-1 font-semibold">Pflegecheck gespeichert.</div>
-              </Alert>
-            ) : (
-              <>
-                {checkSaveError ? <ErrorAlert>{checkSaveError}</ErrorAlert> : null}
-                <FlowPrimaryAction
-                  onClick={() => void saveCheck()}
-                  disabled={isSavingCheck || !isCheckComplete}
+              <div
+                role="status"
+                className="flex items-center justify-between gap-3 rounded-[1.1rem] border-2 border-success-border bg-success-surface px-4 py-3"
+              >
+                <span className="flex items-center gap-2 text-base font-bold text-success-ink">
+                  <Check aria-hidden="true" className="h-5 w-5" strokeWidth={3} />
+                  Pflegecheck gespeichert
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void undoSavedCheck()}
+                  className="min-h-11 shrink-0 rounded-full border-2 border-border-strong bg-surface-raised px-4 text-sm font-semibold text-ink-strong"
                 >
-                  {isSavingCheck ? 'Pflegecheck wird gespeichert …' : 'Pflegecheck speichern'}
-                </FlowPrimaryAction>
+                  Rückgängig
+                </button>
+              </div>
+            ) : isSavingCheck ? (
+              <p role="status" className="text-sm font-semibold text-ink-muted">
+                Wird gespeichert …
+              </p>
+            ) : checkSaveError ? (
+              <>
+                <ErrorAlert>{checkSaveError}</ErrorAlert>
+                <FlowPrimaryAction onClick={() => void saveCheck()}>Erneut speichern</FlowPrimaryAction>
               </>
-            )}
+            ) : null}
 
-            <CarePlanFocusCard
-              habitatType={habitatType}
-              vegTargetPercent={vegTargetPercent}
-              protectedPlants={protectedPlants}
-              manualRemovalPlants={manualRemovalPlants}
-              litterReductionEnabled={litterReductionEnabled}
-              scrubTargetPercent={scrubTargetPercent}
-              protectedWoodyPlants={protectedWoodyPlants}
-              manualRemovalWoodyPlants={manualRemovalWoodyPlants}
-              openSoilMode={openSoilMode}
-              nutrientInputMode={nutrientInputMode}
-            />
-
+            <FlowPrimaryAction onClick={() => setView('overview')} disabled={isSavingCheck}>
+              Zur Flächenübersicht
+            </FlowPrimaryAction>
             <FlowSecondaryAction onClick={() => setView('check')}>
               Beobachtung korrigieren
             </FlowSecondaryAction>
-            <FlowPrimaryAction onClick={startCheck} disabled={!isCheckSaved}>
+            <FlowSecondaryAction onClick={startCheck} disabled={isSavingCheck}>
               Neuer Check auf dieser Fläche
-            </FlowPrimaryAction>
-            <FlowSecondaryAction onClick={() => setView('overview')}>
-              Zur Flächenübersicht
             </FlowSecondaryAction>
           </div>
         ) : null}

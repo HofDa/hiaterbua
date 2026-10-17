@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ErrorAlert } from '@/components/ui/alert'
-import { useConfirm } from '@/components/ui/confirm-dialog'
 import {
   FormButton,
   FormField,
@@ -12,16 +12,16 @@ import {
   FormLabel,
   FormTextarea,
 } from '@/components/ui/form'
-import { MetaLabel, metaLabelClassName } from '@/components/ui/typography'
+import { metaLabelClassName } from '@/components/ui/typography'
 import { assertUpdated } from '@/lib/db/assert-updated'
-import { deleteHerdCascade } from '@/lib/db/delete-herd'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
+import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-enclosure-stats'
 import {
   createHerdRecord,
   listHerdsByRecent,
   updateHerdRecord,
 } from '@/lib/db/repositories/herds'
-import type { Herd, Species } from '@/types/domain'
+import type { Species } from '@/types/domain'
 
 const speciesLabels: Record<Species, string> = {
   cattle: 'Rinder',
@@ -31,8 +31,15 @@ const speciesLabels: Record<Species, string> = {
   other: 'Andere',
 }
 
+function describeHerdCount(registered: number, estimate: number | null) {
+  if (registered > 0 && estimate !== null && estimate > registered) {
+    return `geschätzt · ${registered} mit Ohrmarke erfasst`
+  }
+  if (registered > 0) return 'alle mit Ohrmarke erfasst'
+  return estimate !== null ? 'geschätzt' : 'noch keine Anzahl'
+}
+
 export default function HerdsPage() {
-  const confirm = useConfirm()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const herds = useLiveQuery(async () => {
     const herdList = await listHerdsByRecent()
@@ -55,9 +62,10 @@ export default function HerdsPage() {
 
       return {
         ...herd,
-        displayCount:
-          activeAnimals.length > 0 ? activeAnimals.length : (herd.fallbackCount ?? 0),
-        hasIndividualAnimals: activeAnimals.length > 0,
+        // Same rule as Start and the Pferche: the estimate is the whole flock,
+        // registered animals are a subset (this list used to show 1 for 42).
+        displayCount: getEffectiveHerdCount(herd, activeAnimals),
+        registeredCount: activeAnimals.length,
         speciesSummary,
       }
     })
@@ -105,26 +113,6 @@ export default function HerdsPage() {
       assertUpdated(updatedCount, 'Herde wurde nicht gefunden.')
     } catch {
       setActionError('Herde konnte nicht aktualisiert werden.')
-    }
-  }
-
-  async function deleteHerd(herd: Herd) {
-    const confirmed = await confirm({
-      title: `Herde "${herd.name}" löschen?`,
-      description:
-        'Tiere, Weidegänge, Arbeitseinsätze und Belegungen dieser Herde werden ebenfalls entfernt.',
-      confirmLabel: 'Löschen',
-      destructive: true,
-    })
-
-    if (!confirmed) return
-
-    setActionError('')
-
-    try {
-      await deleteHerdCascade(herd.id)
-    } catch {
-      setActionError('Herde konnte nicht gelöscht werden.')
     }
   }
 
@@ -230,7 +218,7 @@ export default function HerdsPage() {
           <div className="app-panel-sm p-5 text-ink-soft">
             <div className="text-base font-semibold text-ink-strong">Noch keine Herde vorhanden</div>
             <div className="mt-2 text-sm font-medium text-ink-soft">
-              Über `Neue Herde` legst du den ersten Bestand an.
+              Über „Neue Herde“ legst du den ersten Bestand an.
             </div>
           </div>
         ) : (
@@ -238,91 +226,49 @@ export default function HerdsPage() {
             <article key={herd.id} className="app-panel-sm p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="text-xl font-semibold tracking-[-0.02em] text-ink-strong">{herd.name}</h3>
+                  <h2 className="text-xl font-bold tracking-[-0.02em] text-ink-strong [overflow-wrap:anywhere]">
+                    {herd.name}
+                  </h2>
+                  <p className="mt-1 text-base text-ink">
+                    <span className="text-2xl font-bold tabular-nums text-ink-strong">
+                      {herd.displayCount ?? '–'}
+                    </span>{' '}
+                    {herd.displayCount === 1 ? 'Tier' : 'Tiere'}
+                    <span className="block text-sm font-medium text-ink-muted">
+                      {describeHerdCount(herd.registeredCount, herd.fallbackCount ?? null)}
+                      {herd.isArchived ? ' · archiviert' : ''}
+                    </span>
+                  </p>
                 </div>
                 <FormButton
                   type="button"
                   variant="secondary"
                   onClick={() => toggleArchive(herd.id, !herd.isArchived)}
-                  className="min-h-11 rounded-full border border-border-soft bg-surface-muted px-4 py-2 text-sm font-semibold text-ink-strong shadow-sm"
+                  className="min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-semibold"
                 >
                   {herd.isArchived ? 'Aktivieren' : 'Archivieren'}
                 </FormButton>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <div className="app-surface-row px-4 py-3">
-                  <MetaLabel>
-                    Tiere
-                  </MetaLabel>
-                  <div className="mt-1 text-lg font-semibold text-ink-strong">{herd.displayCount}</div>
-                </div>
-                <div className="app-surface-row px-4 py-3">
-                  <MetaLabel>
-                    Erfassung
-                  </MetaLabel>
-                  <div className="mt-1 text-sm font-semibold text-ink-strong">
-                    {herd.hasIndividualAnimals ? 'Einzeltiere' : 'Schätzwert'}
-                  </div>
-                </div>
-                <div className="app-surface-row px-4 py-3">
-                  <MetaLabel>
-                    Status
-                  </MetaLabel>
-                  <div className="mt-1 text-sm font-semibold text-ink-strong">
-                    {herd.isArchived ? 'Archiviert' : 'Aktiv'}
-                  </div>
-                </div>
-              </div>
-
               {herd.speciesSummary.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {herd.speciesSummary.map((entry) => (
-                    <div
-                      key={entry}
-                      className="rounded-full border border-border bg-surface-raised px-3 py-1.5 text-sm font-medium text-ink"
-                    >
-                      {entry}
-                    </div>
-                  ))}
-                </div>
+                <p className="mt-2 text-sm font-medium text-ink-muted">
+                  {herd.speciesSummary.join(' · ')}
+                </p>
               ) : null}
 
               {herd.notes ? (
-                <div className="mt-3 rounded-[1.1rem] border border-border bg-surface-raised px-4 py-3 text-sm font-medium text-ink">
-                  {herd.notes}
-                </div>
+                <p className="mt-2 text-sm text-ink">{herd.notes}</p>
               ) : null}
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link
-                  href={`/herd?id=${encodeURIComponent(herd.id)}`}
-                  className="min-w-[9rem] rounded-[1.1rem] border-2 border-border-strong bg-surface-muted px-5 py-3 text-sm font-semibold text-ink-strong app-shadow-action"
-                >
-                  Herde öffnen & bearbeiten
-                </Link>
-              </div>
-
-              <div className="mt-4 rounded-[1.1rem] border border-error-border/70 bg-error-surface/90 px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className={metaLabelClassName({ tone: 'error' })}>
-                      Kritische Aktion
-                    </div>
-                    <div className="mt-1 text-sm font-medium text-error-ink">
-                      Herde dauerhaft löschen
-                    </div>
-                  </div>
-                  <FormButton
-                    type="button"
-                    variant="danger"
-                    onClick={() => void deleteHerd(herd)}
-                    className="rounded-[1.1rem] border border-error-border bg-surface-raised px-4 py-3 text-sm font-semibold text-error-ink shadow-sm"
-                  >
-                    Löschen
-                  </FormButton>
-                </div>
-              </div>
+              {/* Deleting lives in the herd detail only — not on every card
+                  while just browsing the list. */}
+              <Link
+                href={`/herd?id=${encodeURIComponent(herd.id)}`}
+                className="mt-4 flex min-h-12 w-full items-center justify-center gap-1 rounded-[1.1rem] border-2 border-border-strong bg-surface-raised px-5 text-base font-semibold text-ink-strong transition-colors hover:bg-surface-hover"
+              >
+                Herde öffnen
+                <ChevronRight aria-hidden="true" className="h-5 w-5" />
+              </Link>
             </article>
           ))
         )}

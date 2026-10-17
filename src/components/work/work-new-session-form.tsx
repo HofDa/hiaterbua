@@ -350,7 +350,7 @@ export function WorkNewSessionForm({
               type="submit"
               disabled={isSaving}
               variant="primary"
-              className="w-full min-h-[4.75rem] rounded-[1.35rem]"
+              className="w-full min-h-[4.75rem] rounded-[1.35rem] text-lg font-bold"
             >
               {isSaving ? 'Startet ...' : 'Arbeitseinsatz starten'}
             </FormButton>
@@ -390,7 +390,7 @@ export function WorkNewSessionForm({
           type="submit"
           disabled={isSaving}
           variant="primary"
-          className="w-full min-h-[4.5rem] rounded-[1.3rem]"
+          className="w-full min-h-[4.75rem] rounded-[1.35rem] text-lg font-bold"
         >
           {isSaving ? 'Startet ...' : 'Arbeitseinsatz starten'}
         </FormButton>

@@ -154,7 +154,7 @@ export function useSettingsTileCacheState({
       setStatus(
         granted
           ? 'Permanenter Speicher wurde angefragt und gewährt.'
-          : 'Permanenter Speicher konnte nicht dauerhaft zugesichert werden.'
+          : 'Das Gerät hat den Schutz vor Löschen nicht gewährt.'
       )
     } finally {
       setPersistentStorageLoading(false)

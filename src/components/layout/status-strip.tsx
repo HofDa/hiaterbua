@@ -3,6 +3,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AlertTriangle, X } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { getAppSettings } from '@/lib/db/repositories/settings'
 import { getTileCacheCount, TILE_CACHE_CHANGED_EVENT } from '@/lib/maps/tile-cache'
@@ -55,6 +56,7 @@ export function StatusStrip() {
   const [isInstalling, setIsInstalling] = useState(false)
   // Bumped on snooze so the strip re-reads the stored snooze immediately.
   const [snoozeVersion, setSnoozeVersion] = useState(0)
+  const pathname = usePathname()
   const settings = useLiveQuery(() => getAppSettings(), [])
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
@@ -181,7 +183,14 @@ export function StatusStrip() {
     snoozeVersion >= 0 &&
     problem?.tone === 'warning' &&
     readSnoozedUntil(problem.text) > Date.now()
-  const visibleProblem = isSnoozed ? null : problem
+  // Map-readiness only matters where maps are used. On Start the "Karte
+  // offline sichern" card already carries the warning; on Herden, Sichern or
+  // Einstellungen a standing banner only teaches people to ignore banners.
+  const isMapScreen =
+    pathname?.startsWith('/sessions') || pathname?.startsWith('/enclosures')
+  const isRelevantHere =
+    problem?.tone === 'error' ? isMapScreen || pathname === '/' : isMapScreen
+  const visibleProblem = isSnoozed || !isRelevantHere ? null : problem
 
   function snoozeProblem() {
     if (!problem) return

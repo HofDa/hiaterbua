@@ -53,7 +53,9 @@ export function GrazingSessionHistoryPanel() {
   } = useGrazingSessionMapStore((state) => state.historyHandles)
   const summary = selectedSession
     ? `${pluralize(safeRecentSessions.length, 'Weidegang', 'Weidegänge')} · Fokus aktiv`
-    : `${safeRecentSessions.length} gespeicherte Weidegänge`
+    : safeRecentSessions.length === 1
+      ? '1 gespeicherter Weidegang'
+      : `${safeRecentSessions.length} gespeicherte Weidegänge`
 
   const historyFocusDetails = (
     <>
@@ -127,7 +129,9 @@ export function GrazingSessionHistoryPanel() {
             <div>
               <h2 className="text-lg font-semibold text-ink-strong">Verlauf</h2>
               <div className="mt-1 text-sm font-medium text-ink-muted">
-                {safeRecentSessions.length} gespeicherte Weidegänge
+                {safeRecentSessions.length === 1
+                  ? '1 gespeicherter Weidegang'
+                  : `${safeRecentSessions.length} gespeicherte Weidegänge`}
               </div>
             </div>
             <CollapseChevron open={isHistoryExpanded} />

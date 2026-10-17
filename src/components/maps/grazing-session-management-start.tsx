@@ -7,11 +7,10 @@ import {
   FlowPrimaryAction,
   FlowSecondaryAction,
   FlowSelectableTile,
-  FlowStepperButton,
   FlowStepHeader,
 } from '@/components/ui/mobile-flow'
 import { CountStepper } from '@/components/ui/count-stepper'
-import { MetaLabel } from '@/components/ui/typography'
+import { RecordingControls } from '@/components/ui/recording-controls'
 import type { Herd, SessionStatus } from '@/types/domain'
 
 export function GrazingSessionActiveSummary({
@@ -25,25 +24,15 @@ export function GrazingSessionActiveSummary({
 }) {
   const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
 
+  // Read-only facts as plain text, not boxes that look like buttons.
   return (
-    <div className="grid grid-cols-2 gap-3 lg:hidden">
-      <div className="rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-4 shadow-sm">
-        <MetaLabel weight="medium" tracking="compact">
-          Herde
-        </MetaLabel>
-        <div className="mt-2 text-sm font-semibold leading-tight text-ink-strong [overflow-wrap:anywhere]">
-          {selectedHerd?.name ?? 'Nicht gewählt'}
-        </div>
-      </div>
-      <div className="rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-4 text-center shadow-sm">
-        <MetaLabel weight="medium" tracking="compact">
-          Tiere
-        </MetaLabel>
-        <div className="mt-2 text-2xl font-semibold text-ink-strong">
-          {selectedAnimalCount ?? 0}
-        </div>
-      </div>
-    </div>
+    <p className="text-lg font-bold leading-snug text-ink-strong lg:hidden [overflow-wrap:anywhere]">
+      {selectedHerd?.name ?? 'Herde nicht gewählt'}
+      <span className="font-semibold text-ink-muted">
+        {' · '}
+        {selectedAnimalCount ?? 0} {selectedAnimalCount === 1 ? 'Tier' : 'Tiere'}
+      </span>
+    </p>
   )
 }
 
@@ -51,6 +40,7 @@ export function GrazingSessionMobileStartFlow({
   safeHerds,
   selectedHerdId,
   selectedAnimalCount,
+  lastAnimalCount,
   sessionNotes,
   isSaving,
   onSelectedHerdIdChange,
@@ -61,6 +51,7 @@ export function GrazingSessionMobileStartFlow({
   safeHerds: Herd[]
   selectedHerdId: string
   selectedAnimalCount: number | null
+  lastAnimalCount: number | null
   sessionNotes: string
   isSaving: boolean
   onSelectedHerdIdChange: (value: string) => void
@@ -145,6 +136,7 @@ export function GrazingSessionMobileStartFlow({
           <CountStepper
             label="Tiere"
             value={animalCount}
+            hint={lastAnimalCount !== null && lastAnimalCount === animalCount ? 'wie beim letzten Weidegang' : undefined}
             onChange={(next) => void onAdjustAnimalCount(next - animalCount)}
           />
 
@@ -203,24 +195,6 @@ export function GrazingSessionMobileControls({
   onResumeSession: () => void | Promise<void>
   onStopSession: () => void | Promise<void>
 }) {
-  const stopDisabled =
-    isSaving ||
-    (currentSessionStatus !== 'active' && currentSessionStatus !== 'paused')
-
-  // Kept apart from Pause/Fortsetzen and styled as destructive: the two used
-  // to sit side by side at equal weight, one glove slip from ending the track.
-  // stopSession also asks for confirmation.
-  const stopButton = (
-    <button
-      type="button"
-      onClick={() => void onStopSession()}
-      disabled={stopDisabled}
-      className="mt-2 flex min-h-12 w-full items-center justify-center rounded-[1.1rem] border-2 border-error-border bg-surface-raised px-4 py-3 text-base font-semibold text-error-ink transition-colors hover:bg-error-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50"
-    >
-      Weidegang beenden
-    </button>
-  )
-
   return (
     <div className="mt-4 space-y-3 lg:hidden">
       {currentSessionStatus === null ? (
@@ -232,26 +206,15 @@ export function GrazingSessionMobileControls({
         </FlowPrimaryAction>
       ) : null}
 
-      {currentSessionStatus === 'active' ? (
-        <div>
-          <FlowStepperButton
-            onClick={() => void onPauseSession()}
-            disabled={isSaving}
-            className="w-full text-base disabled:opacity-50"
-          >
-            Pause
-          </FlowStepperButton>
-          {stopButton}
-        </div>
-      ) : null}
-
-      {currentSessionStatus === 'paused' ? (
-        <div>
-          <FlowPrimaryAction onClick={() => void onResumeSession()} disabled={isSaving}>
-            Fortsetzen
-          </FlowPrimaryAction>
-          {stopButton}
-        </div>
+      {currentSessionStatus === 'active' || currentSessionStatus === 'paused' ? (
+        <RecordingControls
+          status={currentSessionStatus}
+          isSaving={isSaving}
+          stopLabel="Weidegang beenden"
+          onPause={onPauseSession}
+          onResume={onResumeSession}
+          onStop={onStopSession}
+        />
       ) : null}
     </div>
   )

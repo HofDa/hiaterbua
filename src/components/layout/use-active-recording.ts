@@ -11,6 +11,7 @@ import { getLiveDurationS } from '@/lib/work/work-session-formatting'
 import { getWorkLabel } from '@/lib/work/work-session-helpers'
 
 export type ActiveRecording = {
+  id: string
   kind: 'grazing' | 'work'
   href: string
   label: string
@@ -52,6 +53,7 @@ function useActiveRecordingQuery(): ActiveRecording | null | undefined {
       const grazing = source.recording
       const herd = grazing.herdId ? await getHerd(grazing.herdId) : undefined
       return {
+        id: grazing.id,
         kind: 'grazing',
         href: '/sessions',
         label: herd?.name ? `Weidegang · ${herd.name}` : 'Weidegang',
@@ -65,6 +67,7 @@ function useActiveRecordingQuery(): ActiveRecording | null | undefined {
 
     const work = source.recording
     return {
+      id: work.id,
       kind: 'work',
       href: '/work',
       label: getWorkLabel(work),

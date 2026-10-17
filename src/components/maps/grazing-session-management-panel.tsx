@@ -27,6 +27,7 @@ export function GrazingSessionManagementPanel() {
     currentDurationRunningSince,
     safeCurrentSessionEvents,
     lastStoppedSession,
+    lastAnimalCountForSelectedHerd,
   } = useGrazingSessionMapStore((state) => state.management)
   const {
     onSelectedHerdIdChange,
@@ -61,6 +62,7 @@ export function GrazingSessionManagementPanel() {
           safeHerds={safeHerds}
           selectedHerdId={selectedHerdId}
           selectedAnimalCount={selectedAnimalCount}
+          lastAnimalCount={lastAnimalCountForSelectedHerd}
           sessionNotes={sessionNotes}
           isSaving={isSaving}
           onSelectedHerdIdChange={onSelectedHerdIdChange}

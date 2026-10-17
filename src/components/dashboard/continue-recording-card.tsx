@@ -9,13 +9,19 @@ import {
 import { metaLabelClassName } from '@/components/ui/typography'
 import { formatDistance, formatDuration } from '@/lib/maps/grazing-session-map-helpers'
 import { triggerHaptic } from '@/hooks/use-haptic-feedback'
+import { getRecoverableSessionKey } from '@/lib/session-recovery/session-recovery-state'
+import { useRecoveryNoticeStore } from '@/lib/session-recovery/recovery-notice-store'
 
 // Home-screen hero while a recording runs: the answer to "what am I doing
 // right now" belongs above everything else, one tap from resuming the session.
 export function ContinueRecordingCard() {
   const { recording, nowMs } = useActiveRecordingSnapshot()
+  const pendingRecoveryKey = useRecoveryNoticeStore((state) => state.pendingSessionKey)
 
-  if (!recording) return null
+  // After a reload the recovery card on Start already reports this session.
+  if (!recording || pendingRecoveryKey === getRecoverableSessionKey(recording.kind, recording.id)) {
+    return null
+  }
 
   const elapsedS = getRecordingElapsedS(recording, nowMs)
   const metrics =
@@ -43,7 +49,11 @@ export function ContinueRecordingCard() {
 
       <span className="min-w-0 flex-1">
         <span className={metaLabelClassName({ tracking: 'wider', tone: 'soft' }, 'block')}>
-          {recording.status === 'active' ? 'Aufnahme läuft' : 'Pausiert'}
+          {recording.status !== 'active'
+            ? 'Pausiert'
+            : recording.kind === 'grazing'
+              ? 'Aufnahme läuft'
+              : 'Zeit läuft'}
         </span>
         <span className="mt-0.5 block truncate text-lg font-semibold leading-tight text-ink-strong">
           {recording.label}

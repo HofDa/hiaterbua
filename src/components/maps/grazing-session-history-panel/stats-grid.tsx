@@ -1,16 +1,15 @@
 import {
   formatDistance,
-  formatDuration,
   type SessionHistoryStats,
 } from '@/lib/maps/grazing-session-map-helpers'
-import { Card } from '@/components/ui/card'
+import { formatSpan } from '@/lib/utils/format'
 
 function HistoryStat({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="min-w-0 px-4 py-3 shadow-sm">
-      <div className="text-xs leading-tight text-ink-muted">{label}</div>
-      <div className="mt-1 font-medium text-ink">{value}</div>
-    </Card>
+    <div className="min-w-0">
+      <div className="text-sm font-medium leading-tight text-ink-muted">{label}</div>
+      <div className="mt-0.5 text-lg font-bold tabular-nums text-ink-strong">{value}</div>
+    </div>
   )
 }
 
@@ -21,7 +20,7 @@ export function GrazingSessionHistoryStatsGrid({
 }) {
   return (
     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-      <HistoryStat label="Sessions" value={String(sessionHistoryStats.totalSessions)} />
+      <HistoryStat label="Weidegänge" value={String(sessionHistoryStats.totalSessions)} />
       <HistoryStat label="Abgeschlossen" value={String(sessionHistoryStats.finishedSessions)} />
       <HistoryStat
         label="Gesamtdistanz"
@@ -29,7 +28,7 @@ export function GrazingSessionHistoryStatsGrid({
       />
       <HistoryStat
         label="Gesamtdauer"
-        value={formatDuration(sessionHistoryStats.totalDurationS)}
+        value={formatSpan(sessionHistoryStats.totalDurationS / 60)}
       />
     </div>
   )
