@@ -137,7 +137,7 @@ export function useLivePositionMapAssignmentController({
         resetAssignmentState()
         setSelectedEnclosureId(enclosure.id)
         // Assigning used to commit silently; say what happened and allow undo.
-        showUndoToast(`${herd.name} → ${enclosure.name}`, async () => {
+        showUndoToast(`${herd.name} in ${enclosure.name} gestellt`, async () => {
           try {
             await undoEnclosureAssignmentRecord({ assignmentId, previousEnclosureHerdId })
           } catch (error) {

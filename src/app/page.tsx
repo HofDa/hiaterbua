@@ -157,7 +157,7 @@ export default function HomePage() {
                 {/* Start right here: the herd is already known on this screen. */}
                 {dashboardData?.activeSessionsCount === 0 ? (
                   <Link
-                    href={`/sessions?herd=${encodeURIComponent(herd.id)}`}
+                    href={`/sessions?herd=${encodeURIComponent(herd.id)}&start=1`}
                     onClick={() => triggerHaptic('light')}
                     aria-label={`Weidegang mit ${herd.name} starten`}
                     className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border-2 border-primary px-3 text-sm font-bold text-ink-strong"
@@ -171,86 +171,81 @@ export default function HomePage() {
           </ul>
         )}
 
-        {dashboardData && dashboardData.activeSessionsCount === 0 && dashboardData.herdStatuses.length > 0 ? (
-          <Link
-            href="/sessions"
-            onClick={() => triggerHaptic('light')}
-            className="mt-3 flex min-h-14 w-full items-center justify-center gap-2 rounded-[1.25rem] border-2 border-primary bg-primary px-4 text-lg font-bold text-primary-foreground transition-colors hover:bg-chrome-strong"
-          >
-            <MapIcon aria-hidden="true" className="h-5 w-5" strokeWidth={2.4} />
-            Weidegang starten
-          </Link>
-        ) : null}
 
       </section>
 
-      <Card>
-        <CardContent className="flex flex-col gap-2.5 py-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            <div className="min-w-0 flex-1 basis-52">
-              <h2 className="text-lg font-bold text-ink-strong">Karte offline sichern</h2>
-              <CardDescription className="mt-0.5">
-                Kartenbereich um deinen Standort speichern, solange noch Netz da ist.
-              </CardDescription>
-            </div>
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic('light')
-                  secureArea.secureCurrentArea()
-                }}
-                disabled={secureArea.isBusy}
-                className={cn(
-                  buttonVariants({ variant: 'default' }),
-                  'min-h-11 gap-2 rounded-full disabled:opacity-60',
-                )}
-              >
-                {secureArea.isBusy ? (
-                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-                ) : (
-                  <DownloadCloud aria-hidden="true" className="h-4 w-4" />
-                )}
-                {secureArea.status === 'locating'
-                  ? 'Standort …'
-                  : secureArea.status === 'prefetching'
-                    ? 'Sichert …'
-                    : 'Kartenbereich sichern'}
-              </button>
-              {secureArea.status === 'prefetching' ? (
+      {/* Not during a recording: then the field work leads, not preparation. */}
+      {dashboardData &&
+      dashboardData.activeSessionsCount === 0 &&
+      dashboardData.activeWorkSessionsCount === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col gap-2.5 py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="min-w-0 flex-1 basis-52">
+                <h2 className="text-lg font-bold text-ink-strong">Karte offline sichern</h2>
+                <CardDescription className="mt-0.5">
+                  Kartenbereich um deinen Standort speichern, solange noch Netz da ist.
+                </CardDescription>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={secureArea.cancelPrefetch}
+                  onClick={() => {
+                    triggerHaptic('light')
+                    secureArea.secureCurrentArea()
+                  }}
+                  disabled={secureArea.isBusy}
                   className={cn(
-                    buttonVariants({ variant: 'secondary' }),
-                    'min-h-11 rounded-full',
+                    buttonVariants({ variant: 'default' }),
+                    'min-h-11 gap-2 rounded-full disabled:opacity-60',
                   )}
                 >
-                  Abbrechen
+                  {secureArea.isBusy ? (
+                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <DownloadCloud aria-hidden="true" className="h-4 w-4" />
+                  )}
+                  {secureArea.status === 'locating'
+                    ? 'Standort …'
+                    : secureArea.status === 'prefetching'
+                      ? 'Sichert …'
+                      : 'Kartenbereich sichern'}
                 </button>
-              ) : null}
+                {secureArea.status === 'prefetching' ? (
+                  <button
+                    type="button"
+                    onClick={secureArea.cancelPrefetch}
+                    className={cn(
+                      buttonVariants({ variant: 'secondary' }),
+                      'min-h-11 rounded-full',
+                    )}
+                  >
+                    Abbrechen
+                  </button>
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          {(secureArea.message || secureArea.progress) && (
-            <p
-              aria-live="polite"
-              className={cn(
-                'text-sm font-medium',
-                secureArea.status === 'error'
-                  ? 'text-error-ink'
-                  : secureArea.status === 'done'
-                    ? 'text-success-ink'
-                    : 'text-ink-muted',
-              )}
-            >
-              {secureArea.progress
-                ? `Sichert ${secureArea.progress.completed} / ${secureArea.progress.total} Tiles …`
-                : secureArea.message}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+            {(secureArea.message || secureArea.progress) && (
+              <p
+                aria-live="polite"
+                className={cn(
+                  'text-sm font-medium',
+                  secureArea.status === 'error'
+                    ? 'text-error-ink'
+                    : secureArea.status === 'done'
+                      ? 'text-success-ink'
+                      : 'text-ink-muted',
+                )}
+              >
+                {secureArea.progress
+                  ? `Sichert ${secureArea.progress.completed} / ${secureArea.progress.total} Tiles …`
+                  : secureArea.message}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Counts are review/admin info, not field info — collapsed by default so
           the field controls above stay within one screen. */}

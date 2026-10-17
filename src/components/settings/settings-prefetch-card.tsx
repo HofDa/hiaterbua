@@ -66,10 +66,10 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
           className="flex w-full items-start justify-between gap-3 text-left"
         >
           <div>
-            <CardTitle className="text-lg">Kartenausschnitt vorladen</CardTitle>
+            <CardTitle className="text-lg">Bestimmten Ausschnitt offline sichern</CardTitle>
             <p className="mt-2 text-sm font-medium text-ink-soft">
-              Bestimmten Ausschnitt gezielt in den Tile-Cache laden, statt nur beim normalen
-              Kartenaufruf.
+              Einen gewählten Kartenbereich vorab sichern – etwa eine Alm, auf die du morgen
+              gehst.
             </p>
           </div>
           <div className="text-base text-ink">{state.isOpen ? '−' : '+'}</div>
@@ -244,7 +244,7 @@ export function SettingsPrefetchCard({ state, actions }: SettingsPrefetchCardPro
             variant="primary"
             className="rounded-[1.25rem]"
           >
-            {state.prefetching ? 'Lädt Karte …' : 'Ausschnitt vorladen'}
+            {state.prefetching ? 'Sichert …' : 'Ausschnitt offline sichern'}
           </FormButton>
           {state.canCancelPrefetch ? (
             <FormButton

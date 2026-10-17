@@ -61,7 +61,7 @@ export function SettingsGeneralFormCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Allgemeine Einstellungen</CardTitle>
+        <CardTitle className="text-xl">Karte, GPS und Anzeige</CardTitle>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={onSubmit}>
@@ -240,7 +240,7 @@ export function SettingsGeneralFormCard({
                 }))
               }
             />
-            <span className="text-sm font-semibold">Offline-Karten speichern</span>
+            <span className="text-sm font-semibold">Angesehene Karten offline sichern</span>
           </label>
 
           <SettingsTileCachePanel {...tileCachePanel} tileCachingEnabled={draft.tileCachingEnabled} />

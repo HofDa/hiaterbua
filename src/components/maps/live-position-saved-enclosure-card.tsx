@@ -150,7 +150,7 @@ export function LivePositionSavedEnclosureCard({
                   : 'border border-border text-ink-soft',
               )}
             >
-              {isActive ? 'aktiv' : 'frei'}
+              {isActive ? 'belegt' : 'frei'}
             </span>
           </div>
           <div className="mt-1 text-sm text-ink-muted">{occupancySummary}</div>

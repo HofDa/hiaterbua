@@ -31,7 +31,6 @@ export function SettingsTileCachePanel({
   tileCacheCount,
   hasStoredTiles,
   isOpen,
-  settingsStorageMode,
   persistentStorageGranted,
   persistentStorageLoading,
   onToggleOpen,
@@ -89,9 +88,6 @@ export function SettingsTileCachePanel({
                     ? 'Vor Löschen geschützt'
                     : 'Nicht vor Löschen geschützt'}
               </span>
-            </div>
-            <div className="mt-2 text-xs font-medium text-ink-muted">
-              Speichermodus: {settingsStorageMode === 'db' ? 'App-Datenbank' : 'iOS-Fallback'}
             </div>
             <div className="mt-1 text-xs font-medium text-ink-muted">
               Das Gerät darf die gespeicherten Daten bei Platzmangel{' '}

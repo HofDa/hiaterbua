@@ -19,8 +19,8 @@ export function getOfflineMapReadinessProblem({
   if (!tileCachingEnabled) {
     return {
       tone: 'warning',
-      text: 'Offline-Karten sind aus – ohne Netz gibt es keine Karte.',
-      action: { href: '/settings', label: 'Aktivieren' },
+      text: 'Karte ist noch nicht offline gesichert.',
+      action: { href: '/settings', label: 'Jetzt sichern' },
     }
   }
 
@@ -31,14 +31,14 @@ export function getOfflineMapReadinessProblem({
   if (isOnline) {
     return {
       tone: 'warning',
-      text: 'Noch keine Offline-Karten gespeichert.',
-      action: { href: '/settings', label: 'Karten sichern' },
+      text: 'Karte ist noch nicht offline gesichert.',
+      action: { href: '/settings', label: 'Jetzt sichern' },
     }
   }
 
   return {
     tone: 'error',
-    text: 'Offline ohne gespeicherte Karten.',
+    text: 'Kein Netz und keine offline gesicherte Karte.',
     action: null,
   }
 }

@@ -19,6 +19,7 @@ import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
 import { ConnectivityBanner } from '@/components/ui/connectivity-banner'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { Toaster } from '@/components/ui/toaster'
+import { UndoToastRouteGuard } from '@/components/ui/undo-toast'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -75,6 +76,7 @@ export default function RootLayout({
               <RecordingStatusBar />
               <ConnectivityBanner />
               <Toaster />
+              <UndoToastRouteGuard />
             </ConfirmDialogProvider>
           </ActiveRecordingProvider>
         </div>

@@ -11,7 +11,7 @@ describe('getOfflineMapReadinessProblem', () => {
       }),
     ).toMatchObject({
       tone: 'warning',
-      action: { href: '/settings', label: 'Aktivieren' },
+      action: { href: '/settings', label: 'Jetzt sichern' },
     })
   })
 
@@ -34,8 +34,8 @@ describe('getOfflineMapReadinessProblem', () => {
       }),
     ).toEqual({
       tone: 'warning',
-      text: 'Noch keine Offline-Karten gespeichert.',
-      action: { href: '/settings', label: 'Karten sichern' },
+      text: 'Karte ist noch nicht offline gesichert.',
+      action: { href: '/settings', label: 'Jetzt sichern' },
     })
   })
 
@@ -48,7 +48,7 @@ describe('getOfflineMapReadinessProblem', () => {
       }),
     ).toEqual({
       tone: 'error',
-      text: 'Offline ohne gespeicherte Karten.',
+      text: 'Kein Netz und keine offline gesicherte Karte.',
       action: null,
     })
   })

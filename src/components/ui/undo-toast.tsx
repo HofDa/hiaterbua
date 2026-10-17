@@ -1,31 +1,65 @@
 'use client'
 
+import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { useNowTick } from '@/hooks/use-now-tick'
+
+const UNDO_TOAST_MS = 10_000
+const UNDO_TOAST_CLASS = 'pastore-undo-toast'
+
+function UndoToastContent({
+  message,
+  startedAt,
+  onUndo,
+  onClose,
+}: {
+  message: string
+  startedAt: number
+  onUndo: () => void | Promise<void>
+  onClose: () => void
+}) {
+  const nowMs = useNowTick(true)
+  const remainingS = Math.max(0, Math.ceil((UNDO_TOAST_MS - (nowMs - startedAt)) / 1000))
+
+  return (
+    <span className="flex items-center gap-3">
+      <span className="text-sm font-semibold text-ink-strong">{message}</span>
+      <button
+        type="button"
+        onClick={() => {
+          onClose()
+          void onUndo()
+        }}
+        className="min-h-11 shrink-0 rounded-full border-2 border-border-strong bg-surface-raised px-4 text-sm font-semibold text-ink-strong"
+      >
+        Rückgängig <span className="tabular-nums text-ink-muted">({remainingS} s)</span>
+      </button>
+    </span>
+  )
+}
 
 /**
- * A short "saved + Rückgängig" notice for quick commits that have no screen
- * of their own (e.g. assigning a herd to a Pferch). Same promise as the
- * larger summary cards: say what was saved, allow a quick undo.
+ * The small "saved + Rückgängig" notice for quick commits without a screen of
+ * their own (assigning a herd). Same promise as the summary cards: what was
+ * saved, a counted-down undo. It belongs to the screen that made the change
+ * and closes when the user moves on (see UndoToastRouteGuard).
  */
 export function showUndoToast(message: string, onUndo: () => void | Promise<void>) {
+  const startedAt = Date.now()
   toast(
     (t) => (
-      <span className="flex items-center gap-3">
-        <span className="text-sm font-semibold text-ink-strong">{message}</span>
-        <button
-          type="button"
-          onClick={() => {
-            toast.dismiss(t.id)
-            void onUndo()
-          }}
-          className="min-h-11 shrink-0 rounded-full border-2 border-border-strong bg-surface-raised px-4 text-sm font-semibold text-ink-strong"
-        >
-          Rückgängig
-        </button>
-      </span>
+      <UndoToastContent
+        message={message}
+        startedAt={startedAt}
+        onUndo={onUndo}
+        onClose={() => toast.dismiss(t.id)}
+      />
     ),
     {
-      duration: 10_000,
+      id: `undo-${startedAt}`,
+      duration: UNDO_TOAST_MS,
+      className: UNDO_TOAST_CLASS,
       style: {
         border: '2px solid var(--success-border)',
         background: 'var(--success-surface)',
@@ -34,4 +68,17 @@ export function showUndoToast(message: string, onUndo: () => void | Promise<void
       },
     }
   )
+}
+
+/**
+ * Dismisses undo toasts on navigation, so a "Rückgängig" never floats over a
+ * different task (e.g. the care answers) where one slip would undo the wrong
+ * thing.
+ */
+export function UndoToastRouteGuard() {
+  const pathname = usePathname()
+  useEffect(() => {
+    toast.dismiss()
+  }, [pathname])
+  return null
 }

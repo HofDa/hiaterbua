@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useWorkPageEditController } from '@/components/work/hooks/use-work-page-edit-controller'
 import { useWorkPageFormState } from '@/components/work/hooks/use-work-page-controller/use-work-page-form-state'
 import { useWorkPageSessionActions } from '@/components/work/hooks/use-work-page-controller/use-work-page-session-actions'
@@ -28,6 +28,13 @@ export function useWorkPageController({ sessions }: UseWorkPageControllerOptions
     resetStartedSessionForm,
   } = useWorkPageFormState()
   const [statusMessage, setStatusMessage] = useState('')
+  // Short confirmations ("Arbeitseinsatz gestartet.") fade after a moment
+  // instead of repeating the live status for the rest of the session.
+  useEffect(() => {
+    if (!statusMessage) return
+    const timer = window.setTimeout(() => setStatusMessage(''), 5000)
+    return () => window.clearTimeout(timer)
+  }, [statusMessage])
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 

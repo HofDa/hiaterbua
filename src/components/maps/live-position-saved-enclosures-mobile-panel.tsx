@@ -191,7 +191,7 @@ export function LivePositionSavedEnclosuresMobilePanel({
                                 : 'border border-border text-ink-soft',
                             )}
                           >
-                            {isActive ? 'aktiv' : 'frei'}
+                            {isActive ? 'belegt' : 'frei'}
                           </span>
                         </span>
                         <span className="mt-0.5 block text-sm text-ink-muted">

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorAlert, StatusAlert } from '@/components/ui/alert'
 import { SavedSummaryCard } from '@/components/ui/saved-summary-card'
 import type { LastFinishedWork } from '@/components/work/hooks/use-work-page-controller/use-work-page-session-actions'
-import { formatSpan } from '@/lib/utils/format'
+import { formatDurationWords } from '@/lib/maps/grazing-session-map-helpers'
 import type { WorkActivityId, Enclosure, Herd, WorkSession, WorkStatus, WorkType } from '@/types/domain'
 import type { WorkPickerSectionId, WorkSelection } from '@/lib/work/work-session-helpers'
 
@@ -75,6 +75,29 @@ export function WorkSessionControlCard({
     <Card data-work-session-control-card="true">
       {/* Card already carries p-5; the CardHeader/CardContent p-6 defaults on
           top of it would double the padding and blow the card up on mobile. */}
+      {/* The summary closes the session that just ended, above the next one. */}
+      {!activeSession && lastFinishedWork ? (
+        <div className="mb-5">
+          <SavedSummaryCard
+            title="Arbeitseinsatz gespeichert"
+            subtitle={lastFinishedWork.label}
+            stats={[
+              { label: 'Dauer', value: formatDurationWords(lastFinishedWork.durationS) },
+              {
+                label: 'Herde',
+                value: lastFinishedWork.herdId
+                  ? (herdsById.get(lastFinishedWork.herdId)?.name ?? '–')
+                  : '–',
+              },
+            ]}
+            savedAt={lastFinishedWork.finishedAt}
+            undoLabel="Rückgängig – weiterlaufen lassen"
+            isBusy={isSaving}
+            onUndo={onUndoFinishWork}
+            onDismiss={onDismissFinishedWork}
+          />
+        </div>
+      ) : null}
       <CardHeader className="p-0">
         <CardTitle className="text-xl">
           {activeSession ? 'Laufender Arbeitseinsatz' : 'Neuer Arbeitseinsatz'}
@@ -82,28 +105,6 @@ export function WorkSessionControlCard({
       </CardHeader>
 
       <CardContent className="p-0">
-        {!activeSession && lastFinishedWork ? (
-          <div className="mb-4">
-            <SavedSummaryCard
-              title="Arbeitseinsatz gespeichert"
-              subtitle={lastFinishedWork.label}
-              stats={[
-                { label: 'Dauer', value: formatSpan(lastFinishedWork.durationS / 60) },
-                {
-                  label: 'Herde',
-                  value: lastFinishedWork.herdId
-                    ? (herdsById.get(lastFinishedWork.herdId)?.name ?? '–')
-                    : '–',
-                },
-              ]}
-              savedAt={lastFinishedWork.finishedAt}
-              undoLabel="Rückgängig – weiterlaufen lassen"
-              isBusy={isSaving}
-              onUndo={onUndoFinishWork}
-              onDismiss={onDismissFinishedWork}
-            />
-          </div>
-        ) : null}
         {activeSession ? (
           <WorkActiveSessionPanel
             activeSession={activeSession}

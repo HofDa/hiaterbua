@@ -154,7 +154,7 @@ export function useSettingsPrefetch(options: {
     resetPrefetchFeedback()
 
     if (!tileCachingEnabled) {
-      setPrefetchError('Bitte zuerst „Offline-Karten speichern“ einschalten.')
+      setPrefetchError('Bitte zuerst „Angesehene Karten offline sichern“ einschalten.')
       return
     }
 
@@ -204,7 +204,7 @@ export function useSettingsPrefetch(options: {
     resetPrefetchFeedback()
 
     if (!tileCachingEnabled) {
-      setPrefetchError('Bitte zuerst „Offline-Karten speichern“ einschalten.')
+      setPrefetchError('Bitte zuerst „Angesehene Karten offline sichern“ einschalten.')
       return
     }
 
@@ -232,7 +232,7 @@ export function useSettingsPrefetch(options: {
     resetPrefetchFeedback()
 
     if (!tileCachingEnabled) {
-      setPrefetchError('Bitte zuerst „Offline-Karten speichern“ einschalten.')
+      setPrefetchError('Bitte zuerst „Angesehene Karten offline sichern“ einschalten.')
       return
     }
 

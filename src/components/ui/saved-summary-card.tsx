@@ -38,6 +38,8 @@ export function SavedSummaryCard({
   const nowMs = useNowTick(true)
   const remainingS = Math.ceil((UNDO_VISIBLE_MS - (nowMs - Date.parse(savedAt))) / 1000)
   const canUndo = remainingS > 0
+  // Empty values ("–") say nothing; leave them out.
+  const shownStats = stats.filter((stat) => stat.value && stat.value !== '–')
 
   return (
     <section
@@ -63,9 +65,9 @@ export function SavedSummaryCard({
         </button>
       </div>
 
-      {stats.length > 0 ? (
+      {shownStats.length > 0 ? (
         <dl className="mt-3 grid grid-cols-3 gap-3">
-          {stats.map((stat) => (
+          {shownStats.map((stat) => (
             <div key={stat.label} className="min-w-0">
               <dt className="text-xs font-semibold text-ink-muted">{stat.label}</dt>
               <dd className="mt-0.5 text-base font-bold tabular-nums [overflow-wrap:anywhere]">{stat.value}</dd>

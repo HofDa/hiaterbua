@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
+  AlertTriangle,
   ArrowRight,
   Check,
   ChevronDown,
@@ -11,8 +12,10 @@ import {
   HelpCircle,
   Pencil,
   Search,
+  X,
 } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/alert'
+import { SavedSummaryCard } from '@/components/ui/saved-summary-card'
 import { Card } from '@/components/ui/card'
 import {
   FlowOptionGrid,
@@ -121,10 +124,19 @@ function ObservationChoice<T extends string>({
   )
 }
 
-function SectionQuestion({ title, hint }: { title: string; hint?: string }) {
+function SectionQuestion({
+  title,
+  hint,
+  level = 'h3',
+}: {
+  title: string
+  hint?: string
+  level?: 'h2' | 'h3'
+}) {
+  const Heading = level
   return (
     <div>
-      <h3 className="text-base font-semibold text-ink-strong">{title}</h3>
+      <Heading className="text-lg font-bold text-ink-strong">{title}</Heading>
       {hint ? <p className="mt-1 text-sm leading-relaxed text-ink-muted">{hint}</p> : null}
     </div>
   )
@@ -235,8 +247,24 @@ function ResultPanel({ result }: { result: ReturnType<typeof evaluateCareAssessm
   return (
     <div className={cn('rounded-[1.35rem] border-2 p-4 md:p-5', styles[result.status])}>
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-current/20 bg-white/40">
-          <Check aria-hidden="true" className="h-5 w-5" />
+        {/* A real traffic-light dot with a matching symbol: the result used
+            to show a checkmark even for "Gelb" and "Rot", and Gelb in orange. */}
+        <span
+          aria-hidden="true"
+          className={cn(
+            'mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-black',
+            result.status === 'green' && 'bg-[#16a34a] text-white',
+            result.status === 'yellow' && 'bg-[#facc15] text-black',
+            result.status === 'red' && 'bg-[#dc2626] text-white',
+          )}
+        >
+          {result.status === 'green' ? (
+            <Check className="h-5 w-5" strokeWidth={3} />
+          ) : result.status === 'yellow' ? (
+            <AlertTriangle className="h-5 w-5" strokeWidth={2.6} />
+          ) : (
+            <X className="h-5 w-5" strokeWidth={3} />
+          )}
         </span>
         <div>
           <h2 className="text-xl font-semibold">{result.title}</h2>
@@ -650,6 +678,8 @@ export function CareCheckFlow() {
   // Id of the check saved from the current answers; a correction replaces it.
   const [savedCheckId, setSavedCheckId] = useState<string | null>(null)
   const [checkDiscarded, setCheckDiscarded] = useState(false)
+  const [checkSavedAt, setCheckSavedAt] = useState<string | null>(null)
+  const [isSavedCardDismissed, setIsSavedCardDismissed] = useState(false)
   // One question per screen: index into fieldQuestionIds; length = all done.
   const [questionIndex, setQuestionIndex] = useState(0)
   const enclosuresWithPlan = useLiveQuery(
@@ -1083,6 +1113,8 @@ export function CareCheckFlow() {
       })
       haptic('medium')
       setCheckDiscarded(false)
+      setCheckSavedAt(new Date().toISOString())
+      setIsSavedCardDismissed(false)
       setSavedCheckId(saved.id)
       setIsCheckSaved(true)
     } catch (error) {
@@ -1137,6 +1169,7 @@ export function CareCheckFlow() {
         {view === 'area' ? (
           <div className="space-y-4">
             <SectionQuestion
+              level="h2"
               title="Welche Fläche kontrollierst du?"
               hint="Wähle den Pferch. Der Pflegeplan gehört immer zu genau dieser Fläche."
             />
@@ -1674,7 +1707,7 @@ export function CareCheckFlow() {
             {checkDiscarded ? (
               <p
                 role="status"
-                className="rounded-[1.1rem] border-2 border-warning-border bg-warning-surface px-4 py-3 text-sm font-semibold text-warning-ink"
+                className="rounded-[1.1rem] border-2 border-border-soft bg-surface-raised px-4 py-3 text-sm font-semibold text-ink-strong"
               >
                 Pflegecheck verworfen. Deine Antworten sind noch da – korrigieren oder neu speichern.
               </p>
@@ -1792,25 +1825,23 @@ export function CareCheckFlow() {
 
         {view === 'result' && result ? (
           <div className="space-y-4">
-            <ResultPanel result={result} />
-
-            {isCheckSaved ? (
-              <div
-                role="status"
-                className="flex items-center justify-between gap-3 rounded-[1.1rem] border-2 border-success-border bg-success-surface px-4 py-3"
-              >
-                <span className="flex items-center gap-2 text-base font-bold text-success-ink">
-                  <Check aria-hidden="true" className="h-5 w-5" strokeWidth={3} />
-                  Pflegecheck gespeichert
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void undoSavedCheck()}
-                  className="min-h-11 shrink-0 rounded-full border-2 border-border-strong bg-surface-raised px-4 text-sm font-semibold text-ink-strong"
-                >
-                  Rückgängig
-                </button>
-              </div>
+            {/* Saved state first, in the shared "saved + undo" form — it was
+                below the long result, behind the bottom nav. */}
+            {isCheckSaved && checkSavedAt && !isSavedCardDismissed ? (
+              <SavedSummaryCard
+                title="Pflegecheck gespeichert"
+                subtitle={enclosures?.find((enclosure) => enclosure.id === enclosureId)?.name}
+                stats={[
+                  {
+                    label: 'Ergebnis',
+                    value: result.status === 'green' ? 'Grün' : result.status === 'yellow' ? 'Gelb' : 'Rot',
+                  },
+                ]}
+                savedAt={checkSavedAt}
+                undoLabel="Rückgängig – Antworten korrigieren"
+                onUndo={undoSavedCheck}
+                onDismiss={() => setIsSavedCardDismissed(true)}
+              />
             ) : isSavingCheck ? (
               <p role="status" className="text-sm font-semibold text-ink-muted">
                 Wird gespeichert …
@@ -1821,6 +1852,8 @@ export function CareCheckFlow() {
                 <FlowPrimaryAction onClick={() => void saveCheck()}>Erneut speichern</FlowPrimaryAction>
               </>
             ) : null}
+
+            <ResultPanel result={result} />
 
             <FlowPrimaryAction onClick={() => setView('overview')} disabled={isSavingCheck}>
               Zur Flächenübersicht

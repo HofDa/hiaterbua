@@ -2,10 +2,10 @@
 
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AlertTriangle, X } from 'lucide-react'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { getAppSettings } from '@/lib/db/repositories/settings'
+import { useSecureAreaPrefetch } from '@/components/dashboard/use-secure-area-prefetch'
 import { getTileCacheCount, TILE_CACHE_CHANGED_EVENT } from '@/lib/maps/tile-cache'
 import { getOfflineMapReadinessProblem } from '@/lib/maps/offline-map-readiness'
 import { defaultAppSettings } from '@/lib/settings/defaults'
@@ -77,6 +77,12 @@ export function StatusStrip() {
         defaultAppSettings.tileCachingEnabled
       )
     : defaultAppSettings.tileCachingEnabled
+  // The banner's button does the whole job — switch offline maps on and save
+  // the area around the user — instead of sending them to Einstellungen.
+  const secureArea = useSecureAreaPrefetch({
+    baseLayer: settings?.mapBaseLayer ?? defaultAppSettings.mapBaseLayer,
+    tileCachingEnabled,
+  })
   useEffect(() => {
     const update = () => setIsOnline(navigator.onLine)
     update()
@@ -215,14 +221,22 @@ export function StatusStrip() {
                 visibleProblem.tone === 'error' ? 'text-error-border' : 'text-warning-border',
               )}
             />
-            <span className="min-w-0">{visibleProblem.text}</span>
+            <span className="min-w-0" aria-live="polite">
+              {secureArea.isBusy || secureArea.status === 'error'
+                ? secureArea.progress
+                  ? `Sichert Karte … ${secureArea.progress.completed} / ${secureArea.progress.total}`
+                  : secureArea.message
+                : visibleProblem.text}
+            </span>
             {visibleProblem.action ? (
-              <Link
-                href={visibleProblem.action.href}
-                className="inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 font-semibold app-chrome-control"
+              <button
+                type="button"
+                onClick={() => secureArea.secureCurrentArea()}
+                disabled={secureArea.isBusy}
+                className="inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 font-semibold app-chrome-control disabled:opacity-60"
               >
-                {visibleProblem.action.label}
-              </Link>
+                {secureArea.isBusy ? 'Sichert …' : visibleProblem.action.label}
+              </button>
             ) : null}
             {visibleProblem.tone === 'warning' ? (
               <button

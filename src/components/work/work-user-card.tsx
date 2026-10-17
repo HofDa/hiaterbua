@@ -259,21 +259,29 @@ export function WorkUserCard() {
                     placeholder="z. B. Vorname Nachname"
                     autoComplete="name"
                     disabled={!isReady || isSaving}
+                    enterKeyHint="done"
+                    // Saved on leaving the field or Enter — like the rest of
+                    // the settings, which save automatically.
+                    onBlur={() => void saveUserName()}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        void saveUserName()
+                      }
+                    }}
                   />
 
                   <div className="flex flex-wrap gap-2">
-                    <FormButton
-                      type="button"
-                      onClick={() => void saveUserName()}
-                      disabled={!isReady || isSaving}
-                    >
-                      {isSaving ? 'Speichert ...' : 'Speichern'}
-                    </FormButton>
+                    {isSaving ? (
+                      <span className="self-center text-sm font-medium text-ink-muted">Speichert …</span>
+                    ) : null}
 
                     {!isMissingUserName ? (
                       <FormButton
                         type="button"
                         onClick={cancelEditing}
+                        // Keep the field's blur from saving before cancelling.
+                        onMouseDown={(event) => event.preventDefault()}
                         disabled={isSaving}
                         variant="secondary"
                       >

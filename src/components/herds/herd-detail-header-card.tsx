@@ -22,7 +22,6 @@ type HerdDetailHeaderCardProps = {
   onMetaNotesChange: (value: string) => void
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void | Promise<void>
   onBack: () => void
-  onDelete: () => void | Promise<void>
 }
 
 export function HerdDetailHeaderCard({
@@ -42,7 +41,6 @@ export function HerdDetailHeaderCard({
   onMetaNotesChange,
   onSubmit,
   onBack,
-  onDelete,
 }: HerdDetailHeaderCardProps) {
   return (
     <Card>
@@ -122,13 +120,6 @@ export function HerdDetailHeaderCard({
           <ErrorAlert className="mt-3">{metaError}</ErrorAlert>
         ) : null}
 
-        {/* Deliberately far from "Zurück": deleting a herd is irreversible
-            (it still asks to confirm). */}
-        <div className="mt-8 border-t border-border pt-4">
-          <FormButton type="button" onClick={() => void onDelete()} variant="danger">
-            Herde löschen
-          </FormButton>
-        </div>
       </CardContent>
     </Card>
   )

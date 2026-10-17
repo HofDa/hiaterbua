@@ -17,22 +17,46 @@ export function GrazingSessionActiveSummary({
   safeHerds,
   selectedHerdId,
   selectedAnimalCount,
+  onAdjustAnimalCount,
 }: {
   safeHerds: Herd[]
   selectedHerdId: string
   selectedAnimalCount: number | null
+  onAdjustAnimalCount: (delta: number) => void | Promise<void>
 }) {
   const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
+  const [isEditingCount, setIsEditingCount] = useState(false)
+  const count = selectedAnimalCount ?? 0
 
-  // Read-only facts as plain text, not boxes that look like buttons.
+  // Read-only facts as plain text; the count stays correctable here, because a
+  // one-tap start from Start skips the count step.
   return (
-    <p className="text-lg font-bold leading-snug text-ink-strong [overflow-wrap:anywhere]">
-      {selectedHerd?.name ?? 'Herde nicht gewählt'}
-      <span className="font-semibold text-ink-muted">
-        {' · '}
-        {selectedAnimalCount ?? 0} {selectedAnimalCount === 1 ? 'Tier' : 'Tiere'}
-      </span>
-    </p>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-lg font-bold leading-snug text-ink-strong [overflow-wrap:anywhere]">
+          {selectedHerd?.name ?? 'Herde nicht gewählt'}
+          <span className="font-semibold text-ink-muted">
+            {' · '}
+            {count} {count === 1 ? 'Tier' : 'Tiere'}
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={() => setIsEditingCount((current) => !current)}
+          aria-expanded={isEditingCount}
+          className="min-h-11 rounded-full border-2 border-border-strong px-4 text-sm font-semibold text-ink-strong"
+        >
+          {isEditingCount ? 'Fertig' : 'Tiere ändern'}
+        </button>
+      </div>
+      {isEditingCount ? (
+        <CountStepper
+          label="Tiere"
+          value={count}
+          onChange={(next) => void onAdjustAnimalCount(next - count)}
+        />
+      ) : null}
+    </div>
   )
 }
 
@@ -57,7 +81,7 @@ export function GrazingSessionMobileStartFlow({
   onSelectedHerdIdChange: (value: string) => void
   onAdjustAnimalCount: (delta: number) => void | Promise<void>
   onSessionNotesChange: (value: string) => void
-  onStartSession: () => void | Promise<void>
+  onStartSession: (herdId?: string) => void | Promise<void>
 }) {
   const flowRef = useRef<HTMLDivElement | null>(null)
   const [internalStep, setInternalStep] = useState<'herd' | 'setup'>('herd')
@@ -67,20 +91,30 @@ export function GrazingSessionMobileStartFlow({
   const animalCount = selectedAnimalCount ?? 0
   const selectedHerd = safeHerds.find((herd) => herd.id === selectedHerdId) ?? null
 
-  // Coming from Start's "Starten" on a herd row: preselect that herd and go
-  // straight to the count step, then drop the parameter from the URL.
+  // Coming from Start's "Starten" on a herd row: start right away with that
+  // herd's default count (editable on the running screen), then drop the
+  // parameter. `?herd=` alone only preselects and opens the count step.
+  const autoStartedRef = useRef(false)
   useEffect(() => {
-    const herdId = new URLSearchParams(window.location.search).get('herd')
+    const params = new URLSearchParams(window.location.search)
+    const herdId = params.get('herd')
     if (!herdId || !safeHerds.some((herd) => herd.id === herdId)) return
+    const shouldStart = params.get('start') === '1'
     const timer = window.setTimeout(() => {
-      onSelectedHerdIdChange(herdId)
-      setInternalStep('setup')
+      if (shouldStart && !autoStartedRef.current) {
+        autoStartedRef.current = true
+        void onStartSession(herdId)
+      } else {
+        onSelectedHerdIdChange(herdId)
+        setInternalStep('setup')
+      }
       const url = new URL(window.location.href)
       url.searchParams.delete('herd')
+      url.searchParams.delete('start')
       window.history.replaceState(window.history.state, '', url.pathname + url.search)
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [safeHerds, onSelectedHerdIdChange])
+  }, [safeHerds, onSelectedHerdIdChange, onStartSession])
 
   useEffect(() => {
     if (!hasStartedFlow || typeof window === 'undefined') return

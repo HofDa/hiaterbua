@@ -64,6 +64,7 @@ export function GrazingSessionManagementPanel() {
             safeHerds={safeHerds}
             selectedHerdId={selectedHerdId}
             selectedAnimalCount={selectedAnimalCount}
+            onAdjustAnimalCount={onAdjustAnimalCount}
           />
 
           <GrazingSessionMobileControls

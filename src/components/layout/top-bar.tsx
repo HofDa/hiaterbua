@@ -3,7 +3,6 @@
 import { Download, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { metaLabelClassName } from '@/components/ui/typography'
 import { APP_NAME } from '@/lib/app-metadata'
 import { cn } from '@/lib/utils/cn'
 import { isNavItemActive } from './nav-active'
@@ -29,14 +28,6 @@ export function TopBar() {
         </p>
         <div className="hidden min-w-0 shrink md:block">
           <p className="truncate text-lg font-semibold text-white">{APP_NAME}</p>
-          <p
-            className={metaLabelClassName(
-              { tracking: 'wider', tone: 'inherit', weight: 'normal' },
-              'text-chrome-muted',
-            )}
-          >
-            Offlinefähige Felddokumentation
-          </p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2 md:hidden">

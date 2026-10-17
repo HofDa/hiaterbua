@@ -13,14 +13,12 @@ import {
   FormTextarea,
 } from '@/components/ui/form'
 import { metaLabelClassName } from '@/components/ui/typography'
-import { assertUpdated } from '@/lib/db/assert-updated'
 import { listAllAnimals } from '@/lib/db/repositories/animals'
 import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-enclosure-stats'
 import { pluralize } from '@/lib/utils/format'
 import {
   createHerdRecord,
   listHerdsByRecent,
-  updateHerdRecord,
 } from '@/lib/db/repositories/herds'
 import type { Species } from '@/types/domain'
 
@@ -78,7 +76,6 @@ export default function HerdsPage() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [createError, setCreateError] = useState('')
-  const [actionError, setActionError] = useState('')
 
   async function handleCreateHerd(e: React.FormEvent) {
     e.preventDefault()
@@ -101,20 +98,6 @@ export default function HerdsPage() {
       setCreateError('Herde konnte nicht gespeichert werden.')
     } finally {
       setSaving(false)
-    }
-  }
-
-  async function toggleArchive(herdId: string, nextState: boolean) {
-    setActionError('')
-
-    try {
-      const updatedCount = await updateHerdRecord(herdId, {
-        isArchived: nextState,
-      })
-
-      assertUpdated(updatedCount, 'Herde wurde nicht gefunden.')
-    } catch {
-      setActionError('Herde konnte nicht aktualisiert werden.')
     }
   }
 
@@ -213,7 +196,6 @@ export default function HerdsPage() {
           ) : null}
         </div>
 
-        {actionError ? <ErrorAlert className="rounded-[1.25rem]">{actionError}</ErrorAlert> : null}
 
         {!herds ? (
           <div className="app-panel-sm p-5">Lade Daten …</div>
@@ -243,14 +225,7 @@ export default function HerdsPage() {
                     </span>
                   </p>
                 </div>
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => toggleArchive(herd.id, !herd.isArchived)}
-                  className="min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-semibold"
-                >
-                  {herd.isArchived ? 'Aktivieren' : 'Archivieren'}
-                </FormButton>
+
               </div>
 
               {herd.speciesSummary.length > 0 ? (

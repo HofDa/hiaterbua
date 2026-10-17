@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react'
 import { usePageTitle } from '@/components/layout/page-title-store'
+import { FormButton } from '@/components/ui/form'
+import { updateHerdRecord } from '@/lib/db/repositories/herds'
 import { getEffectiveHerdCount } from '@/lib/maps/live-position-map-enclosure-stats'
 import { speciesOptions } from '@/components/herds/animal-form-fields'
 import { HerdDetailAddAnimalCard } from '@/components/herds/herd-detail-add-animal-card'
@@ -39,6 +41,10 @@ export function HerdDetailPageContent({
   onDeleted,
 }: HerdDetailPageContentProps) {
   usePageTitle(herd.name)
+
+  async function toggleArchived() {
+    await updateHerdRecord(herd.id, { isArchived: !herd.isArchived })
+  }
   const activeAnimalsCount = animals.filter((animal) => !animal.isArchived).length
   const effectiveHerdCount = getEffectiveHerdCount(herd, animals)
 
@@ -116,7 +122,6 @@ export function HerdDetailPageContent({
         onMetaNotesChange={metaController.setMetaNotes}
         onSubmit={metaController.saveHerdMeta}
         onBack={onBack}
-        onDelete={metaController.deleteHerd}
       />
 
       <HerdDetailAssignmentCard
@@ -184,6 +189,26 @@ export function HerdDetailPageContent({
         onStartEdit={animalController.startEdit}
         onSetAnimalArchived={animalController.setAnimalArchived}
       />
+
+      {/* Gefahrenzone: archive and delete live at the very end, away from the
+          herd's everyday fields and from the list. */}
+      <section aria-labelledby="herd-danger" className="app-panel-sm p-5">
+        <h2 id="herd-danger" className="text-lg font-bold text-ink-strong">
+          Herde archivieren oder löschen
+        </h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          Archivieren blendet die Herde aus und lässt sich zurücknehmen. Löschen entfernt sie samt
+          Tieren, Weidegängen und Belegungen endgültig.
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <FormButton type="button" variant="secondary" onClick={() => void toggleArchived()}>
+            {herd.isArchived ? 'Wieder aktivieren' : 'Archivieren'}
+          </FormButton>
+          <FormButton type="button" variant="danger" onClick={() => void metaController.deleteHerd()}>
+            Herde löschen
+          </FormButton>
+        </div>
+      </section>
     </div>
   )
 }

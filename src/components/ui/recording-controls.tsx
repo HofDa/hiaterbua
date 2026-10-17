@@ -44,7 +44,7 @@ export function RecordingControls({
         type="button"
         onClick={() => void onStop()}
         disabled={isSaving}
-        className="mt-2 flex min-h-12 w-full items-center justify-center rounded-[1.1rem] border-2 border-error-border bg-surface-raised px-4 py-3 text-base font-semibold text-error-ink transition-colors hover:bg-error-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50"
+        className="mt-2 flex min-h-12 w-full items-center justify-center rounded-[1.1rem] border-2 border-error-border bg-surface-raised px-4 py-3 text-base font-semibold text-error-ink transition-colors [@media(hover:hover)]:hover:bg-error-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50"
       >
         {stopLabel}
       </button>

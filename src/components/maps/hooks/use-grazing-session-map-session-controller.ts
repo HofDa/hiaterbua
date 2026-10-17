@@ -160,8 +160,14 @@ export function useGrazingSessionMapSessionController({
     setActionError('')
   }
 
-  async function startSession() {
-    if (!selectedHerdId) {
+  /**
+   * Starts a Weidegang for the selected herd — or for `herdIdOverride`, used
+   * by Start's one-tap "Starten" on a herd row, which starts with that herd's
+   * default count (editable on the running screen).
+   */
+  async function startSession(herdIdOverride?: string) {
+    const herdId = herdIdOverride ?? selectedHerdId
+    if (!herdId) {
       setActionError('Bitte zuerst eine Herde für den Weidegang auswählen.')
       return
     }
@@ -182,9 +188,12 @@ export function useGrazingSessionMapSessionController({
           : 'Weidegang konnte nicht gestartet werden.',
       action: async () => {
         const currentPosition = getFreshAcceptedPosition()
-        const animalCount = getResolvedAnimalCount(selectedHerdId)
+        const animalCount = herdIdOverride
+          ? getDefaultAnimalCount(herdIdOverride, safeHerds, animalsByHerdId, lastAnimalCountByHerdId)
+          : getResolvedAnimalCount(herdId)
+        if (herdIdOverride) setSelectedHerdId(herdIdOverride)
         const session = await createGrazingSessionRecord({
-          herdId: selectedHerdId,
+          herdId,
           animalCount,
           notes: sessionNotes,
           position: currentPosition,
@@ -309,9 +318,15 @@ export function useGrazingSessionMapSessionController({
     const summary = describeSessionForStop()
     const confirmed = await confirm({
       title: 'Weidegang beenden?',
-      description: summary
-        ? `${summary}. Die GPS-Aufzeichnung wird abgeschlossen und gespeichert.`
-        : 'Die GPS-Aufzeichnung wird abgeschlossen und gespeichert.',
+      description: [
+        summary ? `${summary}.` : null,
+        // A walk with no distance is usually a mistaken start; say so.
+        activeSession && activeSession.distanceM < 1
+          ? 'Noch keine Strecke aufgezeichnet – wenn das ein Versehen war, kannst du ihn danach in „Verlauf“ löschen.'
+          : 'Die GPS-Aufzeichnung wird abgeschlossen und gespeichert.',
+      ]
+        .filter(Boolean)
+        .join(' '),
       confirmLabel: 'Beenden',
       cancelLabel: 'Weiter aufzeichnen',
       destructive: true,
