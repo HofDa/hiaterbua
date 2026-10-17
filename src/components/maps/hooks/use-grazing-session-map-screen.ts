@@ -11,7 +11,6 @@ import {
   getPositionLngLat,
   useMapKernel,
 } from '@/components/maps/hooks/use-map-kernel'
-import { useWakeLock } from '@/hooks/use-wake-lock'
 import type { PositionData } from '@/components/maps/grazing-session-map-types'
 import { getBoundsFromTrackpoints, getFreshPosition } from '@/lib/maps/map-core'
 import { registerGrazingSessionMapSetup } from '@/lib/maps/grazing-session-map-setup'
@@ -254,7 +253,8 @@ export function useGrazingSessionMapScreen() {
     currentSessionStatus: session.currentSessionStatus,
   })
 
-  useWakeLock(session.currentSessionStatus === 'active')
+  // The screen wake lock during an active recording is held app-wide by
+  // ScreenWakeKeeper, so it survives switching screens mid-walk.
 
   // Map all four panel slices into the store (the screen hook orchestrates; the publish
   // hook does the state -> store mapping that the old inline prop bags used to do).

@@ -18,6 +18,7 @@ export const settingsRecordSchema = z
     gpsMaxSpeedMps: optionalNumber,
     tileCachingEnabled: z.boolean().optional(),
     theme: z.enum(['system', 'light']).optional(),
+    keepScreenAwake: z.enum(['recording', 'always']).optional(),
   })
   .transform((value): AppSettings => {
     const gpsAccuracyThresholdM = Math.max(
@@ -52,5 +53,6 @@ export const settingsRecordSchema = z
       ),
       tileCachingEnabled: value.tileCachingEnabled ?? defaultAppSettings.tileCachingEnabled,
       theme: value.theme ?? defaultAppSettings.theme,
+      keepScreenAwake: value.keepScreenAwake ?? defaultAppSettings.keepScreenAwake,
     }
   })

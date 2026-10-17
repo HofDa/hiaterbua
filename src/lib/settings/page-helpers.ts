@@ -43,6 +43,7 @@ export function normalizeSettingsValue(
       typeof settings?.userName === 'string' ? settings.userName.trim() : defaultAppSettings.userName,
     language: 'de',
     mapBaseLayer: normalizeMapBaseLayer(settings?.mapBaseLayer),
+    keepScreenAwake: settings?.keepScreenAwake === 'always' ? 'always' : 'recording',
     gpsAccuracyThresholdM,
     gpsMinTimeS,
     gpsMinDistanceM,

@@ -6,7 +6,7 @@ import {
   SettingsTileCachePanel,
   type SettingsTileCachePanelProps,
 } from '@/components/settings/settings-tile-cache-panel'
-import type { AppSettings, MapBaseLayer } from '@/types/domain'
+import type { AppSettings, KeepScreenAwakeMode, MapBaseLayer } from '@/types/domain'
 import type { BrowserNotificationPermissionState } from '@/lib/notifications/browser-notifications'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormField, FormLabel, FormSelect, FormInput, FormButton } from '@/components/ui/form'
@@ -191,6 +191,27 @@ export function SettingsGeneralFormCard({
               <option value="system">System</option>
               <option value="light">Hell</option>
             </FormSelect>
+          </FormField>
+
+          <FormField>
+            <FormLabel>Bildschirm wach halten</FormLabel>
+            <FormSelect
+              value={draft.keepScreenAwake ?? 'recording'}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  keepScreenAwake: event.target.value as KeepScreenAwakeMode,
+                }))
+              }
+            >
+              <option value="recording">Während einer Aufzeichnung</option>
+              <option value="always">Immer an, solange die App offen ist</option>
+            </FormSelect>
+            <p className="mt-1 text-xs font-medium text-ink-muted">
+              {draft.keepScreenAwake === 'always'
+                ? 'Der Bildschirm geht nicht aus, solange die App im Vordergrund ist – zuverlässig, braucht aber mehr Akku.'
+                : 'Während ein Weidegang oder Arbeitseinsatz läuft, bleibt der Bildschirm an – auf jeder Seite der App.'}
+            </p>
           </FormField>
 
           <label className="flex items-center gap-3 rounded-[1.25rem] border-2 border-border bg-surface-raised px-4 py-3">

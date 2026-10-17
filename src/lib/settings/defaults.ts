@@ -11,6 +11,7 @@ export const defaultAppSettings: AppSettings = {
   gpsMaxSpeedMps: 7,
   tileCachingEnabled: false,
   theme: 'system',
+  keepScreenAwake: 'recording',
 }
 
 export function normalizeMapBaseLayer(value: string | null | undefined): AppSettings['mapBaseLayer'] {

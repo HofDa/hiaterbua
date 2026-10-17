@@ -340,6 +340,8 @@ export interface SessionEvent extends LocalRecordMetadata {
   updatedAt?: string
 }
 
+export type KeepScreenAwakeMode = 'recording' | 'always'
+
 export interface AppSettings {
   id: 'app'
   userName: string
@@ -351,6 +353,9 @@ export interface AppSettings {
   gpsMaxSpeedMps: number
   tileCachingEnabled: boolean
   theme: 'system' | 'light'
+  // When the screen is kept awake: only while a recording runs (default), or
+  // whenever the app is open ("Immer an") for field days on a mounted phone.
+  keepScreenAwake?: KeepScreenAwakeMode
   // ISO timestamp of the last successful full export; device-local backup
   // bookkeeping (intentionally not carried across import).
   lastExportAt?: string

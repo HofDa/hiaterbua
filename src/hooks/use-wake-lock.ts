@@ -14,21 +14,34 @@ export function useWakeLock(active: boolean) {
 
     let sentinel: WakeLockSentinel | null = null
     let cancelled = false
+    let requesting = false
 
     const acquire = async () => {
       // The lock can only be held while the page is visible; the OS releases it
       // automatically when the tab is hidden or the screen turns off.
-      if (cancelled || document.visibilityState !== 'visible') return
+      if (cancelled || requesting || document.visibilityState !== 'visible') return
       if (sentinel && !sentinel.released) return
 
+      requesting = true
       try {
-        sentinel = await navigator.wakeLock.request('screen')
+        const next = await navigator.wakeLock.request('screen')
         if (cancelled) {
-          await sentinel.release()
-          sentinel = null
+          await next.release()
+          return
         }
+        sentinel = next
+        // The system can also drop the lock while the page stays visible
+        // (battery saver toggled, power-source change). Re-acquire right away
+        // instead of waiting for the next visibility change.
+        next.addEventListener('release', () => {
+          if (sentinel === next) sentinel = null
+          if (!cancelled && document.visibilityState === 'visible') void acquire()
+        })
       } catch {
-        // Battery saver, missing user gesture, etc. — nothing actionable.
+        // Battery saver, missing user gesture, etc. — retried on the next
+        // interaction or visibility change.
+      } finally {
+        requesting = false
       }
     }
 
@@ -39,12 +52,20 @@ export function useWakeLock(active: boolean) {
       }
     }
 
+    // Some browsers refuse the request until the page has seen a user gesture;
+    // any tap is a cheap moment to retry when the lock is not held.
+    const handleInteraction = () => {
+      if (!sentinel || sentinel.released) void acquire()
+    }
+
     void acquire()
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    document.addEventListener('pointerdown', handleInteraction, { passive: true })
 
     return () => {
       cancelled = true
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      document.removeEventListener('pointerdown', handleInteraction)
       void sentinel?.release()
       sentinel = null
     }

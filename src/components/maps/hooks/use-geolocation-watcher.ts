@@ -33,6 +33,11 @@ type UseGeolocationWatcherOptions<T extends BaseTrackedPosition> = {
 // a short backoff to re-kick the OS location provider.
 const WATCH_RESTART_DELAY_MS = 2_000
 const WATCH_STALL_TIMEOUT_MS = 30_000
+// Mobile browsers suspend watchPosition while the app is hidden and do not
+// always revive it on return. When no fix arrived for this long, a return to
+// the foreground restarts the watch at once instead of waiting for the stall
+// timer (which is itself throttled while hidden).
+const RESUME_RESTART_AFTER_MS = 10_000
 
 /** Fired (via {@link requestGpsRetry}) when the user asks to re-attempt location access. */
 export const GPS_RETRY_EVENT = 'pastore:gps-retry'
@@ -62,6 +67,7 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
     let stopped = false
     let restartTimer: ReturnType<typeof setTimeout> | null = null
     let stallTimer: ReturnType<typeof setTimeout> | null = null
+    let lastFixAt = Date.now()
 
     const clearActiveWatch = () => {
       if (watchIdRef.current !== null) {
@@ -121,6 +127,7 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
 
       watchIdRef.current = navigator.geolocation.watchPosition(
         (rawPosition) => {
+          lastFixAt = Date.now()
           armStallTimer()
           const nextPosition = buildPositionRef.current(rawPosition)
           const currentSettings = settingsRef.current
@@ -199,11 +206,32 @@ export function useGeolocationWatcher<T extends BaseTrackedPosition>({
       startWatch()
     }
 
+    const handleVisibilityChange = () => {
+      if (stopped || document.visibilityState !== 'visible') return
+      if (watchIdRef.current === null && restartTimer === null) return // denied: terminal
+      if (Date.now() - lastFixAt < RESUME_RESTART_AFTER_MS) return
+
+      if (restartTimer !== null) {
+        clearTimeout(restartTimer)
+        restartTimer = null
+      }
+      recordFieldDiagnostic({
+        type: 'gps_watch_resume_restart',
+        message: 'GPS-Watch nach Rückkehr in den Vordergrund neu gestartet.',
+        details: { sinceLastFixMs: Date.now() - lastFixAt },
+      })
+      lastFixAt = Date.now()
+      clearActiveWatch()
+      startWatch()
+    }
+
     window.addEventListener(GPS_RETRY_EVENT, handleGpsRetry)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       stopped = true
       window.removeEventListener(GPS_RETRY_EVENT, handleGpsRetry)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       clearStallTimer()
       if (restartTimer !== null) {
         clearTimeout(restartTimer)
