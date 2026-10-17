@@ -17,7 +17,7 @@ export const settingsRecordSchema = z
     gpsMinDistanceM: optionalNumber,
     gpsMaxSpeedMps: optionalNumber,
     tileCachingEnabled: z.boolean().optional(),
-    theme: z.enum(['system', 'light']).optional(),
+    theme: z.enum(['system', 'light', 'contrast']).optional(),
     keepScreenAwake: z.enum(['recording', 'always']).optional(),
   })
   .transform((value): AppSettings => {

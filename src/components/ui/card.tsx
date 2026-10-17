@@ -35,7 +35,7 @@ export function CardTitle({
 }: ComponentProps<'h2'>) {
   return (
     <h2
-      className={cn('text-2xl font-semibold leading-none tracking-tight', className)}
+      className={cn('text-2xl font-bold leading-tight tracking-tight', className)}
       {...props}
     />
   )

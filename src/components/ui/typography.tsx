@@ -14,8 +14,9 @@ type MetaLabelOptions = {
 }
 
 const metaLabelSizeClasses: Record<MetaLabelSize, string> = {
-  nano: 'text-[10px]',
-  micro: 'text-[11px]',
+  // 11px is the floor for any label read outdoors; nothing renders smaller.
+  nano: 'text-[11px]',
+  micro: 'text-xs',
   xs: 'text-xs',
   sm: 'text-sm',
 }

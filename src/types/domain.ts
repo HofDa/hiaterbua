@@ -352,7 +352,8 @@ export interface AppSettings {
   gpsMinDistanceM: number
   gpsMaxSpeedMps: number
   tileCachingEnabled: boolean
-  theme: 'system' | 'light'
+  // 'system' is legacy and behaves like 'light'; 'contrast' is for sunlight.
+  theme: 'system' | 'light' | 'contrast'
   // When the screen is kept awake: only while a recording runs (default), or
   // whenever the app is open ("Immer an") for field days on a mounted phone.
   keepScreenAwake?: KeepScreenAwakeMode

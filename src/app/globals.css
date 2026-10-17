@@ -13,14 +13,17 @@
   --surface-disabled: #f3eee4;
   --surface-disabled-strong: #e1ddd7;
   --surface-border: rgba(58, 52, 42, 0.24);
-  --border-default: #ccb98a;
-  --border-soft: #d2cbc0;
+  /* Field contrast: control borders must hold >=3:1 on the parchment surfaces in
+     direct sun (the old #ccb98a sat at 1.8:1). */
+  --border-default: #8c7646;
+  --border-soft: #a99d88;
   --border-strong: #5a5347;
   --border-ink: #3a342a;
   --text-main: #17130f;
   --text-strong: #0f0d0b;
-  --text-soft: #5e5549;
-  --text-muted: #4f473c;
+  --text-soft: #463e33;
+  --text-muted: #3d362c;
+  --text-placeholder: #6b6458;
   --brand: #ccb98a;
   --brand-dark: #123a2d;
   --accent: #efe4c8;
@@ -37,7 +40,7 @@
   --chrome-foreground: #f3f8f4;
   --chrome-muted: #dce9e1;
   --success-surface: #edf1ec;
-  --success-border: #c5d3c8;
+  --success-border: #4d7a5f;
   --success-ink: #243228;
   --info-surface: var(--surface-warm);
   --info-border: var(--border-soft);
@@ -45,10 +48,10 @@
   --warning-surface: #fff1e3;
   --warning-callout: #fff1c7;
   --warning-border: #d97706;
-  --warning-ink: #b45309;
+  --warning-ink: #8f3f06;
   --error-surface: #fef2f2;
   --error-border: #ef4444;
-  --error-ink: #dc2626;
+  --error-ink: #b42318;
   --surface-control-start: #f6f2e9;
   --surface-control-end: #ece3cf;
   --map-scrim: rgba(70, 60, 46, 0.18);
@@ -67,15 +70,16 @@
   --chart-card-surface: #fcf8ef;
   --chart-badge-border: #d7ccb3;
   --chart-track: #ece7dc;
-  --shadow-panel: 0 18px 40px rgba(40, 34, 26, 0.08);
-  --shadow-panel-floating: 0 22px 60px rgba(40, 34, 26, 0.16);
-  --shadow-action: 0 12px 24px rgba(40, 34, 26, 0.08);
-  --shadow-action-strong: 0 16px 32px rgba(40, 34, 26, 0.14);
-  --shadow-chrome-top: 0 16px 38px rgba(8, 23, 17, 0.38);
-  --shadow-chrome-bottom: 0 -16px 36px rgba(8, 23, 17, 0.34);
-  --shadow-chrome-status: 0 12px 28px rgba(8, 23, 17, 0.28);
-  --shadow-chrome-active: 0 12px 28px rgba(9, 28, 20, 0.28);
-  --shadow-chrome-control: 0 8px 18px rgba(9, 28, 20, 0.16);
+  /* Rugged depth: short, tight offsets that read as an edge, not a glow. */
+  --shadow-panel: 0 2px 3px rgba(40, 34, 26, 0.12);
+  --shadow-panel-floating: 0 10px 24px rgba(40, 34, 26, 0.2);
+  --shadow-action: 0 2px 2px rgba(40, 34, 26, 0.12);
+  --shadow-action-strong: 0 3px 4px rgba(40, 34, 26, 0.18);
+  --shadow-chrome-top: 0 3px 8px rgba(8, 23, 17, 0.3);
+  --shadow-chrome-bottom: 0 -3px 8px rgba(8, 23, 17, 0.28);
+  --shadow-chrome-status: 0 3px 6px rgba(8, 23, 17, 0.24);
+  --shadow-chrome-active: 0 2px 4px rgba(9, 28, 20, 0.28);
+  --shadow-chrome-control: 0 2px 3px rgba(9, 28, 20, 0.2);
   --shadow-surface-row: 0 1px 2px rgba(23, 20, 18, 0.05);
   --shadow-map-surface: 0 12px 28px rgba(40, 34, 26, 0.1);
   --shadow-map-toolbar: 0 12px 30px rgba(40, 34, 26, 0.12);
@@ -91,10 +95,55 @@
   --radius-control: 1.1rem;
   --radius-callout: 1.2rem;
   --radius-map-surface: 1.4rem;
+  /* Geist (self-hosted via next/font, so it works offline): a clear,
+     slightly technical grotesk with sturdy numerals for an instrument-like
+     field UI. The system stack is only the fallback. */
   --font-sans:
-    "Segoe UI", "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    var(--font-geist-sans), "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono:
     "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* "Hoher Kontrast": for direct sunlight. Pure white surfaces, black ink and
+   borders, no tints or soft depth; the green chrome stays. */
+:root[data-theme="contrast"] {
+  --background: #ffffff;
+  --background-strong: #ffffff;
+  --background-soft: #ffffff;
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
+  --surface-muted: #f0f0f0;
+  --surface-warm: #f5f5f5;
+  --surface-hover: #ebebeb;
+  --border-default: #000000;
+  --border-soft: #4a4a4a;
+  --border-strong: #000000;
+  --border-ink: #000000;
+  --text-main: #000000;
+  --text-strong: #000000;
+  --text-soft: #1f1f1f;
+  --text-muted: #1f1f1f;
+  --text-placeholder: #4a4a4a;
+  --accent: #ffe08a;
+  --surface-control-start: #ffffff;
+  --surface-control-end: #ffffff;
+  --success-surface: #e7f4ea;
+  --success-border: #14532d;
+  --success-ink: #14532d;
+  --warning-ink: #7c2d12;
+  --error-ink: #991b1b;
+  --error-border: #991b1b;
+  --surface-glass: #ffffff;
+  --shadow-panel: none;
+  --shadow-action: none;
+  --shadow-action-strong: none;
+  --shadow-surface-row: none;
+  --shadow-map-surface: none;
+  --shadow-map-toolbar: none;
+}
+
+:root[data-theme="contrast"] body::before {
+  display: none;
 }
 
 @theme {
@@ -396,6 +445,11 @@ input,
 select,
 textarea {
   color: var(--text-main);
+}
+
+::placeholder {
+  color: var(--text-placeholder);
+  opacity: 1;
 }
 
 ::selection {

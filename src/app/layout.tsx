@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils/cn'
 import { GeistSans } from 'geist/font/sans'
 import type { Metadata, Viewport } from 'next'
 import { BottomNav } from '@/components/layout/bottom-nav'
@@ -13,6 +12,7 @@ import { APP_TITLE } from '@/lib/app-metadata'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { BackgroundGrazingRecorder } from '@/components/pwa/background-grazing-recorder'
 import { ScreenWakeKeeper } from '@/components/pwa/screen-wake-keeper'
+import { ThemeApplier } from '@/components/pwa/theme-applier'
 import { ServiceWorkerSync } from '@/components/pwa/service-worker-sync'
 import { SessionRecoveryManager } from '@/components/session-recovery/session-recovery-manager'
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog'
@@ -53,11 +53,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="de" suppressHydrationWarning>
-      <body className={cn('min-h-screen bg-background font-sans antialiased', GeistSans.variable)}>
+    <html lang="de" className={GeistSans.variable} suppressHydrationWarning>
+      <body className="min-h-screen bg-background font-sans antialiased">
         <div className="min-h-screen text-ink-strong">
           <FieldDiagnosticsRuntime />
           <FieldUiBlockerDetector />
+          <ThemeApplier />
           <ServiceWorkerSync />
           <AppRoutePrefetch />
           <BackgroundGrazingRecorder />
