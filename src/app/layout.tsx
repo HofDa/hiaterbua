@@ -8,7 +8,7 @@ import { RecordingStatusBar } from '@/components/layout/recording-status-bar'
 import { ActiveRecordingProvider } from '@/components/layout/use-active-recording'
 import { FieldDiagnosticsRuntime } from '@/components/diagnostics/field-diagnostics-runtime'
 import { FieldUiBlockerDetector } from '@/components/diagnostics/field-ui-blocker-detector'
-import { APP_TITLE } from '@/lib/app-metadata'
+import { APP_NAME } from '@/lib/app-metadata'
 import { AppRoutePrefetch } from '@/components/pwa/app-route-prefetch'
 import { BackgroundGrazingRecorder } from '@/components/pwa/background-grazing-recorder'
 import { ScreenWakeKeeper } from '@/components/pwa/screen-wake-keeper'
@@ -22,13 +22,13 @@ import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: APP_TITLE,
+  title: APP_NAME,
   description: 'Offlinefähige Feld- und Alm-Dokumentation für Herden, Pferche und Weidegänge',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: APP_TITLE,
+    title: APP_NAME,
   },
   icons: {
     icon: [

@@ -24,7 +24,7 @@ export function SettingsPageHeader({
         </div>
         <Link
           href="/settings/diagnostics"
-          className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }), 'rounded-full')}
+          className={cn(buttonVariants({ variant: 'secondary' }), 'min-h-11 rounded-full')}
         >
           Feld-Diagnose
         </Link>

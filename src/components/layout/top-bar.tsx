@@ -4,7 +4,7 @@ import { Download, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { metaLabelClassName } from '@/components/ui/typography'
-import { APP_TITLE } from '@/lib/app-metadata'
+import { APP_NAME } from '@/lib/app-metadata'
 import { cn } from '@/lib/utils/cn'
 import { isNavItemActive } from './nav-active'
 import { navItems } from './nav-items'
@@ -23,10 +23,10 @@ export function TopBar() {
         {/* Installed standalone use means the user already knows which app is
             open — on mobile the page title is the header, not the app name. */}
         <p className="min-w-0 truncate text-lg font-semibold text-white md:hidden">
-          {activeItem?.label ?? APP_TITLE}
+          {activeItem?.label ?? APP_NAME}
         </p>
         <div className="hidden min-w-0 shrink md:block">
-          <p className="truncate text-lg font-semibold text-white">{APP_TITLE}</p>
+          <p className="truncate text-lg font-semibold text-white">{APP_NAME}</p>
           <p
             className={metaLabelClassName(
               { tracking: 'wider', tone: 'inherit', weight: 'normal' },

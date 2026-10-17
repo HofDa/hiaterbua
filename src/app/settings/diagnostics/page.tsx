@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy, Download, LifeBuoy, Trash2 } from 'lucide-react'
+import { Copy, Download, LifeBuoy, Trash2, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -157,8 +157,12 @@ export default function DiagnosticsPage() {
               diesem Gerät und funktionieren offline.
             </CardDescription>
           </div>
-          <Link href="/settings" className={cn(buttonVariants({ variant: 'secondary' }), 'rounded-full')}>
-            Einstellungen
+          <Link
+            href="/settings"
+            className={cn(buttonVariants({ variant: 'outline' }), 'min-h-11 gap-1.5 rounded-full border-2 border-border-strong pl-3 font-semibold text-ink-strong')}
+          >
+            <ChevronLeft aria-hidden="true" className="h-4 w-4" strokeWidth={2.6} />
+            Zurück zu den Einstellungen
           </Link>
         </div>
 
@@ -205,7 +209,7 @@ export default function DiagnosticsPage() {
             type="checkbox"
             checked={debugFieldDiagnostics}
             onChange={(event) => toggleDebugFieldDiagnostics(event.target.checked)}
-            className="mt-1 h-4 w-4"
+            className="mt-0.5"
           />
           <span className="min-w-0">
             <span className="block text-sm font-semibold text-ink-strong">

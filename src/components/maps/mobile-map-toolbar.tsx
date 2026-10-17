@@ -34,7 +34,7 @@ export function MobileMapToolbar({ children, stats }: MobileMapToolbarProps) {
 
 export function MobileMapToolbarStat({ children }: MobileMapToolbarStatProps) {
   return (
-    <div className="shrink-0 rounded-full border border-border bg-surface-raised px-3 py-2 text-[11px] font-semibold text-ink-strong shadow-sm">
+    <div className="shrink-0 rounded-full border border-border bg-surface-raised px-3 py-2 text-xs font-semibold tabular-nums text-ink-strong shadow-sm">
       {children}
     </div>
   )

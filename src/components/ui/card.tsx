@@ -7,8 +7,10 @@ type CardProps = ComponentProps<'div'> & {
 
 export function Card({ className, variant = 'default', ...props }: CardProps) {
   const variantClasses = {
-    default: 'rounded-lg border bg-card p-5 text-card-foreground shadow-sm',
-    compact: 'rounded-lg border bg-card p-4 text-card-foreground shadow-sm',
+    // One panel shape app-wide: default cards used an 8px radius and a 1px
+    // border next to 30px, 2px-ink panels elsewhere.
+    default: 'app-panel-sm p-5 text-card-foreground',
+    compact: 'app-panel-sm p-4 text-card-foreground',
     dashboard: 'app-panel p-5 text-card-foreground',
     panel: 'app-panel p-5 text-card-foreground',
     surface: 'rounded-[1.1rem] border border-border bg-surface-raised p-4 text-card-foreground shadow-sm',

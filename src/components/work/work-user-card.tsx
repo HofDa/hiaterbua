@@ -15,6 +15,7 @@ import { FormInput, FormButton } from '@/components/ui/form'
 import { Alert } from '@/components/ui/alert'
 import { MetaLabel } from '@/components/ui/typography'
 import { cn } from '@/lib/utils/cn'
+import { ChevronDown } from 'lucide-react'
 
 function UserBadgeIcon() {
   return (
@@ -44,7 +45,11 @@ function ExpandToggle({
       aria-expanded={isExpanded}
       aria-label={isExpanded ? 'Benutzerkarte einklappen' : 'Benutzerkarte aufklappen'}
     >
-      {isExpanded ? '-' : '+'}
+      <ChevronDown
+        aria-hidden="true"
+        className={isExpanded ? 'h-5 w-5 rotate-180 transition-transform' : 'h-5 w-5 transition-transform'}
+        strokeWidth={2.4}
+      />
     </button>
   )
 }

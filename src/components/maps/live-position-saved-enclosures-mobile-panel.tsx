@@ -101,12 +101,13 @@ export function LivePositionSavedEnclosuresMobilePanel({
               key={filterOption.id}
               type="button"
               onClick={() => onEnclosureListFilterChange(filterOption.id)}
+              aria-pressed={enclosureListFilter === filterOption.id}
               className={cn(
-                'rounded-2xl px-3 py-2.5 text-sm font-medium',
+                'min-h-11 rounded-2xl px-3 py-2.5 text-sm font-semibold',
                 focusRing,
                 enclosureListFilter === filterOption.id
-                  ? 'border border-border-strong bg-surface-muted text-ink'
-                  : 'border border-border bg-surface-raised text-ink-soft',
+                  ? 'border-2 border-primary bg-accent text-ink-strong'
+                  : 'border border-border bg-surface-raised text-ink',
               )}
             >
               {filterOption.label}
